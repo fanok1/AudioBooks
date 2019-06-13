@@ -2,9 +2,9 @@
     <string name="app_name">Audio Books</string>
     <string name="navigation_drawer_open">Открыть меню</string>
     <string name="navigation_drawer_close">Закрыть меню</string>
-    <string name="action_settings">Настройки</string>
 
 
+    <!-- NavigetionMenu!-->
     <string name="menu_audiobooks">Аудиокниги</string>
     <string name="menu_genre">Жанры</string>
     <string name="menu_artist">Исполнители</string>

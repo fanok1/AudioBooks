@@ -5,6 +5,9 @@
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/primaryColor</item>
         <item name="colorPrimaryDark">@color/primaryDarkColor</item>
+        <item name="colorSelected">@color/primaryTextColor</item>
+        <item name="colorUnSelected">@color/primaryTextColor</item>
+        <item name="backgroundSelected">@color/primaryLightColor</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
