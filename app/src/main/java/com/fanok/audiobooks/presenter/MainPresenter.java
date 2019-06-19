@@ -1,9 +1,12 @@
-package com.fanok.audiobooks.main;
+package com.fanok.audiobooks.presenter;
 
 import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
 import android.view.MenuItem;
 
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.fragment.BooksFragment;
+import com.fanok.audiobooks.interface_pacatge.MainContract;
 
 public class MainPresenter implements MainContract.Presenter {
 
@@ -11,7 +14,7 @@ public class MainPresenter implements MainContract.Presenter {
     private MainContract.View mView;
 
 
-    MainPresenter(MainContract.View view) {
+    public MainPresenter(MainContract.View view) {
         mView = view;
     }
 
@@ -20,7 +23,8 @@ public class MainPresenter implements MainContract.Presenter {
         int id = item.getItemId();
 
         if (id == R.id.nav_audiobooks) {
-            // Handle the camera action
+            Fragment fragment = BooksFragment.newInstance("https://audioknigi.club/index/page", 1);
+            mView.showFragment(fragment, "audioBook");
         } else if (id == R.id.nav_genre) {
 
         } else if (id == R.id.nav_autor) {

@@ -13,4 +13,11 @@
     <string name="menu_history">История</string>
     <string name="menu_settings">Настройки</string>
     <string name="menu_about">О программе</string>
+
+
+    <string name="loading">Загрузка…</string>
+    <string name="book_cover">обложка</string>
+
+    <string name="error_load_data">Ошибка. Не удалось загрузить данные</string>
+    <string name="error_display_data">Ошибка отображения данных</string>
 </resources>

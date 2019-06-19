@@ -1,4 +1,4 @@
-package com.fanok.audiobooks.main;
+package com.fanok.audiobooks.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,6 +14,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.interface_pacatge.MainContract;
+import com.fanok.audiobooks.presenter.MainPresenter;
 
 
 public class MainActivity extends AppCompatActivity
@@ -21,13 +23,14 @@ public class MainActivity extends AppCompatActivity
 
     private MainContract.Presenter mPresenter;
 
+    public MainActivity() {
+        mPresenter = new MainPresenter(this);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        mPresenter = new MainPresenter(this);
-
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

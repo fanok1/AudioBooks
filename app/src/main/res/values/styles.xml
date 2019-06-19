@@ -5,14 +5,19 @@
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/primaryColor</item>
         <item name="colorPrimaryDark">@color/primaryDarkColor</item>
+        <item name="colorPrimaryText">@color/primaryTextColor</item>
         <item name="colorSelected">@color/primaryTextColor</item>
         <item name="colorUnSelected">@color/primaryTextColor</item>
         <item name="backgroundSelected">@color/primaryLightColor</item>
+        <item name="backgroundItem">@color/blackColor</item>
+        <item name="hrefColor">@color/hrefColor</item>
+        <item name="subTextColor">@color/subTextColor</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

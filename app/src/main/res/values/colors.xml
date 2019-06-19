@@ -4,4 +4,7 @@
     <color name="primaryLightColor">#62717b</color>
     <color name="primaryDarkColor">#101f27</color>
     <color name="primaryTextColor">#ffffff</color>
+    <color name="blackColor">#414141</color>
+    <color name="hrefColor">#42a5f5</color>
+    <color name="subTextColor">#e0e0e0</color>
 </resources>

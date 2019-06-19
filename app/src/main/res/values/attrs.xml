@@ -4,5 +4,9 @@
         <attr name="colorSelected" format="color" />
         <attr name="colorUnSelected" format="color" />
         <attr name="backgroundSelected" format="color" />
+        <attr name="colorPrimaryText" format="color" />
+        <attr name="backgroundItem" format="color" />
+        <attr name="hrefColor" format="color" />
+        <attr name="subTextColor" format="color" />
     </declare-styleable>
 </resources>
