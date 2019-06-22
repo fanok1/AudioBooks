@@ -1,8 +1,8 @@
 package com.fanok.audiobooks.fragment;
 
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,20 +14,26 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.arellomobile.mvp.MvpAppCompatFragment;
+import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
-import com.fanok.audiobooks.interface_pacatge.BooksContract;
+import com.fanok.audiobooks.interface_pacatge.books.BooksView;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.presenter.BooksPresenter;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
-public class BooksFragment extends Fragment implements BooksContract.View {
+public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     private static final String TAG = "BooksFragment";
+    private static final String ARG_URL = "url";
 
     @BindView(R.id.list)
     RecyclerView mRecyclerView;
@@ -36,23 +42,37 @@ public class BooksFragment extends Fragment implements BooksContract.View {
     @BindView(R.id.progressBar)
     LinearLayout mProgressBar;
     Unbinder unbinder;
-    private BooksContract.Presenter mPresenter;
+
+    @InjectPresenter
+    BooksPresenter mPresenter;
     private BooksListAddapter mAddapter;
 
-    public BooksFragment() {
-        mPresenter = new BooksPresenter(this);
-    }
-
-    public static BooksFragment newInstance(@NonNull String url, int columnCount) {
+    public static BooksFragment newInstance(@NonNull String url) {
         BooksFragment fragment = new BooksFragment();
-        fragment.setArguments(BooksPresenter.getArg(url, columnCount));
+        if (!Consts.REGEXP_URL.matcher(url).matches()) {
+            throw new IllegalArgumentException(
+                    "Variable 'url' contains not url");
+        }
+        Bundle args = new Bundle();
+        args.putString(ARG_URL, url);
+        fragment.setArguments(args);
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mPresenter.onCreate();
+        Bundle arg = getArguments();
+        String url = "";
+        if (arg != null) {
+            url = arg.getString(ARG_URL, "");
+        }
+        if (url.isEmpty()) throw new IllegalArgumentException("Variable 'url' contains not url");
+        if (savedInstanceState == null) {
+            mPresenter.onCreate(url);
+        } else {
+            mPresenter.onChageOrintationScreen();
+        }
     }
 
     @Override
@@ -60,17 +80,26 @@ public class BooksFragment extends Fragment implements BooksContract.View {
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_books, container, false);
         unbinder = ButterKnife.bind(this, view);
-        mPresenter.onCreateView();
+        int orientation = this.getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            setLayoutManager();
+        } else {
+            setLayoutManager(2);
+        }
         mAddapter = new BooksListAddapter();
         mRecyclerView.setAdapter(mAddapter);
         mPresenter.loadBoks();
 
         mRefresh.setOnRefreshListener(() -> mPresenter.onRefresh());
+
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                if (!recyclerView.canScrollVertically(1)) {
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                int lastCompletelyVisibleItemPosition =
+                        ((LinearLayoutManager) Objects.requireNonNull(
+                                recyclerView.getLayoutManager())).findLastVisibleItemPosition();
+                if (lastCompletelyVisibleItemPosition > mAddapter.getItemCount() - 3 && dy > 0) {
                     mPresenter.loadBoks();
                 }
             }
@@ -89,16 +118,19 @@ public class BooksFragment extends Fragment implements BooksContract.View {
     @Override
     public void setLayoutManager() {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
+        setItemDecoration(1);
     }
 
     @Override
     public void setLayoutManager(int count) {
         mRecyclerView.setLayoutManager(new GridLayoutManager(this.getContext(), count));
+        setItemDecoration(count);
     }
 
-    @Override
-    public Bundle getArg() {
-        return getArguments();
+    private void setItemDecoration(int count) {
+        int spacing = (int) getResources().getDimension(R.dimen.recycler_item_margin);
+        boolean includeEdge = true;
+        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(count, spacing, includeEdge));
     }
 
     @Override

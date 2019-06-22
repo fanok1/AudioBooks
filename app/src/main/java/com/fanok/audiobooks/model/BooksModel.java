@@ -1,7 +1,7 @@
 package com.fanok.audiobooks.model;
 
-import com.fanok.audiobooks.interface_pacatge.BooksContract;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.presenter.BooksPresenter;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 import io.reactivex.Observable;
 
-public class BooksModel implements BooksContract.Model {
+public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.BooksModel {
 
 
     ArrayList<BookPOJO> loadBooksList(String url) throws IOException {
@@ -25,6 +25,7 @@ public class BooksModel implements BooksContract.Model {
                 .referrer("http://www.google.com")
                 .get();
         Elements books = doc.getElementsByTag("article");
+        if (books.size() == 0) BooksPresenter.isEnd = true;
         for (Element book : books) {
             BookPOJO bookPOJO = new BookPOJO();
             String img = book.getElementsByTag("img").get(0).attr("src");

@@ -8,24 +8,25 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
+import com.arellomobile.mvp.MvpAppCompatActivity;
+import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.fanok.audiobooks.R;
-import com.fanok.audiobooks.interface_pacatge.MainContract;
+import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.presenter.MainPresenter;
 
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, MainContract.View {
+public class MainActivity extends MvpAppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener, MainView {
 
-    private MainContract.Presenter mPresenter;
 
-    public MainActivity() {
-        mPresenter = new MainPresenter(this);
-    }
+    @InjectPresenter
+    MainPresenter mPresenter;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +79,7 @@ public class MainActivity extends AppCompatActivity
     public void showFragment(@NonNull Fragment fragment, String tag) {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, fragment, tag)
-                .addToBackStack(null)
+                .addToBackStack(tag)
                 .commit();
 
     }

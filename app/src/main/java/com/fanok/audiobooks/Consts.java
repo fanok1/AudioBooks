@@ -9,4 +9,5 @@ public class Consts {
             "^https?://.+\\.((jpg)|(png)|(jpeg))$");
     public static final Pattern REGEXP_RETING = Pattern.compile("^([+-]\\d+)|0$");
 
+
 }
