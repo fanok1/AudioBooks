@@ -18,6 +18,8 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.presenter.MainPresenter;
 
+import java.util.ArrayList;
+
 
 public class MainActivity extends MvpAppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MainView {
@@ -25,6 +27,8 @@ public class MainActivity extends MvpAppCompatActivity
 
     @InjectPresenter
     MainPresenter mPresenter;
+
+    private ArrayList<String> fragmentsTag;
 
 
 
@@ -44,6 +48,7 @@ public class MainActivity extends MvpAppCompatActivity
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
         mPresenter.onCreate();
+        fragmentsTag = new ArrayList<>();
     }
 
     @Override
@@ -52,7 +57,13 @@ public class MainActivity extends MvpAppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+            if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                if (fragmentsTag.size() > 0) fragmentsTag.remove(fragmentsTag.size() - 1);
+                getSupportFragmentManager().popBackStack();
+
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 
@@ -76,7 +87,11 @@ public class MainActivity extends MvpAppCompatActivity
     }
 
     @Override
-    public void showFragment(@NonNull Fragment fragment, String tag) {
+    public void showFragment(@NonNull Fragment fragment, @NonNull String tag) {
+        if (fragmentsTag.size() != 0 && tag.equals(fragmentsTag.get(fragmentsTag.size() - 1))) {
+            return;
+        }
+        fragmentsTag.add(tag);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, fragment, tag)
                 .addToBackStack(tag)

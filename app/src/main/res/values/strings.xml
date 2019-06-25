@@ -20,4 +20,16 @@
 
     <string name="error_load_data">Ошибка. Не удалось загрузить данные</string>
     <string name="error_display_data">Ошибка отображения данных</string>
+    <string name="search">Поиск</string>
+    <string name="order">Сортировка</string>
+    <string name="new_data">Новое</string>
+    <string name="reting">Рейтинг</string>
+    <string name="all_time">За все время</string>
+    <string name="in_month">За месяц</string>
+    <string name="in_week">За неделю</string>
+    <string name="discussed">Обсуждаемое</string>
+    <string name="title_books">Аудиокниги</string>
+    <string name="order_new">Новое</string>
+    <string name="order_reting">Лучшие</string>
+    <string name="order_discussed">Обсуждаемые</string>
 </resources>

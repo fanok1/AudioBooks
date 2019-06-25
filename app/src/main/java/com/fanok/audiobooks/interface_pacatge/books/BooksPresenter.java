@@ -12,5 +12,8 @@ public interface BooksPresenter {
 
     void onRefresh();
 
-    void onChageOrintationScreen();
+    void onChageOrintationScreen(String url);
+
+    void onOptionItemSelected(int itemId);
+
 }

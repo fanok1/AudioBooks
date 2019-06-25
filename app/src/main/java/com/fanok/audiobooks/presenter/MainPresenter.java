@@ -20,7 +20,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements
         int id = item.getItemId();
 
         if (id == R.id.nav_audiobooks) {
-            Fragment fragment = BooksFragment.newInstance("https://audioknigi.club/index/page");
+            Fragment fragment = BooksFragment.newInstance("https://audioknigi.club/index/page/",
+                    R.string.title_books);
             getViewState().showFragment(fragment, "audioBook");
         } else if (id == R.id.nav_genre) {
 

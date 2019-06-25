@@ -1,6 +1,10 @@
 package com.fanok.audiobooks.interface_pacatge.books;
 
+import android.support.v4.app.Fragment;
+
 import com.arellomobile.mvp.MvpView;
+import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
+import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.fanok.audiobooks.pojo.BookPOJO;
 
 import java.util.ArrayList;
@@ -21,4 +25,10 @@ public interface BooksView extends MvpView {
     void showToast(String message);
 
     void showRefreshing(boolean b);
+
+    void setPosition(int position);
+
+    @StateStrategyType(SkipStrategy.class)
+    void showFragment(Fragment fragment, String tag);
+
 }

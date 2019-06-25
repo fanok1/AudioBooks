@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/app_bar_search"
+        android:icon="@drawable/ic_search_black_24dp"
+        android:title="@string/search"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/order"
+        android:icon="@drawable/ic_order_option_menu"
+        android:title="@string/order"
+        app:showAsAction="ifRoom">
+        <menu>
+            <item
+                android:id="@+id/new_data"
+                android:title="@string/new_data" />
+            <item android:title="@string/reting">
+                <menu>
+                    <item
+                        android:id="@+id/reting_all_time"
+                        android:title="@string/all_time" />
+                    <item
+                        android:id="@+id/reting_month"
+                        android:title="@string/in_month" />
+                    <item
+                        android:id="@+id/reting_week"
+                        android:title="@string/in_week" />
+                </menu>
+            </item>
+            <item android:title="@string/discussed">
+                <menu>
+                    <item
+                        android:id="@+id/discussed_all_time"
+                        android:title="@string/all_time" />
+                    <item
+                        android:id="@+id/discussed_month"
+                        android:title="@string/in_month" />
+                    <item
+                        android:id="@+id/discussed_week"
+                        android:title="@string/in_week" />
+                </menu>
+            </item>
+        </menu>
+    </item>
+</menu>
