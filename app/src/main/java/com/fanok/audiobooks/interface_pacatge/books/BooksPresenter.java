@@ -1,10 +1,11 @@
 package com.fanok.audiobooks.interface_pacatge.books;
 
 import android.support.annotation.NonNull;
+import android.view.View;
 
 public interface BooksPresenter {
 
-    void onCreate(@NonNull String url);
+    void onCreate(@NonNull String url, int modelID);
 
     void onDestroy();
 
@@ -15,5 +16,7 @@ public interface BooksPresenter {
     void onChageOrintationScreen(String url);
 
     void onOptionItemSelected(int itemId);
+
+    void onGenreItemClick(View view, int position);
 
 }

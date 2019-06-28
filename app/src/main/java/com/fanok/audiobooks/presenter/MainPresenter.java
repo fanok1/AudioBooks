@@ -6,6 +6,7 @@ import android.view.MenuItem;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
@@ -21,13 +22,23 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
         if (id == R.id.nav_audiobooks) {
             Fragment fragment = BooksFragment.newInstance("https://audioknigi.club/index/page/",
-                    R.string.title_books);
+                    R.string.menu_audiobooks, Consts.MODEL_BOOKS);
             getViewState().showFragment(fragment, "audioBook");
         } else if (id == R.id.nav_genre) {
+            Fragment fragment = BooksFragment.newInstance("https://audioknigi.club/sections/",
+                    R.string.menu_genre, Consts.MODEL_GENRE);
+            getViewState().showFragment(fragment, "genre");
 
         } else if (id == R.id.nav_autor) {
+            Fragment fragment = BooksFragment.newInstance("https://audioknigi.club/authors/page/",
+                    R.string.menu_autor, Consts.MODEL_AUTOR);
+            getViewState().showFragment(fragment, "autor");
 
         } else if (id == R.id.nav_artist) {
+            Fragment fragment = BooksFragment.newInstance(
+                    "https://audioknigi.club/performers/page/",
+                    R.string.menu_artist, Consts.MODEL_ARTIST);
+            getViewState().showFragment(fragment, "artist");
 
         } else if (id == R.id.nav_favorite) {
 

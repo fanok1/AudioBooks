@@ -1,10 +1,15 @@
 package com.fanok.audiobooks.fragment;
 
+import static com.fanok.audiobooks.Consts.MODEL_ARTIST;
+import static com.fanok.audiobooks.Consts.MODEL_AUTOR;
+import static com.fanok.audiobooks.Consts.MODEL_BOOKS;
+import static com.fanok.audiobooks.Consts.MODEL_GENRE;
 import static com.fanok.audiobooks.Consts.setColorPrimeriTextInIconItemMenu;
 
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
@@ -29,8 +34,10 @@ import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
+import com.fanok.audiobooks.adapter.GenreListAddapter;
 import com.fanok.audiobooks.interface_pacatge.books.BooksView;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.fanok.audiobooks.presenter.BooksPresenter;
 
 import java.util.ArrayList;
@@ -45,6 +52,8 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     private static final String ARG_URL = "url";
     private static final String ARG_TITLE = "title";
     private static final String ARG_SUB_TITLE = "sub_title";
+    private static final String ARG_SUB_TITLE_STRING = "sub_title_string";
+    private static final String ARG_MODEL = "model_id";
 
     @BindView(R.id.list)
     RecyclerView mRecyclerView;
@@ -57,13 +66,15 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     @InjectPresenter
     BooksPresenter mPresenter;
 
-
-    private BooksListAddapter mAddapter;
+    private BooksListAddapter mAddapterBooks;
+    private GenreListAddapter mAddapterGenre;
 
     private int titleId;
     private int subTitleId;
+    private String subTitleString;
+    private int modelID;
 
-    public static BooksFragment newInstance(@NonNull String url, int title) {
+    public static BooksFragment newInstance(@NonNull String url, int title, int modelID) {
         BooksFragment fragment = new BooksFragment();
         if (!Consts.REGEXP_URL.matcher(url).matches()) {
             throw new IllegalArgumentException(
@@ -72,11 +83,13 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         Bundle args = new Bundle();
         args.putString(ARG_URL, url);
         args.putInt(ARG_TITLE, title);
+        args.putInt(ARG_MODEL, modelID);
         fragment.setArguments(args);
         return fragment;
     }
 
-    public static BooksFragment newInstance(@NonNull String url, int title, int subTitle) {
+    public static BooksFragment newInstance(@NonNull String url, int title, int subTitle,
+            int modelID) {
         BooksFragment fragment = new BooksFragment();
         if (!Consts.REGEXP_URL.matcher(url).matches()) {
             throw new IllegalArgumentException(
@@ -86,6 +99,23 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         args.putString(ARG_URL, url);
         args.putInt(ARG_TITLE, title);
         args.putInt(ARG_SUB_TITLE, subTitle);
+        args.putInt(ARG_MODEL, modelID);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static BooksFragment newInstance(@NonNull String url, int title, String subTitle,
+            int modelID) {
+        BooksFragment fragment = new BooksFragment();
+        if (!Consts.REGEXP_URL.matcher(url).matches()) {
+            throw new IllegalArgumentException(
+                    "Variable 'url' contains not url");
+        }
+        Bundle args = new Bundle();
+        args.putString(ARG_URL, url);
+        args.putInt(ARG_TITLE, title);
+        args.putString(ARG_SUB_TITLE_STRING, subTitle);
+        args.putInt(ARG_MODEL, modelID);
         fragment.setArguments(args);
         return fragment;
     }
@@ -99,10 +129,13 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
             url = arg.getString(ARG_URL, "");
             titleId = arg.getInt(ARG_TITLE, 0);
             subTitleId = arg.getInt(ARG_SUB_TITLE, 0);
+            subTitleString = arg.getString(ARG_SUB_TITLE_STRING, "");
+            modelID = arg.getInt(ARG_MODEL, -1);
         }
         if (url.isEmpty()) throw new IllegalArgumentException("Variable 'url' contains not url");
+        if (modelID == -1) throw new IllegalArgumentException("Illegal model id");
         if (savedInstanceState == null) {
-            getPresenter().onCreate(url);
+            getPresenter().onCreate(url, modelID);
         } else {
             getPresenter().onChageOrintationScreen(url);
         }
@@ -120,7 +153,9 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         ActionBar toolbar = ((AppCompatActivity) Objects.requireNonNull(
                 getActivity())).getSupportActionBar();
         if (toolbar != null) {
-            if (subTitleId != 0) {
+            if (!subTitleString.isEmpty()) {
+                toolbar.setSubtitle(subTitleString);
+            } else if (subTitleId != 0) {
                 toolbar.setSubtitle(subTitleId);
             } else {
                 toolbar.setSubtitle("");
@@ -133,8 +168,19 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         } else {
             setLayoutManager(2);
         }
-        setAddapter(new BooksListAddapter());
-        mRecyclerView.setAdapter(getAddapter());
+
+        switch (modelID) {
+            case Consts.MODEL_BOOKS:
+                mAddapterBooks = new BooksListAddapter();
+                mRecyclerView.setAdapter(mAddapterBooks);
+                break;
+            case Consts.MODEL_GENRE:
+            case Consts.MODEL_AUTOR:
+            case Consts.MODEL_ARTIST:
+                mAddapterGenre = new GenreListAddapter();
+                mRecyclerView.setAdapter(mAddapterGenre);
+                break;
+        }
         getPresenter().loadBoks();
         setHasOptionsMenu(true);
 
@@ -147,14 +193,29 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                 int lastCompletelyVisibleItemPosition =
                         ((LinearLayoutManager) Objects.requireNonNull(
                                 recyclerView.getLayoutManager())).findLastVisibleItemPosition();
-                if (lastCompletelyVisibleItemPosition > getAddapter().getItemCount() - 3
-                        && dy > 0) {
+                if (modelID != Consts.MODEL_GENRE
+                        && lastCompletelyVisibleItemPosition > getCount() - 3 && dy > 0) {
                     getPresenter().loadBoks();
                 }
             }
         });
 
+        if (mAddapterGenre != null) {
+            mAddapterGenre.setClickListner(
+                    (view1, position) -> mPresenter.onGenreItemClick(view1, position));
+        }
+
         return view;
+    }
+
+    private int getCount() {
+        if (mAddapterBooks != null) {
+            return mAddapterBooks.getItemCount();
+        } else if (mAddapterGenre != null) {
+            return mAddapterGenre.getItemCount();
+        } else {
+            return 0;
+        }
     }
 
     @Override
@@ -183,18 +244,26 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     }
 
     @Override
-    public void showData(ArrayList<BookPOJO> bookPOJOS) {
+    public void showData(@NonNull ArrayList bookPOJOS) {
         try {
-            getAddapter().setItem(bookPOJOS);
+            if (bookPOJOS.size() != 0) {
+                if (bookPOJOS.get(0) instanceof BookPOJO) {
+                    mAddapterBooks.setItem(bookPOJOS);
+                } else if (bookPOJOS.get(0) instanceof GenrePOJO) {
+                    mAddapterGenre.setItem(bookPOJOS);
+                }
+            }
         } catch (NullPointerException e) {
             Log.e(TAG, "Data display error");
             showToast(R.string.error_display_data);
         }
     }
 
+
     @Override
     public void clearData() {
-        getAddapter().clearItem();
+        if (mAddapterBooks != null) mAddapterBooks.clearItem();
+        if (mAddapterGenre != null) mAddapterGenre.clearItem();
     }
 
 
@@ -239,9 +308,15 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.books_options_menu, menu);
-        setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.order),
+        if (modelID == Consts.MODEL_BOOKS) {
+            setColorPrimeriTextInIconItemMenu(
+                    menu.findItem(R.id.order), Objects.requireNonNull(getContext()));
+        } else {
+            menu.findItem(R.id.order).setVisible(false);
+        }
+        setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search),
                 Objects.requireNonNull(getContext()));
-        setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search), getContext());
+
         super.onCreateOptionsMenu(menu, inflater);
     }
 
@@ -255,11 +330,26 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         return mPresenter;
     }
 
-    public BooksListAddapter getAddapter() {
-        return mAddapter;
-    }
-
-    public void setAddapter(@NonNull BooksListAddapter addapter) {
-        mAddapter = addapter;
+    @Override
+    public void onResume() {
+        super.onResume();
+        MainActivity activity = (MainActivity) getActivity();
+        if (activity != null) {
+            NavigationView navigationView = activity.getNavigationView();
+            switch (modelID) {
+                case MODEL_BOOKS:
+                    navigationView.setCheckedItem(R.id.nav_audiobooks);
+                    break;
+                case MODEL_GENRE:
+                    navigationView.setCheckedItem(R.id.nav_genre);
+                    break;
+                case MODEL_AUTOR:
+                    navigationView.setCheckedItem(R.id.nav_autor);
+                    break;
+                case MODEL_ARTIST:
+                    navigationView.setCheckedItem(R.id.nav_artist);
+                    break;
+            }
+        }
     }
 }

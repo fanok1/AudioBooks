@@ -29,8 +29,11 @@ public class MainActivity extends MvpAppCompatActivity
     MainPresenter mPresenter;
 
     private ArrayList<String> fragmentsTag;
+    private NavigationView navigationView;
 
-
+    public NavigationView getNavigationView() {
+        return navigationView;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +43,7 @@ public class MainActivity extends MvpAppCompatActivity
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView = findViewById(R.id.nav_view);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);

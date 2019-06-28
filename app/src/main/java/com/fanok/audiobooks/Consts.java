@@ -19,6 +19,11 @@ public class Consts {
             "^https?://.+\\.((jpg)|(png)|(jpeg))$");
     public static final Pattern REGEXP_RETING = Pattern.compile("^([+-]\\d+)|0$");
 
+    public static final int MODEL_BOOKS = 0;
+    public static final int MODEL_GENRE = 1;
+    public static final int MODEL_AUTOR = 2;
+    public static final int MODEL_ARTIST = 3;
+
 
     public static int getAttributeColor(
             Context context,
