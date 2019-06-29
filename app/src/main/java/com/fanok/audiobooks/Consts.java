@@ -24,10 +24,10 @@ public class Consts {
     public static final int MODEL_AUTOR = 2;
     public static final int MODEL_ARTIST = 3;
 
+    public static final String DBName = "audioBooksDB";
 
-    public static int getAttributeColor(
-            Context context,
-            int attributeId) {
+
+    public static int getAttributeColor(Context context, int attributeId) {
         TypedValue typedValue = new TypedValue();
         context.getTheme().resolveAttribute(attributeId, typedValue, true);
         int colorRes = typedValue.resourceId;

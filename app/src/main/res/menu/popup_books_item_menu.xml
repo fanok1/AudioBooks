@@ -9,6 +9,10 @@
             android:title="@string/add_to_favorite" />
 
         <item
+            android:id="@+id/removeFavorite"
+            android:title="@string/remove_favorite" />
+
+        <item
             android:id="@+id/genre"
             android:title="@string/open_genre" />
 

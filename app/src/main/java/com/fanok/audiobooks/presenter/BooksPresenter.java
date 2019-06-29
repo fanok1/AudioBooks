@@ -16,6 +16,7 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.books.BooksView;
 import com.fanok.audiobooks.model.AutorsModel;
+import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.model.BooksModel;
 import com.fanok.audiobooks.model.GenreModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
@@ -43,6 +44,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
     private ArrayList<GenrePOJO> genre;
     private com.fanok.audiobooks.interface_pacatge.books.BooksModel mModelBook;
     private com.fanok.audiobooks.interface_pacatge.books.GenreModel mModelGenre;
+    private BooksDBModel mBooksDBModel;
 
     private Context mContext;
 
@@ -58,6 +60,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         mSubTitle = subTitle;
         isEnd = false;
         mContext = context;
+        mBooksDBModel = new BooksDBModel(context);
         switch (mModelId) {
             case Consts.MODEL_BOOKS:
                 books = new ArrayList<>();
@@ -240,51 +243,65 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         PopupMenu popupMenu = new PopupMenu(view.getContext(), view, Gravity.END);
         popupMenu.inflate(R.menu.popup_books_item_menu);
 
-        popupMenu
-                .setOnMenuItemClickListener(item -> {
-                    switch (item.getItemId()) {
-                        case R.id.open:
-                            Toast.makeText(view.getContext(),
-                                    "Вы выбрали PopupMenu 1",
-                                    Toast.LENGTH_SHORT).show();
-                            return true;
-                        case R.id.addFavorite:
-                            Toast.makeText(view.getContext(),
-                                    "Вы выбрали PopupMenu 2",
-                                    Toast.LENGTH_SHORT).show();
-                            return true;
-                        case R.id.genre:
-                            getViewState().showFragment(BooksFragment.newInstance(
-                                    books.get(position).getUrlGenre() + "/page/",
-                                    R.string.menu_audiobooks,
-                                    books.get(position).getGenre(), Consts.MODEL_BOOKS),
-                                    "genreBooks");
-                            return true;
-                        case R.id.author:
-                            getViewState().showFragment(BooksFragment.newInstance(
-                                    books.get(position).getUrlAutor() + "/page/",
-                                    R.string.menu_audiobooks,
-                                    books.get(position).getAutor(), Consts.MODEL_BOOKS),
-                                    "autorBooks");
-                            return true;
-                        case R.id.artist:
-                            getViewState().showFragment(BooksFragment.newInstance(
-                                    books.get(position).getUrlArtist() + "/page/",
-                                    R.string.menu_audiobooks,
-                                    books.get(position).getArtist(), Consts.MODEL_BOOKS),
-                                    "artistBooks");
-                            return true;
-                        case R.id.series:
-                            getViewState().showFragment(BooksFragment.newInstance(
-                                    books.get(position).getUrlSeries() + "/page/",
-                                    R.string.menu_audiobooks,
-                                    books.get(position).getSeries(), Consts.MODEL_BOOKS),
-                                    "seriesBooks");
-                            return true;
-                        default:
-                            return false;
-                    }
-                });
+        if (books.get(position).getSeries() == null || books.get(position).getUrlSeries() == null) {
+            popupMenu.getMenu().findItem(R.id.series).setVisible(false);
+        } else {
+            popupMenu.getMenu().findItem(R.id.series).setVisible(true);
+        }
+
+        if (mBooksDBModel.inFavorite(books.get(position))) {
+            popupMenu.getMenu().findItem(R.id.addFavorite).setVisible(false);
+            popupMenu.getMenu().findItem(R.id.removeFavorite).setVisible(true);
+        } else {
+            popupMenu.getMenu().findItem(R.id.addFavorite).setVisible(true);
+            popupMenu.getMenu().findItem(R.id.removeFavorite).setVisible(false);
+        }
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.open:
+                    Toast.makeText(view.getContext(),
+                            "Вы выбрали PopupMenu 1",
+                            Toast.LENGTH_SHORT).show();
+                    return true;
+                case R.id.addFavorite:
+                    mBooksDBModel.addFavorite(books.get(position));
+                    return true;
+                case R.id.removeFavorite:
+                    mBooksDBModel.removeFavorite(books.get(position));
+                    return true;
+                case R.id.genre:
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            books.get(position).getUrlGenre() + "/page/",
+                            R.string.menu_audiobooks,
+                            books.get(position).getGenre(), Consts.MODEL_BOOKS),
+                            "genreBooks");
+                    return true;
+                case R.id.author:
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            books.get(position).getUrlAutor() + "/page/",
+                            R.string.menu_audiobooks,
+                            books.get(position).getAutor(), Consts.MODEL_BOOKS),
+                            "autorBooks");
+                    return true;
+                case R.id.artist:
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            books.get(position).getUrlArtist() + "/page/",
+                            R.string.menu_audiobooks,
+                            books.get(position).getArtist(), Consts.MODEL_BOOKS),
+                            "artistBooks");
+                    return true;
+                case R.id.series:
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            books.get(position).getUrlSeries() + "/page/",
+                            R.string.menu_audiobooks,
+                            books.get(position).getSeries(), Consts.MODEL_BOOKS),
+                            "seriesBooks");
+                    return true;
+                default:
+                    return false;
+            }
+        });
         popupMenu.show();
     }
 
