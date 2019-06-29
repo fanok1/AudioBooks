@@ -135,7 +135,11 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         if (url.isEmpty()) throw new IllegalArgumentException("Variable 'url' contains not url");
         if (modelID == -1) throw new IllegalArgumentException("Illegal model id");
         if (savedInstanceState == null) {
-            getPresenter().onCreate(url, modelID);
+            String subTitle = "";
+            if (!subTitleString.isEmpty()) {
+                subTitle = subTitleString;
+            } else if (subTitleId != 0) subTitle = getResources().getString(subTitleId);
+            getPresenter().onCreate(url, modelID, subTitle, getContext());
         } else {
             getPresenter().onChageOrintationScreen(url);
         }
@@ -203,6 +207,14 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         if (mAddapterGenre != null) {
             mAddapterGenre.setClickListner(
                     (view1, position) -> mPresenter.onGenreItemClick(view1, position));
+        }
+
+        if (mAddapterBooks != null) {
+            mAddapterBooks.setListener(
+                    (view12, position) -> mPresenter.onBookItemClick(view12, position));
+
+            mAddapterBooks.setLongListener(
+                    (view13, position) -> mPresenter.onBookItemLongClick(view13, position));
         }
 
         return view;
@@ -304,6 +316,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
             activity.showFragment(fragment, tag);
         }
     }
+
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {

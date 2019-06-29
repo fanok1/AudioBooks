@@ -11,7 +11,9 @@ public class BooksModelTest {
 
     @Test
     public void loadBooksList() {
-        final String url = "https://audioknigi.club/index/page7/";
+        final String url =
+                "https://audioknigi.club/author/%D0%9A%D0%B8%D0%BD%D0%B3%20%D0%A1%D1%82%D0%B8%D0"
+                        + "%B2%D0%B5%D0%BD/discussed/";
         BooksModel booksModel = new BooksModel();
         ArrayList<BookPOJO> books;
         try {

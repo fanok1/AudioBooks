@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -14,6 +16,7 @@ import android.view.MenuItem;
 
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.fanok.audiobooks.FragmentTagSteck;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.presenter.MainPresenter;
@@ -28,7 +31,7 @@ public class MainActivity extends MvpAppCompatActivity
     @InjectPresenter
     MainPresenter mPresenter;
 
-    private ArrayList<String> fragmentsTag;
+    private ArrayList<FragmentTagSteck> fragmentsTag;
     private NavigationView navigationView;
 
     public NavigationView getNavigationView() {
@@ -63,6 +66,15 @@ public class MainActivity extends MvpAppCompatActivity
             if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                 if (fragmentsTag.size() > 0) fragmentsTag.remove(fragmentsTag.size() - 1);
                 getSupportFragmentManager().popBackStack();
+                while (true) {
+                    if (fragmentsTag.size() > 0 && fragmentsTag.get(
+                            fragmentsTag.size() - 1).isSkip()) {
+                        fragmentsTag.remove(fragmentsTag.size() - 1);
+                        getSupportFragmentManager().popBackStack();
+                    } else {
+                        break;
+                    }
+                }
 
             } else {
                 super.onBackPressed();
@@ -91,14 +103,23 @@ public class MainActivity extends MvpAppCompatActivity
 
     @Override
     public void showFragment(@NonNull Fragment fragment, @NonNull String tag) {
-        if (fragmentsTag.size() != 0 && tag.equals(fragmentsTag.get(fragmentsTag.size() - 1))) {
+        if (fragmentsTag.size() != 0 && tag.equals(
+                fragmentsTag.get(fragmentsTag.size() - 1).getTag())) {
             return;
         }
-        fragmentsTag.add(tag);
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, fragment, tag)
-                .addToBackStack(tag)
-                .commit();
+        addFragmentTag(tag);
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.replace(R.id.container, fragment, tag);
+        if (fragmentsTag.size() > 1) transaction.addToBackStack(tag);
+        transaction.commit();
 
+    }
+
+    private void addFragmentTag(@NonNull String tag) {
+        for (int i = 0; i < fragmentsTag.size(); i++) {
+            if (fragmentsTag.get(i).getTag().equals(tag)) fragmentsTag.get(i).setSkip(true);
+        }
+        fragmentsTag.add(new FragmentTagSteck(tag));
     }
 }

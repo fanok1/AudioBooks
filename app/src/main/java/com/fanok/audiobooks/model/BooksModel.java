@@ -85,6 +85,10 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
             if (bottomLineElements.size() != 0) {
                 Element bottomLine = bottomLineElements.first();
                 Elements autorElements = bottomLine.getElementsByClass("fa-user");
+                if (autorElements.size() == 0) {
+                    autorElements = bottomLine.getElementsByClass(
+                            "fa-users");
+                }
                 if (autorElements.size() != 0) {
                     Element autor = autorElements.first();
                     Element aElement = autor.nextElementSibling();

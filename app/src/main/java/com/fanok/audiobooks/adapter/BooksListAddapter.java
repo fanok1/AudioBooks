@@ -18,6 +18,27 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
 
     private ArrayList<BookPOJO> mModel;
 
+    private OnListItemSelectedInterface mListener;
+    private OnListItemLongSelectedInterface mLongListener;
+
+    public void setListener(
+            OnListItemSelectedInterface listener) {
+        mListener = listener;
+    }
+
+    public void setLongListener(
+            OnListItemLongSelectedInterface longListener) {
+        mLongListener = longListener;
+    }
+
+    public interface OnListItemLongSelectedInterface {
+        void onItemLongSelected(View view, int position);
+    }
+
+    public interface OnListItemSelectedInterface {
+        void onItemSelected(View view, int position);
+    }
+
     public void setItem(ArrayList<BookPOJO> model) {
         mModel = model;
         notifyDataSetChanged();
@@ -77,6 +98,19 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             mTime = itemView.findViewById(R.id.time);
             mAutor = itemView.findViewById(R.id.autor);
             mArtist = itemView.findViewById(R.id.artist);
+
+            itemView.setOnClickListener(view -> {
+                if (mListener != null) mListener.onItemSelected(view, getAdapterPosition());
+            });
+
+            itemView.setOnLongClickListener(view -> {
+                if (mLongListener != null) {
+                    mLongListener.onItemLongSelected(view,
+                            getAdapterPosition());
+                }
+                return true;
+            });
+
         }
 
         void bind(BookPOJO book) {

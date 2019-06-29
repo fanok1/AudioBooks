@@ -31,4 +31,10 @@
     <string name="order_new">Новое</string>
     <string name="order_reting">Лучшие</string>
     <string name="order_discussed">Обсуждаемые</string>
+    <string name="open">Открыть</string>
+    <string name="add_to_favorite">Добавить в избранное</string>
+    <string name="open_author">Перейти к автору</string>
+    <string name="open_genre">Перейти к жанру</string>
+    <string name="open_artist">Перейти к исполнителю</string>
+    <string name="open_series">Перейти к серии</string>
 </resources>

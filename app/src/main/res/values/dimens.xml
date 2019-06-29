@@ -8,7 +8,7 @@
     <dimen name="recycler_item_height">100dp</dimen>
     <dimen name="recycler_item_height_genre">50dp</dimen>
     <dimen name="recycler_item_image_width">72dp</dimen>
-    <dimen name="recycler_item_margin">8dp</dimen>
+    <dimen name="recycler_item_margin">5dp</dimen>
     <dimen name="subTextSize">12sp</dimen>
     <dimen name="titleSize">14sp</dimen>
     <dimen name="recycler_item_textmargin">6dp</dimen>
