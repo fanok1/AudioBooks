@@ -111,8 +111,8 @@ public class BookPOJO {
         return series;
     }
 
-    public void setSeries(@NonNull String series) {
-        if (series.isEmpty()) throw new IllegalArgumentException("Value must be not empty");
+    public void setSeries(String series) {
+        if (series == null || series.isEmpty()) return;
         this.series = series;
     }
 
@@ -121,6 +121,7 @@ public class BookPOJO {
     }
 
     public void setUrlSeries(String urlSeries) {
+        if (urlSeries == null || urlSeries.isEmpty()) return;
         if (!Consts.REGEXP_URL.matcher(urlSeries).matches()) {
             throw new IllegalArgumentException(
                     "Value must be url");

@@ -38,4 +38,5 @@
     <string name="open_artist">Перейти к исполнителю</string>
     <string name="open_series">Перейти к серии</string>
     <string name="remove_favorite">Удалить из избранного</string>
+    <string name="remove">Удалить</string>
 </resources>

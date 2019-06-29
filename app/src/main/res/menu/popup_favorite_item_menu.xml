@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/menugroup1">
+        <item
+            android:id="@+id/open"
+            android:title="@string/open" />
+
+        <item
+            android:id="@+id/remove"
+            android:title="@string/remove" />
+
+        <item
+            android:id="@+id/genre"
+            android:title="@string/open_genre" />
+
+        <item
+            android:id="@+id/author"
+            android:title="@string/open_author" />
+
+        <item
+            android:id="@+id/artist"
+            android:title="@string/open_artist" />
+
+        <item
+            android:id="@+id/series"
+            android:title="@string/open_series" />
+    </group>
+
+</menu>

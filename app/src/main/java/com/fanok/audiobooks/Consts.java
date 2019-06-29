@@ -24,6 +24,10 @@ public class Consts {
     public static final int MODEL_AUTOR = 2;
     public static final int MODEL_ARTIST = 3;
 
+    public static final int TABLE_FAVORITE = 1;
+    public static final int TABLE_HISTORY = 2;
+
+
     public static final String DBName = "audioBooksDB";
 
 

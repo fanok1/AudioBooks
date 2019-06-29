@@ -2,14 +2,22 @@ package com.fanok.audiobooks.interface_pacatge.books;
 
 import com.fanok.audiobooks.pojo.BookPOJO;
 
+import java.util.ArrayList;
+
 public interface BooksDBHelperInterfase {
     boolean inFavorite(BookPOJO book);
 
-    boolean addFavorite(BookPOJO book);
+    void addFavorite(BookPOJO book);
 
-    boolean removeFavorite(BookPOJO book);
+    void removeFavorite(BookPOJO book);
 
-    boolean addHistory(BookPOJO book);
+    void addHistory(BookPOJO book);
 
-    boolean removeHistory(BookPOJO book);
+    void removeHistory(BookPOJO book);
+
+    ArrayList<BookPOJO> getAllFavorite();
+
+    ArrayList<BookPOJO> getAllHistory();
+
+
 }

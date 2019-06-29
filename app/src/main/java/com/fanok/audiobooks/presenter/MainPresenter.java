@@ -10,6 +10,7 @@ import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.fragment.BooksFragment;
+import com.fanok.audiobooks.fragment.FavoriteFragment;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 
 @InjectViewState
@@ -41,8 +42,14 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             getViewState().showFragment(fragment, "artist");
 
         } else if (id == R.id.nav_favorite) {
+            Fragment fragment = FavoriteFragment.newInstance(R.string.menu_favorite,
+                    Consts.TABLE_FAVORITE);
+            getViewState().showFragment(fragment, "favorite");
 
         } else if (id == R.id.nav_history) {
+            Fragment fragment = FavoriteFragment.newInstance(R.string.menu_history,
+                    Consts.TABLE_HISTORY);
+            getViewState().showFragment(fragment, "history");
 
         } else if (id == R.id.nav_settings) {
 
