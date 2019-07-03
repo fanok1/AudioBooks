@@ -8,5 +8,6 @@
         <attr name="backgroundItem" format="color" />
         <attr name="hrefColor" format="color" />
         <attr name="subTextColor" format="color" />
+        <attr name="backgraundColor" format="color" />
     </declare-styleable>
 </resources>

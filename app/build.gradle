@@ -53,5 +53,8 @@ dependencies {
 
     implementation 'com.tolstykh.textviewrichdrawable:textview-rich-drawable:0.3.2'
 
+    implementation 'com.r0adkll:slidableactivity:2.0.6'
+    implementation 'com.google.code.gson:gson:2.8.5'
+
 
 }

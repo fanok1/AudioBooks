@@ -1,7 +1,6 @@
 package com.fanok.audiobooks.model;
 
 import com.fanok.audiobooks.pojo.GenrePOJO;
-import com.fanok.audiobooks.presenter.BooksPresenter;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -27,7 +26,7 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
         Elements table = doc.getElementsByTag("table");
         if (table.size() != 0) {
             Elements tr = table.first().getElementsByTag("tbody").first().getElementsByTag("tr");
-            if (tr.size() == 0) BooksPresenter.isEnd = true;
+            if (tr.size() == 0) return null;
             for (Element row : tr) {
                 GenrePOJO genrePOJO = new GenrePOJO();
                 Elements h4 = row.getElementsByTag("h4");
@@ -48,10 +47,15 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
                                 Integer.parseInt(subscribe));
                     }
                 }
+                Elements p = row.getElementsByTag("p");
+                if (p.size() != 0) {
+                    String desc = p.first().text();
+                    if (desc != null && !desc.isEmpty()) genrePOJO.setDescription(desc);
+                }
                 if (!genrePOJO.isNull()) result.add(genrePOJO);
             }
         } else {
-            BooksPresenter.isEnd = true;
+            return null;
         }
         return result;
     }

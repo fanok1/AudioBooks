@@ -2,7 +2,9 @@ package com.fanok.audiobooks.presenter;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.PopupMenu;
 import android.util.Log;
 import android.view.Gravity;
@@ -33,7 +35,6 @@ import io.reactivex.schedulers.Schedulers;
 public class BooksPresenter extends MvpPresenter<BooksView> implements
         com.fanok.audiobooks.interface_pacatge.books.BooksPresenter {
 
-    public static boolean isEnd = false;
     private static final String TAG = "BooksPresenter";
     private boolean isLoading = false;
     private boolean isRefreshing = false;
@@ -50,6 +51,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
 
     private String mUrl;
+    private boolean isEnd;
 
 
     @Override
@@ -111,14 +113,10 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
     }
 
     @Override
-    public void onChageOrintationScreen(String url) {
-        if (mUrl == null || mUrl.isEmpty()) {
-            mUrl = url;
-            page = 0;
-            isEnd = false;
-        }
+    public void onChageOrintationScreen() {
         if ((books == null || books.size() == 0) && (genre == null || genre.size() == 0)
                 && !isLoading) {
+            page = 0;
             getData(mUrl);
             isEnd = false;
         } else {
@@ -153,6 +151,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
         switch (itemId) {
             case R.id.app_bar_search:
+                getViewState().showSearchActivity(mModelId);
                 break;
             case R.id.new_data:
                 getViewState().showFragment(BooksFragment.newInstance(
@@ -330,8 +329,12 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             public void onError(Throwable e) {
                                 e.printStackTrace();
                                 Log.e(TAG, e.getMessage());
-                                getViewState().showToast(R.string.error_load_data);
-                                page--;
+                                if (e.getClass() == NullPointerException.class) {
+                                    isEnd = true;
+                                } else {
+                                    getViewState().showToast(R.string.error_load_data);
+                                    page--;
+                                }
                                 onComplete();
 
                             }
@@ -367,9 +370,13 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             @Override
                             public void onError(Throwable e) {
                                 e.printStackTrace();
+                                if (e.getClass() == NullPointerException.class) {
+                                    isEnd = true;
+                                } else {
+                                    getViewState().showToast(R.string.error_load_data);
+                                    page--;
+                                }
                                 Log.e(TAG, e.getMessage());
-                                getViewState().showToast(R.string.error_load_data);
-                                page--;
                                 onComplete();
 
                             }
@@ -393,4 +400,15 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         return mContext.getResources().getString(id);
     }
 
+    @Override
+    public void onActivityResult(@NonNull Intent intent) {
+        String url = intent.getStringExtra("url");
+        String name = intent.getStringExtra("name");
+        int modelId = intent.getIntExtra("modelId", 0);
+        String tag = intent.getStringExtra("tag");
+
+        Fragment fragment = BooksFragment.newInstance(url,
+                R.string.menu_audiobooks, name, modelId);
+        getViewState().showFragment(fragment, tag);
+    }
 }

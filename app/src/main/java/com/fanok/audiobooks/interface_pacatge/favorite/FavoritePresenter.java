@@ -15,4 +15,9 @@ public interface FavoritePresenter {
 
     void onBookItemLongClick(View view, int position);
 
+    void onSearch(String qery);
+
+
+
+
 }

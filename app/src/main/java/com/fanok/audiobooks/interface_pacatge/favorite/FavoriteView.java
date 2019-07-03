@@ -22,8 +22,6 @@ public interface FavoriteView extends MvpView {
 
     void showToast(String message);
 
-    void setPosition(int position);
-
     @StateStrategyType(SkipStrategy.class)
     void showFragment(Fragment fragment, String tag);
 

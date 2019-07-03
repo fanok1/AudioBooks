@@ -22,7 +22,6 @@ import java.util.ArrayList;
 public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         com.fanok.audiobooks.interface_pacatge.favorite.FavoritePresenter {
 
-    private static final String TAG = "FavoritePresenter";
     private ArrayList<BookPOJO> books;
     private BooksDBModel mBooksDBModel;
     private int table;
@@ -117,4 +116,16 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         });
         popupMenu.show();
     }
+
+    @Override
+    public void onSearch(String qery) {
+        ArrayList<BookPOJO> filter = new ArrayList<>();
+        for (BookPOJO book : books) {
+            if (book.getName().toLowerCase().contains(qery.toLowerCase())) {
+                filter.add(book);
+            }
+        }
+        getViewState().showData(filter);
+    }
+
 }

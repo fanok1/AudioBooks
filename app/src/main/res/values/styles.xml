@@ -12,6 +12,7 @@
         <item name="backgroundItem">@color/blackColor</item>
         <item name="hrefColor">@color/hrefColor</item>
         <item name="subTextColor">@color/subTextColor</item>
+        <item name="backgraundColor">@color/colorBackgraund</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -23,6 +24,11 @@
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark" />
+
+    <style name="AppTheme.SwipeOnClose" parent="AppTheme.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
 
 
 </resources>

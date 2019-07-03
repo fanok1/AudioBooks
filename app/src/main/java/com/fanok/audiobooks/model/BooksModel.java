@@ -1,7 +1,6 @@
 package com.fanok.audiobooks.model;
 
 import com.fanok.audiobooks.pojo.BookPOJO;
-import com.fanok.audiobooks.presenter.BooksPresenter;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -25,7 +24,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                 .referrer("http://www.google.com")
                 .get();
         Elements books = doc.getElementsByTag("article");
-        if (books.size() == 0) BooksPresenter.isEnd = true;
+        if (books.size() == 0) return null;
         for (Element book : books) {
             BookPOJO bookPOJO = new BookPOJO();
             String img = book.getElementsByTag("img").get(0).attr("src");

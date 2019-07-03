@@ -64,12 +64,14 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
 
         private TextView mName;
         private TextView mReting;
+        private TextView mDescription;
 
         MyHolder(@NonNull final View itemView) {
             super(itemView);
 
             mName = itemView.findViewById(R.id.name);
             mReting = itemView.findViewById(R.id.reting);
+            mDescription = itemView.findViewById(R.id.desc);
             itemView.setOnClickListener(view -> {
                 if (listner != null) listner.onClickItem(itemView, getAdapterPosition());
             });
@@ -81,6 +83,7 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
             }
             mName.setText(book.getName());
             mReting.setText(String.valueOf(book.getReting()));
+            mDescription.setText(book.getDescription());
         }
     }
 }

@@ -4,8 +4,11 @@ import static com.fanok.audiobooks.Consts.MODEL_ARTIST;
 import static com.fanok.audiobooks.Consts.MODEL_AUTOR;
 import static com.fanok.audiobooks.Consts.MODEL_BOOKS;
 import static com.fanok.audiobooks.Consts.MODEL_GENRE;
+import static com.fanok.audiobooks.Consts.REQEST_CODE_SEARCH;
 import static com.fanok.audiobooks.Consts.setColorPrimeriTextInIconItemMenu;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -33,6 +36,7 @@ import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.MainActivity;
+import com.fanok.audiobooks.activity.SearchableActivity;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
 import com.fanok.audiobooks.adapter.GenreListAddapter;
 import com.fanok.audiobooks.interface_pacatge.books.BooksView;
@@ -140,8 +144,6 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                 subTitle = subTitleString;
             } else if (subTitleId != 0) subTitle = getResources().getString(subTitleId);
             getPresenter().onCreate(url, modelID, subTitle, getContext());
-        } else {
-            getPresenter().onChageOrintationScreen(url);
         }
     }
 
@@ -185,7 +187,11 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                 mRecyclerView.setAdapter(mAddapterGenre);
                 break;
         }
-        getPresenter().loadBoks();
+        if (savedInstanceState == null) {
+            getPresenter().loadBoks();
+        } else {
+            getPresenter().onChageOrintationScreen();
+        }
         setHasOptionsMenu(true);
 
         mRefresh.setOnRefreshListener(() -> getPresenter().onRefresh());
@@ -317,6 +323,13 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         }
     }
 
+    @Override
+    public void showSearchActivity(int modelId) {
+        Intent intent = new Intent(getContext(), SearchableActivity.class);
+        intent.putExtra(Consts.ARG_MODEL, modelId);
+        startActivityForResult(intent, REQEST_CODE_SEARCH);
+    }
+
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -327,7 +340,9 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         } else {
             menu.findItem(R.id.order).setVisible(false);
         }
-        setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search),
+        if (modelID == MODEL_GENRE) {
+            menu.findItem(R.id.app_bar_search).setVisible(false);
+        } else setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search),
                 Objects.requireNonNull(getContext()));
 
         super.onCreateOptionsMenu(menu, inflater);
@@ -364,5 +379,15 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                     break;
             }
         }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == Consts.REQEST_CODE_SEARCH && resultCode == Activity.RESULT_OK) {
+            if (data != null) {
+                mPresenter.onActivityResult(data);
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }

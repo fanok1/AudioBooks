@@ -11,13 +11,18 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.MainActivity;
@@ -34,7 +39,6 @@ import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
 public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteView {
-    private static final String TAG = "FavoriteFragment";
     private static final String ARG_TITLE = "title";
     private static final String ARG_TABLE = "table";
 
@@ -76,6 +80,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_favorite, container, false);
+
         unbinder = ButterKnife.bind(this, view);
 
         if (titleId != 0) {
@@ -148,10 +153,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         Toast.makeText(this.getContext(), message, Toast.LENGTH_LONG).show();
     }
 
-    @Override
-    public void setPosition(int position) {
-        Objects.requireNonNull(mRecyclerView.getLayoutManager()).scrollToPosition(position);
-    }
 
     @Override
     public void showFragment(@NonNull Fragment fragment, @NonNull String tag) {
@@ -180,5 +181,26 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                     break;
             }
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.favorite_options_menu, menu);
+        MenuItem item = menu.findItem(R.id.action_search);
+        Consts.setColorPrimeriTextInIconItemMenu(item, Objects.requireNonNull(getContext()));
+        SearchView searchView = (SearchView) item.getActionView();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                getPresenter().onSearch(s);
+                return false;
+            }
+        });
+        super.onCreateOptionsMenu(menu, inflater);
     }
 }

@@ -19,6 +19,9 @@ public class Consts {
             "^https?://.+\\.((jpg)|(png)|(jpeg))$");
     public static final Pattern REGEXP_RETING = Pattern.compile("^([+-]\\d+)|0$");
 
+    public static final Pattern REGEXP_SIKRET_KEY = Pattern.compile(
+            "\"security_ls_key\":\"(\\w+)\"");
+
     public static final int MODEL_BOOKS = 0;
     public static final int MODEL_GENRE = 1;
     public static final int MODEL_AUTOR = 2;
@@ -27,6 +30,9 @@ public class Consts {
     public static final int TABLE_FAVORITE = 1;
     public static final int TABLE_HISTORY = 2;
 
+    public static final int REQEST_CODE_SEARCH = 157;
+
+    public static final String ARG_MODEL = "ARG_MODEL";
 
     public static final String DBName = "audioBooksDB";
 

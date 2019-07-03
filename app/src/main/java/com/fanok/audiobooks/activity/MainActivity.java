@@ -34,6 +34,7 @@ public class MainActivity extends MvpAppCompatActivity
     private ArrayList<FragmentTagSteck> fragmentsTag;
     private NavigationView navigationView;
 
+
     public NavigationView getNavigationView() {
         return navigationView;
     }

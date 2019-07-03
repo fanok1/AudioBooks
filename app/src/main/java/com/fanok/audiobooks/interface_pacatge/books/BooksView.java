@@ -30,4 +30,7 @@ public interface BooksView extends MvpView {
     @StateStrategyType(SkipStrategy.class)
     void showFragment(Fragment fragment, String tag);
 
+    @StateStrategyType(SkipStrategy.class)
+    void showSearchActivity(int modelId);
+
 }
