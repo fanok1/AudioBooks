@@ -1,6 +1,11 @@
 package com.fanok.audiobooks.interface_pacatge.searchable;
 
+import android.support.annotation.NonNull;
+
 import com.arellomobile.mvp.MvpView;
+import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
+import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
+import com.fanok.audiobooks.pojo.BookPOJO;
 
 import java.util.ArrayList;
 
@@ -21,5 +26,8 @@ public interface SearchableView extends MvpView {
     void showProgres(boolean b);
 
     void returnResult(String url, String name, int modelId, String tag);
+
+    @StateStrategyType(SkipStrategy.class)
+    void startBookActivity(@NonNull BookPOJO bookPOJO);
 
 }

@@ -9,7 +9,6 @@ import android.support.v7.widget.PopupMenu;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.Toast;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
@@ -234,7 +233,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
     @Override
     public void onBookItemClick(View view, int position) {
-        Toast.makeText(view.getContext(), "Short", Toast.LENGTH_SHORT).show();
+        getViewState().showBooksActivity(books.get(position));
     }
 
     @Override
@@ -259,9 +258,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         popupMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.open:
-                    Toast.makeText(view.getContext(),
-                            "Вы выбрали PopupMenu 1",
-                            Toast.LENGTH_SHORT).show();
+                    getViewState().showBooksActivity(books.get(position));
                     return true;
                 case R.id.addFavorite:
                     mBooksDBModel.addFavorite(books.get(position));

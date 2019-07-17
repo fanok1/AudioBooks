@@ -36,6 +36,20 @@ public class Consts {
 
     public static final String DBName = "audioBooksDB";
 
+    public static final double COLLAPS_BUTTON_VISIBLE = 0.7;
+    public static final double COLLAPS_BUTTON_VISIBLE_STEP = (1 - Consts.COLLAPS_BUTTON_VISIBLE);
+
+
+    public static final int FRAGMENT_AUDIOBOOK = 0;
+    public static final int FRAGMENT_GENRE = 1;
+    public static final int FRAGMENT_AUTOR = 2;
+    public static final int FRAGMENT_ARTIST = 3;
+    public static final int FRAGMENT_FAVORITE = 4;
+    public static final int FRAGMENT_HISTORY = 5;
+
+    public static final String APP_PREFERENCES = "audiobooks_settings";
+    public static final String APP_FRAGMENT = "start_fragment";
+
 
     public static int getAttributeColor(Context context, int attributeId) {
         TypedValue typedValue = new TypedValue();

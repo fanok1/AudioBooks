@@ -7,6 +7,8 @@ import java.util.ArrayList;
 public interface BooksDBHelperInterfase {
     boolean inFavorite(BookPOJO book);
 
+    boolean inHistory(BookPOJO book);
+
     void addFavorite(BookPOJO book);
 
     void removeFavorite(BookPOJO book);

@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.interface_pacatge.favorite;
 
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 
 import com.arellomobile.mvp.MvpView;
@@ -24,5 +25,8 @@ public interface FavoriteView extends MvpView {
 
     @StateStrategyType(SkipStrategy.class)
     void showFragment(Fragment fragment, String tag);
+
+    @StateStrategyType(SkipStrategy.class)
+    void showBooksActivity(@NonNull BookPOJO bookPOJO);
 
 }

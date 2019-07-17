@@ -68,4 +68,76 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
     }
 
+    @Override
+    public void startFragment(int fragmentID, String url) {
+        if (url == null || url.isEmpty()) {
+            startFragment(fragmentID);
+            return;
+        }
+
+        Fragment fragment;
+
+        switch (fragmentID) {
+            case Consts.FRAGMENT_AUDIOBOOK:
+                fragment = BooksFragment.newInstance(url,
+                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+                getViewState().showFragment(fragment, "audioBook");
+                break;
+            case Consts.FRAGMENT_GENRE:
+                fragment = BooksFragment.newInstance(url,
+                        R.string.menu_genre, Consts.MODEL_GENRE);
+                getViewState().showFragment(fragment, "genre");
+                break;
+            case Consts.FRAGMENT_AUTOR:
+                fragment = BooksFragment.newInstance(url,
+                        R.string.menu_autor, Consts.MODEL_AUTOR);
+                getViewState().showFragment(fragment, "autor");
+                break;
+            case Consts.FRAGMENT_ARTIST:
+                fragment = BooksFragment.newInstance(
+                        url, R.string.menu_artist, Consts.MODEL_ARTIST);
+                getViewState().showFragment(fragment, "artist");
+                break;
+            case Consts.FRAGMENT_FAVORITE:
+            case Consts.FRAGMENT_HISTORY:
+                startFragment(fragmentID);
+                break;
+        }
+    }
+
+    @Override
+    public void startFragment(int fragmentID) {
+        System.out.println(getViewState());
+        if (fragmentID == Consts.FRAGMENT_AUDIOBOOK) {
+            Fragment fragment = BooksFragment.newInstance(Url.INDEX,
+                    R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            getViewState().showFragment(fragment, "audioBook");
+        } else if (fragmentID == Consts.FRAGMENT_GENRE) {
+            Fragment fragment = BooksFragment.newInstance(Url.SECTIONS,
+                    R.string.menu_genre, Consts.MODEL_GENRE);
+            getViewState().showFragment(fragment, "genre");
+
+        } else if (fragmentID == Consts.FRAGMENT_AUTOR) {
+            Fragment fragment = BooksFragment.newInstance(Url.AUTHORS,
+                    R.string.menu_autor, Consts.MODEL_AUTOR);
+            getViewState().showFragment(fragment, "autor");
+
+        } else if (fragmentID == Consts.FRAGMENT_ARTIST) {
+            Fragment fragment = BooksFragment.newInstance(
+                    Url.PERFORMERS, R.string.menu_artist, Consts.MODEL_ARTIST);
+            getViewState().showFragment(fragment, "artist");
+
+        } else if (fragmentID == Consts.FRAGMENT_FAVORITE) {
+            Fragment fragment = FavoriteFragment.newInstance(R.string.menu_favorite,
+                    Consts.TABLE_FAVORITE);
+            getViewState().showFragment(fragment, "favorite");
+
+        } else if (fragmentID == Consts.FRAGMENT_HISTORY) {
+            Fragment fragment = FavoriteFragment.newInstance(R.string.menu_history,
+                    Consts.TABLE_HISTORY);
+            getViewState().showFragment(fragment, "history");
+        }
+    }
+
+
 }

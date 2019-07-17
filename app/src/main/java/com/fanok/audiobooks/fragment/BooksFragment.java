@@ -35,6 +35,7 @@ import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.activity.SearchableActivity;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
@@ -126,6 +127,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate: called");
         super.onCreate(savedInstanceState);
         Bundle arg = getArguments();
         String url = "";
@@ -389,5 +391,10 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void showBooksActivity(@NonNull BookPOJO bookPOJO) {
+        BookActivity.startNewActivity(Objects.requireNonNull(getContext()), bookPOJO);
     }
 }

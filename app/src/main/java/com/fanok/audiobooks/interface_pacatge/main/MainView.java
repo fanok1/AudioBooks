@@ -15,4 +15,5 @@ public interface MainView extends MvpView {
 
     @StateStrategyType(SkipStrategy.class)
     void showFragment(@NonNull Fragment fragment, String tag);
+
 }

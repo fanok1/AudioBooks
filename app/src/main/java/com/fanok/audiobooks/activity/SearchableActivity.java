@@ -60,6 +60,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate: called");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_searchable);
         ButterKnife.bind(this);
@@ -244,5 +245,10 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
         intent.putExtra("tag", tag);
         setResult(Activity.RESULT_OK, intent);
         finish();
+    }
+
+    @Override
+    public void startBookActivity(@NonNull BookPOJO bookPOJO) {
+        BookActivity.startNewActivity(this, bookPOJO);
     }
 }

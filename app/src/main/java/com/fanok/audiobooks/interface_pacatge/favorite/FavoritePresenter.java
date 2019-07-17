@@ -17,6 +17,8 @@ public interface FavoritePresenter {
 
     void onSearch(String qery);
 
+    void cealrData();
+
 
 
 

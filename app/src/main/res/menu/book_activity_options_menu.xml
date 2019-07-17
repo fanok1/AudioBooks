@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <group android:id="@+id/menugroup1">
+        <item
+            android:id="@+id/addFavorite"
+            android:icon="@drawable/ic_favorite_add"
+            android:title="@string/add_to_favorite"
+            android:visible="false"
+            app:showAsAction="ifRoom" />
+
+        <item
+            android:id="@+id/removeFavorite"
+            android:icon="@drawable/ic_favorite_remove"
+            android:title="@string/remove_favorite"
+            android:visible="false"
+            app:showAsAction="ifRoom" />
+
+        <item
+            android:id="@+id/share"
+            android:icon="@drawable/ic_share"
+            android:title="@string/share"
+            app:showAsAction="ifRoom" />
+
+        <item
+            android:id="@+id/refresh"
+            android:title="@string/refresh"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/addMainScreen"
+            android:title="@string/add_to_main_screen"
+            app:showAsAction="never" />
+    </group>
+</menu>

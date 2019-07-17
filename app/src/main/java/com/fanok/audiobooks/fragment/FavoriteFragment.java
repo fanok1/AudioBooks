@@ -12,6 +12,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -25,6 +26,7 @@ import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
@@ -39,6 +41,7 @@ import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
 public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteView {
+    private static final String TAG = "FavoriteFragment";
     private static final String ARG_TITLE = "title";
     private static final String ARG_TABLE = "table";
 
@@ -65,6 +68,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate: called");
         super.onCreate(savedInstanceState);
         Bundle arg = getArguments();
         if (arg != null) {
@@ -95,7 +99,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
         mAddapterBooks = new BooksListAddapter();
         mRecyclerView.setAdapter(mAddapterBooks);
-        getPresenter().loadBooks();
         setHasOptionsMenu(true);
         mAddapterBooks.setListener(
                 (view12, position) -> mPresenter.onBookItemClick(view12, position));
@@ -181,6 +184,8 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                     break;
             }
         }
+        getPresenter().cealrData();
+        getPresenter().loadBooks();
     }
 
     @Override
@@ -202,5 +207,10 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
             }
         });
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void showBooksActivity(@NonNull BookPOJO bookPOJO) {
+        BookActivity.startNewActivity(Objects.requireNonNull(getContext()), bookPOJO);
     }
 }

@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.support.annotation.NonNull;
 
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBAbstract;
 import com.fanok.audiobooks.pojo.BookPOJO;
@@ -19,8 +20,17 @@ public class BooksDBModel extends BooksDBAbstract {
     }
 
     @Override
-    public boolean inFavorite(BookPOJO book) {
-        String builder = "select id from favorite where "
+    public boolean inFavorite(@NonNull BookPOJO book) {
+        return booksInTable(book, "favorite");
+    }
+
+    @Override
+    public boolean inHistory(@NonNull BookPOJO book) {
+        return booksInTable(book, "history");
+    }
+
+    private boolean booksInTable(@NonNull BookPOJO book, @NonNull String table) {
+        String builder = "select id from " + table + " where "
                 + "url_book = '" + book.getUrl() + "'";
         SQLiteDatabase db = getDBHelper().getWritableDatabase();
         Cursor cursor = db.rawQuery(builder, null);
@@ -42,6 +52,7 @@ public class BooksDBModel extends BooksDBAbstract {
 
     @Override
     public void addHistory(BookPOJO book) {
+        if (inHistory(book)) removeHistory(book);
         add(book, "history");
     }
 

@@ -39,4 +39,24 @@
     <string name="open_series">Перейти к серии</string>
     <string name="remove_favorite">Удалить из избранного</string>
     <string name="remove">Удалить</string>
+    <string name="title_activity_book">BookActivity</string>
+    <string name="tab_text_1">Описание</string>
+    <string name="tab_text_2">Коментарии</string>
+    <string name="tab_text_3">Серия</string>
+    <string name="time_zero">00:00</string>
+    <string name="previous">Предыдущий</string>
+    <string name="play">Воспроизвести</string>
+    <string name="next">Следуйщий</string>
+    <string name="collapse">Свернуть</string>
+    <string name="autor">Автор:</string>
+    <string name="artist">Читает:</string>
+    <string name="series">Серия:</string>
+    <string name="show_more">Показать еще</string>
+    <string name="other_autor_books">Другие книги автора</string>
+    <string name="other_genre_books">Похожие книги</string>
+    <string name="try_again">Попробовать еще</string>
+    <string name="show_less">Скрыть</string>
+    <string name="share">Поделится</string>
+    <string name="add_to_main_screen">Добавить на главный экран</string>
+    <string name="refresh">Обновить</string>
 </resources>
