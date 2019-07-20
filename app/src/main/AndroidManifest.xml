@@ -19,6 +19,7 @@
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="com.catinean.appshortcutsdemo.OPEN_DYNAMIC_SHORTCUT" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -58,12 +59,11 @@
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
-
         <activity
             android:name=".activity.LoadBook"
             android:noHistory="true"
             android:screenOrientation="locked"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoAnimTheme" />
 
         <provider
             android:name=".MySuggestionProvider"

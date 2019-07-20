@@ -41,12 +41,6 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
         Log.d(TAG, "onCreateViewHolder: called");
         View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.slider_item,
                 viewGroup, false);
-        view.setOnClickListener(view1 -> {
-            Intent intent = new Intent(mContext, LoadBook.class);
-            intent.putExtra("url", mData.get(i).getUrl());
-            mContext.startActivity(intent);
-
-        });
         return new ViewHolder(view);
     }
 
@@ -55,6 +49,10 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
         Log.d(TAG, "onBindViewHolder: called");
         Picasso.get().load(mData.get(i).getPhoto()).into(viewHolder.mImageView);
         viewHolder.mTitle.setText(mData.get(i).getName());
+        viewHolder.mImageView.setOnClickListener(
+                view -> myOnClick(viewHolder.getAdapterPosition()));
+        viewHolder.mTitle.setOnClickListener(view -> myOnClick(viewHolder.getAdapterPosition()));
+
     }
 
     @Override
@@ -74,5 +72,11 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
 
 
         }
+    }
+
+    private void myOnClick(int i) {
+        Intent intent = new Intent(mContext, LoadBook.class);
+        intent.putExtra("url", mData.get(i).getUrl());
+        mContext.startActivity(intent);
     }
 }

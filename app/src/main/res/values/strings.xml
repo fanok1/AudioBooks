@@ -59,4 +59,5 @@
     <string name="share">Поделится</string>
     <string name="add_to_main_screen">Добавить на главный экран</string>
     <string name="refresh">Обновить</string>
+    <string name="title_activity_main2">Main2Activity</string>
 </resources>

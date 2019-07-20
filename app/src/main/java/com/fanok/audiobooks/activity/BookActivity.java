@@ -39,6 +39,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     private TabLayout tabs;
     private SectionsPagerAdapter sectionsPagerAdapter;
     private BookPOJO mBookPOJO;
+    private BottomSheetBehavior bottomSheetBehavior;
 
     public static void startNewActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO) {
         Intent intent = new Intent(context, BookActivity.class);
@@ -80,7 +81,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         TextView nameCurent = findViewById(R.id.name_curent);
 
 
-        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
+        bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
 
 
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -224,8 +225,18 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                 .startChooser();
     }
 
+
     @Override
     public void addToMainScreen() {
         Log.d(TAG, "addToMainScreen: callded");
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        } else {
+            super.onBackPressed();
+        }
     }
 }

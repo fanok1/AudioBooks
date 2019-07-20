@@ -7,6 +7,7 @@
     tools:context=".activity.BookActivity">
 
     <android.support.design.widget.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:animateLayoutChanges="true"
@@ -33,6 +34,7 @@
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:paddingBottom="@dimen/player_row_height"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
 

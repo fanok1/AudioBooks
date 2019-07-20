@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.BookActivity">
+
+    <LinearLayout
+        android:id="@+id/parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/text_margin_book_description"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="@dimen/book_cover_weight"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="40dp"
+            android:layout_marginEnd="40dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/book_cover"
+            android:scaleType="fitCenter"
+            tools:srcCompat="@tools:sample/avatars[2]" />
+
+        <android.support.v4.widget.NestedScrollView
+            android:id="@+id/scrollView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="invisible"
+            tools:background="?attr/backgraundColor">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/text_margin_book_description"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorPrimaryText"
+                    android:textSize="@dimen/titleSizeBookDescription"
+                    tools:text="Роулинг Джоан - Гарри Поттер и Орден Феникса" />
+
+
+                <TextView
+                    android:id="@+id/genre"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/hrefColor"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    tools:text="Фантастика" />
+
+                <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                    android:id="@+id/years"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    app:compoundDrawableHeight="@dimen/scale_drawable"
+                    app:compoundDrawableWidth="@dimen/scale_drawable"
+                    app:drawableStartVector="@drawable/ic_calendar_range"
+                    tools:text="2011 год" />
+
+                <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                    android:id="@+id/time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    app:compoundDrawableHeight="@dimen/scale_drawable"
+                    app:compoundDrawableWidth="@dimen/scale_drawable"
+                    app:drawableStartVector="@drawable/ic_clock"
+                    tools:text="13 часов 15 минут" />
+
+                <TextView
+                    android:id="@+id/fantlab"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    tools:text="Fantlab: 8.46/10" />
+
+                <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                    android:id="@+id/reting"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    app:compoundDrawableHeight="@dimen/scale_drawable"
+                    app:compoundDrawableWidth="@dimen/scale_drawable"
+                    app:drawableStartVector="@drawable/ic_reting"
+                    tools:text="+4972" />
+
+                <LinearLayout
+                    android:id="@+id/autorConteiner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:orientation="horizontal">
+
+                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                        android:layout_width="@dimen/text_width"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:text="@string/autor"
+                        android:textColor="?attr/subTextColor"
+                        android:textSize="@dimen/textSizeBookDescription"
+                        app:compoundDrawableHeight="@dimen/scale_drawable"
+                        app:compoundDrawableWidth="@dimen/scale_drawable"
+                        app:drawableStartVector="@drawable/ic_autor" />
+
+                    <TextView
+                        android:id="@+id/author"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/recycler_item_textmargin"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:textColor="?attr/hrefColor"
+                        android:textSize="@dimen/textSizeBookDescription"
+                        tools:text="Роулинг Джоан" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/artistConteiner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:orientation="horizontal">
+
+                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                        android:layout_width="@dimen/text_width"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:text="@string/artist"
+                        android:textColor="?attr/subTextColor"
+                        android:textSize="@dimen/textSizeBookDescription"
+                        app:compoundDrawableHeight="@dimen/scale_drawable"
+                        app:compoundDrawableWidth="@dimen/scale_drawable"
+                        app:drawableStartVector="@drawable/ic_artist" />
+
+                    <TextView
+                        android:id="@+id/artist"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/recycler_item_textmargin"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:textColor="?attr/hrefColor"
+                        android:textSize="@dimen/textSizeBookDescription"
+                        tools:text="Клюквин Александр" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/seriesConteiner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:orientation="horizontal">
+
+                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                        android:layout_width="@dimen/text_width"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:text="@string/series"
+                        android:textColor="?attr/subTextColor"
+                        android:textSize="@dimen/textSizeBookDescription"
+                        app:compoundDrawableHeight="@dimen/scale_drawable"
+                        app:compoundDrawableWidth="@dimen/scale_drawable"
+                        app:drawableStartVector="@drawable/ic_book" />
+
+                    <TextView
+                        android:id="@+id/series"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/recycler_item_textmargin"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:textColor="?attr/hrefColor"
+                        android:textSize="@dimen/textSizeBookDescription"
+                        tools:text="Гарри Поттер" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:background="?attr/subTextColor" />
+
+                <TextView
+                    android:id="@+id/desc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:ellipsize="end"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    tools:text="Гарри Поттер с нетерпением ждет окончания каникул и начала пятого учебного года в Хогвартсе. Юный волшебник как никогда страдает от одиночества, а насмешки и придирки Дурслей стали совсем невыносимы. К тому же он уверен, что Волан-де-Морт возродился и скоро начнет действовать. Вас снова ждут опасные и захватывающие приключения, жестокая борьба, верные друзья и волшебный мир Гарри Поттера." />
+
+                <TextView
+                    android:id="@+id/showMore"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:text="@string/show_more"
+                    android:textAlignment="center"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/textSizeBookDescription" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1px"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:background="?attr/subTextColor" />
+
+                <TextView
+                    android:id="@+id/otherAutorBooksTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:text="@string/other_autor_books"
+                    android:textColor="?attr/colorPrimaryText"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    android:visibility="gone" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/otherAutorBooks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/otherGenreBooksTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:text="@string/other_genre_books"
+                    android:textColor="?attr/colorPrimaryText"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    android:visibility="gone" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/otherGenreBooks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+        </android.support.v4.widget.NestedScrollView>
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/parent"
+        app:layout_constraintStart_toStartOf="@+id/parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+</android.support.constraint.ConstraintLayout>
