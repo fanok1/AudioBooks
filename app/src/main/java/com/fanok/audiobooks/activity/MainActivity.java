@@ -45,6 +45,7 @@ public class MainActivity extends MvpAppCompatActivity
 
     private ArrayList<FragmentTagSteck> fragmentsTag;
     private NavigationView navigationView;
+    private boolean firstStart = true;
 
 
     public NavigationView getNavigationView() {
@@ -92,16 +93,19 @@ public class MainActivity extends MvpAppCompatActivity
     @Override
     protected void onStart() {
         super.onStart();
-        Intent intent = getIntent();
-        int fragment = intent.getIntExtra(EXSTRA_FRAGMENT, -1);
-        String url = intent.getStringExtra(EXSTRA_URL);
-        if (url != null && !url.isEmpty() && fragment != -1) {
-            mPresenter.startFragment(fragment, url);
-        } else {
-            SharedPreferences mSettings = getSharedPreferences(APP_PREFERENCES,
-                    Context.MODE_PRIVATE);
-            fragment = mSettings.getInt(APP_FRAGMENT, Consts.FRAGMENT_AUDIOBOOK);
-            mPresenter.startFragment(fragment);
+        if (firstStart) {
+            Intent intent = getIntent();
+            int fragment = intent.getIntExtra(EXSTRA_FRAGMENT, -1);
+            String url = intent.getStringExtra(EXSTRA_URL);
+            if (url != null && !url.isEmpty() && fragment != -1) {
+                mPresenter.startFragment(fragment, url);
+            } else {
+                SharedPreferences mSettings = getSharedPreferences(APP_PREFERENCES,
+                        Context.MODE_PRIVATE);
+                fragment = mSettings.getInt(APP_FRAGMENT, Consts.FRAGMENT_AUDIOBOOK);
+                mPresenter.startFragment(fragment);
+            }
+            firstStart = false;
         }
     }
 

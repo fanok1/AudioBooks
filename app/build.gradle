@@ -57,5 +57,7 @@ dependencies {
     implementation 'com.r0adkll:slidableactivity:2.0.6'
     implementation 'com.google.code.gson:gson:2.8.5'
 
+    implementation 'de.hdodenhof:circleimageview:3.0.0'
+
 
 }

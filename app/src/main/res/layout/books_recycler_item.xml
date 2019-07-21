@@ -40,7 +40,7 @@
                     android:layout_marginEnd="@dimen/recycler_item_textmargin"
                     android:maxLines="2"
                     android:textColor="?attr/colorPrimaryText"
-                    android:textSize="@dimen/titleSize"
+                    android:textSize="@dimen/books_recyle_item_title_size"
                     tools:context=".activity.MainActivity"
                     tools:text="Зеланд Вадим - Жрица Итфат" />
 

@@ -51,7 +51,7 @@
     <string name="autor">Автор:</string>
     <string name="artist">Читает:</string>
     <string name="series">Серия:</string>
-    <string name="show_more">Показать еще</string>
+    <string name="show_more">Читать дальше</string>
     <string name="other_autor_books">Другие книги автора</string>
     <string name="other_genre_books">Похожие книги</string>
     <string name="try_again">Попробовать еще</string>
@@ -60,4 +60,7 @@
     <string name="add_to_main_screen">Добавить на главный экран</string>
     <string name="refresh">Обновить</string>
     <string name="title_activity_main2">Main2Activity</string>
+    <string name="answers">Ответы</string>
+    <string name="close">Закрыть</string>
+    <string name="show_all_answer">Показать все ответы</string>
 </resources>

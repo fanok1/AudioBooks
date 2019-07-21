@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    tools:background="@color/colorBackgraund">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/text_margin">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/imageView"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            tools:src="@tools:sample/avatars" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/text_margin"
+            android:orientation="vertical">
+
+            <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                android:id="@+id/parentName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/subTextColor"
+                android:textSize="@dimen/titleSize"
+                app:compoundDrawableHeight="@dimen/scale_drawable"
+                app:compoundDrawableWidth="@dimen/scale_drawable"
+                app:drawableStartVector="@drawable/ic_undo"
+                tools:text="➠Мyх๑м๑р✎" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/titleSize"
+                    tools:text="Мyх๑м๑р✎" />
+
+                <TextView
+                    android:id="@+id/time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/text_margin"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/titleSize"
+                    tools:text="2 апреля 2019, 15:15" />
+            </LinearLayout>
+
+
+            <TextView
+                android:id="@+id/text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/text_margin"
+                android:textColor="?attr/colorPrimaryText"
+                android:textSize="@dimen/titleSize"
+                tools:text="Увлекательно и атмосферно, герои симпатичны, динамичны и слишком нереальные роботы. Девочка, попавшая непростую ситуацию, «Чем старше она становилась, тем становил" />
+
+            <TextView
+                android:id="@+id/readMore"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/show_more"
+                android:textColor="?attr/subTextColor"
+                android:textSize="@dimen/titleSize" />
+
+            <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                android:id="@+id/reting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/text_margin"
+                android:textColor="?attr/subTextColor"
+                android:textSize="@dimen/titleSize"
+                app:compoundDrawableHeight="@dimen/scale_drawable"
+                app:compoundDrawableWidth="@dimen/scale_drawable"
+                app:drawableStartVector="@drawable/ic_reting"
+                tools:text="+7" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/border"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/subTextColor"
+        android:visibility="gone" />
+
+
+</LinearLayout>

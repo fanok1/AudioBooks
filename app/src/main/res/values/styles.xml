@@ -13,6 +13,7 @@
         <item name="hrefColor">@color/hrefColor</item>
         <item name="subTextColor">@color/subTextColor</item>
         <item name="backgraundColor">@color/colorBackgraund</item>
+        <item name="mySelectableItemBackground">@color/selectableItemBackground</item>
     </style>
 
     <style name="AppTheme.NoActionBar">

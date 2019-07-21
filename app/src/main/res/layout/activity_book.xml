@@ -34,7 +34,7 @@
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingBottom="@dimen/player_row_height"
+        android:layout_marginBottom="130dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
 

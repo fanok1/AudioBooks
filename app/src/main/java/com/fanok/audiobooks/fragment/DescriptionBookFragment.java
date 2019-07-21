@@ -5,7 +5,6 @@ import static java.lang.Integer.MAX_VALUE;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -16,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
@@ -85,7 +85,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     @BindView(R.id.otherGenreBooks)
     RecyclerView mOtherGenreBooks;
     @BindView(R.id.scrollView)
-    NestedScrollView mScrollView;
+    ScrollView mScrollView;
     @BindView(R.id.progressBar)
     ProgressBar mProgressBar;
     Unbinder unbinder;
@@ -131,17 +131,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         int margin = (int) getContext().getResources().getDimension(R.dimen.books_other_margin);
         mOtherGenreBooks.addItemDecoration(new MarginItemDecoration(margin));
         mOtherAutorBooks.addItemDecoration(new MarginItemDecoration(margin));
-
-        mShowMore.setOnClickListener(view1 -> {
-            if (!showMore) {
-                mDesc.setMaxLines(MAX_VALUE);
-                mShowMore.setText(R.string.show_less);
-            } else {
-                mDesc.setMaxLines(MAX_LINES);
-                mShowMore.setText(R.string.show_more);
-            }
-            showMore = !showMore;
-        });
         if (savedInstanceState == null) {
             mPresenter.onCreate(mUrl);
         } else {
@@ -247,13 +236,26 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
 
         mDesc.setMaxLines(MAX_VALUE);
         mDesc.setText(description.getDescription());
-        if (mDesc.getLineCount() <= MAX_LINES && mDesc.getLineCount() != 0) {
-            mShowMore.setVisibility(View.GONE);
-        } else {
-            mShowMore.setVisibility(View.VISIBLE);
-        }
-        mDesc.setMaxLines(MAX_LINES);
-        showMore = false;
+        mDesc.post(() -> {
+            if (mDesc.getLineCount() <= MAX_LINES) {
+                mShowMore.setVisibility(View.GONE);
+            } else {
+                mShowMore.setVisibility(View.VISIBLE);
+            }
+            mDesc.setMaxLines(MAX_LINES);
+            showMore = false;
+
+            mShowMore.setOnClickListener(view1 -> {
+                if (!showMore) {
+                    mDesc.setMaxLines(MAX_VALUE);
+                    mShowMore.setText(R.string.show_less);
+                } else {
+                    mDesc.setMaxLines(MAX_LINES);
+                    mShowMore.setText(R.string.show_more);
+                }
+                showMore = !showMore;
+            });
+        });
 
 
         mGenre.setOnClickListener(

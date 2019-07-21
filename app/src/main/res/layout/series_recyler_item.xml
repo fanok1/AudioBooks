@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:selectableItemBackground"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/text_margin_book_description"
+    android:paddingTop="@dimen/text_margin"
+    android:paddingEnd="@dimen/text_margin_book_description"
+    android:paddingBottom="@dimen/text_margin"
+    tools:background="@color/blackColor">
+
+    <TextView
+        android:id="@+id/line"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/subTextColor"
+        android:textSize="@dimen/titleSize"
+        tools:text="1" />
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/text_margin_book_description"
+        android:layout_weight="1"
+        android:textColor="?attr/colorPrimaryText"
+        android:textSize="@dimen/titleSize"
+        tools:text="Роулинг Джоан - Гарри Поттер и Философский камень" />
+
+    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+        android:id="@+id/reting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/text_margin_book_description"
+        android:textColor="?attr/subTextColor"
+        android:textSize="@dimen/titleSize"
+        app:compoundDrawableHeight="@dimen/scale_drawable"
+        app:compoundDrawableWidth="@dimen/scale_drawable"
+        app:drawableStartVector="@drawable/ic_reting"
+        tools:text="+254" />
+
+    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+        android:id="@+id/coments"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/text_margin_book_description"
+        android:textColor="?attr/subTextColor"
+        android:textSize="@dimen/titleSize"
+        app:compoundDrawableHeight="@dimen/scale_drawable"
+        app:compoundDrawableWidth="@dimen/scale_drawable"
+        app:drawableStartVector="@drawable/ic_coments"
+        tools:text="454" />
+
+
+</LinearLayout>

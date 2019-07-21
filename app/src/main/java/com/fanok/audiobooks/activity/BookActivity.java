@@ -59,6 +59,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
         mBookPOJO = BookPOJO.parceJsonToBookPojo(json);
         setContentView(R.layout.activity_book);
+        setTitle(mBookPOJO.getName().substring(mBookPOJO.getName().indexOf("-") + 1).trim());
         sectionsPagerAdapter = new SectionsPagerAdapter(this,
                 getSupportFragmentManager(), mBookPOJO.getUrl());
         ViewPager viewPager = findViewById(R.id.view_pager);
@@ -73,6 +74,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         if (actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setSubtitle(
+                    mBookPOJO.getName().substring(0, mBookPOJO.getName().indexOf("-")).trim());
         }
         View topBarButtonsControl = llBottomSheet.findViewById(R.id.topButtonsControls);
         ImageButton buttonCollapse = findViewById(R.id.buttonCollapse);

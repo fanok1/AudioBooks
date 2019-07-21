@@ -8,4 +8,5 @@
     <color name="hrefColor">#42a5f5</color>
     <color name="subTextColor">#e0e0e0</color>
     <color name="colorBackgraund">#303030</color>
+    <color name="selectableItemBackground">#444444</color>
 </resources>

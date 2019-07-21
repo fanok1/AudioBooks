@@ -8,7 +8,9 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.fragment.ComentsBookFragment;
 import com.fanok.audiobooks.fragment.DescriptionBookFragment;
+import com.fanok.audiobooks.fragment.SeriesBookFragment;
 
 import java.util.ArrayList;
 
@@ -33,9 +35,9 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
             case 0:
                 return DescriptionBookFragment.newInstance(mUrl);
             case 1:
-                break;
+                return ComentsBookFragment.newInstance(mUrl);
             case 2:
-                break;
+                return SeriesBookFragment.newInstance(mUrl);
         }
         return DescriptionBookFragment.newInstance(mUrl);
     }
