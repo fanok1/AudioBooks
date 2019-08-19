@@ -36,10 +36,66 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/list"
+        <LinearLayout
+            android:id="@+id/liner"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:animateLayoutChanges="true"
+            android:orientation="vertical"
+            android:scrollbars="vertical">
+
+            <LinearLayout
+                android:id="@+id/topList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+
+                <ProgressBar
+                    android:id="@+id/progressBarTop"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:indeterminate="true"
+                    android:visibility="invisible" />
+
+                <TextView
+                    android:id="@+id/autors"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/text_margin_book_description"
+                    android:layout_marginEnd="@dimen/text_margin_book_description"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/titleSize"
+                    tools:text="@string/menu_autor" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/authorList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/series"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/text_margin_book_description"
+                    android:layout_marginEnd="@dimen/text_margin_book_description"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/titleSize"
+                    tools:text="Серии" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/seriesList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </LinearLayout>
 
         <include
             android:id="@+id/progressBar"
@@ -47,7 +103,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@+id/list" />
+            app:layout_constraintBottom_toBottomOf="@+id/liner" />
     </android.support.constraint.ConstraintLayout>
 
 

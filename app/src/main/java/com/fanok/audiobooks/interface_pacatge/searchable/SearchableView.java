@@ -6,6 +6,7 @@ import com.arellomobile.mvp.MvpView;
 import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.pojo.SearcheblPOJO;
 
 import java.util.ArrayList;
 
@@ -25,7 +26,11 @@ public interface SearchableView extends MvpView {
 
     void showProgres(boolean b);
 
+    void showProgresTop(boolean b);
+
     void returnResult(String url, String name, int modelId, String tag);
+
+    void showSeriesAndAutors(SearcheblPOJO searcheblPOJO);
 
     @StateStrategyType(SkipStrategy.class)
     void startBookActivity(@NonNull BookPOJO bookPOJO);

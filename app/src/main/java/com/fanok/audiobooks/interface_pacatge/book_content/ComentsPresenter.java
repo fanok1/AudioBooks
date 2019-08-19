@@ -9,5 +9,4 @@ public interface ComentsPresenter {
 
     void loadComents();
 
-    void onChageOrintationScreen();
 }

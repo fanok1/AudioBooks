@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.model;
 
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 
 import org.jsoup.Jsoup;
@@ -15,7 +16,7 @@ import io.reactivex.Observable;
 public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.GenreModel {
 
 
-    protected ArrayList<GenrePOJO> loadBooksList(String url) throws IOException {
+    protected ArrayList<GenrePOJO> loadBooksList(String url, int page) throws IOException {
         ArrayList<GenrePOJO> result = new ArrayList<>();
         Document doc = Jsoup.connect(url)
                 .userAgent(
@@ -23,49 +24,36 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
                                 + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
                 .referrer("http://www.google.com")
                 .get();
-        Elements table = doc.getElementsByTag("table");
-        if (table.size() != 0) {
-            Elements tr = table.first().getElementsByTag("tbody").first().getElementsByTag("tr");
-            if (tr.size() == 0) return null;
-            for (Element row : tr) {
-                GenrePOJO genrePOJO = new GenrePOJO();
-                Elements h4 = row.getElementsByTag("h4");
-                if (h4.size() != 0) {
-                    Element a = h4.first().child(0);
-                    if (a != null) {
-                        String src = a.attr("href");
-                        if (src != null && !src.isEmpty()) genrePOJO.setUrl(src);
-                        String name = a.text();
-                        if (name != null && !name.isEmpty()) genrePOJO.setName(name);
-                    }
-                }
-                Elements subsribesConteiner = row.getElementsByClass("cell-readers");
-                if (subsribesConteiner.size() != 0) {
-                    String subscribe = subsribesConteiner.first().text();
-                    if (subscribe != null && !subscribe.isEmpty()) {
-                        genrePOJO.setReting(
-                                Integer.parseInt(subscribe));
-                    }
-                }
-                Elements p = row.getElementsByTag("p");
-                if (p.size() != 0) {
-                    String desc = p.first().text();
-                    if (desc != null && !desc.isEmpty()) genrePOJO.setDescription(desc);
-                }
-                if (!genrePOJO.isNull()) result.add(genrePOJO);
+
+        Elements items = doc.getElementsByClass("genre_item");
+        for (Element item : items) {
+            GenrePOJO genrePOJO = new GenrePOJO();
+            Elements name = item.getElementsByClass("genre_item_name");
+            if (name.size() != 0) {
+                genrePOJO.setUrl(Url.SERVER + name.first().attr("href"));
+                genrePOJO.setName(name.first().text());
             }
-        } else {
-            return null;
+
+            Elements rating = item.getElementsByClass("subscribe_btn_label_count");
+            if (rating.size() != 0) {
+                genrePOJO.setReting(Integer.parseInt(rating.first().text()));
+            }
+
+            Elements description = item.getElementsByClass("genre_item_description");
+            if (description.size() != 0) {
+                genrePOJO.setDescription(description.first().text());
+            }
+            if (!genrePOJO.isNull()) result.add(genrePOJO);
         }
         return result;
     }
 
     @Override
-    public Observable<ArrayList<GenrePOJO>> getBooks(String url) {
+    public Observable<ArrayList<GenrePOJO>> getBooks(String url, int page) {
         return Observable.create(observableEmitter -> {
             ArrayList<GenrePOJO> articlesModels;
             try {
-                articlesModels = loadBooksList(url);
+                articlesModels = loadBooksList(url, page);
                 observableEmitter.onNext(articlesModels);
             } catch (Exception e) {
                 observableEmitter.onError(e);

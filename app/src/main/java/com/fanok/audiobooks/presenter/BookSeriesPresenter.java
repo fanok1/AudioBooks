@@ -50,16 +50,6 @@ public class BookSeriesPresenter extends MvpPresenter<Series> implements
         getData();
     }
 
-
-    @Override
-    public void onChageOrintationScreen() {
-        if (isLoading) {
-            getViewState().showProgress(true);
-        } else if (mComentsPOJOS != null) {
-            getViewState().showSeries(mComentsPOJOS);
-        }
-    }
-
     private void getData() {
         if (!isLoading) {
             isLoading = true;
@@ -78,8 +68,6 @@ public class BookSeriesPresenter extends MvpPresenter<Series> implements
 
                         @Override
                         public void onError(Throwable e) {
-                            e.printStackTrace();
-                            Log.e(TAG, e.getMessage());
                             getViewState().showToast(R.string.error_load_data);
                             onComplete();
                         }

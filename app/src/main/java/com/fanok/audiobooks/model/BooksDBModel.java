@@ -106,8 +106,7 @@ public class BooksDBModel extends BooksDBAbstract {
                 book.setUrlSeries(cursor.getString(11));
                 book.setTime(cursor.getString(12));
                 book.setReting(cursor.getString(13));
-                book.setFavorite(Integer.parseInt(cursor.getString(14)));
-                book.setComents(cursor.getString(15));
+                book.setComents(cursor.getString(14));
                 contactList.add(book);
             } while (cursor.moveToPrevious());
         }
@@ -130,7 +129,6 @@ public class BooksDBModel extends BooksDBAbstract {
         contentValues.put("url_series", book.getUrlSeries());
         contentValues.put("time", book.getTime());
         contentValues.put("reting", book.getReting());
-        contentValues.put("favorite", book.getFavorite());
         contentValues.put("coments", book.getComents());
         return contentValues;
     }

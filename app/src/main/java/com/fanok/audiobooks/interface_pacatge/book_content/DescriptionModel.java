@@ -10,5 +10,5 @@ import io.reactivex.Observable;
 public interface DescriptionModel {
     Observable<DescriptionPOJO> getDescription();
 
-    Observable<ArrayList<BookPOJO>> getBooks(int itemPosition);
+    Observable<ArrayList<BookPOJO>> getBooks();
 }

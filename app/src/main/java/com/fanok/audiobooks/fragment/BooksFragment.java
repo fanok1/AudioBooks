@@ -78,6 +78,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     private int subTitleId;
     private String subTitleString;
     private int modelID;
+    private String mUrl;
 
     public static BooksFragment newInstance(@NonNull String url, int title, int modelID) {
         BooksFragment fragment = new BooksFragment();
@@ -140,6 +141,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         }
         if (url.isEmpty()) throw new IllegalArgumentException("Variable 'url' contains not url");
         if (modelID == -1) throw new IllegalArgumentException("Illegal model id");
+        mUrl = url;
         if (savedInstanceState == null) {
             String subTitle = "";
             if (!subTitleString.isEmpty()) {
@@ -191,8 +193,6 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         }
         if (savedInstanceState == null) {
             getPresenter().loadBoks();
-        } else {
-            getPresenter().onChageOrintationScreen();
         }
         setHasOptionsMenu(true);
 
@@ -274,7 +274,6 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                 }
             }
         } catch (NullPointerException e) {
-            Log.e(TAG, "Data display error");
             showToast(R.string.error_display_data);
         }
     }
@@ -337,8 +336,12 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.books_options_menu, menu);
         if (modelID == Consts.MODEL_BOOKS) {
-            setColorPrimeriTextInIconItemMenu(
-                    menu.findItem(R.id.order), Objects.requireNonNull(getContext()));
+            if (mUrl.contains("reader") || mUrl.contains("author")) {
+                menu.findItem(R.id.order).setVisible(false);
+            } else {
+                setColorPrimeriTextInIconItemMenu(
+                        menu.findItem(R.id.order), Objects.requireNonNull(getContext()));
+            }
         } else {
             menu.findItem(R.id.order).setVisible(false);
         }

@@ -38,8 +38,8 @@
                     android:layout_width="@dimen/book_cover_weight"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
-                    android:contentDescription="@string/book_cover"
                     android:scaleType="fitCenter"
+                    android:contentDescription="@string/book_cover"
                     tools:srcCompat="@tools:sample/avatars[2]" />
 
                 <LinearLayout
@@ -59,19 +59,6 @@
                         android:textSize="@dimen/textSizeBookDescription"
                         tools:text="Фантастика" />
 
-                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
-                        android:id="@+id/years"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/text_margin_book_description"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:textColor="?attr/subTextColor"
-                        android:textSize="@dimen/textSizeBookDescription"
-                        app:compoundDrawableHeight="@dimen/scale_drawable"
-                        app:compoundDrawableWidth="@dimen/scale_drawable"
-                        app:drawableStartVector="@drawable/ic_calendar_range"
-                        tools:text="2011 год" />
 
                     <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
                         android:id="@+id/time"
@@ -87,8 +74,43 @@
                         app:drawableStartVector="@drawable/ic_clock"
                         tools:text="13 часов 15 минут" />
 
-                    <TextView
-                        android:id="@+id/fantlab"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/text_margin_book_description"
+                        android:orientation="horizontal">
+
+                        <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                            android:id="@+id/like"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="@dimen/text_margin_book_description"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:textColor="?attr/subTextColor"
+                            android:textSize="@dimen/textSizeBookDescription"
+                            app:compoundDrawableHeight="@dimen/scale_drawable"
+                            app:compoundDrawableWidth="@dimen/scale_drawable"
+                            app:drawableStartVector="@drawable/ic_like"
+                            tools:text="10" />
+
+                        <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                            android:id="@+id/disLike"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:textColor="?attr/subTextColor"
+                            android:textSize="@dimen/textSizeBookDescription"
+                            app:compoundDrawableHeight="@dimen/scale_drawable"
+                            app:compoundDrawableWidth="@dimen/scale_drawable"
+                            app:drawableStartVector="@drawable/ic_dislike"
+                            tools:text="10" />
+
+                    </LinearLayout>
+
+                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                        android:id="@+id/favorite"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/text_margin_book_description"
@@ -96,7 +118,11 @@
                         android:singleLine="true"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/textSizeBookDescription"
-                        tools:text="Fantlab: 8.46/10" />
+                        app:compoundDrawableHeight="@dimen/scale_drawable"
+                        app:compoundDrawableWidth="@dimen/scale_drawable"
+                        app:drawableStartVector="@drawable/ic_favorite_description"
+                        tools:text="520" />
+
 
                     <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
                         android:id="@+id/reting"
@@ -109,7 +135,7 @@
                         android:textSize="@dimen/textSizeBookDescription"
                         app:compoundDrawableHeight="@dimen/scale_drawable"
                         app:compoundDrawableWidth="@dimen/scale_drawable"
-                        app:drawableStartVector="@drawable/ic_reting"
+                        app:drawableStartVector="@drawable/ic_rating_2"
                         tools:text="+4972" />
 
                 </LinearLayout>
@@ -243,34 +269,17 @@
                 android:background="?attr/subTextColor" />
 
             <TextView
-                android:id="@+id/otherAutorBooksTitle"
+                android:id="@+id/recommendedBooksTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/text_margin_book_description"
-                android:text="@string/other_autor_books"
+                android:text="@string/other_recomended_books"
                 android:textColor="?attr/colorPrimaryText"
                 android:textSize="@dimen/textSizeBookDescription"
                 android:visibility="gone" />
 
             <android.support.v7.widget.RecyclerView
-                android:id="@+id/otherAutorBooks"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/otherGenreBooksTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/text_margin_book_description"
-                android:text="@string/other_genre_books"
-                android:textColor="?attr/colorPrimaryText"
-                android:textSize="@dimen/textSizeBookDescription"
-                android:visibility="gone" />
-
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/otherGenreBooks"
+                android:id="@+id/recommendedBooks"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"

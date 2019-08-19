@@ -27,10 +27,10 @@
     <string name="all_time">За все время</string>
     <string name="in_month">За месяц</string>
     <string name="in_week">За неделю</string>
-    <string name="discussed">Обсуждаемое</string>
+    <string name="popular">Популярное</string>
     <string name="order_new">Новое</string>
-    <string name="order_reting">Лучшие</string>
-    <string name="order_discussed">Обсуждаемые</string>
+    <string name="order_reting">Рейтинг</string>
+    <string name="order_popular">Популярное</string>
     <string name="open">Открыть</string>
     <string name="add_to_favorite">Добавить в избранное</string>
     <string name="open_author">Перейти к автору</string>
@@ -52,8 +52,7 @@
     <string name="artist">Читает:</string>
     <string name="series">Серия:</string>
     <string name="show_more">Читать дальше</string>
-    <string name="other_autor_books">Другие книги автора</string>
-    <string name="other_genre_books">Похожие книги</string>
+    <string name="other_recomended_books">Рекомендуемые книги</string>
     <string name="try_again">Попробовать еще</string>
     <string name="show_less">Скрыть</string>
     <string name="share">Поделится</string>
@@ -63,4 +62,23 @@
     <string name="answers">Ответы</string>
     <string name="close">Закрыть</string>
     <string name="show_all_answer">Показать все ответы</string>
+    <string name="rewind_10">назад на 10 секунд</string>
+    <string name="forward_30">вперед на 30 секунд</string>
+    <string name="speed">скорость</string>
+    <string name="error_load_coments">Не удалось загрузить комментарии</string>
+    <string name="error_load_books">Не удалось загрузить книги</string>
+    <string name="in_day">За день</string>
+    <string name="tab_text_4">Другие озвучки</string>
+
+
+    <string-array name="speed">
+        <item>0.5</item>
+        <item>0.75</item>
+        <item>1</item>
+        <item>1.25</item>
+        <item>1.5</item>
+        <item>1.75</item>
+        <item>2</item>
+    </string-array>
+
 </resources>

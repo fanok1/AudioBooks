@@ -12,6 +12,18 @@
         android:layout_height="match_parent"
         tools:listitem="@layout/series_recyler_item" />
 
+    <TextView
+        android:id="@+id/placeholder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/error_load_books"
+        android:textColor="?attr/subTextColor"
+        android:textSize="@dimen/titleSize"
+        android:visibility="gone"
+        app:layout_anchor="@+id/list"
+        app:layout_anchorGravity="center|center" />
+
 
     <ProgressBar
         android:id="@+id/progressBar"

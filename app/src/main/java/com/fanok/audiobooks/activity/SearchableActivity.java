@@ -17,6 +17,8 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.arellomobile.mvp.MvpAppCompatActivity;
@@ -27,11 +29,12 @@ import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
 import com.fanok.audiobooks.adapter.GenreListAddapter;
+import com.fanok.audiobooks.adapter.SearchebleAdapter;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchableView;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.GenrePOJO;
+import com.fanok.audiobooks.pojo.SearcheblPOJO;
 import com.fanok.audiobooks.presenter.SearchbalePresenter;
-import com.r0adkll.slidr.Slidr;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -51,10 +54,26 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     SearchbalePresenter mPresenter;
     @BindView(R.id.progressBar)
     LinearLayout mProgressBar;
+    @BindView(R.id.autors)
+    TextView mAutors;
+    @BindView(R.id.authorList)
+    RecyclerView mAuthorList;
+    @BindView(R.id.series)
+    TextView mSeries;
+    @BindView(R.id.seriesList)
+    RecyclerView mSeriesList;
+    @BindView(R.id.progressBarTop)
+    ProgressBar mProgressBarTop;
+    @BindView(R.id.topList)
+    LinearLayout mTopList;
     private int modelId;
 
     private BooksListAddapter mAddapterBooks;
     private GenreListAddapter mAddapterGenre;
+
+    private SearchebleAdapter mAdapterAutors;
+    private SearchebleAdapter mAdapterSeries;
+
 
     private String query;
 
@@ -64,7 +83,6 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_searchable);
         ButterKnife.bind(this);
-        Slidr.attach(this);
         Intent intent = getIntent();
         modelId = intent.getIntExtra(Consts.ARG_MODEL, -1);
         if (modelId == -1) throw new IllegalArgumentException("modelId require parameter");
@@ -95,6 +113,14 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
             case Consts.MODEL_BOOKS:
                 mAddapterBooks = new BooksListAddapter();
                 mRecyclerView.setAdapter(mAddapterBooks);
+                mAdapterAutors = new SearchebleAdapter();
+                mAdapterSeries = new SearchebleAdapter();
+                mAuthorList.setLayoutManager(
+                        new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+                mSeriesList.setLayoutManager(
+                        new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+                mAuthorList.setAdapter(mAdapterAutors);
+                mSeriesList.setAdapter(mAdapterSeries);
                 break;
             case Consts.MODEL_GENRE:
             case Consts.MODEL_AUTOR:
@@ -106,8 +132,6 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
 
         if (savedInstanceState == null) {
             mPresenter.onCreate(modelId, this);
-        } else {
-            mPresenter.onChageOrintationScreen();
         }
 
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -137,6 +161,31 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                     (view13, position) -> mPresenter.onBookItemLongClick(view13, position));
         }
 
+        mAdapterSeries.setListener(
+                (view, position) -> mPresenter.onSeriesListItemClick(view, position));
+
+        mAdapterAutors.setListener(
+                (view, position) -> mPresenter.onAutorsListItemClick(view, position));
+
+
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                int y = recyclerView.computeVerticalScrollOffset();
+                if (y == 0 && mTopList.getVisibility() == View.GONE) {
+                    mTopList.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (dy > 0 && mTopList.getVisibility() == View.VISIBLE) {
+                    mTopList.setVisibility(View.GONE);
+                }
+            }
+        });
 
     }
 
@@ -205,7 +254,6 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                 }
             }
         } catch (NullPointerException e) {
-            Log.e(TAG, "Data display error");
             showToast(R.string.error_display_data);
         }
     }
@@ -237,6 +285,15 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     }
 
     @Override
+    public void showProgresTop(boolean b) {
+        if (b) {
+            mProgressBarTop.setVisibility(View.VISIBLE);
+        } else {
+            mProgressBarTop.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    @Override
     public void returnResult(String url, String name, int modelId, String tag) {
         Intent intent = new Intent();
         intent.putExtra("url", url);
@@ -245,6 +302,32 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
         intent.putExtra("tag", tag);
         setResult(Activity.RESULT_OK, intent);
         finish();
+    }
+
+    @Override
+    public void showSeriesAndAutors(@NonNull SearcheblPOJO searcheblPOJO) {
+        if (mAdapterSeries != null && mAdapterAutors != null) {
+            if (searcheblPOJO.getAutorsList().size() == 0) {
+                mAutors.setVisibility(View.GONE);
+                mAuthorList.setVisibility(View.GONE);
+            } else {
+                mAutors.setVisibility(View.VISIBLE);
+                mAuthorList.setVisibility(View.VISIBLE);
+                mAutors.setText(searcheblPOJO.getAutorsCount());
+                mAdapterAutors.setItem(searcheblPOJO.getAutorsList());
+            }
+
+            if (searcheblPOJO.getSeriesList().size() == 0) {
+                mSeries.setVisibility(View.GONE);
+                mSeriesList.setVisibility(View.GONE);
+            } else {
+                mSeries.setVisibility(View.VISIBLE);
+                mSeriesList.setVisibility(View.VISIBLE);
+                mSeries.setText(searcheblPOJO.getSeriesCount());
+                mAdapterSeries.setItem(searcheblPOJO.getSeriesList());
+            }
+        }
+
     }
 
     @Override

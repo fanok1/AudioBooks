@@ -10,7 +10,7 @@ import android.support.annotation.NonNull;
 public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(@NonNull Context context) {
-        super(context, DBName, null, 1);
+        super(context, DBName, null, 4);
     }
 
     @Override
@@ -30,7 +30,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 + "url_series text,"
                 + "time text,"
                 + "reting text,"
-                + "favorite integer,"
                 + "coments integer" + ");");
 
         sqLiteDatabase.execSQL("create table history ("
@@ -48,7 +47,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 + "url_series text,"
                 + "time text,"
                 + "reting text,"
-                + "favorite integer,"
                 + "coments integer" + ");");
     }
 

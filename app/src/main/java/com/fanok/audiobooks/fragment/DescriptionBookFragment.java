@@ -50,8 +50,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     TextView mTitle;
     @BindView(R.id.imageView)
     ImageView mImageView;
-    @BindView(R.id.years)
-    TextViewRichDrawable mYears;
     @BindView(R.id.reting)
     TextViewRichDrawable mReting;
     @BindView(R.id.genre)
@@ -74,16 +72,10 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     TextView mDesc;
     @BindView(R.id.showMore)
     TextView mShowMore;
-    @BindView(R.id.otherAutorBooksTitle)
-    TextView mOtherAutorBooksTitle;
-    @BindView(R.id.fantlab)
-    TextView mFantlab;
-    @BindView(R.id.otherAutorBooks)
-    RecyclerView mOtherAutorBooks;
-    @BindView(R.id.otherGenreBooksTitle)
-    TextView mOtherGenreBooksTitle;
-    @BindView(R.id.otherGenreBooks)
-    RecyclerView mOtherGenreBooks;
+    @BindView(R.id.recommendedBooks)
+    RecyclerView mRecommendedBooks;
+    @BindView(R.id.recommendedBooksTitle)
+    TextView mRecommendedBooksTitle;
     @BindView(R.id.scrollView)
     ScrollView mScrollView;
     @BindView(R.id.progressBar)
@@ -91,9 +83,14 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     Unbinder unbinder;
     @InjectPresenter
     BookDescriptionPresenter mPresenter;
+    @BindView(R.id.favorite)
+    TextViewRichDrawable mFavorite;
+    @BindView(R.id.like)
+    TextViewRichDrawable mLike;
+    @BindView(R.id.disLike)
+    TextViewRichDrawable mDisLike;
     private String mUrl;
-    private BooksOtherAdapter mAdapterBooksAutor;
-    private BooksOtherAdapter mAdapterBooksGenre;
+    private BooksOtherAdapter mAdapterBooksRecomended;
     private boolean showMore;
 
     public static DescriptionBookFragment newInstance(@NonNull String url) {
@@ -120,21 +117,14 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
             @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_book_description, container, false);
         unbinder = ButterKnife.bind(this, view);
-        mAdapterBooksAutor = new BooksOtherAdapter(Objects.requireNonNull(getContext()));
-        mAdapterBooksGenre = new BooksOtherAdapter(Objects.requireNonNull(getContext()));
-        mOtherAutorBooks.setAdapter(mAdapterBooksAutor);
-        mOtherGenreBooks.setAdapter(mAdapterBooksGenre);
-        mOtherAutorBooks.setLayoutManager(
-                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        mOtherGenreBooks.setLayoutManager(
+        mAdapterBooksRecomended = new BooksOtherAdapter(Objects.requireNonNull(getContext()));
+        mRecommendedBooks.setAdapter(mAdapterBooksRecomended);
+        mRecommendedBooks.setLayoutManager(
                 new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         int margin = (int) getContext().getResources().getDimension(R.dimen.books_other_margin);
-        mOtherGenreBooks.addItemDecoration(new MarginItemDecoration(margin));
-        mOtherAutorBooks.addItemDecoration(new MarginItemDecoration(margin));
+        mRecommendedBooks.addItemDecoration(new MarginItemDecoration(margin));
         if (savedInstanceState == null) {
             mPresenter.onCreate(mUrl);
-        } else {
-            mPresenter.onChageOrintationScreen();
         }
         return view;
     }
@@ -157,32 +147,14 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         }
     }
 
-    @Override
-    public void showOtherBooks(@NonNull ArrayList<BookPOJO> data, int adapter) {
-        if (adapter == 0 && mAdapterBooksAutor != null) mAdapterBooksAutor.setData(data);
-        if (adapter == 1 && mAdapterBooksGenre != null) mAdapterBooksGenre.setData(data);
+    public void showOtherBooks(@NonNull ArrayList<BookPOJO> data) {
+        if (mAdapterBooksRecomended != null) mAdapterBooksRecomended.setData(data);
         if (data.size() != 0) {
-            switch (adapter) {
-                case 0:
-                    mOtherAutorBooks.setVisibility(View.VISIBLE);
-                    mOtherAutorBooksTitle.setVisibility(View.VISIBLE);
-                    break;
-                case 1:
-                    mOtherGenreBooks.setVisibility(View.VISIBLE);
-                    mOtherGenreBooksTitle.setVisibility(View.VISIBLE);
-                    break;
-            }
+            mRecommendedBooks.setVisibility(View.VISIBLE);
+            mRecommendedBooksTitle.setVisibility(View.VISIBLE);
         } else {
-            switch (adapter) {
-                case 0:
-                    mOtherAutorBooks.setVisibility(View.GONE);
-                    mOtherAutorBooksTitle.setVisibility(View.GONE);
-                    break;
-                case 1:
-                    mOtherGenreBooks.setVisibility(View.GONE);
-                    mOtherGenreBooksTitle.setVisibility(View.GONE);
-                    break;
-            }
+            mRecommendedBooks.setVisibility(View.GONE);
+            mRecommendedBooksTitle.setVisibility(View.GONE);
         }
 
     }
@@ -195,12 +167,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 .placeholder(android.R.drawable.ic_menu_gallery)
                 .error(android.R.drawable.ic_menu_gallery)
                 .into(mImageView);
-        String year = description.getYear() + " год";
-        if (description.getYear() != 0) {
-            mYears.setText(year);
-        } else {
-            mYears.setVisibility(View.GONE);
-        }
 
         if (!description.getGenre().isEmpty()) {
             mGenre.setText(description.getGenre());
@@ -208,17 +174,12 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
             mGenre.setVisibility(View.GONE);
         }
 
-        String reting = "Рейтинг: " + description.getReiting();
+        String reting = String.valueOf(description.getReiting());
         mReting.setText(reting);
         if (description.getTime().isEmpty()) {
             mTime.setVisibility(View.GONE);
         } else {
             mTime.setText(description.getTime());
-        }
-        if (description.getFanlab().isEmpty()) {
-            mFantlab.setVisibility(View.GONE);
-        } else {
-            mFantlab.setText(description.getFanlab());
         }
 
 
@@ -233,6 +194,14 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 activity.showSiries();
             }
         }
+
+        if (description.isOtherReader()) {
+            if (activity != null) {
+                activity.showOtherArtist();
+            }
+        }
+
+
 
         mDesc.setMaxLines(MAX_VALUE);
         mDesc.setText(description.getDescription());
@@ -257,6 +226,10 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
             });
         });
 
+        mFavorite.setText(String.valueOf(description.getFavorite()));
+        mLike.setText(String.valueOf(description.getLike()));
+        mDisLike.setText(String.valueOf(description.getDisLike()));
+
 
         mGenre.setOnClickListener(
                 view -> MainActivity.startMainActivity(Objects.requireNonNull(getContext()),
@@ -272,7 +245,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
 
         mSeries.setOnClickListener(view -> {
             if (activity != null) {
-                activity.setTabPostion(2);
+                activity.setTabPostion(getResources().getString(R.string.tab_text_3));
             }
         });
     }

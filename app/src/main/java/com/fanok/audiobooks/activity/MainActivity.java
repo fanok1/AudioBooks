@@ -38,6 +38,7 @@ public class MainActivity extends MvpAppCompatActivity
 
     private static final String EXSTRA_FRAGMENT = "startFragment";
     private static final String EXSTRA_URL = "url";
+    private boolean isSavedInstanceState = false;
 
 
     @InjectPresenter
@@ -88,24 +89,27 @@ public class MainActivity extends MvpAppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
         mPresenter.onCreate();
         fragmentsTag = new ArrayList<>();
+        isSavedInstanceState = savedInstanceState != null;
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        if (firstStart) {
-            Intent intent = getIntent();
-            int fragment = intent.getIntExtra(EXSTRA_FRAGMENT, -1);
-            String url = intent.getStringExtra(EXSTRA_URL);
-            if (url != null && !url.isEmpty() && fragment != -1) {
-                mPresenter.startFragment(fragment, url);
-            } else {
-                SharedPreferences mSettings = getSharedPreferences(APP_PREFERENCES,
-                        Context.MODE_PRIVATE);
-                fragment = mSettings.getInt(APP_FRAGMENT, Consts.FRAGMENT_AUDIOBOOK);
-                mPresenter.startFragment(fragment);
+        if (!isSavedInstanceState) {
+            if (firstStart) {
+                Intent intent = getIntent();
+                int fragment = intent.getIntExtra(EXSTRA_FRAGMENT, -1);
+                String url = intent.getStringExtra(EXSTRA_URL);
+                if (url != null && !url.isEmpty() && fragment != -1) {
+                    mPresenter.startFragment(fragment, url);
+                } else {
+                    SharedPreferences mSettings = getSharedPreferences(APP_PREFERENCES,
+                            Context.MODE_PRIVATE);
+                    fragment = mSettings.getInt(APP_FRAGMENT, Consts.FRAGMENT_AUDIOBOOK);
+                    mPresenter.startFragment(fragment);
+                }
+                firstStart = false;
             }
-            firstStart = false;
         }
     }
 
@@ -156,7 +160,8 @@ public class MainActivity extends MvpAppCompatActivity
     @Override
     public void showFragment(@NonNull Fragment fragment, @NonNull String tag) {
         if (fragmentsTag.size() != 0 && tag.equals(
-                fragmentsTag.get(fragmentsTag.size() - 1).getTag())) {
+                fragmentsTag.get(fragmentsTag.size() - 1).getTag())
+                && !tag.equals("searchebleBooks")) {
             return;
         }
         addFragmentTag(tag);

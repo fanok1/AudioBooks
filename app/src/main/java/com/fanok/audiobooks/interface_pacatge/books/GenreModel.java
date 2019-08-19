@@ -7,5 +7,5 @@ import java.util.ArrayList;
 import io.reactivex.Observable;
 
 public interface GenreModel {
-    Observable<ArrayList<GenrePOJO>> getBooks(String url);
+    Observable<ArrayList<GenrePOJO>> getBooks(String url, int page);
 }

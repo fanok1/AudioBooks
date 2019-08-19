@@ -78,7 +78,6 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
         private TextView mTitle;
         private TextView mGenre;
         private TextView mReting;
-        private TextView mFavorite;
         private TextView mComents;
         private TextView mSiresle;
         private TextView mTime;
@@ -92,7 +91,6 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             mTitle = itemView.findViewById(R.id.title);
             mGenre = itemView.findViewById(R.id.genre);
             mReting = itemView.findViewById(R.id.reting);
-            mFavorite = itemView.findViewById(R.id.favorite);
             mComents = itemView.findViewById(R.id.coments);
             mSiresle = itemView.findViewById(R.id.series);
             mTime = itemView.findViewById(R.id.time);
@@ -116,17 +114,32 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
         void bind(BookPOJO book) {
             if (book.getName() == null || book.getGenre() == null || book.getAutor() == null ||
                     book.getArtist() == null || book.getUrl() == null || book.getUrlArtist() == null
-                    ||
-                    book.getUrlAutor() == null || book.getUrlGenre() == null) {
+                    || book.getUrlGenre() == null) {
                 throw new NullPointerException();
             }
             Picasso.get().load(book.getPhoto()).into(mImageView);
             mTitle.setText(book.getName());
             mGenre.setText(book.getGenre());
-            mReting.setText(book.getReting());
-            mFavorite.setText(String.valueOf(book.getFavorite()));
-            mComents.setText(String.valueOf(book.getComents()));
-            mAutor.setText(book.getAutor());
+            if (!book.getReting().equals("0")) {
+                mReting.setText(book.getReting());
+                mReting.setVisibility(View.VISIBLE);
+            } else {
+                mReting.setVisibility(View.GONE);
+            }
+
+            if (book.getComents() != 0) {
+                mComents.setText(String.valueOf(book.getComents()));
+                mComents.setVisibility(View.VISIBLE);
+            } else {
+                mComents.setVisibility(View.GONE);
+            }
+
+            if (book.getAutor() != null && !book.getAutor().isEmpty()) {
+                mAutor.setText(book.getAutor());
+                mAutor.setVisibility(View.VISIBLE);
+            } else {
+                mAutor.setVisibility(View.GONE);
+            }
             mArtist.setText(book.getArtist());
             if (book.getTime() != null && !book.getTime().isEmpty()) {
                 mTime.setText(book.getTime());

@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
@@ -49,6 +50,8 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
     @BindView(R.id.listAnswer)
     RecyclerView mListAnswer;
     Unbinder unbinder;
+    @BindView(R.id.placeholder)
+    TextView mPlaceholder;
     private String mUrl;
     private ComentsListAddapter mComentsListAddapter;
     private AnswerListAddapter mAnswerListAddapter;
@@ -120,8 +123,6 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
 
         if (savedInstanceState == null) {
             mPresenter.onCreate(mUrl);
-        } else {
-            mPresenter.onChageOrintationScreen();
         }
 
         return view;
@@ -140,6 +141,11 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
 
     @Override
     public void showComents(ArrayList<ComentsPOJO> data) {
+        if (data.size() == 0) {
+            mPlaceholder.setVisibility(View.VISIBLE);
+        } else {
+            mPlaceholder.setVisibility(View.GONE);
+        }
         mComentsListAddapter.setItem(data);
 
     }

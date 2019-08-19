@@ -15,6 +15,23 @@
             <item
                 android:id="@+id/new_data"
                 android:title="@string/new_data" />
+            <item android:title="@string/popular">
+                <menu>
+                    <item
+                        android:id="@+id/popular_all_time"
+                        android:title="@string/all_time" />
+                    <item
+                        android:id="@+id/popular_month"
+                        android:title="@string/in_month" />
+                    <item
+                        android:id="@+id/popular_week"
+                        android:title="@string/in_week" />
+
+                    <item
+                        android:id="@+id/popular_day"
+                        android:title="@string/in_day" />
+                </menu>
+            </item>
             <item android:title="@string/reting">
                 <menu>
                     <item
@@ -26,19 +43,9 @@
                     <item
                         android:id="@+id/reting_week"
                         android:title="@string/in_week" />
-                </menu>
-            </item>
-            <item android:title="@string/discussed">
-                <menu>
                     <item
-                        android:id="@+id/discussed_all_time"
-                        android:title="@string/all_time" />
-                    <item
-                        android:id="@+id/discussed_month"
-                        android:title="@string/in_month" />
-                    <item
-                        android:id="@+id/discussed_week"
-                        android:title="@string/in_week" />
+                        android:id="@+id/reting_day"
+                        android:title="@string/in_day" />
                 </menu>
             </item>
         </menu>

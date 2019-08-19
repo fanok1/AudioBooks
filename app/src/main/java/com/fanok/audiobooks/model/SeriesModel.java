@@ -2,6 +2,7 @@ package com.fanok.audiobooks.model;
 
 import android.support.annotation.NonNull;
 
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 
 import org.jsoup.Jsoup;
@@ -27,27 +28,33 @@ public class SeriesModel implements
                 .referrer("http://www.google.com")
                 .get();
 
-        Elements seriesConteiner = doc.getElementsByClass("series-info");
-        if (seriesConteiner.size() != 0) {
-            Elements seriesList = seriesConteiner.first().getElementsByTag("li");
-            for (Element book : seriesList) {
-                SeriesPOJO seriesPOJO = new SeriesPOJO();
-                Elements a = book.getElementsByTag("a");
-                if (a.size() != 0) {
-                    seriesPOJO.setName(a.first().text());
-                    seriesPOJO.setUrl(a.first().attr("href"));
-                }
-                Elements elements = book.getElementsByClass("favourite-count");
-                if (elements.size() != 0) {
-                    seriesPOJO.setReting(elements.first().text());
-                }
-                if (elements.size() > 1) {
-                    Elements comnetsConteiner = elements.get(1).getElementsByTag("a");
-                    if (comnetsConteiner.size() != 0) {
-                        seriesPOJO.setComents(comnetsConteiner.first().text());
+        Elements seriesConteiner = doc.getElementsByClass("book_blue_block book_serie_block");
+        for (int i = 0; i < seriesConteiner.size(); i++) {
+            Elements elementsTitle = seriesConteiner.get(i).getElementsByClass(
+                    "book_serie_block_title");
+            if (elementsTitle.size() != 0 && elementsTitle.first().text().contains("Цикл")) {
+                Elements series = seriesConteiner.get(i).getElementsByClass(
+                        "book_serie_block_item");
+                for (Element item : series) {
+                    SeriesPOJO seriesPOJO = new SeriesPOJO();
+                    Elements indexElements = item.getElementsByClass("book_serie_block_item_index");
+                    if (indexElements.size() != 0) {
+                        seriesPOJO.setNumber(indexElements.first().text());
                     }
+
+                    Elements strongElements = item.getElementsByTag("strong");
+                    if (strongElements.size() != 0) {
+                        seriesPOJO.setName(strongElements.first().text());
+                    }
+
+                    Elements aElements = item.getElementsByTag("a");
+                    if (aElements.size() != 0) {
+                        seriesPOJO.setName(aElements.first().text());
+                        seriesPOJO.setUrl(Url.SERVER + aElements.first().attr("href"));
+                    }
+
+                    result.add(seriesPOJO);
                 }
-                result.add(seriesPOJO);
             }
         }
 

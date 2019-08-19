@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public interface Description extends MvpView {
     void showProgress(boolean b);
 
-    void showOtherBooks(ArrayList<BookPOJO> data, int adpter);
+    void showOtherBooks(ArrayList<BookPOJO> data);
 
     void showDescription(DescriptionPOJO description);
 

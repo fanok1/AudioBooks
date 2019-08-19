@@ -29,6 +29,8 @@ import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.google.gson.GsonBuilder;
 
+import java.util.Objects;
+
 public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     private static final String TAG = "BookActivity";
@@ -59,7 +61,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
         mBookPOJO = BookPOJO.parceJsonToBookPojo(json);
         setContentView(R.layout.activity_book);
-        setTitle(mBookPOJO.getName().substring(mBookPOJO.getName().indexOf("-") + 1).trim());
+        setTitle(mBookPOJO.getName().trim());
         sectionsPagerAdapter = new SectionsPagerAdapter(this,
                 getSupportFragmentManager(), mBookPOJO.getUrl());
         ViewPager viewPager = findViewById(R.id.view_pager);
@@ -74,8 +76,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         if (actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setSubtitle(
-                    mBookPOJO.getName().substring(0, mBookPOJO.getName().indexOf("-")).trim());
+            actionBar.setSubtitle(mBookPOJO.getAutor().trim());
         }
         View topBarButtonsControl = llBottomSheet.findViewById(R.id.topButtonsControls);
         ImageButton buttonCollapse = findViewById(R.id.buttonCollapse);
@@ -171,9 +172,25 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     }
 
     public void showSiries() {
-        if (tabs.getTabCount() <= 2) {
-            tabs.addTab(tabs.newTab().setText(getResources().getString(R.string.tab_text_3)));
-            sectionsPagerAdapter.addTabPage(getResources().getString(R.string.tab_text_3));
+        showPage(getResources().getString(R.string.tab_text_3));
+    }
+
+    public void showOtherArtist() {
+        showPage(getResources().getString(R.string.tab_text_4));
+    }
+
+    private void showPage(String name) {
+        boolean temp = false;
+        for (int i = 0; i < tabs.getTabCount(); i++) {
+            String title = Objects.requireNonNull(
+                    Objects.requireNonNull(tabs.getTabAt(i)).getText()).toString();
+            if (title.equals(name)) {
+                temp = true;
+            }
+        }
+        if (!temp) {
+            tabs.addTab(tabs.newTab().setText(name));
+            sectionsPagerAdapter.addTabPage(name);
         }
     }
 
@@ -201,10 +218,10 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     }
 
     @Override
-    public void setTabPostion(int postion) {
-        if (postion < tabs.getTabCount() && postion > 0) {
-            TabLayout.Tab tab = tabs.getTabAt(postion);
-            if (tab != null) {
+    public void setTabPostion(String title) {
+        for (int i = 0; i < tabs.getTabCount(); i++) {
+            TabLayout.Tab tab = tabs.getTabAt(i);
+            if (tab != null && Objects.requireNonNull(tab.getText()).toString().equals(title)) {
                 tab.select();
             }
         }

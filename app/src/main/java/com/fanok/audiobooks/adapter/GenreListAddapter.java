@@ -82,7 +82,11 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
                 throw new NullPointerException();
             }
             mName.setText(book.getName());
-            mReting.setText(String.valueOf(book.getReting()));
+            if (book.getReting() != 0) {
+                mReting.setText(String.valueOf(book.getReting()));
+            } else {
+                mReting.setVisibility(View.GONE);
+            }
             mDescription.setText(book.getDescription());
         }
     }

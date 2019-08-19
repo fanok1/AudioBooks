@@ -13,12 +13,14 @@ public interface SearchablePresenter {
 
     void loadNext(String qery);
 
-    void onChageOrintationScreen();
-
     void onGenreItemClick(View view, int position);
 
     void onBookItemClick(View view, int position);
 
     void onBookItemLongClick(View view, int position);
+
+    void onAutorsListItemClick(View view, int position);
+
+    void onSeriesListItemClick(View view, int position);
 
 }

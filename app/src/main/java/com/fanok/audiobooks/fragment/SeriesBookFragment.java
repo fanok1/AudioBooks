@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
@@ -42,6 +43,8 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
 
     @InjectPresenter
     BookSeriesPresenter mPresenter;
+    @BindView(R.id.placeholder)
+    TextView mPlaceholder;
 
 
     private String mUrl;
@@ -77,7 +80,7 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
 
         mSeriesListAddapter.setListener((view12, position) -> {
             SeriesPOJO seriesPOJO = mSeriesListAddapter.getItem(position);
-            if (!mUrl.equals(seriesPOJO.getUrl())) {
+            if (!seriesPOJO.getUrl().isEmpty()) {
                 showBook(seriesPOJO.getUrl());
             }
         });
@@ -90,8 +93,6 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
 
         if (savedInstanceState == null) {
             mPresenter.onCreate(mUrl);
-        } else {
-            mPresenter.onChageOrintationScreen();
         }
 
 
@@ -111,6 +112,11 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
 
     @Override
     public void showSeries(ArrayList<SeriesPOJO> data) {
+        if (data.size() == 0) {
+            mPlaceholder.setVisibility(View.VISIBLE);
+        } else {
+            mPlaceholder.setVisibility(View.GONE);
+        }
         mSeriesListAddapter.setItem(data);
     }
 

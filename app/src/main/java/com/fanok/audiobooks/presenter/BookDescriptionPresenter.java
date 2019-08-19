@@ -34,8 +34,7 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
     public void onCreate(@NonNull String url) {
         mModelDescription = new BookDescriptionModel(url);
         loadDescription();
-        loadBooks(0);
-        loadBooks(1);
+        loadBooks();
     }
 
     @Override
@@ -49,19 +48,8 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
         getData();
     }
 
-
-    @Override
-    public void onChageOrintationScreen() {
-        if (isLoading) {
-            getViewState().showProgress(true);
-        } else if (mDescriptionPOJO != null) {
-            getViewState().showDescription(mDescriptionPOJO);
-        }
-    }
-
-
-    private void loadBooks(int position) {
-        mModelDescription.getBooks(position)
+    private void loadBooks() {
+        mModelDescription.getBooks()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<ArrayList<BookPOJO>>() {
@@ -71,13 +59,12 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
 
                     @Override
                     public void onNext(ArrayList<BookPOJO> bookPOJOS) {
-                        getViewState().showOtherBooks(bookPOJOS, position);
+                        getViewState().showOtherBooks(bookPOJOS);
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        e.printStackTrace();
-                        Log.e(TAG, e.getMessage());
+                        Log.d(TAG, e.getMessage());
                     }
 
                     @Override
@@ -106,8 +93,6 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
 
                         @Override
                         public void onError(Throwable e) {
-                            e.printStackTrace();
-                            Log.e(TAG, e.getMessage());
                             getViewState().showRefreshDialog();
                         }
 

@@ -9,5 +9,4 @@ public interface DescriptionPresenter {
 
     void loadDescription();
 
-    void onChageOrintationScreen();
 }

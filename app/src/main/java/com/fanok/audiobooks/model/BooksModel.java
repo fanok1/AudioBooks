@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.model;
 
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.BookPOJO;
 
 import org.jsoup.Jsoup;
@@ -15,143 +16,138 @@ import io.reactivex.Observable;
 public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.BooksModel {
 
 
-    ArrayList<BookPOJO> loadBooksList(String url) throws IOException {
+    private ArrayList<BookPOJO> loadBooksList(String url, int page) throws IOException {
         ArrayList<BookPOJO> result = new ArrayList<>();
+        String autor = "";
+        String autorUrl = "";
         Document doc = Jsoup.connect(url)
                 .userAgent(
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
-                                + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
+                        "Mozilla / 5.0 (Windows NT 10.0; Win64; x64) AppleWebKit / 537.36 (KHTML,"
+                                + " как Gecko) Chrome / 60.0.3112.78 Safari / 537.36")
                 .referrer("http://www.google.com")
                 .get();
-        Elements books = doc.getElementsByTag("article");
-        if (books.size() == 0) return null;
-        for (Element book : books) {
-            BookPOJO bookPOJO = new BookPOJO();
-            String img = book.getElementsByTag("img").get(0).attr("src");
-            if (img != null) bookPOJO.setPhoto(img);
-            Element a = book.getElementsByClass("ls-topic-title").first().child(0);
-            if (a != null) {
-                bookPOJO.setUrl(a.attr("href"));
-                bookPOJO.setName(a.text());
-            } else {
-                continue;
+
+
+        Elements pagesConteiner = doc.getElementsByClass("pn_page_buttons");
+        if (pagesConteiner.size() != 0) {
+            Elements pagesElements = pagesConteiner.first().children();
+            if (pagesElements.size() != 0) {
+                Element lastPageElement = pagesElements.last();
+                int lastPage = Integer.parseInt(lastPageElement.text());
+                if (lastPage < page) throw new NullPointerException();
             }
-            Elements topLineElements = book.getElementsByClass("ls-topic-info");
-            if (topLineElements.size() != 0) {
-                Element topLine = topLineElements.first();
-                Elements genreConteiner = topLine.getElementsByClass("topic-blog");
-                if (genreConteiner.size() != 0) {
-                    Element genre = genreConteiner.first();
-                    if (genre != null) {
-                        genre = genre.child(0);
-                        if (genre != null) {
-                            bookPOJO.setGenre(genre.text());
-                            bookPOJO.setUrlGenre(genre.attr("href"));
-                        }
-                    }
-                }
+        } else if (page > 1) throw new NullPointerException();
 
-                Elements retingConteiner = topLine.getElementsByClass("favourite-count");
-                if (retingConteiner.size() != 0) {
-                    String reting = retingConteiner.first().text();
-                    if (reting != null) bookPOJO.setReting(reting);
+        Elements pageTitle = doc.getElementsByClass("page_title");
+        if (pageTitle.size() != 0) {
+            if (pageTitle.first().text().contains("Цикл")) {
+                Elements aList = pageTitle.first().getElementsByTag("a");
+                if (aList.size() != 0) {
+                    autor = aList.first().text();
+                    autorUrl = Url.SERVER + aList.first().attr("href");
                 }
-                Elements favoriteConteiner = book.getElementsByClass("ls-favourite-count");
-                if (favoriteConteiner.size() != 0) {
-                    String favorite = favoriteConteiner.first().text();
-                    if (favorite != null && favorite.matches("^\\d+$")) {
-                        bookPOJO.setFavorite(Integer.parseInt(favorite));
-                    }
+            } else if (pageTitle.first().text().contains("Все авторы")) {
+                autorUrl = "";
+                Elements h1 = pageTitle.first().getElementsByTag("h1");
+                if (h1.size() != 0) {
+                    autor = h1.first().text();
+                } else {
+                    autor = "";
                 }
-
-                Elements comentsConteiner = topLine.getElementsByClass("fa-comments-o");
-                try {
-                    if (comentsConteiner.size() != 0) {
-                        Element comentsConteinerChild = comentsConteiner.first().parent();
-                        if (comentsConteinerChild != null) {
-                            String countComents = comentsConteinerChild.text();
-                            if (countComents != null) {
-                                bookPOJO.setComents(countComents);
-                            }
-                        }
-                    }
-                } catch (NullPointerException e) {
-                    bookPOJO.setComents("0");
-                }
-
             }
-            Elements bottomLineElements = book.getElementsByClass("topic-a-info");
-            if (bottomLineElements.size() != 0) {
-                Element bottomLine = bottomLineElements.first();
-                Elements autorElements = bottomLine.getElementsByClass("fa-user");
-                if (autorElements.size() == 0) {
-                    autorElements = bottomLine.getElementsByClass(
-                            "fa-users");
+        }
+        Element bookList = doc.getElementById("books_updates_list");
+        if (bookList == null) bookList = doc.getElementById("books_list");
+        if (bookList != null) {
+            Elements books = bookList.getElementsByClass("bookitem");
+            if (books.size() == 0) return null;
+            for (Element book : books) {
+                Elements litRes = book.getElementsByClass("bookitem_litres_icon");
+                if (litRes.size() != 0) continue;
+                BookPOJO bookPOJO = new BookPOJO();
+                String img = book.getElementsByTag("img").get(0).attr("src");
+                if (img != null) bookPOJO.setPhoto(img);
+                Elements aTags = book.getElementsByClass("bookitem_name");
+                if (aTags.size() != 0) {
+                    Element a = aTags.first().child(0);
+                    if (a != null) {
+                        bookPOJO.setUrl(Url.SERVER + a.attr("href"));
+                        bookPOJO.setName(a.text());
+                    }
                 }
-                if (autorElements.size() != 0) {
-                    Element autor = autorElements.first();
-                    Element aElement = autor.nextElementSibling();
-                    String autorName = aElement.text();
-                    String autorUrl = aElement.attr("href");
-                    if (autorName != null && autorUrl != null) {
-                        bookPOJO.setAutor(autorName);
+
+                Element aGenre = book.getElementsByClass("bookitem_genre").first().child(0);
+                if (aGenre != null) {
+                    bookPOJO.setUrlGenre(Url.SERVER + aGenre.attr("href"));
+                    bookPOJO.setGenre(aGenre.text());
+                }
+
+                Elements ratingConteiner = book.getElementsByClass("bookitem_icon -views");
+                if (ratingConteiner.size() != 0) {
+                    bookPOJO.setReting(ratingConteiner.first().nextElementSibling().text());
+                }
+
+                Elements comentsConteiner = book.getElementsByClass("bookitem_icon -comments");
+                if (comentsConteiner.size() != 0) {
+                    bookPOJO.setComents(comentsConteiner.first().nextElementSibling().text());
+                }
+
+                Elements autorConteiner = book.getElementsByClass("bookitem_author");
+                if (autorConteiner.size() != 0) {
+                    Elements aAutor = autorConteiner.first().getElementsByTag("a");
+                    if (aAutor.size() != 0) {
+                        bookPOJO.setAutor(aAutor.first().text());
+                        bookPOJO.setUrlAutor(Url.SERVER + aAutor.first().attr("href"));
+                    }
+                } else {
+                    if (!autor.isEmpty()) {
+                        bookPOJO.setAutor(autor);
+                    }
+                    if (!autorUrl.isEmpty()) {
                         bookPOJO.setUrlAutor(autorUrl);
                     }
                 }
 
-                Elements artistElements = bottomLine.getElementsByClass("fa-microphone");
-                if (artistElements.size() != 0) {
-                    Element artist = artistElements.first();
-                    Element aElement = artist.nextElementSibling();
-                    String artistName = aElement.text();
-                    String artistUrl = aElement.attr("href");
-                    if (artistName != null && artistUrl != null) {
-                        bookPOJO.setArtist(artistName);
-                        bookPOJO.setUrlArtist(artistUrl);
+
+                Elements artistConteiner = book.getElementsByClass("bookitem_icon -reader");
+                if (artistConteiner.size() != 0) {
+                    Element parent = artistConteiner.first().parent();
+                    Elements artist = parent.getElementsByTag("a");
+                    if (artist.size() != 0) {
+                        bookPOJO.setArtist(artist.first().text());
+                        bookPOJO.setUrlArtist(Url.SERVER + artist.first().attr("href"));
                     }
                 }
 
-                Elements seriesConteiner = bottomLine.getElementsByClass("fa-book");
+                Elements timeConteinr = book.getElementsByClass("bookitem_meta_time");
+                if (timeConteinr.size() != 0) {
+                    bookPOJO.setTime(timeConteinr.first().text());
+                }
+
+
+                Elements seriesConteiner = book.getElementsByClass("bookitem_icon -serie");
                 if (seriesConteiner.size() != 0) {
-                    Element element = seriesConteiner.first();
-                    if (element != null) {
-                        Element aElement = element.nextElementSibling();
-                        String urlSeries = aElement.attr("href");
-                        String nameSeries = aElement.text();
-                        if (urlSeries != null && nameSeries != null) {
-                            bookPOJO.setSeries(nameSeries);
-                            bookPOJO.setUrlSeries(urlSeries);
-                        }
+                    Element parent = seriesConteiner.first().parent();
+                    Elements series = parent.getElementsByTag("a");
+                    if (series.size() != 0) {
+                        bookPOJO.setSeries(series.first().text());
+                        bookPOJO.setUrlSeries(Url.SERVER + series.first().attr("href"));
                     }
                 }
 
-                Elements hoursEl = bottomLine.getElementsByClass("hours");
-                String hours = "";
-                if (hoursEl.size() != 0) {
-                    hours = hoursEl.first().text();
-                }
-                Elements minetsEl = bottomLine.getElementsByClass("minutes");
-                String minets = "";
-                if (minetsEl.size() != 0) {
-                    minets = minetsEl.first().text();
-                }
-                if (!hours.isEmpty() || !minets.isEmpty()) {
-                    String temp = hours + " " + minets;
-                    bookPOJO.setTime(temp.trim());
-                }
+                if (bookPOJO.isNull()) continue;
+                result.add(bookPOJO);
             }
-            if (bookPOJO.isNull()) continue;
-            result.add(bookPOJO);
         }
         return result;
     }
 
     @Override
-    public Observable<ArrayList<BookPOJO>> getBooks(String url) {
+    public Observable<ArrayList<BookPOJO>> getBooks(String url, int page) {
         return Observable.create(observableEmitter -> {
             ArrayList<BookPOJO> articlesModels;
             try {
-                articlesModels = loadBooksList(url);
+                articlesModels = loadBooksList(url, page);
                 observableEmitter.onNext(articlesModels);
             } catch (Exception e) {
                 observableEmitter.onError(e);

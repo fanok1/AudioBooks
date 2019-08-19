@@ -8,10 +8,8 @@ public class DescriptionPOJO {
 
     private String title = "";
     private String poster = "";
-    private int year = 0;
     private int reiting = 0;
     private String time = "";
-    private String fanlab = "";
     private String autor = "";
     private String artist = "";
     private String series = "";
@@ -21,7 +19,42 @@ public class DescriptionPOJO {
     private String artistUrl = "";
     private String genre = "";
     private String genreUrl = "";
+    private int favorite = 0;
+    private int like = 0;
+    private int disLike = 0;
+    private boolean otherReader = false;
 
+    public boolean isOtherReader() {
+        return otherReader;
+    }
+
+    public void setOtherReader(boolean otherReader) {
+        this.otherReader = otherReader;
+    }
+
+    public int getLike() {
+        return like;
+    }
+
+    public void setLike(int like) {
+        if (like >= 0) this.like = like;
+    }
+
+    public int getDisLike() {
+        return disLike;
+    }
+
+    public void setDisLike(int disLike) {
+        if (disLike >= 0) this.disLike = disLike;
+    }
+
+    public int getFavorite() {
+        return favorite;
+    }
+
+    public void setFavorite(int favorite) {
+        if (favorite >= 0) this.favorite = favorite;
+    }
 
     public String getTitle() {
         return title;
@@ -44,14 +77,6 @@ public class DescriptionPOJO {
         }
     }
 
-    public int getYear() {
-        return year;
-    }
-
-    public void setYear(int year) {
-        this.year = year;
-    }
-
     public int getReiting() {
         return reiting;
     }
@@ -69,18 +94,6 @@ public class DescriptionPOJO {
             this.time = "";
         } else {
             this.time = time;
-        }
-    }
-
-    public String getFanlab() {
-        return fanlab;
-    }
-
-    public void setFanlab(String fanlab) {
-        if (fanlab == null) {
-            this.fanlab = "";
-        } else {
-            this.fanlab = fanlab;
         }
     }
 
@@ -134,7 +147,7 @@ public class DescriptionPOJO {
         if (!Consts.REGEXP_URL.matcher(autorUrl).matches()) {
             this.autorUrl = "";
         } else {
-            this.autorUrl = autorUrl + "page/";
+            this.autorUrl = autorUrl;
         }
     }
 
@@ -146,7 +159,7 @@ public class DescriptionPOJO {
         if (!Consts.REGEXP_URL.matcher(artistUrl).matches()) {
             this.artistUrl = "";
         } else {
-            this.artistUrl = artistUrl + "page/";
+            this.artistUrl = artistUrl;
         }
     }
 
@@ -166,7 +179,7 @@ public class DescriptionPOJO {
         if (!Consts.REGEXP_URL.matcher(genreUrl).matches()) {
             this.genreUrl = "";
         } else {
-            this.genreUrl = genreUrl + "page/";
+            this.genreUrl = genreUrl;
         }
     }
 
@@ -178,7 +191,7 @@ public class DescriptionPOJO {
         if (!Consts.REGEXP_URL.matcher(seriesUrl).matches()) {
             this.seriesUrl = "";
         } else {
-            this.seriesUrl = seriesUrl + "page/";
+            this.seriesUrl = seriesUrl;
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.fanok.audiobooks;
 
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
@@ -16,8 +17,7 @@ public class Consts {
     public static final Pattern REGEXP_URL = Pattern.compile(
             "^https?://.+\\..+$");
     public static final Pattern REGEXP_URL_PHOTO = Pattern.compile(
-            "^https?://.+\\.((jpg)|(png)|(jpeg))$");
-    public static final Pattern REGEXP_RETING = Pattern.compile("^([+-]\\d+)|0$");
+            "^https?://.+\\.((jpg)|(png)|(jpeg)).*$");
 
     public static final Pattern REGEXP_SIKRET_KEY = Pattern.compile(
             "\"security_ls_key\":\"(\\w+)\"");
@@ -70,6 +70,17 @@ public class Consts {
         DrawableCompat.setTint(drawable,
                 Consts.getAttributeColor(context, R.attr.colorPrimaryText));
         item.setIcon(drawable);
+    }
+
+    public static int indexOfByNumber(@NonNull String str, char c, int index) {
+        int count = 0;
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == c) {
+                count++;
+                if (count == index) return i;
+            }
+        }
+        return -1;
     }
 
 

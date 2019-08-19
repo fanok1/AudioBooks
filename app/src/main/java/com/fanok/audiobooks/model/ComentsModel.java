@@ -19,7 +19,7 @@ public class ComentsModel implements
         com.fanok.audiobooks.interface_pacatge.book_content.ComentsModel {
 
 
-    ArrayList<ComentsPOJO> loadComentsList(String url) throws IOException {
+    private ArrayList<ComentsPOJO> loadComentsList(String url) throws IOException {
         ArrayList<ComentsPOJO> result = new ArrayList<>();
         Document doc = Jsoup.connect(url)
                 .userAgent(
@@ -28,32 +28,32 @@ public class ComentsModel implements
                 .referrer("http://www.google.com")
                 .get();
 
-        Elements comentsElements = doc.getElementsByClass("ls-comment-list js-comment-list");
+        Element comentsElement = doc.getElementById("comments_list");
 
-        if (comentsElements.size() == 0) return result;
+        if (comentsElement == null) return result;
 
-        for (Element comentConteiner : comentsElements.first().children()) {
+        for (Element comentConteiner : comentsElement.children()) {
             ComentsPOJO comentsPOJO = new ComentsPOJO();
             Elements imageConteiner = comentConteiner.getElementsByTag("img");
             if (imageConteiner.size() != 0) {
                 comentsPOJO.setImage(imageConteiner.first().attr("src"));
             }
-            Elements nameConteiner = comentConteiner.getElementsByClass("ls-comment-username");
+            Elements nameConteiner = comentConteiner.getElementsByClass("comment_head_user");
             if (nameConteiner.size() != 0) {
-                comentsPOJO.setName(nameConteiner.first().child(0).text());
+                comentsPOJO.setName(nameConteiner.first().text());
             }
 
-            Elements time = comentConteiner.getElementsByTag("time");
+            Elements time = comentConteiner.getElementsByClass("comment_head_time");
             if (time.size() != 0) {
                 comentsPOJO.setDate(time.first().text());
             }
 
-            Elements reting = comentConteiner.getElementsByClass("ls-vote-rating");
+            Elements reting = comentConteiner.getElementsByClass("comment_head_votes_count");
             if (reting.size() != 0) {
                 comentsPOJO.setReting(reting.first().text());
             }
 
-            Elements text = comentConteiner.getElementsByClass("ls-comment-text");
+            Elements text = comentConteiner.getElementsByClass("comment_body");
             if (text.size() != 0) {
                 comentsPOJO.setText(text.first().text());
             }
@@ -62,8 +62,9 @@ public class ComentsModel implements
             Elements children = comentConteiner.children();
 
             for (int i = 1; i < children.size(); i++) {
-                if (children.get(i).attr("class").contains("ls-comment-wrapper")) {
-                    comentsPOJO.setChildComents(getChildCOments(children.get(i)));
+                if (children.get(i).attr("class").contains("comments_list")) {
+                    comentsPOJO.setChildComents(
+                            getChildCOments(children.get(i), comentsPOJO.getName()));
                 }
             }
             if (!comentsPOJO.isEmty()) {
@@ -74,34 +75,31 @@ public class ComentsModel implements
         return result;
     }
 
-    private ArrayList<SubComentsPOJO> getChildCOments(Element child) {
+    private ArrayList<SubComentsPOJO> getChildCOments(Element child, String parent) {
         ArrayList<SubComentsPOJO> result = new ArrayList<>();
         SubComentsPOJO subComentsPOJO = new SubComentsPOJO();
         Elements imageConteiner = child.getElementsByTag("img");
         if (imageConteiner.size() != 0) {
             subComentsPOJO.setImage(imageConteiner.first().attr("src"));
         }
-        Elements parentConteiner = child.getElementsByClass("reply-to");
-        if (parentConteiner.size() != 0) {
-            Element parent = parentConteiner.first().child(0);
-            subComentsPOJO.setParentName(parent.text());
-        }
-        Elements nameConteiner = child.getElementsByClass("ls-comment-username");
+        subComentsPOJO.setParentName(parent);
+
+        Elements nameConteiner = child.getElementsByClass("comment_head_user");
         if (nameConteiner.size() != 0) {
-            subComentsPOJO.setName(nameConteiner.first().child(0).text());
+            subComentsPOJO.setName(nameConteiner.first().text());
         }
 
-        Elements reting = child.getElementsByClass("ls-vote-rating");
+        Elements reting = child.getElementsByClass("comment_head_votes_count");
         if (reting.size() != 0) {
             subComentsPOJO.setReting(reting.first().text());
         }
 
-        Elements time = child.getElementsByTag("time");
+        Elements time = child.getElementsByClass("comment_head_time");
         if (time.size() != 0) {
             subComentsPOJO.setDate(time.first().text());
         }
 
-        Elements text = child.getElementsByClass("ls-comment-text");
+        Elements text = child.getElementsByClass("comment_body");
         if (text.size() != 0) {
             subComentsPOJO.setText(text.first().text());
         }
@@ -113,8 +111,8 @@ public class ComentsModel implements
         Elements elements = child.children();
 
         for (int i = 1; i < elements.size(); i++) {
-            if (elements.get(i).attr("class").contains("ls-comment-wrapper")) {
-                result.addAll(getChildCOments(elements.get(i)));
+            if (elements.get(i).attr("class").contains("comments_list")) {
+                result.addAll(getChildCOments(elements.get(i), subComentsPOJO.getName()));
             }
         }
 

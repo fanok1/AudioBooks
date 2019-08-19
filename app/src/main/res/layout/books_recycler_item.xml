@@ -54,6 +54,7 @@
                         android:id="@+id/genre"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/recycler_item_textmargin"
                         android:layout_weight="1"
                         android:gravity="center_vertical"
                         android:maxLines="1"
@@ -66,7 +67,7 @@
                         android:id="@+id/reting"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/recycler_item_textmargin"
+                        android:layout_marginEnd="@dimen/recycler_item_textmargin"
                         android:gravity="center_vertical"
                         android:maxLines="1"
                         android:singleLine="true"
@@ -74,29 +75,13 @@
                         android:textSize="@dimen/subTextSize"
                         app:compoundDrawableHeight="@dimen/scale_drawable"
                         app:compoundDrawableWidth="@dimen/scale_drawable"
-                        app:drawableStartVector="@drawable/ic_reting"
+                        app:drawableStartVector="@drawable/ic_rating_2"
                         tools:text="+7" />
-
-                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
-                        android:id="@+id/favorite"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/recycler_item_textmargin"
-                        android:gravity="center_vertical"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:textColor="?attr/subTextColor"
-                        android:textSize="@dimen/subTextSize"
-                        app:compoundDrawableHeight="@dimen/scale_drawable"
-                        app:compoundDrawableWidth="@dimen/scale_drawable"
-                        app:drawableStartVector="@drawable/ic_favorite"
-                        tools:text="36" />
 
                     <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
                         android:id="@+id/coments"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/recycler_item_textmargin"
                         android:layout_marginEnd="@dimen/recycler_item_textmargin"
                         android:gravity="center_vertical"
                         android:maxLines="1"

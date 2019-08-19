@@ -103,27 +103,40 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="@dimen/text_margin">
+        android:paddingStart="@dimen/text_margin"
+        android:paddingTop="@dimen/text_margin"
+        android:paddingEnd="0dp">
 
         <TextView
             android:id="@+id/timeStart"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="?attr/colorPrimaryText"
             android:text="@string/time_zero" />
 
         <SeekBar
             android:id="@+id/seekBar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/text_margin"
-            android:layout_marginEnd="@dimen/text_margin"
             android:layout_weight="1" />
 
         <TextView
             android:id="@+id/timeEnd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="?attr/colorPrimaryText"
             android:text="@string/time_zero" />
+
+        <ImageButton
+            android:id="@+id/speed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?selectableItemBackgroundBorderless"
+            android:contentDescription="@string/speed"
+            android:paddingStart="@dimen/text_margin"
+            android:paddingEnd="@dimen/text_margin"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_play_speed" />
 
     </LinearLayout>
 
@@ -133,6 +146,17 @@
         android:gravity="center_vertical|center_horizontal"
         android:orientation="horizontal"
         android:padding="@dimen/text_margin">
+
+        <ImageButton
+            android:id="@+id/rewind"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="?selectableItemBackgroundBorderless"
+            android:contentDescription="@string/rewind_10"
+            android:paddingStart="@dimen/text_margin"
+            android:paddingEnd="@dimen/text_margin"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_rewind_10" />
 
 
         <ImageButton
@@ -167,6 +191,19 @@
             android:paddingEnd="@dimen/text_margin"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_skip_next" />
+
+        <ImageButton
+            android:id="@+id/forward"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="?selectableItemBackgroundBorderless"
+            android:contentDescription="@string/forward_30"
+            android:paddingStart="@dimen/text_margin"
+            android:paddingEnd="@dimen/text_margin"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_fast_forward_30" />
+
+
     </LinearLayout>
 
 

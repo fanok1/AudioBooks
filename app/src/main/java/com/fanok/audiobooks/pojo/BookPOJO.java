@@ -3,12 +3,14 @@ package com.fanok.audiobooks.pojo;
 import android.support.annotation.NonNull;
 
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.Url;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
@@ -22,14 +24,13 @@ public class BookPOJO {
     private String autor;
     private String artist;
     private String urlArtist;
-    private String urlAutor;
+    private String urlAutor = "";
     private String time = "";
     private String series = "";
     private String urlSeries;
     private String genre;
     private String urlGenre;
     private String reting = "0";
-    private int favorite = 0;
     private int coments = 0;
     private String name;
     private String url;
@@ -165,50 +166,6 @@ public class BookPOJO {
         return reting;
     }
 
-    public void setReting(@NonNull String reting) {
-        if (!Consts.REGEXP_RETING.matcher(reting).matches()) {
-            throw new IllegalArgumentException(
-                    "Incorect value");
-        }
-        this.reting = reting;
-    }
-
-    public int getFavorite() {
-        return favorite;
-    }
-
-    public void setFavorite(int favorite) {
-        if (favorite < 0) throw new IllegalArgumentException("Value must be more 0");
-        this.favorite = favorite;
-    }
-
-    public int getComents() {
-        return coments;
-    }
-
-    public void setComents(@NonNull String coments) {
-        coments = coments.replaceAll("[^0-9]", "");
-        if (!coments.matches("^\\d+$")) {
-            throw new IllegalArgumentException(
-                    "Value not conteins integr");
-        }
-        int count = Integer.parseInt(coments);
-        if (count < 0) throw new IllegalArgumentException("Value must be more 0");
-        this.coments = count;
-    }
-
-    public boolean isNull() {
-        return photo == null || autor == null || artist == null || urlArtist == null
-                || urlAutor == null || genre == null || urlGenre == null
-                || name == null || url == null;
-    }
-
-
-    public static BookPOJO parceJsonToBookPojo(String json) {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        return gson.fromJson(json, BookPOJO.class);
-    }
-
     private static BookPOJO getBookByUrl(String url) throws IOException {
         BookPOJO bookPOJO = new BookPOJO();
 
@@ -218,15 +175,18 @@ public class BookPOJO {
                                 + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
                 .referrer("https://audioknigi.club/")
                 .get();
-        Elements titleElement = document.getElementsByClass("ls-topic-title");
+        Elements titleElement = document.getElementsByClass("book_title_elem book_title_name");
         if (titleElement.size() != 0) {
             bookPOJO.setName(titleElement.first().text().trim());
         }
-        Elements retingElements = document.getElementsByClass("ls-vote-big-rating");
+        Elements retingElements = document.getElementsByClass("book_views_icon");
         if (retingElements.size() != 0) {
-            bookPOJO.setReting(retingElements.first().text());
+            Node retingNode = retingElements.first().nextSibling();
+            if (retingNode != null) {
+                bookPOJO.setReting(retingNode.toString());
+            }
         }
-        Elements posterElements = document.getElementsByClass("picture-side ");
+        Elements posterElements = document.getElementsByClass("book_cover");
         if (posterElements.size() != 0) {
             Elements img = posterElements.first().getElementsByTag("img");
             if (img.size() != 0) {
@@ -235,71 +195,104 @@ public class BookPOJO {
         }
 
 
-        Elements hoursElements = document.getElementsByClass("hours");
-        Elements minutesElements = document.getElementsByClass("minutes");
+        Elements timeElements = document.getElementsByClass("book_info_label");
 
-        String hours = "";
-        String minutes = "";
-
-        if (hoursElements.size() != 0) {
-            hours = hoursElements.first().text();
-        }
-
-        if (minutesElements.size() != 0) {
-            minutes = minutesElements.first().text();
-        }
-        bookPOJO.setTime((hours + " " + minutes).trim());
-
-        Elements autorElements = document.getElementsByAttributeValue("itemprop", "author");
-        if (autorElements.size() != 0) {
-            bookPOJO.setAutor(autorElements.first().text());
-        }
-
-        Elements artistElements = document.getElementsByAttributeValue("rel", "performer");
-        if (artistElements.size() != 0) {
-            bookPOJO.setArtist(artistElements.first().text());
-            bookPOJO.setUrlArtist(artistElements.first().attr("href"));
-        }
-
-        Elements seriesSisterElements = document.getElementsByClass("fa fa-book");
-        if (seriesSisterElements.size() != 0) {
-            Element parent = seriesSisterElements.first().parent();
-            Elements seriesElement = parent.getElementsByTag("a");
-            if (seriesElement.size() != 0) {
-                bookPOJO.setSeries(seriesElement.first().text());
-                bookPOJO.setUrlSeries(seriesElement.first().attr("href"));
+        if (timeElements.size() != 0 && timeElements.first().text().contains("Время звучания:")) {
+            Node timeNode = timeElements.first().nextSibling();
+            if (timeNode != null) {
+                bookPOJO.setTime(timeNode.toString());
             }
         }
 
 
-        Elements genreConteiner = document.getElementsByClass("ls-topic-info-item");
+        Elements autorElements = document.getElementsByAttributeValue("itemprop", "author");
+        if (autorElements.size() != 0) {
+            Elements aElements = autorElements.first().getElementsByTag("a");
+            if (aElements.size() != 0) {
+                bookPOJO.setAutor(aElements.first().text());
+                bookPOJO.setUrlAutor(Url.SERVER + aElements.first().attr("href"));
+            }
+        }
+
+        Elements artistElements = document.getElementsByClass("book_title_elem");
+
+        for (int i = 0; i < artistElements.size(); i++) {
+            Element element = artistElements.get(i);
+            if (element.text().contains("читает")) {
+                Elements aTag = element.getElementsByTag("a");
+                if (aTag.size() != 0) {
+                    bookPOJO.setArtist(aTag.first().text());
+                    bookPOJO.setUrlArtist(Url.SERVER + aTag.first().attr("href"));
+                }
+            }
+        }
+
+        Elements seriesSisterElements = document.getElementsByClass("book_serie_block_title");
+        for (int i = 0; i < seriesSisterElements.size(); i++) {
+            Element element = seriesSisterElements.first();
+            if (element.text().contains("Цикл")) {
+                Elements seriesElement = element.getElementsByTag("a");
+                if (seriesElement.size() != 0) {
+                    bookPOJO.setSeries(seriesElement.first().text());
+                    bookPOJO.setUrlSeries(Url.SERVER + seriesElement.first().attr("href"));
+                }
+            }
+
+        }
+
+
+        Elements genreConteiner = document.getElementsByClass("book_genre_pretitle");
         if (genreConteiner.size() != 0) {
             Elements aTag = genreConteiner.first().getElementsByTag("a");
             if (aTag.size() != 0) {
                 Element a = aTag.first();
                 bookPOJO.setGenre(a.text());
-                bookPOJO.setUrlGenre(a.attr("href"));
+                bookPOJO.setUrlGenre(Url.SERVER + a.attr("href"));
             }
-        }
-
-        Elements autorUrlConteiner = document.getElementsByAttributeValue("rel", "author");
-        if (autorUrlConteiner.size() != 0) {
-            bookPOJO.setUrlAutor(autorUrlConteiner.first().attr("href"));
         }
 
         bookPOJO.setUrl(url);
 
-        Elements comentsTitle = document.getElementsByClass("comments-title");
-        if (comentsTitle.size() != 0) {
-            bookPOJO.setComents(comentsTitle.first().text());
-        }
-
-        Elements favoriteConteiner = document.getElementsByClass("ls-favourite-count");
-        if (favoriteConteiner.size() != 0) {
-            bookPOJO.setFavorite(Integer.valueOf(favoriteConteiner.first().text()));
+        Element comentsTitle = document.getElementById("comments_count");
+        if (comentsTitle != null) {
+            bookPOJO.setComents(comentsTitle.text());
         }
 
         return bookPOJO;
+    }
+
+    public static BookPOJO parceJsonToBookPojo(String json) {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        return gson.fromJson(json, BookPOJO.class);
+    }
+
+    public int getComents() {
+        return coments;
+    }
+
+    public void setComents(@NonNull String coments) {
+        coments = coments.replaceAll("[^0-9]", "");
+        if (!coments.matches("^\\d+$")) {
+            this.coments = 0;
+        } else {
+            int count = Integer.parseInt(coments);
+            if (count < 0) throw new IllegalArgumentException("Value must be more 0");
+            this.coments = count;
+        }
+    }
+
+    public void setReting(@NonNull String reting) {
+        if (reting.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Incorect value");
+        }
+        this.reting = reting;
+    }
+
+    public boolean isNull() {
+        return photo == null || autor == null || artist == null || urlArtist == null
+                || genre == null || urlGenre == null
+                || name == null || url == null;
     }
 
     public static Observable<BookPOJO> getDescription(String url) {
@@ -331,7 +324,6 @@ public class BookPOJO {
                 "\"genre\":\"" + genre + "\"" +
                 "\"urlGenre\":\"" + urlGenre + "\"" +
                 "\"reting\":\"" + reting + "\"" +
-                "\"favorite\":\"" + favorite + "\"" +
                 "\"coments\":\"" + coments + "\"" +
                 "\"name\":\"" + name + "\"" +
                 "\"url\":\"" + url + "\"" +

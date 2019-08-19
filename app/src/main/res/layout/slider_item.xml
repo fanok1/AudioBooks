@@ -9,7 +9,9 @@
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="@dimen/books_other_width"
-        android:layout_height="@dimen/books_other_width"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
         android:contentDescription="@string/book_cover"
         tools:srcCompat="@tools:sample/avatars[1]" />
 
@@ -19,6 +21,7 @@
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="3"
-        tools:text="dawdjawiudguyawgduyawgduyawgvdytawvdyiwvcyawvdytawvcavcacsdawdsc" />
+        android:gravity="center"
+        tools:text="Ntcn" />
 
 </LinearLayout>

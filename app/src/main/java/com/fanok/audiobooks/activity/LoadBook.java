@@ -53,7 +53,6 @@ public class LoadBook extends AppCompatActivity {
 
                     @Override
                     public void onError(Throwable e) {
-                        e.printStackTrace();
                         finish();
                     }
 

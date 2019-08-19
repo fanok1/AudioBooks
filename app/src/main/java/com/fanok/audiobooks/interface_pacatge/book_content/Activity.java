@@ -5,7 +5,7 @@ import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 
 public interface Activity extends MvpView {
-    void setTabPostion(int postion);
+    void setTabPostion(String title);
 
     void refreshActivity();
 

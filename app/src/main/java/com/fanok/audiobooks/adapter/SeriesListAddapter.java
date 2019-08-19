@@ -11,7 +11,6 @@ import android.widget.TextView;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
-import com.tolstykh.textviewrichdrawable.TextViewRichDrawable;
 
 import java.util.ArrayList;
 
@@ -77,8 +76,6 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
 
         private TextView mLine;
         private TextView mText;
-        private TextViewRichDrawable mReting;
-        private TextViewRichDrawable mComents;
         private LinearLayout mLinearLayout;
 
 
@@ -87,8 +84,6 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
 
             mLine = itemView.findViewById(R.id.line);
             mText = itemView.findViewById(R.id.text);
-            mReting = itemView.findViewById(R.id.reting);
-            mComents = itemView.findViewById(R.id.coments);
             mLinearLayout = itemView.findViewById(R.id.item);
 
             itemView.setOnClickListener(view -> {
@@ -106,19 +101,6 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
             }
             mLine.setText(String.valueOf(getAdapterPosition() + 1));
             mText.setText(book.getName());
-
-            if (book.getReting().isEmpty()) {
-                mReting.setVisibility(View.GONE);
-            } else {
-                mReting.setText(book.getReting());
-                mReting.setVisibility(View.VISIBLE);
-            }
-            if (book.getComents().isEmpty()) {
-                mComents.setVisibility(View.GONE);
-            } else {
-                mComents.setText(book.getComents());
-                mComents.setVisibility(View.VISIBLE);
-            }
         }
     }
 }
