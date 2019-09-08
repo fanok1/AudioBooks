@@ -15,9 +15,10 @@
     <color name="primaryTextColorLight">#000000</color>
     <color name="primaryLightColorLight">#52c7b8</color>
     <color name="lightColor">#999999</color>
-    <color name="colorBackgraundLight">#E1E2E1</color>
+    <color name="colorBackgraundLight">#fafafa</color>
     <color name="BackgroundItemColor">#eff2ed</color>
     <color name="selectableItemBackgroundLight">#efefef</color>
+    <color name="colorNavigayionItemLight">#626368</color>
 
 
 </resources>

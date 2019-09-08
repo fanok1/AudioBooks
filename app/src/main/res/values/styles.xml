@@ -44,8 +44,8 @@
         <item name="colorPrimary">@color/primaryColorLight</item>
         <item name="colorPrimaryDark">@color/primaryDarkColorLight</item>
         <item name="colorPrimaryText">@color/primaryTextColorLight</item>
-        <item name="colorSelected">@color/primaryTextColorLight</item>
-        <item name="colorUnSelected">@color/primaryTextColorLight</item>
+        <item name="colorSelected">@color/colorNavigayionItemLight</item>
+        <item name="colorUnSelected">@color/colorNavigayionItemLight</item>
         <item name="backgroundSelected">@color/primaryLightColorLight</item>
         <item name="backgroundItem">@color/BackgroundItemColor</item>
         <item name="hrefColor">@color/hrefColor</item>

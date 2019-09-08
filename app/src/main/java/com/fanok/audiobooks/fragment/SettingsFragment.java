@@ -21,6 +21,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.preferences, rootKey);
+        Objects.requireNonNull(getActivity()).setTitle(R.string.menu_settings);
         PreferenceManager.setDefaultValues(
                 Objects.requireNonNull(getActivity()).getApplicationContext(), R.xml.preferences,
                 false);
