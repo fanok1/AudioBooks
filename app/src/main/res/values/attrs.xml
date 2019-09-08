@@ -10,5 +10,6 @@
         <attr name="subTextColor" format="color" />
         <attr name="backgraundColor" format="color" />
         <attr name="mySelectableItemBackground" format="color" />
+        <attr name="colorItemMenu" format="color" />
     </declare-styleable>
 </resources>

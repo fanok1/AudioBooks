@@ -5,6 +5,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.util.Log;
@@ -21,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ShareCompat;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
@@ -89,6 +93,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     ImageButton mNextBottom;
     @BindView(R.id.forward)
     ImageButton mForward;
+    @BindView(R.id.speed)
+    ImageButton mSpeed;
     private TabLayout tabs;
     private SectionsPagerAdapter sectionsPagerAdapter;
     private BookPOJO mBookPOJO;
@@ -151,6 +157,21 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         mBookPOJO = BookPOJO.parceJsonToBookPojo(json);
         setContentView(R.layout.activity_book);
         ButterKnife.bind(this);
+
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
+        if (themeName != null) {
+            if (themeName.equals(getString(R.string.theme_dark))) {
+                setTheme(R.style.AppTheme_NoActionBar);
+            } else if (themeName.equals(getString(R.string.theme_light))) {
+                setTheme(R.style.LightAppTheme_NoActionBar);
+            }
+        }
+
+
         setTitle(mBookPOJO.getName().trim());
         sectionsPagerAdapter = new SectionsPagerAdapter(this,
                 getSupportFragmentManager(), mBookPOJO.getUrl());
@@ -265,8 +286,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         });
 
 
-        if (savedInstanceState == null) mPresenter.onCreate(mBookPOJO, this);
-        else {
+        if (savedInstanceState == null) {
+            mPresenter.onCreate(mBookPOJO, this);
+        } else {
             mPresenter.onOrintationChangeListner();
         }
 
@@ -298,6 +320,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         mNextBottom.setOnClickListener(view -> mPresenter.buttomNextClick(view));
         mRewind.setOnClickListener(view -> mPresenter.buttomRewindClick(view));
         mForward.setOnClickListener(view -> mPresenter.buttomForwardClick(view));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mSpeed.setOnClickListener(v -> mPresenter.buttonSpeedClick(v));
+            mSpeed.setVisibility(View.VISIBLE);
+        } else {
+            mSpeed.setVisibility(View.GONE);
+        }
 
 
     }
@@ -465,5 +494,25 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                 }
             }
         }
+    }
+
+    @Override
+    public Resources.Theme getTheme() {
+        Resources.Theme theme = super.getTheme();
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
+        if (themeName != null) {
+            if (themeName.equals(getString(R.string.theme_dark))) {
+                theme.applyStyle(R.style.AppTheme_NoActionBar, true);
+            } else if (themeName.equals(getString(R.string.theme_light))) {
+                theme.applyStyle(R.style.LightAppTheme_NoActionBar, true);
+            }
+        }
+
+
+        return theme;
     }
 }

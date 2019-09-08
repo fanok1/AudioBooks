@@ -149,7 +149,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private BroadcastReceiver play = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (mediaPlayer.isPlaying()) {
+            if (isPlaying()) {
                 pauseMedia();
             } else if (prepared) {
                 resumeMedia();
@@ -195,6 +195,19 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
     };
 
+    private BroadcastReceiver setSpeed = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mediaPlayer != null) {
+                Intent broadcastIntent = new Intent(Broadcast_SET_IMAGE);
+                broadcastIntent.putExtra("id", R.drawable.ic_pause);
+                sendBroadcast(broadcastIntent);
+                mediaPlayer.setPlaybackParams(
+                        mediaPlayer.getPlaybackParams().setSpeed(BookPresenter.speed));
+            }
+        }
+    };
+
     public static boolean isPlay() {
         return isPlay;
     }
@@ -228,6 +241,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         register_seekToPrevious10Sec();
         register_showTitle();
         register_getPosition();
+        register_setSpeed();
     }
 
     //The system calls this method when an activity, requests the service be started
@@ -291,7 +305,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     @Override
     public boolean onUnbind(Intent intent) {
-        if (!mediaPlayer.isPlaying()) {
+        if (!isPlaying()) {
             mediaSession.release();
             removeNotification();
         }
@@ -305,13 +319,15 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             stopMedia();
             mediaPlayer.release();
         }
+
+        removeNotification();
         removeAudioFocus();
         //Disable the PhoneStateListener
         if (phoneStateListener != null) {
             telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
         }
 
-        removeNotification();
+
 
         //unregister BroadcastReceivers
         unregisterReceiver(becomingNoisyReceiver);
@@ -324,6 +340,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         unregisterReceiver(seekToPrevious10Sec);
         unregisterReceiver(showTitle);
         unregisterReceiver(getPosition);
+        unregisterReceiver(setSpeed);
 
         //clear cached playlist
         new StorageUtil(getApplicationContext()).clearCachedAudioPlaylist();
@@ -405,7 +422,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 if (mediaPlayer == null) {
                     initMediaPlayer();
                 } else {
-                    if (!mediaPlayer.isPlaying() && !pause) {
+                    if (!isPlaying() && !pause) {
                         mediaPlayer.start();
                         buildNotification(PlaybackStatus.PLAYING);
                     } else {
@@ -420,7 +437,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 pause = false;
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                if (mediaPlayer.isPlaying()) {
+                if (isPlaying()) {
                     pause = false;
                     pauseMedia();
                 } else {
@@ -431,7 +448,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 // Lost focus for a short time, but it's ok to keep playing
                 // at an attenuated level
                 pause = false;
-                if (mediaPlayer.isPlaying()) mediaPlayer.setVolume(0.1f, 0.1f);
+                if (isPlaying()) mediaPlayer.setVolume(0.1f, 0.1f);
                 break;
         }
     }
@@ -449,8 +466,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private boolean removeAudioFocus() {
-        return AudioManager.AUDIOFOCUS_REQUEST_GRANTED ==
-                audioManager.abandonAudioFocus(this);
+        try {
+            return AudioManager.AUDIOFOCUS_REQUEST_GRANTED ==
+                    audioManager.abandonAudioFocus(this);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public boolean isPlaying() {
@@ -485,6 +506,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             e.printStackTrace();
             stopSelf();
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mediaPlayer.setPlaybackParams(
+                    mediaPlayer.getPlaybackParams().setSpeed(BookPresenter.speed));
+        }
+
         mediaPlayer.prepareAsync();
         Log.d(TAG, "initMediaPlayer: calld");
 
@@ -500,7 +527,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     private void stopMedia() {
         if (mediaPlayer == null) return;
-        if (mediaPlayer.isPlaying()) {
+        if (isPlaying()) {
             isPlay = false;
             mediaPlayer.stop();
             mediaSession.setActive(false);
@@ -508,7 +535,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private void pauseMedia() {
-        if (mediaPlayer.isPlaying()) {
+        if (isPlaying()) {
             buildNotification(PlaybackStatus.PAUSED);
             isPlay = false;
             mediaPlayer.pause();
@@ -518,7 +545,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private void resumeMedia() {
-        if (!mediaPlayer.isPlaying()) {
+        if (!isPlaying()) {
             isPlay = true;
             mediaPlayer.seekTo(resumePosition);
             mediaPlayer.start();
@@ -675,7 +702,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             @Override
             public void onPause() {
                 super.onPause();
-                if (mediaPlayer.isPlaying()) {
+                if (isPlaying()) {
                     pauseMedia();
                 } else {
                     resumeMedia();
@@ -894,7 +921,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 broadcastIntent.putExtra("timeEnd", timeDuration);
                 this.sendBroadcast(broadcastIntent);
 
-                if (mediaPlayer.isPlaying()) {
+                if (isPlaying()) {
                     Runnable notification = this::startPlayProgressUpdater;
                     handler.postDelayed(notification, 200);
                 }
@@ -907,7 +934,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private void startTimeProgressUpdater() {
         try {
             if (prepared) {
-                if (mediaPlayer.isPlaying()) {
+                if (isPlaying()) {
                     mAudioDBModel.setTime(urlBook, mediaPlayer.getCurrentPosition());
                     Runnable notification = this::startTimeProgressUpdater;
                     handler.postDelayed(notification, 10000);
@@ -965,6 +992,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         registerReceiver(getPosition, filter);
     }
 
+    private void register_setSpeed() {
+        IntentFilter filter = new IntentFilter(BookPresenter.Broadcast_SET_SPEED);
+        registerReceiver(setSpeed, filter);
+    }
+
     /**
      * Service Binder
      */
@@ -973,8 +1005,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             // Return this instance of LocalService so clients can call public methods
             return MediaPlayerService.this;
         }
-
-
     }
 
 }

@@ -74,16 +74,11 @@
     <string name="no_comments">Комментарии отсутствуют</string>
     <string name="open_site">Открыть на сайте</string>
     <string name="worning_loading_not_finish">Данные загружены не до конца.</string>
+    <string name="title_set_speed_popup">Выберите скорость</string>
 
-
-    <string-array name="speed">
-        <item>0.5</item>
-        <item>0.75</item>
-        <item>1</item>
-        <item>1.25</item>
-        <item>1.5</item>
-        <item>1.75</item>
-        <item>2</item>
-    </string-array>
+    <!--Settings -->
+    <string name="setting_theme">Тема</string>
+    <string name="theme_dark">Темная</string>
+    <string name="theme_light">Светлая</string>
 
 </resources>

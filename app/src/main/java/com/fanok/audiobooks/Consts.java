@@ -72,7 +72,7 @@ public class Consts {
         Drawable drawable = item.getIcon();
         drawable = DrawableCompat.wrap(drawable);
         DrawableCompat.setTint(drawable,
-                Consts.getAttributeColor(context, R.attr.colorPrimaryText));
+                Consts.getAttributeColor(context, R.attr.colorItemMenu));
         item.setIcon(drawable);
     }
 

@@ -35,4 +35,6 @@ public interface ActivityPresenter {
     void seekChange(View view);
 
     void onOrintationChangeListner();
+
+    void buttonSpeedClick(View view);
 }

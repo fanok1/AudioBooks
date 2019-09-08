@@ -13,12 +13,16 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
@@ -55,6 +59,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     public static final String Broadcast_SEEK_PREVIOUS_10 = "SeekToPrevious10";
     public static final String Broadcast_SHOW_TITLE = "SHOW_TITLE";
     public static final String Broadcast_GET_POSITION = "GET_POSITION";
+    public static final String Broadcast_SET_SPEED = "SET_SPEED";
     public static boolean start = false;
 
     private BookPOJO mBookPOJO;
@@ -70,6 +75,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private MediaPlayerService player;
     private boolean serviceBound = false;
     private int curentTrack = 0;
+    public static float speed = 1;
 
     private AudioModelInterfece mAudioModel;
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -333,5 +339,68 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             Intent broadcastIntent = new Intent(Broadcast_GET_POSITION);
             mContext.sendBroadcast(broadcastIntent);
         }
+    }
+
+    @Override
+    public void buttonSpeedClick(View view) {
+
+        final int step = 25;
+
+        final AlertDialog.Builder popDialog = new AlertDialog.Builder(view.getContext());
+        final LinearLayout linearLayout = new LinearLayout(view.getContext());
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        final TextView textView = new TextView(view.getContext());
+        textView.setGravity(Gravity.CENTER_HORIZONTAL);
+        textView.setText(String.valueOf(speed));
+        linearLayout.addView(textView);
+        final SeekBar seek = new SeekBar(view.getContext());
+        seek.setMax(200);
+        seek.incrementProgressBy(step);
+        seek.setProgress((int) speed * 100 - 100);
+        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progress = progress / step;
+                progress = progress * step;
+                String s = progress / 100 + 1 + "." + progress % 100;
+                textView.setText(s);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        linearLayout.addView(seek);
+
+        popDialog.setIcon(R.drawable.ic_play_speed);
+        popDialog.setTitle(view.getContext().getString(R.string.title_set_speed_popup));
+        popDialog.setView(linearLayout);
+
+
+        // Button OK
+        popDialog.setPositiveButton("OK",
+                (dialog, which) -> {
+                    float s = Float.valueOf(textView.getText().toString());
+                    if (s != speed) {
+                        setSpeed(s);
+                    }
+                    dialog.dismiss();
+                });
+
+
+        popDialog.create();
+        popDialog.show();
+    }
+
+    private void setSpeed(float value) {
+        speed = value;
+        mContext.sendBroadcast(new Intent(Broadcast_SET_SPEED));
     }
 }

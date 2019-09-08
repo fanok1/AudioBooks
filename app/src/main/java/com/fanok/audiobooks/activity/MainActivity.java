@@ -6,6 +6,7 @@ import static com.fanok.audiobooks.Consts.APP_PREFERENCES;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -19,6 +20,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.preference.PreferenceManager;
 
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
@@ -79,7 +81,23 @@ public class MainActivity extends MvpAppCompatActivity
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate: called");
         setContentView(R.layout.activity_main);
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
+        if (themeName != null) {
+            if (themeName.equals(getString(R.string.theme_dark))) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                setTheme(R.style.AppTheme_NoActionBar);
+            } else if (themeName.equals(getString(R.string.theme_light))) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                setTheme(R.style.LightAppTheme_NoActionBar);
+            }
+        }
+
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -156,12 +174,12 @@ public class MainActivity extends MvpAppCompatActivity
     }
 
     @Override
-    public void openActivity(@NotNull @NonNull Intent intent) {
+    public void openActivity(@NotNull Intent intent) {
         startActivity(intent);
     }
 
     @Override
-    public void showFragment(@NotNull @NonNull Fragment fragment, @NonNull String tag) {
+    public void showFragment(@NotNull Fragment fragment, @NonNull String tag) {
         if (fragmentsTag.size() != 0 && tag.equals(
                 fragmentsTag.get(fragmentsTag.size() - 1).getTag())
                 && !tag.equals("searchebleBooks")) {
@@ -176,11 +194,30 @@ public class MainActivity extends MvpAppCompatActivity
 
     }
 
-
     private void addFragmentTag(@NonNull String tag) {
         for (int i = 0; i < fragmentsTag.size(); i++) {
             if (fragmentsTag.get(i).getTag().equals(tag)) fragmentsTag.get(i).setSkip(true);
         }
         fragmentsTag.add(new FragmentTagSteck(tag));
+    }
+
+    @Override
+    public Resources.Theme getTheme() {
+        Resources.Theme theme = super.getTheme();
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
+        if (themeName != null) {
+            if (themeName.equals(getString(R.string.theme_dark))) {
+                theme.applyStyle(R.style.AppTheme_NoActionBar, true);
+            } else if (themeName.equals(getString(R.string.theme_light))) {
+                theme.applyStyle(R.style.LightAppTheme_NoActionBar, true);
+            }
+        }
+
+
+        return theme;
     }
 }

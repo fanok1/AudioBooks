@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="settings_them_titles">
+        <item>@string/theme_dark</item>
+        <item>@string/theme_light</item>
+    </string-array>
+
+</resources>

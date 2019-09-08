@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.provider.SearchRecentSuggestions;
 import android.util.Log;
@@ -18,6 +20,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -86,6 +89,21 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_searchable);
         ButterKnife.bind(this);
+
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
+        if (themeName != null) {
+            if (themeName.equals(getString(R.string.theme_dark))) {
+                setTheme(R.style.AppTheme_SwipeOnClose);
+            } else if (themeName.equals(getString(R.string.theme_light))) {
+                setTheme(R.style.LightAppTheme_SwipeOnClose);
+            }
+        }
+
+
         Intent intent = getIntent();
         modelId = intent.getIntExtra(Consts.ARG_MODEL, -1);
         if (modelId == -1) throw new IllegalArgumentException("modelId require parameter");
@@ -336,5 +354,25 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     @Override
     public void startBookActivity(@NotNull @NonNull BookPOJO bookPOJO) {
         BookActivity.startNewActivity(this, bookPOJO);
+    }
+
+    @Override
+    public Resources.Theme getTheme() {
+        Resources.Theme theme = super.getTheme();
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
+        if (themeName != null) {
+            if (themeName.equals(getString(R.string.theme_dark))) {
+                theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
+            } else if (themeName.equals(getString(R.string.theme_light))) {
+                theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
+            }
+        }
+
+
+        return theme;
     }
 }

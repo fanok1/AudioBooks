@@ -1,6 +1,6 @@
 <resources>
 
-    <!-- Base application theme. -->
+    <!-- DARK application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/primaryColor</item>
@@ -14,12 +14,12 @@
         <item name="subTextColor">@color/subTextColor</item>
         <item name="backgraundColor">@color/colorBackgraund</item>
         <item name="mySelectableItemBackground">@color/selectableItemBackground</item>
+        <item name="colorItemMenu">@color/primaryTextColor</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
@@ -32,6 +32,44 @@
     </style>
 
     <style name="AppTheme.NoAnimTheme" parent="AppTheme.NoActionBar">
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
+
+    <!-- LIGHT application theme. -->
+
+
+    <style name="LightAppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/primaryColorLight</item>
+        <item name="colorPrimaryDark">@color/primaryDarkColorLight</item>
+        <item name="colorPrimaryText">@color/primaryTextColorLight</item>
+        <item name="colorSelected">@color/primaryTextColorLight</item>
+        <item name="colorUnSelected">@color/primaryTextColorLight</item>
+        <item name="backgroundSelected">@color/primaryLightColorLight</item>
+        <item name="backgroundItem">@color/BackgroundItemColor</item>
+        <item name="hrefColor">@color/hrefColor</item>
+        <item name="subTextColor">@color/lightColor</item>
+        <item name="backgraundColor">@color/colorBackgraundLight</item>
+        <item name="mySelectableItemBackground">@color/selectableItemBackgroundLight</item>
+        <item name="colorItemMenu">@color/primaryTextColor</item>
+    </style>
+
+    <style name="LightAppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="LightAppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.ActionBar" />
+
+    <style name="LightAppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="LightAppTheme.SwipeOnClose" parent="LightAppTheme.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="LightAppTheme.NoAnimTheme" parent="LightAppTheme.NoActionBar">
         <item name="android:windowAnimationStyle">@null</item>
     </style>
 

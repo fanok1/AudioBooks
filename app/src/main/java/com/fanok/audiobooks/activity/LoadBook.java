@@ -2,10 +2,13 @@ package com.fanok.audiobooks.activity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
 
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.BookPOJO;
@@ -30,6 +33,19 @@ public class LoadBook extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.load_book_activity);
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
+        if (themeName != null) {
+            if (themeName.equals(getString(R.string.theme_dark))) {
+                setTheme(R.style.AppTheme_NoAnimTheme);
+            } else if (themeName.equals(getString(R.string.theme_light))) {
+                setTheme(R.style.LightAppTheme_NoAnimTheme);
+            }
+        }
+
         mContext = this;
         Intent intent = getIntent();
         mUrl = intent.getStringExtra("url");
@@ -62,5 +78,25 @@ public class LoadBook extends AppCompatActivity {
                         BookActivity.startNewActivity(mContext, mBookPOJO);
                     }
                 });
+    }
+
+    @Override
+    public Resources.Theme getTheme() {
+        Resources.Theme theme = super.getTheme();
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
+        if (themeName != null) {
+            if (themeName.equals(getString(R.string.theme_dark))) {
+                theme.applyStyle(R.style.AppTheme_NoAnimTheme, true);
+            } else if (themeName.equals(getString(R.string.theme_light))) {
+                theme.applyStyle(R.style.LightAppTheme_NoAnimTheme, true);
+            }
+        }
+
+
+        return theme;
     }
 }

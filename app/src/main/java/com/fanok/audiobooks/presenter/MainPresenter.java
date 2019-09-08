@@ -12,6 +12,7 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.fragment.FavoriteFragment;
+import com.fanok.audiobooks.fragment.SettingsFragment;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 
 @InjectViewState
@@ -53,6 +54,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             getViewState().showFragment(fragment, "history");
 
         } else if (id == R.id.nav_settings) {
+            getViewState().showFragment(new SettingsFragment(), "swttings");
+
 
         } else if (id == R.id.nav_about) {
 
