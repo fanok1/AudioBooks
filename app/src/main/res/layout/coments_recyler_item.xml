@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -71,27 +70,23 @@
             android:layout_marginBottom="@dimen/text_margin"
             android:orientation="horizontal">
 
-            <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+            <TextView
                 android:id="@+id/reting"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="?attr/subTextColor"
                 android:textSize="@dimen/titleSize"
-                app:compoundDrawableHeight="@dimen/scale_drawable"
-                app:compoundDrawableWidth="@dimen/scale_drawable"
-                app:drawableStartVector="@drawable/ic_reting"
+                android:drawableStart="@drawable/ic_reting"
                 tools:text="+7" />
 
-            <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+            <TextView
                 android:id="@+id/coments"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/text_margin"
                 android:textColor="?attr/subTextColor"
                 android:textSize="@dimen/titleSize"
-                app:compoundDrawableHeight="@dimen/scale_drawable"
-                app:compoundDrawableWidth="@dimen/scale_drawable"
-                app:drawableStartVector="@drawable/ic_coments"
+                android:drawableStart="@drawable/ic_coments"
                 tools:text="78" />
         </LinearLayout>
 

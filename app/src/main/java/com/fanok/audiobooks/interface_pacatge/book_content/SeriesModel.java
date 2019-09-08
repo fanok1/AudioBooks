@@ -1,6 +1,6 @@
 package com.fanok.audiobooks.interface_pacatge.book_content;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 

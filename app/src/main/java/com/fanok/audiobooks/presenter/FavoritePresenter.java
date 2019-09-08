@@ -2,9 +2,10 @@ package com.fanok.audiobooks.presenter;
 
 
 import android.content.Context;
-import android.support.v7.widget.PopupMenu;
 import android.view.Gravity;
 import android.view.View;
+
+import androidx.appcompat.widget.PopupMenu;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
@@ -12,6 +13,7 @@ import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
+import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
 
@@ -23,11 +25,13 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
     private ArrayList<BookPOJO> books;
     private BooksDBModel mBooksDBModel;
+    private AudioDBModel mAudioDBModel;
     private int table;
 
     @Override
     public void onCreate(Context context, int table) {
         mBooksDBModel = new BooksDBModel(context);
+        mAudioDBModel = new AudioDBModel(context);
         books = new ArrayList<>();
         this.table = table;
     }
@@ -75,6 +79,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                         mBooksDBModel.removeFavorite(books.get(position));
                     } else if (table == Consts.TABLE_HISTORY) {
                         mBooksDBModel.removeHistory(books.get(position));
+                        mAudioDBModel.remove(books.get(position).getUrl());
                     }
                     books.remove(position);
                     getViewState().showData(books);

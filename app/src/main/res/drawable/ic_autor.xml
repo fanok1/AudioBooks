@@ -1,7 +1,7 @@
 <!-- drawable/account_edit.xml -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
+    android:width="@dimen/scale_drawable"
+    android:height="@dimen/scale_drawable"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path

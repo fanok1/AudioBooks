@@ -3,11 +3,6 @@ package com.fanok.audiobooks.fragment;
 import static java.lang.Integer.MAX_VALUE;
 
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +12,12 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
@@ -31,7 +32,6 @@ import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.DescriptionPOJO;
 import com.fanok.audiobooks.presenter.BookDescriptionPresenter;
 import com.squareup.picasso.Picasso;
-import com.tolstykh.textviewrichdrawable.TextViewRichDrawable;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -51,11 +51,11 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     @BindView(R.id.imageView)
     ImageView mImageView;
     @BindView(R.id.reting)
-    TextViewRichDrawable mReting;
+    TextView mReting;
     @BindView(R.id.genre)
     TextView mGenre;
     @BindView(R.id.time)
-    TextViewRichDrawable mTime;
+    TextView mTime;
     @BindView(R.id.author)
     TextView mAuthor;
     @BindView(R.id.autorConteiner)
@@ -84,11 +84,11 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     @InjectPresenter
     BookDescriptionPresenter mPresenter;
     @BindView(R.id.favorite)
-    TextViewRichDrawable mFavorite;
+    TextView mFavorite;
     @BindView(R.id.like)
-    TextViewRichDrawable mLike;
+    TextView mLike;
     @BindView(R.id.disLike)
-    TextViewRichDrawable mDisLike;
+    TextView mDisLike;
     private String mUrl;
     private BooksOtherAdapter mAdapterBooksRecomended;
     private boolean showMore;

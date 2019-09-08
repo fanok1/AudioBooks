@@ -1,6 +1,7 @@
 package com.fanok.audiobooks.interface_pacatge.searchable;
 
-import android.support.annotation.NonNull;
+
+import androidx.annotation.NonNull;
 
 import com.arellomobile.mvp.MvpView;
 import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;

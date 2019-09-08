@@ -1,6 +1,7 @@
 package com.fanok.audiobooks.model;
 
-import android.support.annotation.NonNull;
+
+import androidx.annotation.NonNull;
 
 import com.fanok.audiobooks.pojo.ComentsPOJO;
 import com.fanok.audiobooks.pojo.SubComentsPOJO;

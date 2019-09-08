@@ -2,8 +2,9 @@ package com.fanok.audiobooks.interface_pacatge.books;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
 import android.view.View;
+
+import androidx.annotation.NonNull;
 
 public interface BooksPresenter {
 

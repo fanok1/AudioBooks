@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.fanok.audiobooks.model.DBHelper;
 
-public abstract class BooksDBAbstract implements BooksDBHelperInterfase {
+public abstract class BooksDBAbstract {
     private DBHelper mDBHelper;
 
     public BooksDBAbstract(Context context) {

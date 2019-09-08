@@ -1,6 +1,6 @@
 package com.fanok.audiobooks.pojo;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public class SeriesPOJO extends OtherArtistPOJO {
 

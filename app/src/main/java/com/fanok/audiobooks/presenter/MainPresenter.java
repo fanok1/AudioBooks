@@ -1,8 +1,9 @@
 package com.fanok.audiobooks.presenter;
 
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
 import android.view.MenuItem;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;

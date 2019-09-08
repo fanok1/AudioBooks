@@ -69,6 +69,11 @@
     <string name="error_load_books">Не удалось загрузить книги</string>
     <string name="in_day">За день</string>
     <string name="tab_text_4">Другие озвучки</string>
+    <string name="file_not_dowland">Файл еще не загрузился полностью</string>
+    <string name="notification_channel_name">channelId</string>
+    <string name="no_comments">Комментарии отсутствуют</string>
+    <string name="open_site">Открыть на сайте</string>
+    <string name="worning_loading_not_finish">Данные загружены не до конца.</string>
 
 
     <string-array name="speed">

@@ -2,11 +2,6 @@ package com.fanok.audiobooks.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +9,12 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
@@ -23,6 +24,8 @@ import com.fanok.audiobooks.adapter.SeriesListAddapter;
 import com.fanok.audiobooks.interface_pacatge.book_content.Series;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 import com.fanok.audiobooks.presenter.BookSeriesPresenter;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -121,7 +124,7 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
     }
 
     @Override
-    public void showBook(@NonNull String url) {
+    public void showBook(@NotNull @NonNull String url) {
         Intent intent = new Intent(getContext(), LoadBook.class);
         intent.putExtra("url", url);
         Objects.requireNonNull(getContext()).startActivity(intent);

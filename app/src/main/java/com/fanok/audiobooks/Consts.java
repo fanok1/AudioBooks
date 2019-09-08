@@ -4,11 +4,12 @@ package com.fanok.audiobooks;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.MenuItem;
+
+import androidx.annotation.NonNull;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import java.util.regex.Pattern;
 
@@ -18,6 +19,9 @@ public class Consts {
             "^https?://.+\\..+$");
     public static final Pattern REGEXP_URL_PHOTO = Pattern.compile(
             "^https?://.+\\.((jpg)|(png)|(jpeg)).*$");
+
+    public static final Pattern REGEXP_URL_MP3 = Pattern.compile(
+            "^https?://.+\\.mp3.*$");
 
     public static final Pattern REGEXP_SIKRET_KEY = Pattern.compile(
             "\"security_ls_key\":\"(\\w+)\"");

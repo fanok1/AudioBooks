@@ -5,12 +5,13 @@ import static com.fanok.audiobooks.Consts.DBName;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.support.annotation.NonNull;
+
+import androidx.annotation.NonNull;
 
 public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(@NonNull Context context) {
-        super(context, DBName, null, 4);
+        super(context, DBName, null, 8);
     }
 
     @Override
@@ -48,12 +49,19 @@ public class DBHelper extends SQLiteOpenHelper {
                 + "time text,"
                 + "reting text,"
                 + "coments integer" + ");");
+
+        sqLiteDatabase.execSQL("create table audio ("
+                + "id integer primary key autoincrement,"
+                + "url_book text not null UNIQUE,"
+                + "name text not null,"
+                + "time integer DEFAULT 0" + ");");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS favorite");
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS history");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS audio");
         onCreate(sqLiteDatabase);
     }
 }

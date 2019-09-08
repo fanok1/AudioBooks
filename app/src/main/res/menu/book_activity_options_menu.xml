@@ -28,6 +28,11 @@
             app:showAsAction="never" />
 
         <item
+            android:id="@+id/openSite"
+            android:title="@string/open_site"
+            app:showAsAction="never" />
+
+        <item
             android:id="@+id/addMainScreen"
             android:title="@string/add_to_main_screen"
             android:visible="false"

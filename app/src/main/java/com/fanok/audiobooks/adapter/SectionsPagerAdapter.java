@@ -1,17 +1,20 @@
 package com.fanok.audiobooks.adapter;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
 
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.fragment.ComentsBookFragment;
 import com.fanok.audiobooks.fragment.DescriptionBookFragment;
 import com.fanok.audiobooks.fragment.OtherArtistFragment;
 import com.fanok.audiobooks.fragment.SeriesBookFragment;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -24,7 +27,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     public SectionsPagerAdapter(@NonNull Context context, @NonNull FragmentManager fm,
             @NonNull String url) {
-        super(fm);
+        super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         mUrl = url;
         tabItems = new ArrayList<>();
         tabItems.add(context.getResources().getString(R.string.tab_text_1));
@@ -33,6 +36,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     }
 
+    @NotNull
     @Override
     public Fragment getItem(int position) {
         switch (position) {

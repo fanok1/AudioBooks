@@ -10,6 +10,6 @@
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/text_margin_book_description"
         android:background="?attr/backgroundItem"
-        android:textColor="@color/primaryTextColor"
+        android:textColor="?attr/colorPrimaryText"
         android:textSize="@dimen/titleSize" />
 </LinearLayout>

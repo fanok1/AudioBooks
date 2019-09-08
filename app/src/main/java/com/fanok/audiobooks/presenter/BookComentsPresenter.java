@@ -1,8 +1,9 @@
 package com.fanok.audiobooks.presenter;
 
 
-import android.support.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
@@ -68,14 +69,16 @@ public class BookComentsPresenter extends MvpPresenter<Coments> implements
 
                         @Override
                         public void onError(Throwable e) {
-                            getViewState().showToast(R.string.error_load_data);
-                            onComplete();
+                            getViewState().setPlaceholder(R.string.error_load_coments);
+                            getViewState().showProgress(false);
+                            isLoading = false;
                         }
 
                         @Override
                         public void onComplete() {
                             Log.d(TAG, "onComplete");
                             getViewState().showComents(mComentsPOJOS);
+                            getViewState().setPlaceholder(R.string.no_comments);
                             getViewState().showProgress(false);
                             isLoading = false;
                         }

@@ -1,6 +1,6 @@
 package com.fanok.audiobooks.pojo;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public abstract class ContentParentPOJO {
     private String image = "";

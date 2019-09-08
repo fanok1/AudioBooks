@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -57,27 +56,13 @@
                     tools:text="Фантастика" />
 
 
-                <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
-                    android:id="@+id/time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/text_margin_book_description"
-                    android:maxLines="1"
-                    android:singleLine="true"
-                    android:textColor="?attr/subTextColor"
-                    android:textSize="@dimen/textSizeBookDescription"
-                    app:compoundDrawableHeight="@dimen/scale_drawable"
-                    app:compoundDrawableWidth="@dimen/scale_drawable"
-                    app:drawableStartVector="@drawable/ic_clock"
-                    tools:text="13 часов 15 минут" />
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/text_margin_book_description"
                     android:orientation="horizontal">
 
-                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                    <TextView
                         android:id="@+id/like"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -86,12 +71,10 @@
                         android:singleLine="true"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/textSizeBookDescription"
-                        app:compoundDrawableHeight="@dimen/scale_drawable"
-                        app:compoundDrawableWidth="@dimen/scale_drawable"
-                        app:drawableStartVector="@drawable/ic_like"
+                        android:drawableStart="@drawable/ic_like"
                         tools:text="10" />
 
-                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                    <TextView
                         android:id="@+id/disLike"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -99,41 +82,10 @@
                         android:singleLine="true"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/textSizeBookDescription"
-                        app:compoundDrawableHeight="@dimen/scale_drawable"
-                        app:compoundDrawableWidth="@dimen/scale_drawable"
-                        app:drawableStartVector="@drawable/ic_dislike"
+                        android:drawableStart="@drawable/ic_dislike"
                         tools:text="10" />
 
                 </LinearLayout>
-
-                <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
-                    android:id="@+id/favorite"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/text_margin_book_description"
-                    android:maxLines="1"
-                    android:singleLine="true"
-                    android:textColor="?attr/subTextColor"
-                    android:textSize="@dimen/textSizeBookDescription"
-                    app:compoundDrawableHeight="@dimen/scale_drawable"
-                    app:compoundDrawableWidth="@dimen/scale_drawable"
-                    app:drawableStartVector="@drawable/ic_favorite_description"
-                    tools:text="520" />
-
-
-                <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
-                    android:id="@+id/reting"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/text_margin_book_description"
-                    android:maxLines="1"
-                    android:singleLine="true"
-                    android:textColor="?attr/subTextColor"
-                    android:textSize="@dimen/textSizeBookDescription"
-                    app:compoundDrawableHeight="@dimen/scale_drawable"
-                    app:compoundDrawableWidth="@dimen/scale_drawable"
-                    app:drawableStartVector="@drawable/ic_reting"
-                    tools:text="+4972" />
 
                 <LinearLayout
                     android:id="@+id/autorConteiner"
@@ -142,7 +94,7 @@
                     android:layout_marginTop="@dimen/text_margin_book_description"
                     android:orientation="horizontal">
 
-                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                    <TextView
                         android:layout_width="@dimen/text_width"
                         android:layout_height="wrap_content"
                         android:maxLines="1"
@@ -150,9 +102,7 @@
                         android:text="@string/autor"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/textSizeBookDescription"
-                        app:compoundDrawableHeight="@dimen/scale_drawable"
-                        app:compoundDrawableWidth="@dimen/scale_drawable"
-                        app:drawableStartVector="@drawable/ic_autor" />
+                        android:drawableStart="@drawable/ic_autor" />
 
                     <TextView
                         android:id="@+id/author"
@@ -173,7 +123,7 @@
                     android:layout_marginTop="@dimen/text_margin_book_description"
                     android:orientation="horizontal">
 
-                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                    <TextView
                         android:layout_width="@dimen/text_width"
                         android:layout_height="wrap_content"
                         android:maxLines="1"
@@ -181,9 +131,7 @@
                         android:text="@string/artist"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/textSizeBookDescription"
-                        app:compoundDrawableHeight="@dimen/scale_drawable"
-                        app:compoundDrawableWidth="@dimen/scale_drawable"
-                        app:drawableStartVector="@drawable/ic_artist" />
+                        android:drawableStart="@drawable/ic_artist" />
 
                     <TextView
                         android:id="@+id/artist"
@@ -197,6 +145,7 @@
                         tools:text="Клюквин Александр" />
                 </LinearLayout>
 
+
                 <LinearLayout
                     android:id="@+id/seriesConteiner"
                     android:layout_width="wrap_content"
@@ -204,7 +153,7 @@
                     android:layout_marginTop="@dimen/text_margin_book_description"
                     android:orientation="horizontal">
 
-                    <com.tolstykh.textviewrichdrawable.TextViewRichDrawable
+                    <TextView
                         android:layout_width="@dimen/text_width"
                         android:layout_height="wrap_content"
                         android:maxLines="1"
@@ -212,9 +161,7 @@
                         android:text="@string/series"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/textSizeBookDescription"
-                        app:compoundDrawableHeight="@dimen/scale_drawable"
-                        app:compoundDrawableWidth="@dimen/scale_drawable"
-                        app:drawableStartVector="@drawable/ic_book" />
+                        android:drawableStart="@drawable/ic_book" />
 
                     <TextView
                         android:id="@+id/series"
@@ -227,6 +174,42 @@
                         android:textSize="@dimen/textSizeBookDescription"
                         tools:text="Гарри Поттер" />
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:drawableStart="@drawable/ic_clock"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    tools:text="13 часов 15 минут" />
+
+                <TextView
+                    android:id="@+id/favorite"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:drawableStart="@drawable/ic_favorite_description"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    tools:text="520" />
+
+                <TextView
+                    android:id="@+id/reting"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/text_margin_book_description"
+                    android:drawableStart="@drawable/ic_reting"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    tools:text="+4972" />
 
                 <View
                     android:layout_width="match_parent"
@@ -271,7 +254,7 @@
                     android:textSize="@dimen/textSizeBookDescription"
                     android:visibility="gone" />
 
-                <android.support.v7.widget.RecyclerView
+                <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recommendedBooks"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -287,10 +270,7 @@
         style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/parent"
-        app:layout_constraintStart_toStartOf="@+id/parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_gravity="center" />
 
 
-</android.support.constraint.ConstraintLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
