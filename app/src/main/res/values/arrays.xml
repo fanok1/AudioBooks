@@ -5,4 +5,59 @@
         <item>@string/theme_light</item>
     </string-array>
 
+    <string-array name="settings_them_values">
+        <item>@string/theme_dark_value</item>
+        <item>@string/theme_light_value</item>
+    </string-array>
+
+
+    <string-array name="settings_lang_titles">
+        <item>@string/lang_ru</item>
+        <item>@string/lang_ua</item>
+        <item>@string/lang_en</item>
+    </string-array>
+
+    <string-array name="settings_lang_values">
+        <item>ru</item>
+        <item>uk</item>
+        <item>en</item>
+    </string-array>
+
+
+    <string-array name="settings_start_screen_titles">
+        <item>@string/menu_audiobooks</item>
+        <item>@string/menu_genre</item>
+        <item>@string/menu_autor</item>
+        <item>@string/menu_artist</item>
+        <item>@string/menu_favorite</item>
+        <item>@string/menu_history</item>
+    </string-array>
+
+    <string-array name="settings_start_screen_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+
+    <string-array name="settings_sort_titles">
+        <item>@string/sort_title_date</item>
+        <item>@string/sort_title_name</item>
+        <item>@string/sort_title_genre</item>
+        <item>@string/sort_title_autor</item>
+        <item>@string/sort_title_artist</item>
+        <item>@string/sort_title_series</item>
+    </string-array>
+
+    <string-array name="settings_sort_values">
+        <item>@string/sort_value_date</item>
+        <item>@string/sort_value_name</item>
+        <item>@string/sort_value_genre</item>
+        <item>@string/sort_value_autor</item>
+        <item>@string/sort_value_artist</item>
+        <item>@string/sort_value_series</item>
+    </string-array>
+
 </resources>

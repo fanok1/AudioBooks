@@ -2,11 +2,71 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-
     <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search_black_24dp"
         android:title="@string/search"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="collapseActionView|ifRoom" />
+
+    <item
+        android:id="@+id/order"
+        android:icon="@drawable/ic_sort"
+        android:title="@string/order"
+        android:visible="false"
+        app:showAsAction="ifRoom">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/date"
+                    android:title="@string/sort_title_date" />
+
+                <item
+                    android:id="@+id/name"
+                    android:title="@string/sort_title_name" />
+
+                <item
+                    android:id="@+id/genre"
+                    android:title="@string/sort_title_genre" />
+
+                <item
+                    android:id="@+id/autor"
+                    android:title="@string/sort_title_autor" />
+
+                <item
+                    android:id="@+id/artist"
+                    android:title="@string/sort_title_artist" />
+
+                <item
+                    android:id="@+id/series"
+                    android:title="@string/sort_title_series" />
+            </group>
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/filter"
+        android:icon="@drawable/ic_filter"
+        android:title="@string/filter"
+        android:visible="false"
+        app:showAsAction="ifRoom">
+        <menu>
+            <item
+                android:id="@+id/genre_filter"
+                android:title="@string/menu_genre" />
+
+            <item
+                android:id="@+id/autor_filter"
+                android:title="@string/menu_autor" />
+
+            <item
+                android:id="@+id/artist_filter"
+                android:title="@string/menu_artist" />
+
+            <item
+                android:id="@+id/series_filter"
+                android:title="@string/filter_series" />
+        </menu>
+    </item>
+
 </menu>

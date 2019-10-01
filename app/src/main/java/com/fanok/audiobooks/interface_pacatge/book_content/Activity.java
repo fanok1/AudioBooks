@@ -1,6 +1,9 @@
 package com.fanok.audiobooks.interface_pacatge.book_content;
 
 
+import android.content.Intent;
+import android.content.ServiceConnection;
+
 import androidx.annotation.NonNull;
 
 import com.arellomobile.mvp.MvpView;
@@ -31,7 +34,18 @@ public interface Activity extends MvpView {
 
     void setTimeEnd(int timeEnd);
 
+    @StateStrategyType(SkipStrategy.class)
     void setImageDrawable(int id);
 
     void setSelected(int id, String name);
+
+
+    @StateStrategyType(SkipStrategy.class)
+    void broadcastSend(@NonNull Intent intent);
+
+    @StateStrategyType(SkipStrategy.class)
+    void activityStart(@NonNull Intent intent);
+
+    @StateStrategyType(SkipStrategy.class)
+    void myUnbindService(@NonNull ServiceConnection serviceConnection);
 }

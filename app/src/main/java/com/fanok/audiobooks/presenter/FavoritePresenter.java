@@ -2,6 +2,7 @@ package com.fanok.audiobooks.presenter;
 
 
 import android.content.Context;
+import android.os.Build;
 import android.view.Gravity;
 import android.view.View;
 
@@ -15,39 +16,83 @@ import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
 import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.BooksDBModel;
+import com.fanok.audiobooks.model.FavoriteModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 @InjectViewState
 public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         com.fanok.audiobooks.interface_pacatge.favorite.FavoritePresenter {
 
     private ArrayList<BookPOJO> books;
+    private ArrayList<BookPOJO> flter = null;
     private BooksDBModel mBooksDBModel;
     private AudioDBModel mAudioDBModel;
+    private FavoriteModel mFavoriteModel;
     private int table;
+    private boolean isLoading = false;
+    private Context mContext;
+    private View mView;
 
     @Override
-    public void onCreate(Context context, int table) {
+    public void onCreate(@NotNull Context context, int table) {
         mBooksDBModel = new BooksDBModel(context);
         mAudioDBModel = new AudioDBModel(context);
-        books = new ArrayList<>();
+        mFavoriteModel = new FavoriteModel(context);
         this.table = table;
+        mContext = context;
+    }
+
+    @Override
+    public void setView(@NotNull View view) {
+        mView = view;
     }
 
     @Override
     public void loadBooks() {
-        switch (table) {
-            case Consts.TABLE_FAVORITE:
-                books = mBooksDBModel.getAllFavorite();
-                break;
-            case Consts.TABLE_HISTORY:
-                books = mBooksDBModel.getAllHistory();
-                break;
+        if (!isLoading) {
+            isLoading = true;
+            mFavoriteModel.getBooks(table)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<ArrayList<BookPOJO>>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+                        }
+
+                        @Override
+                        public void onNext(ArrayList<BookPOJO> bookPOJOS) {
+                            books = bookPOJOS;
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            getViewState().showToast(R.string.error_load_data);
+                            onComplete();
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            getViewState().showData(books);
+                            getViewState().showProgres(false);
+                            isLoading = false;
+                        }
+                    });
+
         }
         getViewState().showData(books);
     }
+
 
     @Override
     public void onDestroy() {
@@ -86,28 +131,28 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                     return true;
                 case R.id.genre:
                     getViewState().showFragment(BooksFragment.newInstance(
-                            books.get(position).getUrlGenre() + "/page/",
+                            books.get(position).getUrlGenre(),
                             R.string.menu_audiobooks,
                             books.get(position).getGenre(), Consts.MODEL_BOOKS),
                             "genreBooks");
                     return true;
                 case R.id.author:
                     getViewState().showFragment(BooksFragment.newInstance(
-                            books.get(position).getUrlAutor() + "/page/",
+                            books.get(position).getUrlAutor(),
                             R.string.menu_audiobooks,
                             books.get(position).getAutor(), Consts.MODEL_BOOKS),
                             "autorBooks");
                     return true;
                 case R.id.artist:
                     getViewState().showFragment(BooksFragment.newInstance(
-                            books.get(position).getUrlArtist() + "/page/",
+                            books.get(position).getUrlArtist(),
                             R.string.menu_audiobooks,
                             books.get(position).getArtist(), Consts.MODEL_BOOKS),
                             "artistBooks");
                     return true;
                 case R.id.series:
                     getViewState().showFragment(BooksFragment.newInstance(
-                            books.get(position).getUrlSeries() + "/page/",
+                            books.get(position).getUrlSeries() + "?page=",
                             R.string.menu_audiobooks,
                             books.get(position).getSeries(), Consts.MODEL_BOOKS),
                             "seriesBooks");
@@ -132,8 +177,131 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
     @Override
     public void cealrData() {
-        books.clear();
-        getViewState().showData(books);
+        if (books != null) {
+            books.clear();
+            getViewState().showData(books);
+        }
+    }
+
+    @Override
+    public void onOptionsItemSelected(int id) {
+        if (books != null && id != R.id.filter && id != R.id.order) {
+            Comparator<BookPOJO> comparator = getComparator(id);
+            if (id == R.id.genre_filter || id == R.id.autor_filter ||
+                    id == R.id.artist_filter || id == R.id.series_filter) {
+                showPopupMenu(id);
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    if (flter == null) {
+                        books.sort(comparator);
+                    } else {
+                        flter.sort(comparator);
+                    }
+                } else {
+                    if (flter == null) {
+                        Collections.sort(books, comparator);
+                    } else {
+                        Collections.sort(flter, comparator);
+                    }
+                }
+                if (flter == null) {
+                    getViewState().showData(books);
+                } else {
+                    getViewState().showData(flter);
+                }
+            }
+
+        }
+
+    }
+
+    private void showPopupMenu(int id) {
+        if (mView != null) {
+            ArrayList<String> arrayList;
+            switch (id) {
+                case R.id.genre_filter:
+                    arrayList = mBooksDBModel.getGenre();
+                    break;
+                case R.id.autor_filter:
+                    arrayList = mBooksDBModel.getAutors();
+                    break;
+                case R.id.artist_filter:
+                    arrayList = mBooksDBModel.getArtists();
+                    break;
+                case R.id.series_filter:
+                    arrayList = mBooksDBModel.getSeries();
+                    break;
+                default:
+                    arrayList = new ArrayList<>();
+            }
+            if (arrayList.isEmpty()) {
+                return;
+            } else {
+                arrayList.add(0, "Все");
+            }
+
+            PopupMenu popupMenu = new PopupMenu(mContext, mView, Gravity.END);
+            for (int i = 0; i < arrayList.size(); i++) {
+                popupMenu.getMenu().add(1, i, 0, arrayList.get(i));
+            }
+            popupMenu.setOnMenuItemClickListener(item -> {
+                if (books != null) {
+                    if (item.getTitle().equals("Все")) {
+                        this.flter = null;
+                        getViewState().showData(books);
+                        return false;
+                    }
+                    if (item.getTitle().equals("Все")) {
+                        getViewState().setSubTitle("");
+                    } else {
+                        getViewState().setSubTitle(item.getTitle().toString());
+                    }
+                    ArrayList<BookPOJO> filter = new ArrayList<>();
+                    for (BookPOJO book : books) {
+                        String text;
+                        switch (id) {
+                            case R.id.genre_filter:
+                                text = book.getGenre();
+                                break;
+                            case R.id.autor_filter:
+                                text = book.getAutor();
+                                break;
+                            case R.id.artist_filter:
+                                text = book.getArtist();
+                                break;
+                            case R.id.series_filter:
+                                text = book.getSeries();
+                                break;
+                            default:
+                                return false;
+                        }
+                        if (item.getTitle().equals(text)) {
+                            filter.add(book);
+                        }
+                    }
+                    this.flter = filter;
+                    getViewState().showData(filter);
+                }
+                return false;
+            });
+            popupMenu.show();
+        }
+    }
+
+    private Comparator<BookPOJO> getComparator(int sort) {
+        if (sort == R.id.name) {
+            return (bookPOJO, t1) -> bookPOJO.getName().compareTo(t1.getName());
+        } else if (sort == R.id.genre) {
+            return (bookPOJO, t1) -> bookPOJO.getGenre().compareTo(t1.getGenre());
+        } else if (sort == R.id.autor) {
+            return (bookPOJO, t1) -> bookPOJO.getAutor().compareTo(t1.getAutor());
+        } else if (sort == R.id.artist) {
+            return (bookPOJO, t1) -> bookPOJO.getArtist().compareTo(t1.getArtist());
+        } else if (sort == R.id.series) {
+            return (bookPOJO, t1) -> bookPOJO.getSeries().compareTo(t1.getSeries());
+        } else {
+            return (bookPOJO, t1) -> 0;
+        }
     }
 
 }

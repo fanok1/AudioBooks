@@ -8,7 +8,7 @@
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/order"
-        android:icon="@drawable/ic_order_option_menu"
+        android:icon="@drawable/ic_sort"
         android:title="@string/order"
         app:showAsAction="ifRoom">
         <menu>

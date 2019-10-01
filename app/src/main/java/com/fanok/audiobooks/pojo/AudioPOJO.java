@@ -6,7 +6,7 @@ import com.fanok.audiobooks.Consts;
 
 public class AudioPOJO {
     private String name = "";
-    private String url = "";
+    String url = "";
     private int time = 0;
 
     public String getName() {

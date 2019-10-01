@@ -1,0 +1,186 @@
+<resources>
+    <string name="navigation_drawer_open">Відкрити меню</string>
+        
+    <string name="navigation_drawer_close">Закрити меню</string>
+
+
+        <!-- NavigetionMenu!-->
+        
+    <string name="menu_audiobooks">Аудіокниги</string>
+        
+    <string name="menu_genre">Жанри</string>
+        
+    <string name="menu_artist">Виконавці</string>
+        
+    <string name="menu_autor">Автори</string>
+        
+    <string name="menu_favorite">Вибране</string>
+        
+    <string name="menu_history">Історія</string>
+        
+    <string name="menu_settings">Налаштування</string>
+        
+    <string name="menu_about">Про програму</string>
+
+
+        
+    <string name="loading">Завантаження…</string>
+        
+    <string name="book_cover">обкладинка</string>
+
+        
+    <string name="error_load_data">Помилка. Не вдалося завантажити дані</string>
+        
+    <string name="error_display_data">Помилка відображення даних</string>
+        
+    <string name="search">Пошук</string>
+        
+    <string name="order">Сортування</string>
+        
+    <string name="new_data">Нове</string>
+        
+    <string name="reting">Рейтинг</string>
+        
+    <string name="all_time">За весь час</string>
+        
+    <string name="in_month">За місяць</string>
+        
+    <string name="in_week">За тиждень</string>
+        
+    <string name="popular">Популярні</string>
+        
+    <string name="order_new">Нове</string>
+        
+    <string name="order_reting">Рейтинг</string>
+        
+    <string name="order_popular">Популярне</string>
+        
+    <string name="open">Відкрити</string>
+        
+    <string name="add_to_favorite">Додати до обраного</string>
+        
+    <string name="open_author">Перейти до автора</string>
+        
+    <string name="open_genre">Перейти до жанру</string>
+        
+    <string name="open_artist">Перейти до виконавця</string>
+        
+    <string name="open_series">Перейти до серії</string>
+        
+    <string name="remove_favorite">Видалити з обраного</string>
+        
+    <string name="remove">Видалити</string>
+        
+    <string name="tab_text_1">Опис</string>
+        
+    <string name="tab_text_2">Коментарі</string>
+        
+    <string name="tab_text_3">Серія</string>
+        
+    <string name="previous">Попередній</string>
+        
+    <string name="play">Відтворити</string>
+        
+    <string name="next">Наступний</string>
+        
+    <string name="collapse">Згорнути</string>
+        
+    <string name="autor">Автор:</string>
+        
+    <string name="artist">Читає:</string>
+        
+    <string name="series">Серія:</string>
+        
+    <string name="show_more">Читати далі</string>
+        
+    <string name="other_recomended_books">Рекомендовані книги</string>
+        
+    <string name="try_again">Спробувати ще</string>
+        
+    <string name="show_less">Приховати</string>
+        
+    <string name="share">Поділитися</string>
+        
+    <string name="add_to_main_screen">Додати на головний екран</string>
+        
+    <string name="refresh">Оновити</string>
+        
+    <string name="answers">Відповіді</string>
+        
+    <string name="close">Закрити</string>
+        
+    <string name="show_all_answer">Показати всі відповіді</string>
+        
+    <string name="rewind_10">назад на 10 секунд</string>
+        
+    <string name="forward_30">вперед на 30 секунд</string>
+        
+    <string name="speed">швидкість</string>
+        
+    <string name="error_load_coments">Неможливо завантажити коментарі</string>
+        
+    <string name="error_load_books">Неможливо завантажити книги</string>
+        
+    <string name="in_day">За день</string>
+        
+    <string name="tab_text_4">Інші озвучення</string>
+        
+    <string name="file_not_dowland">Файл ще не завантажився повністю</string>
+        
+    <string name="no_comments">Без коментарів</string>
+        
+    <string name="open_site">Відкрити на сайті</string>
+        
+    <string name="worning_loading_not_finish">Дані завантажені не до кінця.</string>
+        
+    <string name="title_set_speed_popup">Оберіть швидкість</string>
+
+        <!-- Settings -->
+        
+    <string name="setting_theme">Тема</string>
+        
+    <string name="theme_dark">Темна</string>
+        
+    <string name="theme_light">Світла</string>
+        
+    <string name="setting_lang">Мова</string>
+    <string name="setting_start_menu">" Категорія за замовчуванням"</string>
+    <string name="setting_sort_favorite">Сортування обраного</string>
+    <string name="sort_title_artist">За виконавцем</string>
+    <string name="sort_title_autor">За автором</string>
+    <string name="sort_title_date">"За датою додавання "</string>
+    <string name="sort_title_genre">За жанром</string>
+    <string name="sort_title_name">За назвою</string>
+    <string name="sort_title_series">За серією</string>
+    <string name="filter">Фільтр</string>
+    <string name="filter_series">Серії</string>
+    <string name="pref_dowland_path">Папка для завантажень</string>
+    <string name="select_folder_description">Виберіть папку для завантаження</string>
+    <string name="default_text">За замовчуванням</string>
+    <string name="select_folder">Виберіть папку</string>
+    <string name="confirm">Підтвердити</string>
+    <string name="clear_history_search">Очистити історію пошуку</string>
+    <string name="cancel">Скасувати</string>
+    <string name="yes">Так</string>
+    <string name="confirm_clear_history_search">Ви впевнені що хочете очистити історію пошуку?</string>
+    <string name="clear_favorite">Очистити обране</string>
+    <string name="clear_history">Очистити історію</string>
+    <string name="confirm_clear_favorite">Ви впевнені що хочете очистити обране?</string>
+    <string name="confirm_clear_history">Ви впевнені що хочете очистити історію?</string>
+    <string name="backup">Резервне копіювання</string>
+    <string name="backup_summary">Почати резервне копіювання</string>
+    <string name="restore">Відновлення</string>
+    <string name="restore_summary">Запуск восстановления из резервной копии</string>
+    <string name="confirm_backup">Ви впевнені, що хочете зробити резервну копію?</string>
+    <string name="confirm_restore">Ви впевнені що хочете відновити дані?</string>
+    <string name="clear">Очистити</string>
+    <string name="choose_file">Виберіть файл</string>
+    <string name="backup_created">Резервна копія створена.</string>
+    <string name="backup_not_created">Не вдалося створити резервну копію!</string>
+    <string name="error_restored">Помилка відновлення!</string>
+    <string name="restored">Дані успішно відновлені.</string>
+    <string name="worning_not_allowed_write_storege">Додатком не було дозволено записувати дані сховище.</string>
+    <string name="permission_read_external_storage">Дозвіл на читання файлів</string>
+    <string name="worning_not_allowed_read_storege">Додатком не було дозволено чіать дані з сховища.</string>
+
+</resources>

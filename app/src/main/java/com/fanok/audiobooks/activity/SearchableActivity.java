@@ -29,6 +29,7 @@ import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.GridSpacingItemDecoration;
+import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
@@ -94,13 +95,11 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
-        if (themeName != null) {
-            if (themeName.equals(getString(R.string.theme_dark))) {
-                setTheme(R.style.AppTheme_SwipeOnClose);
-            } else if (themeName.equals(getString(R.string.theme_light))) {
-                setTheme(R.style.LightAppTheme_SwipeOnClose);
-            }
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            setTheme(R.style.AppTheme_SwipeOnClose);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            setTheme(R.style.LightAppTheme_SwipeOnClose);
         }
 
 
@@ -117,7 +116,9 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
 
 
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        mSearchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        if (searchManager != null) {
+            mSearchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        }
 
 
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
@@ -363,16 +364,19 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
-        if (themeName != null) {
-            if (themeName.equals(getString(R.string.theme_dark))) {
-                theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
-            } else if (themeName.equals(getString(R.string.theme_light))) {
-                theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
-            }
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
         }
 
 
         return theme;
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(LocaleManager.onAttach(base));
     }
 }

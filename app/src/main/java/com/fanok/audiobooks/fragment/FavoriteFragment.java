@@ -1,8 +1,11 @@
 package com.fanok.audiobooks.fragment;
 
+import static com.fanok.audiobooks.Consts.REQEST_CODE_SEARCH;
 import static com.fanok.audiobooks.Consts.TABLE_FAVORITE;
 import static com.fanok.audiobooks.Consts.TABLE_HISTORY;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,11 +15,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,6 +33,7 @@ import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.MainActivity;
+import com.fanok.audiobooks.activity.SearchableActivity;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
 import com.fanok.audiobooks.pojo.BookPOJO;
@@ -50,10 +56,14 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
     @BindView(R.id.list)
     RecyclerView mRecyclerView;
+    @BindView(R.id.progressBar)
+    LinearLayout mProgressBar;
     Unbinder unbinder;
 
     @InjectPresenter
     FavoritePresenter mPresenter;
+    @BindView(R.id.view)
+    View mView;
 
     private BooksListAddapter mAddapterBooks;
 
@@ -79,7 +89,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
             table = arg.getInt(ARG_TABLE, 0);
         }
         if (savedInstanceState == null) {
-            getPresenter().onCreate(getContext(), table);
+            getPresenter().onCreate(Objects.requireNonNull(getContext()), table);
         }
     }
 
@@ -87,7 +97,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_favorite, container, false);
-
         unbinder = ButterKnife.bind(this, view);
 
         if (titleId != 0) {
@@ -108,6 +117,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
         mAddapterBooks.setLongListener(
                 (view13, position) -> mPresenter.onBookItemLongClick(view13, position));
+        getPresenter().setView(mView);
         return view;
     }
 
@@ -159,6 +169,23 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         Toast.makeText(this.getContext(), message, Toast.LENGTH_LONG).show();
     }
 
+    @Override
+    public void showProgres(boolean b) {
+        if (b) {
+            mProgressBar.setVisibility(View.VISIBLE);
+        } else {
+            mProgressBar.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void setSubTitle(@NotNull String text) {
+        MainActivity mainActivity = (MainActivity) getActivity();
+        if (mainActivity != null) {
+            Objects.requireNonNull(mainActivity.getSupportActionBar()).setSubtitle(text);
+        }
+    }
+
 
     @Override
     public void showFragment(@NonNull Fragment fragment, @NonNull String tag) {
@@ -196,6 +223,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         inflater.inflate(R.menu.favorite_options_menu, menu);
         MenuItem item = menu.findItem(R.id.action_search);
         Consts.setColorPrimeriTextInIconItemMenu(item, Objects.requireNonNull(getContext()));
+
         SearchView searchView = (SearchView) item.getActionView();
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -209,11 +237,51 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                 return false;
             }
         });
+
+        if (table == TABLE_FAVORITE) {
+            menu.findItem(R.id.order).setVisible(true);
+            menu.findItem(R.id.filter).setVisible(true);
+
+            SharedPreferences pref = PreferenceManager
+                    .getDefaultSharedPreferences(getContext());
+
+            String sort = pref.getString("pref_sort_favorite", getString(R.string.sort_value_date));
+            if (getString(R.string.sort_value_name).equals(sort)) {
+                menu.findItem(R.id.name).setChecked(true);
+            } else if (getString(R.string.sort_value_genre).equals(sort)) {
+                menu.findItem(R.id.genre).setChecked(true);
+            } else if (getString(R.string.sort_value_autor).equals(sort)) {
+                menu.findItem(R.id.autor).setChecked(true);
+            } else if (getString(R.string.sort_value_artist).equals(sort)) {
+                menu.findItem(R.id.artist).setChecked(true);
+            } else if (getString(R.string.sort_value_series).equals(sort)) {
+                menu.findItem(R.id.series).setChecked(true);
+            } else {
+                menu.findItem(R.id.date).setChecked(true);
+            }
+
+        }
+
+
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        mPresenter.onOptionsItemSelected(item.getItemId());
+        item.setChecked(true);
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
     public void showBooksActivity(@NotNull @NonNull BookPOJO bookPOJO) {
         BookActivity.startNewActivity(Objects.requireNonNull(getContext()), bookPOJO);
+    }
+
+    @Override
+    public void showSearchActivity(int modelId) {
+        Intent intent = new Intent(getContext(), SearchableActivity.class);
+        intent.putExtra(Consts.ARG_MODEL, modelId);
+        startActivityForResult(intent, REQEST_CODE_SEARCH);
     }
 }

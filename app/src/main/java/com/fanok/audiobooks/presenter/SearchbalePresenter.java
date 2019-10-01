@@ -110,6 +110,46 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         isEnd = false;
         page = 0;
         loadNext(qery);
+        /*
+        FirebaseLanguageIdentification languageIdentifier =
+                FirebaseNaturalLanguage.getInstance().getLanguageIdentification();
+        languageIdentifier.identifyLanguage(qery)
+                .addOnSuccessListener(
+                        languageCode -> {
+                            if (!Objects.equals(languageCode, "und")) {
+                                FirebaseTranslatorOptions options =
+                                        new FirebaseTranslatorOptions.Builder()
+                                                .setSourceLanguage(FirebaseTranslateLanguage
+                                                .languageForLanguageCode(languageCode))
+                                                .setTargetLanguage(FirebaseTranslateLanguage.RU)
+                                                .build();
+                                final FirebaseTranslator translator =
+                                        FirebaseNaturalLanguage.getInstance().getTranslator
+                                        (options);
+
+                                FirebaseModelDownloadConditions conditions = new
+                                FirebaseModelDownloadConditions.Builder()
+                                        .requireWifi()
+                                        .build();
+                                translator.downloadModelIfNeeded(conditions)
+                                        .addOnSuccessListener(
+                                                v -> translator.translate(qery)
+                                                        .addOnSuccessListener(
+                                                                this::loadNext)
+                                                        .addOnFailureListener(
+                                                                e -> loadNext(qery)))
+                                        .addOnFailureListener(
+                                                e -> loadNext(qery));
+
+                            } else {
+                                loadNext(qery);
+                            }
+                        })
+                .addOnFailureListener(
+                        e -> loadNext(qery));
+
+         */
+
     }
 
 

@@ -86,10 +86,43 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
             mName.setText(book.getName());
             if (book.getReting() != 0) {
                 mReting.setText(String.valueOf(book.getReting()));
+                mReting.setVisibility(View.VISIBLE);
             } else {
                 mReting.setVisibility(View.GONE);
             }
             mDescription.setText(book.getDescription());
+
+            /*//translation
+            String lang = Locale.getDefault().toLanguageTag();
+            if(!lang.equals("ru")) {
+                FirebaseTranslatorOptions options =
+                        new FirebaseTranslatorOptions.Builder()
+                                .setSourceLanguage(FirebaseTranslateLanguage.RU)
+                                .setTargetLanguage(FirebaseTranslateLanguage
+                                .languageForLanguageCode(lang))
+                                .build();
+                final FirebaseTranslator translator =
+                        FirebaseNaturalLanguage.getInstance().getTranslator(options);
+
+                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
+                .Builder()
+                        .requireWifi()
+                        .build();
+                translator.downloadModelIfNeeded(conditions)
+                        .addOnSuccessListener(
+                                v -> {
+                                    translator.translate(book.getName())
+                                            .addOnSuccessListener(
+                                                    translatedText -> mName.setText
+                                                    (translatedText));
+
+                                    translator.translate(book.getDescription())
+                                            .addOnSuccessListener(
+                                                    translatedText -> mDescription.setText
+                                                    (translatedText));
+                                });
+            }*/
+
         }
     }
 }

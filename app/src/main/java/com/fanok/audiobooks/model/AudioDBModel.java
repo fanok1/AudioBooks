@@ -9,6 +9,9 @@ import androidx.annotation.NonNull;
 
 import com.fanok.audiobooks.interface_pacatge.books.AudioDBHelperInterfase;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBAbstract;
+import com.fanok.audiobooks.pojo.TimeStartPOJO;
+
+import java.util.ArrayList;
 
 public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterfase {
     private static final String TAG = "AudioDBModel";
@@ -49,9 +52,27 @@ public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterf
     }
 
     @Override
+    public void add(@NonNull TimeStartPOJO timeStartPOJO) {
+        ContentValues values = new ContentValues();
+        values.put("url_book", timeStartPOJO.getUrl());
+        values.put("name", timeStartPOJO.getName());
+        values.put("time", timeStartPOJO.getTime());
+        SQLiteDatabase db = getDBHelper().getWritableDatabase();
+        long i = db.insert("audio", null, values);
+        db.close();
+    }
+
+    @Override
     public void remove(@NonNull String urlBook) {
         SQLiteDatabase db = getDBHelper().getWritableDatabase();
         long i = db.delete("audio", "url_book = ?", new String[]{urlBook});
+        db.close();
+    }
+
+    @Override
+    public void clearAll() {
+        SQLiteDatabase db = getDBHelper().getWritableDatabase();
+        db.delete("audio", null, null);
         db.close();
     }
 
@@ -84,10 +105,11 @@ public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterf
 
         int result = 0;
         if (cursor != null) {
-            cursor.moveToFirst();
-            result = cursor.getInt(0);
+            if (cursor.getCount() != 0) {
+                cursor.moveToFirst();
+                result = cursor.getInt(0);
+            }
             cursor.close();
-
         }
         db.close();
         return result;
@@ -102,5 +124,26 @@ public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterf
 
         return db.update("audio", values, "url_book" + " = ?",
                 new String[]{urlBook});
+    }
+
+    @Override
+    public ArrayList<TimeStartPOJO> getAll() {
+        ArrayList<TimeStartPOJO> list = new ArrayList<>();
+        String selectQuery = "SELECT  * FROM audio";
+
+        SQLiteDatabase db = getDBHelper().getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        if (cursor.moveToLast()) {
+            do {
+                TimeStartPOJO audio = new TimeStartPOJO();
+                audio.setUrl(cursor.getString(1));
+                audio.setName(cursor.getString(2));
+                audio.setTime(cursor.getInt(3));
+                list.add(audio);
+            } while (cursor.moveToPrevious());
+        }
+        cursor.close();
+        db.close();
+        return list;
     }
 }

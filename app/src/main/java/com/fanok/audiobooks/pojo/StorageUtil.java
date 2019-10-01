@@ -82,4 +82,16 @@ public class StorageUtil {
         editor.apply();
     }
 
+    public void storeTimeStart(int time) {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("timeStart", time);
+        editor.apply();
+    }
+
+    public int loadTimeStart() {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        return preferences.getInt("timeStart", 0);
+    }
+
 }

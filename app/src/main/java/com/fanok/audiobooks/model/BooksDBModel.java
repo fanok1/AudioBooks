@@ -11,6 +11,8 @@ import com.fanok.audiobooks.interface_pacatge.books.BooksDBAbstract;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBHelperInterfase;
 import com.fanok.audiobooks.pojo.BookPOJO;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 
 public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterfase {
@@ -53,6 +55,11 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     }
 
     @Override
+    public void clearFavorite() {
+        clearAll("favorite");
+    }
+
+    @Override
     public void addHistory(BookPOJO book) {
         if (inHistory(book)) removeHistory(book);
         add(book, "history");
@@ -64,6 +71,11 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     }
 
     @Override
+    public void clearHistory() {
+        clearAll("history");
+    }
+
+    @Override
     public ArrayList<BookPOJO> getAllFavorite() {
         return getAll("favorite");
     }
@@ -71,6 +83,46 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     @Override
     public ArrayList<BookPOJO> getAllHistory() {
         return getAll("history");
+    }
+
+    @Override
+    public ArrayList<String> getGenre() {
+        return getStringRow("genre");
+    }
+
+
+    @Override
+    public ArrayList<String> getAutors() {
+        return getStringRow("author");
+    }
+
+    @Override
+    public ArrayList<String> getArtists() {
+        return getStringRow("artist");
+    }
+
+    @Override
+    public ArrayList<String> getSeries() {
+        return getStringRow("series");
+    }
+
+    private ArrayList<String> getStringRow(@NotNull String row) {
+        ArrayList<String> list = new ArrayList<>();
+
+        SQLiteDatabase db = getDBHelper().getWritableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT " + row + " FROM favorite WHERE " + row + "<>\"\" GROUP BY " + row
+                        + " ORDER BY " + row + " ASC", null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                list.add(cursor.getString(0));
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return list;
     }
 
     private void add(BookPOJO book, String table) {
@@ -113,6 +165,7 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
             } while (cursor.moveToPrevious());
         }
         cursor.close();
+        db.close();
         return contactList;
     }
 
@@ -134,4 +187,12 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
         contentValues.put("coments", book.getComents());
         return contentValues;
     }
+
+    private void clearAll(String table) {
+        SQLiteDatabase db = getDBHelper().getWritableDatabase();
+        db.delete(table, null, null);
+        db.close();
+    }
+
+
 }

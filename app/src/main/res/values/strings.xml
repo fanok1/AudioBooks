@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Audio Books</string>
+    <string name="app_name" translatable="false">Audio Books</string>
     <string name="navigation_drawer_open">Открыть меню</string>
     <string name="navigation_drawer_close">Закрыть меню</string>
 
@@ -39,11 +39,11 @@
     <string name="open_series">Перейти к серии</string>
     <string name="remove_favorite">Удалить из избранного</string>
     <string name="remove">Удалить</string>
-    <string name="title_activity_book">BookActivity</string>
+    <string name="title_activity_book" translatable="false">BookActivity</string>
     <string name="tab_text_1">Описание</string>
     <string name="tab_text_2">Коментарии</string>
     <string name="tab_text_3">Серия</string>
-    <string name="time_zero">00:00</string>
+    <string name="time_zero" translatable="false">00:00</string>
     <string name="previous">Предыдущий</string>
     <string name="play">Воспроизвести</string>
     <string name="next">Следуйщий</string>
@@ -58,7 +58,6 @@
     <string name="share">Поделится</string>
     <string name="add_to_main_screen">Добавить на главный экран</string>
     <string name="refresh">Обновить</string>
-    <string name="title_activity_main2">Main2Activity</string>
     <string name="answers">Ответы</string>
     <string name="close">Закрыть</string>
     <string name="show_all_answer">Показать все ответы</string>
@@ -70,7 +69,7 @@
     <string name="in_day">За день</string>
     <string name="tab_text_4">Другие озвучки</string>
     <string name="file_not_dowland">Файл еще не загрузился полностью</string>
-    <string name="notification_channel_name">channelId</string>
+    <string name="notification_channel_name" translatable="false">channelId</string>
     <string name="no_comments">Комментарии отсутствуют</string>
     <string name="open_site">Открыть на сайте</string>
     <string name="worning_loading_not_finish">Данные загружены не до конца.</string>
@@ -80,5 +79,62 @@
     <string name="setting_theme">Тема</string>
     <string name="theme_dark">Темная</string>
     <string name="theme_light">Светлая</string>
+
+    <string name="theme_dark_value" translatable="false">dark</string>
+    <string name="theme_light_value" translatable="false">light</string>
+
+    <string name="setting_lang">Язык</string>
+
+    <string name="lang_ru" translatable="false">Русский</string>
+    <string name="lang_ua" translatable="false">Українська</string>
+    <string name="lang_en" translatable="false">English</string>
+
+
+    <string name="setting_start_menu">Категория по умолчанию</string>
+    <string name="setting_sort_favorite">Сортировка избранного</string>
+
+    <string name="sort_title_date">По дате добавления</string>
+    <string name="sort_title_name">По названию</string>
+    <string name="sort_title_genre">По жанру</string>
+    <string name="sort_title_autor">По автору</string>
+    <string name="sort_title_artist">По исполнителю</string>
+    <string name="sort_title_series">По серии</string>
+
+    <string name="sort_value_date" translatable="false">date</string>
+    <string name="sort_value_name" translatable="false">name</string>
+    <string name="sort_value_genre" translatable="false">genre</string>
+    <string name="sort_value_autor" translatable="false">autor</string>
+    <string name="sort_value_artist" translatable="false">artist</string>
+    <string name="sort_value_series" translatable="false">series</string>
+    <string name="filter">Фильтр</string>
+    <string name="filter_series">Серии</string>
+    <string name="pref_dowland_path">Папка для загрузок</string>
+    <string name="select_folder_description">Выберите папку для загрузки</string>
+    <string name="default_text">По умолчанию</string>
+    <string name="select_folder">Выберите папку</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="clear_history_search">Очистить историю поиска</string>
+    <string name="confirm_clear_history_search">Вы уверены что хотите очистить историю поиска?</string>
+    <string name="yes">Да</string>
+    <string name="cancel">Отмена</string>
+    <string name="confirm_clear_history">Вы уверены что хотите очистить историю?</string>
+    <string name="confirm_clear_favorite">Вы уверены что хотите очистить избранное?</string>
+    <string name="clear_history">Очистить историю</string>
+    <string name="clear_favorite">Очистить избранное</string>
+    <string name="backup">Резервное копирование</string>
+    <string name="backup_summary">Начать резервное копирование</string>
+    <string name="restore">Восстановление</string>
+    <string name="restore_summary">Начать восстановление из резервной копии</string>
+    <string name="confirm_backup">Вы уверены что хотите сделать резервную копию?</string>
+    <string name="confirm_restore">Вы уверены что хотите восстановить данные?</string>
+    <string name="choose_file">Выберите файл</string>
+    <string name="clear">Очистить</string>
+    <string name="backup_created">Резервная копия создана.</string>
+    <string name="backup_not_created">Не удалось создать резервную копию!</string>
+    <string name="worning_not_allowed_write_storege">Приложению не было разрешено записывать данные хранилище.</string>
+    <string name="restored">Данные успешно восстановлены.</string>
+    <string name="error_restored">Ошибка восстановления!</string>
+    <string name="permission_read_external_storage">Разрешение на чтение файлов</string>
+    <string name="worning_not_allowed_read_storege">Приложению не было разрешено чиать данные с хранилища.</string>
 
 </resources>

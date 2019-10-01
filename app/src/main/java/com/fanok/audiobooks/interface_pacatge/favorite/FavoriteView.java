@@ -8,6 +8,8 @@ import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.fanok.audiobooks.pojo.BookPOJO;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 
 public interface FavoriteView extends MvpView {
@@ -23,10 +25,17 @@ public interface FavoriteView extends MvpView {
 
     void showToast(String message);
 
+    void showProgres(boolean b);
+
+    void setSubTitle(@NotNull String text);
+
     @StateStrategyType(SkipStrategy.class)
     void showFragment(Fragment fragment, String tag);
 
     @StateStrategyType(SkipStrategy.class)
     void showBooksActivity(@NonNull BookPOJO bookPOJO);
+
+    @StateStrategyType(SkipStrategy.class)
+    void showSearchActivity(int modelId);
 
 }

@@ -1,10 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <ListPreference
-        android:defaultValue="@string/theme_dark"
+        android:defaultValue="@string/theme_dark_value"
         android:dialogTitle="@string/setting_theme"
         android:entries="@array/settings_them_titles"
-        android:entryValues="@array/settings_them_titles"
+        android:entryValues="@array/settings_them_values"
         android:key="pref_theme"
+        android:icon="@drawable/ic_theme"
         android:title="@string/setting_theme" />
+
+    <!--<ListPreference
+        android:defaultValue="ru"
+        android:dialogTitle="@string/setting_lang"
+        android:entries="@array/settings_lang_titles"
+        android:entryValues="@array/settings_lang_values"
+        android:key="pref_lang"
+        android:title="@string/setting_lang" />-->
+
+    <ListPreference
+        android:defaultValue="0"
+        android:dialogTitle="@string/setting_start_menu"
+        android:entries="@array/settings_start_screen_titles"
+        android:entryValues="@array/settings_start_screen_values"
+        android:icon="@drawable/ic_application"
+        android:key="pref_start_screen"
+        android:title="@string/setting_start_menu" />
+
+    <ListPreference
+        android:defaultValue="@string/sort_value_date"
+        android:dialogTitle="@string/setting_sort_favorite"
+        android:entries="@array/settings_sort_titles"
+        android:entryValues="@array/settings_sort_values"
+        android:icon="@drawable/ic_sort"
+        android:key="pref_sort_favorite"
+        android:title="@string/setting_sort_favorite" />
+
+    <!--<Preference
+        android:key="pref_dowland_path"
+        android:summary="@string/select_folder_description"
+        android:title="@string/pref_dowland_path"
+        android:icon="@drawable/ic_folder">
+        <intent android:action="com.fanok.audiobooks.activity.SelectDirectoryActivity"/>
+    </Preference>-->
+
+    <Preference
+        android:icon="@drawable/ic_backup"
+        android:key="backup"
+        android:summary="@string/backup_summary"
+        android:title="@string/backup" />
+
+    <Preference
+        android:icon="@drawable/ic_restore"
+        android:key="restore"
+        android:summary="@string/restore_summary"
+        android:title="@string/restore" />
+
+
+    <PreferenceScreen
+        android:icon="@drawable/ic_clear"
+        android:key="clear"
+        android:persistent="true"
+        android:title="@string/clear">
+        <Preference
+            android:key="clear_history_search"
+            android:title="@string/clear_history_search" />
+
+        <Preference
+            android:key="clear_history"
+            android:title="@string/clear_history" />
+
+        <Preference
+            android:key="clear_favorite"
+            android:title="@string/clear_favorite" />
+    </PreferenceScreen>
+
+
 </PreferenceScreen>

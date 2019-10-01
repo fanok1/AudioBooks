@@ -1,4 +1,5 @@
 package com.fanok.audiobooks.adapter;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,8 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 
 public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.MyHolder> {
+
+    private static final String TAG = "BooksListAddapter";
 
     private ArrayList<BookPOJO> mModel;
 
@@ -117,6 +120,7 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                     || book.getUrlGenre() == null) {
                 throw new NullPointerException();
             }
+
             Picasso.get().load(book.getPhoto()).into(mImageView);
             mTitle.setText(book.getName());
             mGenre.setText(book.getGenre());
@@ -154,6 +158,66 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             } else {
                 mSiresle.setVisibility(View.GONE);
             }
+
+            /*//translation
+            String lang = Locale.getDefault().toLanguageTag();
+            if(!lang.equals("ru")) {
+                FirebaseTranslatorOptions options =
+                        new FirebaseTranslatorOptions.Builder()
+                                .setSourceLanguage(FirebaseTranslateLanguage.RU)
+                                .setTargetLanguage(FirebaseTranslateLanguage
+                                .languageForLanguageCode(lang))
+                                .build();
+                final FirebaseTranslator translator =
+                        FirebaseNaturalLanguage.getInstance().getTranslator(options);
+
+                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
+                .Builder()
+                        .requireWifi()
+                        .build();
+                translator.downloadModelIfNeeded(conditions)
+                        .addOnSuccessListener(
+                                v -> {
+                                    translator.translate(book.getName())
+                                            .addOnSuccessListener(
+                                                    translatedText -> mTitle.setText
+                                                    (translatedText));
+
+                                    translator.translate(book.getGenre())
+                                            .addOnSuccessListener(
+                                                    translatedText -> mGenre.setText
+                                                    (translatedText));
+
+                                    if (book.getAutor() != null && !book.getAutor().isEmpty()) {
+                                        translator.translate(book.getAutor())
+                                                .addOnSuccessListener(
+                                                        translatedText -> mAutor.setText
+                                                        (translatedText));
+                                    }
+                                    translator.translate(book.getArtist())
+                                            .addOnSuccessListener(
+                                                    translatedText -> mArtist.setText
+                                                    (translatedText));
+
+                                    if (book.getSeries() != null && book.getUrlSeries() != null &&
+                                            !book.getSeries().isEmpty() && !book.getUrlSeries()
+                                            .isEmpty()) {
+                                        translator.translate(book.getSeries())
+                                                .addOnSuccessListener(
+                                                        translatedText -> mSiresle.setText
+                                                        (translatedText));
+                                    }
+
+                                    if (book.getTime() != null && !book.getTime().isEmpty()) {
+                                        translator.translate(book.getTime())
+                                                .addOnSuccessListener(
+                                                        translatedText -> mTime.setText
+                                                        (translatedText));
+                                    }
+
+
+                                });
+            }*/
         }
     }
 }

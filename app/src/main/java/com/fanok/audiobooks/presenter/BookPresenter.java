@@ -8,9 +8,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.media.AudioManager;
 import android.net.Uri;
-import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.Gravity;
@@ -39,7 +37,10 @@ import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.service.MediaPlayerService;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
+import java.util.Objects;
 
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -66,13 +67,10 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private BooksDBModel mBooksDBModel;
     private MenuItem mAddFavorite;
     private MenuItem mRemoveFavorite;
-    private final Handler handler = new Handler();
     private AudioDBModel mAudioDBModel;
     private ArrayList<AudioPOJO> mAudioPOJO;
     private String last = "";
-    private AudioManager mAudioManager;
     private Context mContext;
-    private MediaPlayerService player;
     private boolean serviceBound = false;
     private int curentTrack = 0;
     public static float speed = 1;
@@ -82,9 +80,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            Crashlytics.setBool("onServiceConnected", true);
-            MediaPlayerService.LocalBinder binder = (MediaPlayerService.LocalBinder) service;
-            player = binder.getService();
+            //Crashlytics.setBool("onServiceConnected", true);
             serviceBound = true;
         }
 
@@ -121,21 +117,23 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         } else {
             getViewState().setImageDrawable(R.drawable.ic_pause);
             Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
-            mContext.sendBroadcast(broadcastIntent);
+            getViewState().broadcastSend(broadcastIntent);
         }
-        mAudioManager = (AudioManager) context.getSystemService(AUDIO_SERVICE);
+        context.getSystemService(AUDIO_SERVICE);
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu) {
         mAddFavorite = menu.findItem(R.id.addFavorite);
         mRemoveFavorite = menu.findItem(R.id.removeFavorite);
-        if (mBooksDBModel.inFavorite(mBookPOJO)) {
-            mAddFavorite.setVisible(false);
-            mRemoveFavorite.setVisible(true);
-        } else {
-            mAddFavorite.setVisible(true);
-            mRemoveFavorite.setVisible(false);
+        if (mBookPOJO != null && mBooksDBModel != null) {
+            if (mBooksDBModel.inFavorite(mBookPOJO)) {
+                mAddFavorite.setVisible(false);
+                mRemoveFavorite.setVisible(true);
+            } else {
+                mAddFavorite.setVisible(true);
+                mRemoveFavorite.setVisible(false);
+            }
         }
     }
 
@@ -143,14 +141,10 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     public void onDestroy() {
         Crashlytics.setBool("serviceBound", serviceBound);
         if (serviceBound) {
-            try {
-                mContext.unbindService(serviceConnection);
-            } catch (IllegalArgumentException ignored) {
-
-            }
-            if (!MediaPlayerService.isPlay() && player != null) {
+            getViewState().myUnbindService(serviceConnection);
+            /*if(!MediaPlayerService.isPlay()&&player!=null){
                 player.stopSelf();
-            }
+            }*/
         }
 
     }
@@ -184,7 +178,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             case R.id.openSite:
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW,
                         Uri.parse(mBookPOJO.getUrl()));
-                mContext.startActivity(browserIntent);
+                getViewState().activityStart(browserIntent);
                 break;
         }
     }
@@ -199,12 +193,12 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             last = mAudioPOJO.get(position).getName();
             getViewState().showTitle(last);
             curentTrack = position;
-            playAudio(position);
+            playAudio(position, 0);
         }
 
     }
 
-    private void playAudio(int audioIndex) {
+    private void playAudio(int audioIndex, int timeStart) {
         StorageUtil storage = new StorageUtil(mContext.getApplicationContext());
         storage.storeAudioIndex(audioIndex);
         //Check is service is active
@@ -213,6 +207,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             storage.storeAudio(mAudioPOJO);
             storage.storeUrlBook(mBookPOJO.getUrl());
             storage.storeImageUrl(mBookPOJO.getPhoto());
+            storage.storeTimeStart(timeStart);
             //Store Serializable audioList to SharedPreferences
             Intent playerIntent = new Intent(mContext, MediaPlayerService.class);
             playerIntent.setAction("start");
@@ -220,7 +215,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             mContext.bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
         } else {
             Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
-            mContext.sendBroadcast(broadcastIntent);
+            getViewState().broadcastSend(broadcastIntent);
         }
     }
 
@@ -244,7 +239,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
                     @Override
                     public void onError(Throwable e) {
-                        Log.d(TAG, e.getMessage());
+                        Log.d(TAG, Objects.requireNonNull(e.getMessage()));
                     }
 
                     @Override
@@ -255,7 +250,6 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                         for (int i = 0; i < mAudioPOJO.size(); i++) {
                             if (mAudioPOJO.get(i).getName().equals(last)) {
                                 pojo = mAudioPOJO.get(i);
-                                pojo.setTime(mAudioDBModel.getTime(mBookPOJO.getUrl()));
                                 curentTrack = i;
                             }
                         }
@@ -269,7 +263,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
                         if (!MediaPlayerService.isPlay()) {
                             start = false;
-                            playAudio(curentTrack);
+                            playAudio(curentTrack, mAudioDBModel.getTime(mBookPOJO.getUrl()));
                         } else {
                             start = true;
                         }
@@ -285,7 +279,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     @Override
     public void buttomPlayClick(View view) {
         Intent broadcastIntent = new Intent(Broadcast_PLAY);
-        mContext.sendBroadcast(broadcastIntent);
+        getViewState().broadcastSend(broadcastIntent);
     }
 
 
@@ -294,7 +288,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         if (mAudioPOJO.size() > 0) {
             curentTrack--;
             Intent broadcastIntent = new Intent(Broadcast_PLAY_PREVIOUS);
-            mContext.sendBroadcast(broadcastIntent);
+            getViewState().broadcastSend(broadcastIntent);
         }
     }
 
@@ -303,7 +297,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         if (mAudioPOJO.size() - 1 > curentTrack) {
             curentTrack++;
             Intent broadcastIntent = new Intent(Broadcast_PLAY_NEXT);
-            mContext.sendBroadcast(broadcastIntent);
+            getViewState().broadcastSend(broadcastIntent);
         }
 
     }
@@ -311,13 +305,13 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     @Override
     public void buttomRewindClick(View view) {
         Intent broadcastIntent = new Intent(Broadcast_SEEK_PREVIOUS_10);
-        mContext.sendBroadcast(broadcastIntent);
+        getViewState().broadcastSend(broadcastIntent);
     }
 
     @Override
     public void buttomForwardClick(View view) {
         Intent broadcastIntent = new Intent(Broadcast_SEEK_NEXT_30);
-        mContext.sendBroadcast(broadcastIntent);
+        getViewState().broadcastSend(broadcastIntent);
     }
 
     @Override
@@ -325,19 +319,20 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         SeekBar sb = (SeekBar) view;
         Intent broadcastIntent = new Intent(Broadcast_SEEK_TO);
         broadcastIntent.putExtra("postion", sb.getProgress());
-        mContext.sendBroadcast(broadcastIntent);
+        getViewState().broadcastSend(broadcastIntent);
     }
 
     @Override
-    public void onOrintationChangeListner() {
+    public void onOrintationChangeListner(@NotNull BookPOJO bookPOJO) {
+        if (mBookPOJO == null) mBookPOJO = bookPOJO;
         if (MediaPlayerService.isPlay()) {
             getViewState().setImageDrawable(R.drawable.ic_pause);
             Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
-            mContext.sendBroadcast(broadcastIntent);
+            getViewState().broadcastSend(broadcastIntent);
         } else {
             getViewState().setImageDrawable(R.drawable.ic_play);
             Intent broadcastIntent = new Intent(Broadcast_GET_POSITION);
-            mContext.sendBroadcast(broadcastIntent);
+            getViewState().broadcastSend(broadcastIntent);
         }
     }
 
@@ -356,7 +351,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         final SeekBar seek = new SeekBar(view.getContext());
         seek.setMax(200);
         seek.incrementProgressBy(step);
-        seek.setProgress((int) speed * 100 - 100);
+        seek.setProgress((int) (speed * 100 - 100));
         seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -401,6 +396,6 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     private void setSpeed(float value) {
         speed = value;
-        mContext.sendBroadcast(new Intent(Broadcast_SET_SPEED));
+        getViewState().broadcastSend(new Intent(Broadcast_SET_SPEED));
     }
 }

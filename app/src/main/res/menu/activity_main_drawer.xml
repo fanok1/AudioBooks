@@ -39,7 +39,7 @@
 
     <group
         android:id="@+id/group_secondary"
-        android:checkableBehavior="none">
+        android:checkableBehavior="single">
         <item
             android:id="@+id/nav_settings"
             android:icon="@drawable/ic_menu_settings"

@@ -248,6 +248,55 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 activity.setTabPostion(getResources().getString(R.string.tab_text_3));
             }
         });
+
+        //translation
+        /*String lang = Locale.getDefault().toLanguageTag();
+        if(!lang.equals("ru")) {
+            FirebaseTranslatorOptions options =
+                    new FirebaseTranslatorOptions.Builder()
+                            .setSourceLanguage(FirebaseTranslateLanguage.RU)
+                            .setTargetLanguage(FirebaseTranslateLanguage.languageForLanguageCode
+                            (lang))
+                            .build();
+            final FirebaseTranslator translator =
+                    FirebaseNaturalLanguage.getInstance().getTranslator(options);
+
+            FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
+            .Builder()
+                    .requireWifi()
+                    .build();
+            translator.downloadModelIfNeeded(conditions)
+                    .addOnSuccessListener(
+                            v -> {
+                                translator.translate(description.getTitle())
+                                        .addOnSuccessListener(
+                                                translatedText -> mTitle.setText(translatedText));
+                                if (!description.getGenre().isEmpty()) {
+                                    translator.translate(description.getGenre())
+                                            .addOnSuccessListener(
+                                                    translatedText -> mGenre.setText
+                                                    (translatedText));
+                                }
+
+                                translator.translate(description.getAutor())
+                                        .addOnSuccessListener(
+                                                translatedText -> mAuthor.setText(translatedText));
+
+                                translator.translate(description.getArtist())
+                                        .addOnSuccessListener(
+                                                translatedText -> mArtist.setText(translatedText));
+                                if (!description.getSeries().isEmpty()) {
+                                    translator.translate(description.getSeries())
+                                            .addOnSuccessListener(
+                                                    translatedText -> mSeries.setText
+                                                    (translatedText));
+                                }
+
+                                translator.translate(description.getDescription())
+                                        .addOnSuccessListener(
+                                                translatedText -> mDesc.setText(translatedText));
+                            });
+        }*/
     }
 
 

@@ -15,7 +15,6 @@ import io.reactivex.Observable;
 
 public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.BooksModel {
 
-
     private ArrayList<BookPOJO> loadBooksList(String url, int page) throws IOException {
         ArrayList<BookPOJO> result = new ArrayList<>();
         String autor = "";
@@ -47,7 +46,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     autorUrl = Url.SERVER + aList.first().attr("href");
                 }
             } else if (pageTitle.first().text().contains("Все авторы")) {
-                autorUrl = "";
+                autorUrl = url;
                 Elements h1 = pageTitle.first().getElementsByTag("h1");
                 if (h1.size() != 0) {
                     autor = h1.first().text();
@@ -141,6 +140,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         }
         return result;
     }
+
 
     @Override
     public Observable<ArrayList<BookPOJO>> getBooks(String url, int page) {

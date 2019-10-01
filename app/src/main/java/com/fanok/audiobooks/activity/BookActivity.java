@@ -1,10 +1,10 @@
 package com.fanok.audiobooks.activity;
 
-import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Build;
@@ -32,6 +32,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.AudioAdapter;
 import com.fanok.audiobooks.adapter.SectionsPagerAdapter;
@@ -101,6 +102,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     private BottomSheetBehavior bottomSheetBehavior;
 
     private AudioAdapter mAudioAdapter;
+    private boolean savedInstanceState;
+
+
 
     public static void startNewActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO) {
         Intent intent = new Intent(context, BookActivity.class);
@@ -139,12 +143,18 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String title = intent.getStringExtra("title");
-            showTitle(title);
+            if (title != null) {
+                showTitle(title);
+            }
         }
     };
 
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(LocaleManager.onAttach(base));
+    }
 
-    @SuppressLint("ClickableViewAccessibility")
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -162,17 +172,40 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
-        if (themeName != null) {
-            if (themeName.equals(getString(R.string.theme_dark))) {
-                setTheme(R.style.AppTheme_NoActionBar);
-            } else if (themeName.equals(getString(R.string.theme_light))) {
-                setTheme(R.style.LightAppTheme_NoActionBar);
-            }
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            setTheme(R.style.AppTheme_NoActionBar);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            setTheme(R.style.LightAppTheme_NoActionBar);
         }
 
 
         setTitle(mBookPOJO.getName().trim());
+
+        /*//translation
+        String lang = Locale.getDefault().toLanguageTag();
+        if(!lang.equals("ru")) {
+            FirebaseTranslatorOptions options =
+                    new FirebaseTranslatorOptions.Builder()
+                            .setSourceLanguage(FirebaseTranslateLanguage.RU)
+                            .setTargetLanguage(FirebaseTranslateLanguage.languageForLanguageCode
+                            (lang))
+                            .build();
+            final FirebaseTranslator translator =
+                    FirebaseNaturalLanguage.getInstance().getTranslator(options);
+
+            FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
+            .Builder()
+                    .requireWifi()
+                    .build();
+            translator.downloadModelIfNeeded(conditions)
+                    .addOnSuccessListener(
+                            v -> {
+                                translator.translate(mBookPOJO.getName().trim())
+                                        .addOnSuccessListener(this::setTitle);
+                            });
+        }*/
+
         sectionsPagerAdapter = new SectionsPagerAdapter(this,
                 getSupportFragmentManager(), mBookPOJO.getUrl());
         ViewPager viewPager = findViewById(R.id.view_pager);
@@ -188,6 +221,30 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setSubtitle(mBookPOJO.getAutor().trim());
+
+            /*//translation
+            if(!lang.equals("ru")) {
+                FirebaseTranslatorOptions options =
+                        new FirebaseTranslatorOptions.Builder()
+                                .setSourceLanguage(FirebaseTranslateLanguage.RU)
+                                .setTargetLanguage(FirebaseTranslateLanguage
+                                .languageForLanguageCode(lang))
+                                .build();
+                final FirebaseTranslator translator =
+                        FirebaseNaturalLanguage.getInstance().getTranslator(options);
+
+                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
+                .Builder()
+                        .requireWifi()
+                        .build();
+                translator.downloadModelIfNeeded(conditions)
+                        .addOnSuccessListener(
+                                v -> {
+                                    translator.translate(mBookPOJO.getAutor().trim())
+                                            .addOnSuccessListener(actionBar::setSubtitle);
+                                });
+            }*/
+
         }
         View topBarButtonsControl = llBottomSheet.findViewById(R.id.topButtonsControls);
         ImageButton buttonCollapse = findViewById(R.id.buttonCollapse);
@@ -286,11 +343,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         });
 
 
-        if (savedInstanceState == null) {
-            mPresenter.onCreate(mBookPOJO, this);
-        } else {
-            mPresenter.onOrintationChangeListner();
-        }
+        this.savedInstanceState = savedInstanceState != null;
 
 
         mAudioAdapter = new AudioAdapter();
@@ -298,17 +351,23 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         mList.setAdapter(mAudioAdapter);
         mList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
 
-        if (savedInstanceState == null) {
-            mPresenter.getAudio();
-        }
-
 
         mSeekBar.setMax(100);
         mProgressBar.setMax(100);
 
-        mSeekBar.setOnTouchListener((v, event) -> {
-            mPresenter.seekChange(v);
-            return false;
+        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mPresenter.seekChange(seekBar);
+            }
         });
 
 
@@ -331,6 +390,16 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (savedInstanceState) {
+            mPresenter.onOrintationChangeListner(mBookPOJO);
+        } else {
+            mPresenter.onCreate(mBookPOJO, this);
+            mPresenter.getAudio();
+        }
+    }
 
     public void showSiries() {
         showPage(getResources().getString(R.string.tab_text_3));
@@ -474,13 +543,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+    public void onSaveInstanceState(@NotNull Bundle outState,
+            @NotNull PersistableBundle outPersistentState) {
         super.onSaveInstanceState(outState, outPersistentState);
         outState.putBoolean("serviceStatus", mPresenter.isServiceBound());
     }
 
     @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    protected void onRestoreInstanceState(@NotNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         mPresenter.setServiceBound(savedInstanceState.getBoolean("serviceStatus"));
     }
@@ -497,22 +567,41 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     }
 
     @Override
+    public void broadcastSend(@NotNull @NonNull Intent intent) {
+        sendBroadcast(intent);
+    }
+
+    @Override
+    public void activityStart(@NotNull @NonNull Intent intent) {
+        startActivity(intent);
+    }
+
+    @Override
+    public void myUnbindService(@NotNull @NonNull ServiceConnection serviceConnection) {
+        try {
+            unbindService(serviceConnection);
+        } catch (Exception ignored) {
+        }
+
+    }
+
+    @Override
     public Resources.Theme getTheme() {
         Resources.Theme theme = super.getTheme();
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
-        if (themeName != null) {
-            if (themeName.equals(getString(R.string.theme_dark))) {
-                theme.applyStyle(R.style.AppTheme_NoActionBar, true);
-            } else if (themeName.equals(getString(R.string.theme_light))) {
-                theme.applyStyle(R.style.LightAppTheme_NoActionBar, true);
-            }
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            theme.applyStyle(R.style.AppTheme_NoActionBar, true);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            theme.applyStyle(R.style.LightAppTheme_NoActionBar, true);
         }
 
 
         return theme;
     }
+
+
 }

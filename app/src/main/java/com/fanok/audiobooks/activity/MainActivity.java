@@ -1,11 +1,9 @@
 package com.fanok.audiobooks.activity;
 
-import static com.fanok.audiobooks.Consts.APP_FRAGMENT;
-import static com.fanok.audiobooks.Consts.APP_PREFERENCES;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,7 +11,6 @@ import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -24,8 +21,8 @@ import androidx.preference.PreferenceManager;
 
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
-import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.FragmentTagSteck;
+import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.presenter.MainPresenter;
@@ -34,6 +31,7 @@ import com.google.android.material.navigation.NavigationView;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 
 public class MainActivity extends MvpAppCompatActivity
@@ -43,8 +41,12 @@ public class MainActivity extends MvpAppCompatActivity
 
     private static final String EXSTRA_FRAGMENT = "startFragment";
     private static final String EXSTRA_URL = "url";
+    private static boolean closeApp = false;
     private boolean isSavedInstanceState = false;
 
+    public static boolean isCloseApp() {
+        return closeApp;
+    }
 
     @InjectPresenter
     MainPresenter mPresenter;
@@ -77,26 +79,26 @@ public class MainActivity extends MvpAppCompatActivity
     }
 
     @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(LocaleManager.onAttach(base));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        closeApp = false;
         Log.d(TAG, "onCreate: called");
         setContentView(R.layout.activity_main);
-
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
-        if (themeName != null) {
-            if (themeName.equals(getString(R.string.theme_dark))) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                setTheme(R.style.AppTheme_NoActionBar);
-            } else if (themeName.equals(getString(R.string.theme_light))) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                setTheme(R.style.LightAppTheme_NoActionBar);
-            }
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            setTheme(R.style.AppTheme_NoAnimTheme);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            setTheme(R.style.LightAppTheme_NoAnimTheme);
         }
-
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -124,9 +126,9 @@ public class MainActivity extends MvpAppCompatActivity
                 if (url != null && !url.isEmpty() && fragment != -1) {
                     mPresenter.startFragment(fragment, url);
                 } else {
-                    SharedPreferences mSettings = getSharedPreferences(APP_PREFERENCES,
-                            Context.MODE_PRIVATE);
-                    fragment = mSettings.getInt(APP_FRAGMENT, Consts.FRAGMENT_AUDIOBOOK);
+                    SharedPreferences pref = PreferenceManager
+                            .getDefaultSharedPreferences(this);
+                    fragment = Integer.parseInt(pref.getString("pref_start_screen", "0"));
                     mPresenter.startFragment(fragment);
                 }
                 firstStart = false;
@@ -171,6 +173,7 @@ public class MainActivity extends MvpAppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
         mPresenter.onDestroy();
+        closeApp = true;
     }
 
     @Override
@@ -208,16 +211,25 @@ public class MainActivity extends MvpAppCompatActivity
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
-        if (themeName != null) {
-            if (themeName.equals(getString(R.string.theme_dark))) {
-                theme.applyStyle(R.style.AppTheme_NoActionBar, true);
-            } else if (themeName.equals(getString(R.string.theme_light))) {
-                theme.applyStyle(R.style.LightAppTheme_NoActionBar, true);
-            }
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            theme.applyStyle(R.style.AppTheme_NoActionBar, true);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            theme.applyStyle(R.style.LightAppTheme_NoActionBar, true);
         }
 
 
         return theme;
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String lang = pref.getString("pref_lang", "ru");
+        Locale locale = new Locale(lang);
+        newConfig.setLocale(locale);
+        super.onConfigurationChanged(newConfig);
     }
 }

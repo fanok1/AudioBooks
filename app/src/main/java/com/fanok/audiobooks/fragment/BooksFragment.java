@@ -168,6 +168,30 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         if (toolbar != null) {
             if (!subTitleString.isEmpty()) {
                 toolbar.setSubtitle(subTitleString);
+                /*//translation
+                String lang = Locale.getDefault().toLanguageTag();
+                if(!lang.equals("ru")) {
+                    FirebaseTranslatorOptions options =
+                            new FirebaseTranslatorOptions.Builder()
+                                    .setSourceLanguage(FirebaseTranslateLanguage.RU)
+                                    .setTargetLanguage(FirebaseTranslateLanguage
+                                    .languageForLanguageCode(lang))
+                                    .build();
+                    final FirebaseTranslator translator =
+                            FirebaseNaturalLanguage.getInstance().getTranslator(options);
+
+                    FirebaseModelDownloadConditions conditions = new
+                    FirebaseModelDownloadConditions.Builder()
+                            .requireWifi()
+                            .build();
+                    translator.downloadModelIfNeeded(conditions)
+                            .addOnSuccessListener(
+                                    v -> {
+                                        translator.translate(subTitleString)
+                                                .addOnSuccessListener(
+                                                        toolbar::setSubtitle);
+                                    });
+                }*/
             } else if (subTitleId != 0) {
                 toolbar.setSubtitle(subTitleId);
             } else {

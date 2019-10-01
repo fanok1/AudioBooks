@@ -13,13 +13,27 @@ public interface BooksDBHelperInterfase {
 
     void removeFavorite(BookPOJO book);
 
+    void clearFavorite();
+
     void addHistory(BookPOJO book);
 
     void removeHistory(BookPOJO book);
 
+    void clearHistory();
+
     ArrayList<BookPOJO> getAllFavorite();
 
     ArrayList<BookPOJO> getAllHistory();
+
+    ArrayList<String> getGenre();
+
+    ArrayList<String> getAutors();
+
+    ArrayList<String> getArtists();
+
+    ArrayList<String> getSeries();
+
+
 
 
 }

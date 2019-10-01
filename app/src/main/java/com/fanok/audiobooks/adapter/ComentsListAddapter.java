@@ -152,6 +152,44 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
             });
 
 
+            /*//translation
+            String lang = Locale.getDefault().toLanguageTag();
+            if(!lang.equals("ru")) {
+                FirebaseTranslatorOptions options =
+                        new FirebaseTranslatorOptions.Builder()
+                                .setSourceLanguage(FirebaseTranslateLanguage.RU)
+                                .setTargetLanguage(FirebaseTranslateLanguage
+                                .languageForLanguageCode(lang))
+                                .build();
+                final FirebaseTranslator translator =
+                        FirebaseNaturalLanguage.getInstance().getTranslator(options);
+
+                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
+                .Builder()
+                        .requireWifi()
+                        .build();
+                translator.downloadModelIfNeeded(conditions)
+                        .addOnSuccessListener(
+                                v -> {
+                                    translator.translate(comentsPOJO.getName())
+                                            .addOnSuccessListener(
+                                                    translatedText -> mName.setText
+                                                    (translatedText));
+
+                                    translator.translate(comentsPOJO.getText())
+                                            .addOnSuccessListener(
+                                                    translatedText -> mText.setText
+                                                    (translatedText));
+
+                                    translator.translate(comentsPOJO.getDate())
+                                            .addOnSuccessListener(
+                                                    translatedText -> mTime.setText
+                                                    (translatedText));
+
+                                });
+            }*/
+
+
         }
     }
 }

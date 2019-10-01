@@ -34,7 +34,7 @@ public interface ActivityPresenter {
 
     void seekChange(View view);
 
-    void onOrintationChangeListner();
+    void onOrintationChangeListner(BookPOJO bookPOJO);
 
     void buttonSpeedClick(View view);
 }

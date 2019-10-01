@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 
+import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.BookPOJO;
 
@@ -37,13 +38,11 @@ public class LoadBook extends AppCompatActivity {
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
-        if (themeName != null) {
-            if (themeName.equals(getString(R.string.theme_dark))) {
-                setTheme(R.style.AppTheme_NoAnimTheme);
-            } else if (themeName.equals(getString(R.string.theme_light))) {
-                setTheme(R.style.LightAppTheme_NoAnimTheme);
-            }
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            setTheme(R.style.AppTheme_NoAnimTheme);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            setTheme(R.style.LightAppTheme_NoAnimTheme);
         }
 
         mContext = this;
@@ -87,16 +86,19 @@ public class LoadBook extends AppCompatActivity {
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark));
-        if (themeName != null) {
-            if (themeName.equals(getString(R.string.theme_dark))) {
-                theme.applyStyle(R.style.AppTheme_NoAnimTheme, true);
-            } else if (themeName.equals(getString(R.string.theme_light))) {
-                theme.applyStyle(R.style.LightAppTheme_NoAnimTheme, true);
-            }
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            theme.applyStyle(R.style.AppTheme_NoAnimTheme, true);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            theme.applyStyle(R.style.LightAppTheme_NoAnimTheme, true);
         }
 
 
         return theme;
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(LocaleManager.onAttach(base));
     }
 }
