@@ -1,4 +1,7 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.firebase-perf'
+apply plugin: "io.fabric"
 
 android {
     compileSdkVersion 29
@@ -62,6 +65,9 @@ dependencies {
     implementation 'tech.schoolhelper:moxy-x-material:1.7.0'
     implementation 'com.android.support:preference-v7:29.0.0'
     implementation 'pub.devrel:easypermissions:0.2.0'
+    implementation 'com.github.codekidX:storage-chooser:2.0.4.4'
+
+
 
     /*implementation('com.google.firebase:firebase-ml-natural-language:21.0.2') {
         exclude module: 'androidx.activity'
@@ -70,8 +76,3 @@ dependencies {
         exclude module: 'androidx.activity'
     }*/
 }
-
-
-apply plugin: 'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.firebase-perf'
-apply plugin: "io.fabric"

@@ -27,6 +27,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     public SectionsPagerAdapter(@NonNull Context context, @NonNull FragmentManager fm,
             @NonNull String url) {
+
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         mUrl = url;
         tabItems = new ArrayList<>();

@@ -532,7 +532,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         mediaPlayer.start();
         mediaSession.setActive(true);
         startPlayProgressUpdater();
-        //startTimeProgressUpdater();
+        startTimeProgressUpdater();
     }
 
     private void stopMedia() {
@@ -561,7 +561,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             mediaPlayer.start();
             mediaSession.setActive(true);
             startPlayProgressUpdater();
-            //startTimeProgressUpdater();
+            startTimeProgressUpdater();
             buildNotification(PlaybackStatus.PLAYING);
         }
     }
@@ -951,11 +951,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
     }
 
-    /*private void startTimeProgressUpdater() {
+    private void startTimeProgressUpdater() {
         try {
             if (prepared) {
                 if (isPlaying()) {
-                    mAudioDBModel.setTime(urlBook, mediaPlayer.getCurrentPosition()/1000);
+                    int time = mediaPlayer.getCurrentPosition() / 1000;
+                    timeStart = time;
+                    mAudioDBModel.setTime(urlBook, time);
                     Runnable notification = this::startTimeProgressUpdater;
                     handler.postDelayed(notification, 10000);
                 }
@@ -963,7 +965,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         } catch (IllegalStateException ignored) {
 
         }
-    }*/
+    }
 
     private void seekTo(long postion) {
         try {

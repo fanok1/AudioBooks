@@ -182,5 +182,11 @@
     <string name="worning_not_allowed_write_storege">Додатком не було дозволено записувати дані сховище.</string>
     <string name="permission_read_external_storage">Дозвіл на читання файлів</string>
     <string name="worning_not_allowed_read_storege">Додатком не було дозволено чіать дані з сховища.</string>
+    <string name="create">Створити</string>
+    <string name="empty_text">Поле пусте</string>
+    <string name="error_folder_create">Помилка створення</string>
+    <string name="folder_created">Папка створена</string>
+    <string name="new_folder">Нова папка</string>
+    <string name="select">Вибрати</string>
 
 </resources>

@@ -13,15 +13,6 @@
         android:orientation="vertical"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <Button
-            android:id="@+id/button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/text_margin"
-            android:layout_marginEnd="@dimen/text_margin"
-            android:text="@string/default_text"
-            android:textSize="@dimen/titleSize" />
-
         <!--<TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -39,6 +30,15 @@
             android:drawableEnd="@drawable/ic_folder"
             android:text=""
             android:textColor="?attr/colorPrimaryText"
+            android:textSize="@dimen/titleSize" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/text_margin"
+            android:layout_marginEnd="@dimen/text_margin"
+            android:text="@string/default_text"
             android:textSize="@dimen/titleSize" />
 
 

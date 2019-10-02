@@ -520,14 +520,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         timeEnd /= 1000;
         int minutes = timeCurent / 60;
         int seconds = timeCurent % 60;
-        String timeString = String.format(Locale.forLanguageTag("UA"), "%02d:%02d", minutes,
+        String timeString = String.format(Locale.forLanguageTag("UK"), "%02d:%02d", minutes,
                 seconds);
 
         mTimeStart.setText(timeString);
 
         minutes = timeEnd / 60;
         seconds = timeEnd % 60;
-        timeString = String.format(Locale.forLanguageTag("UA"), "%02d:%02d", minutes, seconds);
+        timeString = String.format(Locale.forLanguageTag("UK"), "%02d:%02d", minutes, seconds);
         mTimeEnd.setText(timeString);
     }
 

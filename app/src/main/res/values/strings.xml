@@ -136,5 +136,11 @@
     <string name="error_restored">Ошибка восстановления!</string>
     <string name="permission_read_external_storage">Разрешение на чтение файлов</string>
     <string name="worning_not_allowed_read_storege">Приложению не было разрешено чиать данные с хранилища.</string>
+    <string name="select">Выбрать</string>
+    <string name="create">Создать</string>
+    <string name="new_folder">Новая папка</string>
+    <string name="folder_created">Папка создана</string>
+    <string name="error_folder_create">Ошибка создания</string>
+    <string name="empty_text">Поле пустое</string>
 
 </resources>

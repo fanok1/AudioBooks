@@ -1,24 +1,34 @@
 package com.fanok.audiobooks.activity;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.ContextWrapper;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
+import com.codekidlabs.storagechooser.Content;
+import com.codekidlabs.storagechooser.StorageChooser;
+import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.google.android.material.textfield.TextInputEditText;
 import com.r0adkll.slidr.Slidr;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -29,9 +39,17 @@ public class SelectDirectoryActivity extends AppCompatActivity {
 
     @BindView(R.id.textInputEditText)
     TextInputEditText mTextInputEditText;
-    boolean selection = false;
     @BindView(R.id.button)
     Button mButton;
+
+    private static final int REQUEST_DIRECTORY = 165;
+
+    private StorageChooser chooser;
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(LocaleManager.onAttach(base));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,12 +78,35 @@ public class SelectDirectoryActivity extends AppCompatActivity {
                 view.getContext()).getFilesDir().toString()));
 
 
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        Content content = new Content();
+        content.setCancelLabel(getString(R.string.cancel));
+        content.setSelectLabel(getString(R.string.select));
+        content.setOverviewHeading(getString(R.string.select_folder));
+        content.setCreateLabel(getString(R.string.create));
+        content.setFolderCreatedToastText(getString(R.string.folder_created));
+        content.setFolderErrorToastText(getString(R.string.error_folder_create));
+        content.setNewFolderLabel(getString(R.string.new_folder));
+        content.setTextfieldHintText(getString(R.string.new_folder));
+        content.setTextfieldErrorText(getString(R.string.empty_text));
+
+        StorageChooser.Builder builder = new StorageChooser.Builder()
+                .withContent(content)
+                .allowAddFolder(true)
+                .withActivity(SelectDirectoryActivity.this)
+                .withFragmentManager(getFragmentManager())
+                .withMemoryBar(true)
+                .withPredefinedPath(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS).getPath())
+                .allowCustomPath(true)
+                .setType(StorageChooser.DIRECTORY_CHOOSER);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_light_value));
         if (themeName.equals(getString(R.string.theme_dark_value))) {
-            setTheme(R.style.AppTheme_NoActionBar);
-        } else if (themeName.equals(getString(R.string.theme_light_value))) {
-            setTheme(R.style.LightAppTheme_NoActionBar);
+            StorageChooser.Theme theme = new StorageChooser.Theme(getApplicationContext());
+            theme.setScheme(getResources().getIntArray(R.array.paranoid_theme));
+            builder.setTheme(theme);
         }
+        chooser = builder.build();
     }
 
     @Override
@@ -73,29 +114,24 @@ public class SelectDirectoryActivity extends AppCompatActivity {
         super.onResume();
     }
 
-    private void click(View view) {
-        if (!selection) {
-            selection = true;
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-            intent.addCategory(Intent.CATEGORY_DEFAULT);
-            startActivityForResult(
-                    Intent.createChooser(intent, getString(R.string.select_folder_description)),
-                    251);
+    private void click(@NotNull View view) {
+        boolean hasPermission = (ContextCompat.checkSelfPermission(
+                view.getContext(),
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED);
+        if (!hasPermission) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_DIRECTORY);
+        } else {
+            showDirPiker(view.getContext());
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 251) {
-            selection = false;
-            if (data != null) {
-                Uri uri = data.getData();
-                if (uri != null) {
-                    mTextInputEditText.setText(uri.getPath());
-                }
-            }
-        }
+    private void showDirPiker(@NotNull Context context) {
+
+        chooser.setOnSelectListener(path -> mTextInputEditText.setText(path));
+        chooser.show();
     }
 
     @Override
@@ -120,6 +156,39 @@ public class SelectDirectoryActivity extends AppCompatActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.confirm_options_menu, menu);
         return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NotNull String[] permissions,
+            @NotNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_DIRECTORY) {
+            if (grantResults.length <= 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this,
+                        getString(R.string.worning_not_allowed_write_storege),
+                        Toast.LENGTH_LONG).show();
+            } else {
+                showDirPiker(this);
+            }
+        }
+    }
+
+    @Override
+    public Resources.Theme getTheme() {
+        Resources.Theme theme = super.getTheme();
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
+        }
+
+
+        return theme;
     }
 
 

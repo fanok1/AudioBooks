@@ -26,6 +26,8 @@ import androidx.preference.PreferenceGroup;
 import androidx.preference.PreferenceManager;
 import androidx.preference.PreferenceScreen;
 
+import com.codekidlabs.storagechooser.Content;
+import com.codekidlabs.storagechooser.StorageChooser;
 import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.model.AudioDBModel;
@@ -40,17 +42,72 @@ import java.io.BufferedReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class SettingsFragment extends PreferenceFragmentCompat implements
         SharedPreferences.OnSharedPreferenceChangeListener, EasyPermissions.PermissionCallbacks {
-    private static final int CODE_BACKUP = 937;
     private static final int CODE_RESTORE = 292;
     private static final int REQUEST_WRITE_STORAGE = 112;
     private static final int EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 342;
+
+    private DialogInterface.OnClickListener mOnClickListener = (dialogInterface, i) -> {
+
+
+        Content content = new Content();
+        content.setCancelLabel(getString(R.string.cancel));
+        content.setSelectLabel(getString(R.string.select));
+        content.setOverviewHeading(getString(R.string.select_folder));
+        content.setCreateLabel(getString(R.string.create));
+        content.setFolderCreatedToastText(getString(R.string.folder_created));
+        content.setFolderErrorToastText(getString(R.string.error_folder_create));
+        content.setNewFolderLabel(getString(R.string.new_folder));
+        content.setTextfieldHintText(getString(R.string.new_folder));
+        content.setTextfieldErrorText(getString(R.string.empty_text));
+
+
+        StorageChooser.Builder builder = new StorageChooser.Builder()
+                .withContent(content)
+                .allowAddFolder(true)
+                .withActivity(getActivity())
+                .withMemoryBar(true)
+                .withFragmentManager(Objects.requireNonNull(getActivity()).getFragmentManager())
+                .withPredefinedPath(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS).getPath())
+                .allowCustomPath(true)
+                .setType(StorageChooser.DIRECTORY_CHOOSER);
+
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(Objects.requireNonNull(getContext()));
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_light_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            StorageChooser.Theme theme = new StorageChooser.Theme(
+                    Objects.requireNonNull(getContext()).getApplicationContext());
+            theme.setScheme(getResources().getIntArray(R.array.paranoid_theme));
+            builder.setTheme(theme);
+        }
+
+        StorageChooser chooser = builder.build();
+
+
+        chooser.setOnSelectListener(path -> {
+            if (backup(path)) {
+                Toast.makeText(getContext(), getString(R.string.backup_created),
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(),
+                        getString(R.string.backup_not_created),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+        chooser.show();
+    };
 
     @Override
     public void onNavigateToScreen(PreferenceScreen preferenceScreen) {
@@ -130,18 +187,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                         REQUEST_WRITE_STORAGE);
             } else {
                 showAllert(preference.getContext(), R.string.confirm_backup,
-                        (dialogInterface, i) -> {
-                            if (backup(Environment.getExternalStoragePublicDirectory(
-                                    Environment.DIRECTORY_DOWNLOADS).getPath())) {
-                                Toast.makeText(getContext(), getString(R.string.backup_created),
-                                        Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(getContext(),
-                                        getString(R.string.backup_not_created),
-                                        Toast.LENGTH_SHORT).show();
-                            }
-
-                        });
+                        mOnClickListener);
             }
             return true;
         });
@@ -289,8 +335,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         GsonBuilder builder = new GsonBuilder();
         Gson gson = builder.create();
         FileWriter writer;
+        Date dateNow = new Date();
+        SimpleDateFormat formatForDateNow = new SimpleDateFormat("'Backup_'yyyy_MM_dd_HH_mm_ss",
+                Locale.forLanguageTag("UK"));
         try {
-            writer = new FileWriter(dir + "/backup.json");
+            writer = new FileWriter(dir + "/" + formatForDateNow.format(dateNow) + ".json");
             writer.write(gson.toJson(backup));
             writer.close();
         } catch (IOException e) {
@@ -371,10 +420,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                         Toast.LENGTH_LONG).show();
             } else {
                 showAllert(Objects.requireNonNull(getContext()), R.string.confirm_backup,
-                        (dialogInterface, i) -> {
-                            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-                            startActivityForResult(intent, CODE_BACKUP);
-                        });
+                        mOnClickListener);
             }
         }
     }

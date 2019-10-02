@@ -35,13 +35,13 @@
         android:key="pref_sort_favorite"
         android:title="@string/setting_sort_favorite" />
 
-    <!--<Preference
+    <Preference
         android:key="pref_dowland_path"
         android:summary="@string/select_folder_description"
         android:title="@string/pref_dowland_path"
         android:icon="@drawable/ic_folder">
         <intent android:action="com.fanok.audiobooks.activity.SelectDirectoryActivity"/>
-    </Preference>-->
+    </Preference>
 
     <Preference
         android:icon="@drawable/ic_backup"

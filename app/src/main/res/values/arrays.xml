@@ -60,4 +60,25 @@
         <item>@string/sort_value_series</item>
     </string-array>
 
+    <array name="paranoid_theme">
+        <!-- Overview -->
+        <item>#151515</item> <!--  Top Header bg -->
+        <item>#2c9633</item> <!-- header text   -->
+        <item>#252525</item> <!-- list bg  -->
+        <item>@android:color/white</item> <!--  storage list name text  -->
+        <item>#e1e1e1</item> <!-- free space text  -->
+        <item>#2c9633</item> <!-- memory bar -->
+
+        <!-- secondary dialog colors -->
+        <item>#e1e1e1</item> <!-- folder tint -->
+        <item>#252525</item> <!-- list bg -->
+        <item>@android:color/white</item> <!-- list text -->
+        <item>#151515</item> <!-- address bar tint -->
+        <item>@color/chevronBgColor</item> <!-- new folder hint tint -->
+        <item>#2c9633</item> <!-- select button color -->
+        <item>#2c9633</item> <!-- new folder layour bg -->
+        <item>#2c9633</item> <!-- fab multiselect color -->
+        <item>#151515</item> <!-- address bar bg -->
+    </array>
+
 </resources>

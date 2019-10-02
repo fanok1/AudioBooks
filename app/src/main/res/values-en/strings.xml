@@ -182,5 +182,11 @@
     <string name="worning_not_allowed_write_storege">The application was not allowed to write storage data.</string>
     <string name="permission_read_external_storage">Permission to read files</string>
     <string name="worning_not_allowed_read_storege">The application was not allowed to read data from storage.</string>
+    <string name="create">Create</string>
+    <string name="empty_text">The field is empty</string>
+    <string name="error_folder_create">Creation error</string>
+    <string name="folder_created">Folder created</string>
+    <string name="new_folder">New folder</string>
+    <string name="select">Choose</string>
 
 </resources>

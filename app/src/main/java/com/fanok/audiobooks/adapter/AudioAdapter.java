@@ -64,7 +64,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         int hours = totalSecs / 3600;
         int minutes = (totalSecs % 3600) / 60;
         int seconds = totalSecs % 60;
-        String timeString = String.format(Locale.forLanguageTag("UA"), "%02d:%02d:%02d", hours,
+        String timeString = String.format(Locale.forLanguageTag("UK"), "%02d:%02d:%02d", hours,
                 minutes, seconds);
 
         viewHolder.mTime.setText(timeString);
