@@ -51,6 +51,8 @@ public class Consts {
     public static final int FRAGMENT_FAVORITE = 4;
     public static final int FRAGMENT_HISTORY = 5;
 
+    public static final int IMPORT_SITE_KNIGA_V_UHE = 0;
+
     public static final String APP_PREFERENCES = "audiobooks_settings";
     public static final String APP_FRAGMENT = "start_fragment";
 

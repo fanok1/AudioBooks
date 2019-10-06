@@ -183,10 +183,17 @@
     <string name="permission_read_external_storage">Дозвіл на читання файлів</string>
     <string name="worning_not_allowed_read_storege">Додатком не було дозволено чіать дані з сховища.</string>
     <string name="create">Створити</string>
-    <string name="empty_text">Поле пусте</string>
+    <string name="empty_text">Пусте поле</string>
     <string name="error_folder_create">Помилка створення</string>
     <string name="folder_created">Папка створена</string>
     <string name="new_folder">Нова папка</string>
     <string name="select">Вибрати</string>
+    <string name="import_favorite">Імпорт обраного</string>
+    <string name="import_description">Імпортувати обране з сайту</string>
+    <string name="kniga_v_uhe">Книга в вусі</string>
+    <string name="kniga_v_uhe_description">Імпортувати з сайту \"Книга в вусі\"</string>
+    <string name="action_import">імпортувати</string>
+    <string name="prompt_password">Пароль</string>
+    <string name="prompt_username">Ім\'я користувача</string>
 
 </resources>

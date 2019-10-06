@@ -259,6 +259,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                             if (!MediaPlayerService.isPlay()) {
                                 getViewState().showTitle(pojo.getName());
                             }
+                            mAudioDBModel.add(mBookPOJO.getUrl(), pojo.getName());
                         }
 
                         if (!MediaPlayerService.isPlay()) {

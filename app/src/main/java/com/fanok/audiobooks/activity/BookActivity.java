@@ -63,6 +63,12 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     public static final String Broadcast_SET_SELECTION = "SetSelection";
     public static final String Broadcast_SET_TITLE = "SetTitle";
 
+    private static String showingView;
+
+    public static String getShowingView() {
+        return showingView;
+    }
+
     private static final String ARG_BOOK = "arg_book";
     @InjectPresenter
     BookPresenter mPresenter;
@@ -399,6 +405,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             mPresenter.onCreate(mBookPOJO, this);
             mPresenter.getAudio();
         }
+        savedInstanceState = true;
     }
 
     public void showSiries() {
@@ -434,12 +441,18 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onStop() {
         mPresenter.onDestroy();
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
         unregisterReceiver(setImage);
         unregisterReceiver(setProgress);
         unregisterReceiver(setSelectionBroadcast);
         unregisterReceiver(setTitleBroadcast);
+        showingView = "";
         super.onDestroy();
     }
 
@@ -603,5 +616,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         return theme;
     }
 
-
+    @Override
+    protected void onResume() {
+        super.onResume();
+        showingView = mBookPOJO.getUrl();
+    }
 }

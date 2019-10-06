@@ -39,6 +39,7 @@ import androidx.core.app.NotificationCompat;
 import com.fanok.audiobooks.PlaybackStatus;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.BookActivity;
+import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.broadcasts.OnCancelBroadcastReceiver;
 import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.pojo.AudioPOJO;
@@ -325,7 +326,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public void onDestroy() {
         super.onDestroy();
         if (mediaPlayer != null) {
-            mAudioDBModel.setTime(urlBook, mediaPlayer.getCurrentPosition() / 1000);
+            int time = mediaPlayer.getCurrentPosition() / 1000;
+            mAudioDBModel.setTime(urlBook, time);
             stopMedia();
             mediaPlayer.release();
         }
@@ -551,6 +553,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             mediaPlayer.pause();
             mediaSession.setActive(false);
             resumePosition = mediaPlayer.getCurrentPosition();
+            int time = resumePosition / 1000;
+            mAudioDBModel.setTime(urlBook, time);
         }
     }
 
@@ -799,6 +803,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             Objects.requireNonNull(notificationManager).createNotificationChannel(channel);
         }
 
+        Intent intent = new Intent(this, LoadBook.class);
+        intent.putExtra("url", urlBook);
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this,
                 CHANNEL_ID)
                 .setShowWhen(false)
@@ -812,6 +821,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 .addAction(R.drawable.ic_notification_previous, "previous", playbackAction(3))
                 .addAction(notificationAction, "pause", play_pauseAction)
                 .addAction(R.drawable.ic_notification_next, "next", playbackAction(2))
+                .setAutoCancel(true)
+                .setContentIntent(resultPendingIntent)
                 .setLargeIcon(image);
 
         if (playbackStatus == PlaybackStatus.PLAYING) {
@@ -956,7 +967,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             if (prepared) {
                 if (isPlaying()) {
                     int time = mediaPlayer.getCurrentPosition() / 1000;
-                    timeStart = time;
                     mAudioDBModel.setTime(urlBook, time);
                     Runnable notification = this::startTimeProgressUpdater;
                     handler.postDelayed(notification, 10000);

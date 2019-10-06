@@ -141,6 +141,13 @@
     <string name="new_folder">Новая папка</string>
     <string name="folder_created">Папка создана</string>
     <string name="error_folder_create">Ошибка создания</string>
-    <string name="empty_text">Поле пустое</string>
+    <string name="empty_text">Пустое поле</string>
+    <string name="import_favorite">Импорт избранного</string>
+    <string name="import_description">Импортировать избранное с сайта</string>
+    <string name="kniga_v_uhe">Книга в ухе</string>
+    <string name="kniga_v_uhe_description">Импортировать с сайта \"Книга в ухе\"</string>
+    <string name="action_import">Импортировать</string>
+    <string name="prompt_password">Пароль</string>
+    <string name="prompt_username">Имя пользователя</string>
 
 </resources>

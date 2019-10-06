@@ -28,8 +28,10 @@ import androidx.preference.PreferenceScreen;
 
 import com.codekidlabs.storagechooser.Content;
 import com.codekidlabs.storagechooser.StorageChooser;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.activity.ActivityImport;
 import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BackupPOJO;
@@ -211,6 +213,12 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                         });
             }
 
+            return true;
+        });
+
+        preferenceClickListner("import_kniga_v_uhe", preference -> {
+            ActivityImport.startActivity(Objects.requireNonNull(getActivity()),
+                    Consts.IMPORT_SITE_KNIGA_V_UHE);
             return true;
         });
 

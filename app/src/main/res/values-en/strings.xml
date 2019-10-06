@@ -188,5 +188,12 @@
     <string name="folder_created">Folder created</string>
     <string name="new_folder">New folder</string>
     <string name="select">Choose</string>
+    <string name="import_favorite">Import Favorites</string>
+    <string name="import_description">Import favorites from site</string>
+    <string name="kniga_v_uhe">Book in the ear</string>
+    <string name="kniga_v_uhe_description">Import from Book to Ear site</string>
+    <string name="action_import">Import</string>
+    <string name="prompt_password">Password</string>
+    <string name="prompt_username">Username</string>
 
 </resources>

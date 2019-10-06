@@ -48,7 +48,8 @@ public class LoadBook extends AppCompatActivity {
         mContext = this;
         Intent intent = getIntent();
         mUrl = intent.getStringExtra("url");
-        if (mUrl == null) finish();
+        String text = BookActivity.getShowingView();
+        if (mUrl == null || mUrl.equals(text)) finish();
     }
 
     @Override

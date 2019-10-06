@@ -35,6 +35,18 @@
         android:key="pref_sort_favorite"
         android:title="@string/setting_sort_favorite" />
 
+    <PreferenceScreen
+        android:icon="@drawable/ic_import"
+        android:key="import"
+        android:persistent="true"
+        android:summary="@string/import_description"
+        android:title="@string/import_favorite">
+        <Preference
+            android:key="import_kniga_v_uhe"
+            android:summary="@string/kniga_v_uhe_description"
+            android:title="@string/kniga_v_uhe"/>
+    </PreferenceScreen>
+
     <Preference
         android:key="pref_dowland_path"
         android:summary="@string/select_folder_description"
