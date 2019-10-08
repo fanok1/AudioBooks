@@ -15,6 +15,7 @@
         <item name="backgraundColor">@color/colorBackgraund</item>
         <item name="mySelectableItemBackground">@color/selectableItemBackground</item>
         <item name="colorItemMenu">@color/primaryTextColor</item>
+        <item name="prefIconColor">@color/primaryTextColor</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -52,6 +53,7 @@
         <item name="backgraundColor">@color/colorBackgraundLight</item>
         <item name="mySelectableItemBackground">@color/selectableItemBackgroundLight</item>
         <item name="colorItemMenu">@color/primaryTextColor</item>
+        <item name="prefIconColor">@color/colorNavigayionItemLight</item>
     </style>
 
     <style name="LightAppTheme.NoActionBar">
