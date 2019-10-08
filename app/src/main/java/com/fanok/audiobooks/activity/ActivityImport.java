@@ -93,6 +93,8 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
             return false;
         });
 
+        mPresenter.onCreate(this, site);
+
     }
 
     private void click() {
@@ -107,6 +109,11 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
     @Override
     public void showToast(int id) {
         Toast.makeText(this, getText(id), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     @Override

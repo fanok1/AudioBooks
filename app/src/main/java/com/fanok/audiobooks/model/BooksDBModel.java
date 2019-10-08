@@ -33,9 +33,23 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
         return booksInTable(book, "history");
     }
 
+    @Override
+    public boolean inFavorite(@NonNull String url) {
+        return booksInTable(url, "favorite");
+    }
+
+    @Override
+    public boolean inHistory(@NonNull String url) {
+        return booksInTable(url, "history");
+    }
+
     private boolean booksInTable(@NonNull BookPOJO book, @NonNull String table) {
+        return booksInTable(book.getUrl(), table);
+    }
+
+    private boolean booksInTable(@NonNull String url, @NonNull String table) {
         String builder = "select id from " + table + " where "
-                + "url_book = '" + book.getUrl() + "'";
+                + "url_book = '" + url + "'";
         SQLiteDatabase db = getDBHelper().getWritableDatabase();
         Cursor cursor = db.rawQuery(builder, null);
         int i = cursor.getCount();

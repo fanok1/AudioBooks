@@ -166,7 +166,7 @@ public class BookPOJO {
         return reting;
     }
 
-    private static BookPOJO getBookByUrl(String url) throws IOException {
+    public static BookPOJO getBookByUrl(String url) throws IOException {
         BookPOJO bookPOJO = new BookPOJO();
 
         Document document = Jsoup.connect(url)
@@ -229,7 +229,7 @@ public class BookPOJO {
 
         Elements seriesSisterElements = document.getElementsByClass("book_serie_block_title");
         for (int i = 0; i < seriesSisterElements.size(); i++) {
-            Element element = seriesSisterElements.first();
+            Element element = seriesSisterElements.get(i);
             if (element.text().contains("Цикл")) {
                 Elements seriesElement = element.getElementsByTag("a");
                 if (seriesElement.size() != 0) {

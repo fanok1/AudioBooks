@@ -9,6 +9,10 @@ public interface BooksDBHelperInterfase {
 
     boolean inHistory(BookPOJO book);
 
+    boolean inFavorite(String url);
+
+    boolean inHistory(String url);
+
     void addFavorite(BookPOJO book);
 
     void removeFavorite(BookPOJO book);

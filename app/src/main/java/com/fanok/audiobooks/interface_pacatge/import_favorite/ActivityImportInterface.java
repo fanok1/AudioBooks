@@ -10,6 +10,9 @@ public interface ActivityImportInterface extends MvpView {
     void showToast(int id);
 
     @StateStrategyType(SkipStrategy.class)
+    void showToast(String message);
+
+    @StateStrategyType(SkipStrategy.class)
     void close();
 
     void showProgress(boolean b);

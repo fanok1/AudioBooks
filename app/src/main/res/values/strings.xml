@@ -149,5 +149,9 @@
     <string name="action_import">Импортировать</string>
     <string name="prompt_password">Пароль</string>
     <string name="prompt_username">Имя пользователя</string>
+    <string name="error_import">Не удалось импортировать данные</string>
+    <string name="import_complite">Данные импортированы</string>
+    <string name="worong_data_sorce">Неверный источник данных</string>
+    <string name="incorect_login_or_password">Невероне имя пользователя или пароль</string>
 
 </resources>

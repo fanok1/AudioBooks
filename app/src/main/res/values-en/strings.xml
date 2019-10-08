@@ -195,5 +195,9 @@
     <string name="action_import">Import</string>
     <string name="prompt_password">Password</string>
     <string name="prompt_username">Username</string>
+    <string name="error_import">Failed to import data.</string>
+    <string name="import_complite">Data Imported</string>
+    <string name="incorect_login_or_password">The username or password you entered is incorrect</string>
+    <string name="worong_data_sorce">Invalid data source</string>
 
 </resources>

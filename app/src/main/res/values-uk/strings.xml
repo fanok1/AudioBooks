@@ -195,5 +195,9 @@
     <string name="action_import">імпортувати</string>
     <string name="prompt_password">Пароль</string>
     <string name="prompt_username">Ім\'я користувача</string>
+    <string name="error_import">Не вдалось імпортувати дані</string>
+    <string name="import_complite">Дані імпортовані</string>
+    <string name="incorect_login_or_password">Неправильне ім\'я користувача або пароль</string>
+    <string name="worong_data_sorce">Невірне джерело даних</string>
 
 </resources>
