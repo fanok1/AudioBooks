@@ -270,6 +270,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
 
 
+
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
@@ -620,5 +621,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     protected void onResume() {
         super.onResume();
         showingView = mBookPOJO.getUrl();
+        View decorView = getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+        decorView.setSystemUiVisibility(uiOptions);
     }
 }

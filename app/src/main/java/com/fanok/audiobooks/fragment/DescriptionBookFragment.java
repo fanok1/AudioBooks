@@ -2,6 +2,8 @@ package com.fanok.audiobooks.fragment;
 
 import static java.lang.Integer.MAX_VALUE;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,6 +28,7 @@ import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MarginItemDecoration;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.BookActivity;
+import com.fanok.audiobooks.activity.ImageFullScreenActivity;
 import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.adapter.BooksOtherAdapter;
 import com.fanok.audiobooks.interface_pacatge.book_content.Description;
@@ -32,6 +36,7 @@ import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.DescriptionPOJO;
 import com.fanok.audiobooks.presenter.BookDescriptionPresenter;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -162,11 +167,34 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     @Override
     public void showDescription(@NonNull DescriptionPOJO description) {
         mTitle.setText(description.getTitle());
+        mImageView.setOnClickListener(null);
         Picasso.get()
                 .load(description.getPoster())
                 .placeholder(android.R.drawable.ic_menu_gallery)
                 .error(android.R.drawable.ic_menu_gallery)
-                .into(mImageView);
+                .into(new Target() {
+                    @Override
+                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                        mImageView.setImageBitmap(bitmap);
+                        mImageView.setOnClickListener(
+                                view -> ImageFullScreenActivity.start(
+                                        Objects.requireNonNull(getActivity()),
+                                        description.getPoster(), description.getTitle(),
+                                        mImageView));
+                    }
+
+                    @Override
+                    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                        mImageView.setImageDrawable(errorDrawable);
+                        Toast.makeText(getContext(), getString(R.string.error_load_photo),
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onPrepareLoad(Drawable placeHolderDrawable) {
+                        mImageView.setImageDrawable(placeHolderDrawable);
+                    }
+                });
 
         if (!description.getGenre().isEmpty()) {
             mGenre.setText(description.getGenre());
@@ -200,7 +228,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 activity.showOtherArtist();
             }
         }
-
 
 
         mDesc.setMaxLines(MAX_VALUE);

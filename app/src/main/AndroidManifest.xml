@@ -56,6 +56,12 @@
             android:theme="@style/AppTheme.SwipeOnClose" />
 
         <activity
+            android:name=".activity.ImageFullScreenActivity"
+            android:configChanges="locale|uiMode"
+            android:label=""
+            android:theme="@style/ImageFullScreen" />
+
+        <activity
             android:name=".activity.MainActivity"
             android:configChanges="locale|uiMode|orientation|screenSize"
             android:label="@string/app_name"

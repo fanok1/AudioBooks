@@ -153,5 +153,7 @@
     <string name="import_complite">Данные импортированы</string>
     <string name="worong_data_sorce">Неверный источник данных</string>
     <string name="incorect_login_or_password">Невероне имя пользователя или пароль</string>
+    <string name="back">Назад</string>
+    <string name="error_load_photo">Не удалось загрузить изображение</string>
 
 </resources>

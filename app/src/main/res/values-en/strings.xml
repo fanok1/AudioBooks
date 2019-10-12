@@ -199,5 +199,7 @@
     <string name="import_complite">Data Imported</string>
     <string name="incorect_login_or_password">The username or password you entered is incorrect</string>
     <string name="worong_data_sorce">Invalid data source</string>
+    <string name="back">Back</string>
+    <string name="error_load_photo">Failed to download image.</string>
 
 </resources>

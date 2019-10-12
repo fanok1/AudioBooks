@@ -199,5 +199,7 @@
     <string name="import_complite">Дані імпортовані</string>
     <string name="incorect_login_or_password">Неправильне ім\'я користувача або пароль</string>
     <string name="worong_data_sorce">Невірне джерело даних</string>
+    <string name="back">Назад</string>
+    <string name="error_load_photo">Не вдалося завантажити зображення</string>
 
 </resources>
