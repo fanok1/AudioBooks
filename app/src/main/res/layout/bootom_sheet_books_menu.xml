@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/backgraundColor"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:contentDescription="@string/book_cover"
+            android:scaleType="matrix"
+            tools:srcCompat="@tools:sample/avatars[0]" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="?attr/colorPrimaryText"
+                android:textSize="16sp"
+                tools:text="@string/open" />
+
+            <TextView
+                android:id="@+id/authorName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="?attr/subTextColor"
+                android:textSize="14sp"
+                tools:text="@string/open" />
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:alpha="0.3"
+        android:background="?attr/colorPrimaryText" />
+
+    <TextView
+        android:id="@+id/open"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawableStart="@drawable/ic_open_in_new"
+        android:drawablePadding="30dp"
+        android:focusable="true"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:text="@string/open"
+        android:textColor="?attr/colorPrimaryText"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/addFavorite"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawableStart="@drawable/ic_star"
+        android:drawablePadding="30dp"
+        android:focusable="true"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:text="@string/add_to_favorite"
+        android:textColor="?attr/colorPrimaryText"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/removeFavorite"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawableStart="@drawable/ic_star_off"
+        android:drawablePadding="30dp"
+        android:focusable="true"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:text="@string/remove_favorite"
+        android:textColor="?attr/colorPrimaryText"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/genre"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawableStart="@drawable/ic_genre_bottom_sheet"
+        android:drawablePadding="30dp"
+        android:focusable="true"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:text="@string/open_genre"
+        android:textColor="?attr/colorPrimaryText"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/author"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawableStart="@drawable/ic_autor_bottom_sheet"
+        android:drawablePadding="30dp"
+        android:focusable="true"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:text="@string/open_author"
+        android:textColor="?attr/colorPrimaryText"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/artist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawableStart="@drawable/ic_artist_bottom_sheet"
+        android:drawablePadding="30dp"
+        android:focusable="true"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:text="@string/open_artist"
+        android:textColor="?attr/colorPrimaryText"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/series"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawableStart="@drawable/ic_series_bottom_sheet"
+        android:drawablePadding="30dp"
+        android:focusable="true"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:text="@string/open_series"
+        android:textColor="?attr/colorPrimaryText"
+        android:textSize="16sp" />
+
+</LinearLayout>

@@ -180,7 +180,8 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                     (view12, position) -> mPresenter.onBookItemClick(view12, position));
 
             mAddapterBooks.setLongListener(
-                    (view13, position) -> mPresenter.onBookItemLongClick(view13, position));
+                    (view13, position) -> mPresenter.onBookItemLongClick(view13, position,
+                            getLayoutInflater()));
         }
 
         mAdapterSeries.setListener(

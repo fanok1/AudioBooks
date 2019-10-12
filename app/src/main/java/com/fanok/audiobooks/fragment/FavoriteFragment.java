@@ -116,7 +116,8 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                 (view12, position) -> mPresenter.onBookItemClick(view12, position));
 
         mAddapterBooks.setLongListener(
-                (view13, position) -> mPresenter.onBookItemLongClick(view13, position));
+                (view13, position) -> mPresenter.onBookItemLongClick(view13, position,
+                        getLayoutInflater()));
         getPresenter().setView(mView);
         return view;
     }

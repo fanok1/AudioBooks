@@ -2,6 +2,7 @@ package com.fanok.audiobooks.interface_pacatge.books;
 
 import android.content.Context;
 import android.content.Intent;
+import android.view.LayoutInflater;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -22,7 +23,7 @@ public interface BooksPresenter {
 
     void onBookItemClick(View view, int position);
 
-    void onBookItemLongClick(View view, int position);
+    void onBookItemLongClick(View view, int position, LayoutInflater layoutInflater);
 
     void onActivityResult(@NonNull Intent intent);
 

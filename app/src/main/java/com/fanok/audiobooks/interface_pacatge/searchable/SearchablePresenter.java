@@ -1,6 +1,7 @@
 package com.fanok.audiobooks.interface_pacatge.searchable;
 
 import android.content.Context;
+import android.view.LayoutInflater;
 import android.view.View;
 
 public interface SearchablePresenter {
@@ -17,7 +18,7 @@ public interface SearchablePresenter {
 
     void onBookItemClick(View view, int position);
 
-    void onBookItemLongClick(View view, int position);
+    void onBookItemLongClick(View view, int position, LayoutInflater layoutInflater);
 
     void onAutorsListItemClick(View view, int position);
 

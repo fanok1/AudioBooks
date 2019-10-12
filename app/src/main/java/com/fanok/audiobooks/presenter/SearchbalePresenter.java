@@ -1,12 +1,13 @@
 package com.fanok.audiobooks.presenter;
 
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.Log;
-import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
-
-import androidx.appcompat.widget.PopupMenu;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
@@ -22,6 +23,8 @@ import com.fanok.audiobooks.model.SearchebleModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.fanok.audiobooks.pojo.SearcheblPOJO;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -189,56 +192,88 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
     }
 
     @Override
-    public void onBookItemLongClick(View view, int position) {
-        PopupMenu popupMenu = new PopupMenu(view.getContext(), view, Gravity.END);
-        popupMenu.inflate(R.menu.popup_books_item_menu);
+    public void onBookItemLongClick(View view, int position, LayoutInflater layoutInflater) {
+
+        @SuppressLint("InflateParams") View layout = layoutInflater.inflate(
+                R.layout.bootom_sheet_books_menu, null);
+        final BottomSheetDialog dialog = new BottomSheetDialog(view.getContext());
+        dialog.setContentView(layout);
+
+        TextView open = layout.findViewById(R.id.open);
+        TextView add = layout.findViewById(R.id.addFavorite);
+        TextView remove = layout.findViewById(R.id.removeFavorite);
+        TextView genre = layout.findViewById(R.id.genre);
+        TextView author = layout.findViewById(R.id.author);
+        TextView artist = layout.findViewById(R.id.artist);
+        TextView series = layout.findViewById(R.id.series);
+
+        ImageView imageView = layout.findViewById(R.id.imageView);
+        Picasso.get()
+                .load(books.get(position).getPhoto())
+                .error(android.R.drawable.ic_menu_camera)
+                .placeholder(android.R.drawable.ic_menu_camera)
+                .into(imageView);
+
+        TextView title = layout.findViewById(R.id.title);
+        title.setText(books.get(position).getName());
+
+        TextView authorName = layout.findViewById(R.id.authorName);
+        authorName.setText(books.get(position).getAutor());
+
 
         if (books.get(position).getSeries() == null || books.get(position).getUrlSeries() == null) {
-            popupMenu.getMenu().findItem(R.id.series).setVisible(false);
+            series.setVisibility(View.GONE);
         } else {
-            popupMenu.getMenu().findItem(R.id.series).setVisible(true);
+            series.setVisibility(View.VISIBLE);
         }
 
         if (mBooksDBModel.inFavorite(books.get(position))) {
-            popupMenu.getMenu().findItem(R.id.addFavorite).setVisible(false);
-            popupMenu.getMenu().findItem(R.id.removeFavorite).setVisible(true);
+            add.setVisibility(View.GONE);
+            remove.setVisibility(View.VISIBLE);
         } else {
-            popupMenu.getMenu().findItem(R.id.addFavorite).setVisible(true);
-            popupMenu.getMenu().findItem(R.id.removeFavorite).setVisible(false);
+            add.setVisibility(View.VISIBLE);
+            remove.setVisibility(View.GONE);
         }
 
-        popupMenu.setOnMenuItemClickListener(item -> {
-            switch (item.getItemId()) {
-                case R.id.open:
-                    getViewState().startBookActivity(books.get(position));
-                    return true;
-                case R.id.addFavorite:
-                    mBooksDBModel.addFavorite(books.get(position));
-                    return true;
-                case R.id.removeFavorite:
-                    mBooksDBModel.removeFavorite(books.get(position));
-                    return true;
-                case R.id.genre:
-                    getViewState().returnResult(books.get(position).getUrlGenre(),
-                            books.get(position).getGenre(), Consts.MODEL_BOOKS, "searchebleBooks");
-                    return true;
-                case R.id.author:
-                    getViewState().returnResult(books.get(position).getUrlAutor(),
-                            books.get(position).getAutor(), Consts.MODEL_BOOKS, "searchebleBooks");
-                    return true;
-                case R.id.artist:
-                    getViewState().returnResult(books.get(position).getUrlArtist(),
-                            books.get(position).getArtist(), Consts.MODEL_BOOKS, "searchebleBooks");
-                    return true;
-                case R.id.series:
-                    getViewState().returnResult(books.get(position).getUrlSeries() + "?page=",
-                            books.get(position).getSeries(), Consts.MODEL_BOOKS, "searchebleBooks");
-                    return true;
-                default:
-                    return false;
-            }
+        open.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            getViewState().startBookActivity(books.get(position));
         });
-        popupMenu.show();
+
+        add.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            mBooksDBModel.addFavorite(books.get(position));
+        });
+
+        remove.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            mBooksDBModel.removeFavorite(books.get(position));
+        });
+
+        genre.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            getViewState().returnResult(books.get(position).getUrlGenre(),
+                    books.get(position).getGenre(), Consts.MODEL_BOOKS, "searchebleBooks");
+        });
+
+        author.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            getViewState().returnResult(books.get(position).getUrlAutor(),
+                    books.get(position).getAutor(), Consts.MODEL_BOOKS, "searchebleBooks");
+        });
+
+        artist.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            getViewState().returnResult(books.get(position).getUrlArtist(),
+                    books.get(position).getArtist(), Consts.MODEL_BOOKS, "searchebleBooks");
+        });
+
+        series.setOnClickListener(view12 -> {
+            dialog.dismiss();
+            getViewState().returnResult(books.get(position).getUrlSeries() + "?page=",
+                    books.get(position).getSeries(), Consts.MODEL_BOOKS, "searchebleBooks");
+        });
+        dialog.show();
     }
 
     @Override
