@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.LocaleManager;
@@ -73,7 +74,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     ProgressBar mProgressBarTop;
     @BindView(R.id.topList)
     LinearLayout mTopList;
-    private int modelId;
+    private int mModelId;
 
     private BooksListAddapter mAddapterBooks;
     private GenreListAddapter mAddapterGenre;
@@ -83,6 +84,14 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
 
 
     private String query;
+
+    @ProvidePresenter
+    SearchbalePresenter provide() {
+        Intent intent = getIntent();
+        int model = intent.getIntExtra(Consts.ARG_MODEL, -1);
+        if (model == -1) throw new IllegalArgumentException("ModelId require parameter");
+        return new SearchbalePresenter(model, this);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,8 +113,8 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
 
 
         Intent intent = getIntent();
-        modelId = intent.getIntExtra(Consts.ARG_MODEL, -1);
-        if (modelId == -1) throw new IllegalArgumentException("modelId require parameter");
+        mModelId = intent.getIntExtra(Consts.ARG_MODEL, -1);
+        if (mModelId == -1) throw new IllegalArgumentException("mModelId require parameter");
 
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -131,7 +140,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
             setLayoutManager(2);
         }
 
-        switch (modelId) {
+        switch (mModelId) {
             case Consts.MODEL_BOOKS:
                 mAddapterBooks = new BooksListAddapter();
                 mRecyclerView.setAdapter(mAddapterBooks);
@@ -152,10 +161,6 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                 break;
         }
 
-        if (savedInstanceState == null) {
-            mPresenter.onCreate(modelId, this);
-        }
-
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -163,7 +168,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                 int lastCompletelyVisibleItemPosition =
                         ((LinearLayoutManager) Objects.requireNonNull(
                                 recyclerView.getLayoutManager())).findLastVisibleItemPosition();
-                if (modelId != Consts.MODEL_GENRE
+                if (mModelId != Consts.MODEL_GENRE
                         && lastCompletelyVisibleItemPosition > getCount() - 3 && dy > 0) {
                     mPresenter.loadNext(query);
                 }
@@ -321,7 +326,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
         Intent intent = new Intent();
         intent.putExtra("url", url);
         intent.putExtra("name", name);
-        intent.putExtra("modelId", modelId);
+        intent.putExtra("mModelId", modelId);
         intent.putExtra("tag", tag);
         setResult(Activity.RESULT_OK, intent);
         finish();

@@ -1,7 +1,6 @@
 package com.fanok.audiobooks.fragment;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.AnswerListAddapter;
 import com.fanok.audiobooks.adapter.ComentsListAddapter;
@@ -30,6 +30,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -54,9 +55,15 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
     Unbinder unbinder;
     @BindView(R.id.placeholder)
     TextView mPlaceholder;
-    private String mUrl;
     private ComentsListAddapter mComentsListAddapter;
     private AnswerListAddapter mAnswerListAddapter;
+
+    @ProvidePresenter
+    BookComentsPresenter provide() {
+        String url = Objects.requireNonNull(getArguments()).getString(ARG_URL);
+        if (url == null || url.isEmpty()) throw new NullPointerException();
+        return new BookComentsPresenter(url);
+    }
 
     public static ComentsBookFragment newInstance(@NonNull String url) {
         Bundle args = new Bundle();
@@ -64,16 +71,6 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
         ComentsBookFragment fragment = new ComentsBookFragment();
         fragment.setArguments(args);
         return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate: called");
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mUrl = getArguments().getString(ARG_URL);
-            if (mUrl == null || mUrl.isEmpty()) throw new NullPointerException();
-        }
     }
 
     @Nullable
@@ -121,11 +118,6 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
         mListAnswer.setAdapter(mAnswerListAddapter);
 
         ViewCompat.setNestedScrollingEnabled(mList, false);
-
-
-        if (savedInstanceState == null) {
-            mPresenter.onCreate(mUrl);
-        }
 
         return view;
     }

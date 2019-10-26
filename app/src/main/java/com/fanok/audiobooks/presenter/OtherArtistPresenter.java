@@ -30,12 +30,15 @@ public class OtherArtistPresenter extends MvpPresenter<OtherArtist> implements
     private ArrayList<OtherArtistPOJO> mComentsPOJOS;
     private String mUrl;
 
-
-    @Override
-    public void onCreate(@NonNull String url) {
+    public OtherArtistPresenter(@NonNull String url) {
         mComentsPOJOS = new ArrayList<>();
         mComentsModel = new com.fanok.audiobooks.model.OtherArtistModel();
         mUrl = url;
+    }
+
+    @Override
+    protected void onFirstViewAttach() {
+        super.onFirstViewAttach();
         loadComents();
     }
 

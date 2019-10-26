@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import androidx.annotation.NonNull;
 
 import com.arellomobile.mvp.MvpView;
+import com.arellomobile.mvp.viewstate.strategy.SingleStateStrategy;
 import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.fanok.audiobooks.pojo.AudioPOJO;
@@ -14,8 +15,10 @@ import com.fanok.audiobooks.pojo.AudioPOJO;
 import java.util.ArrayList;
 
 public interface Activity extends MvpView {
+    @StateStrategyType(SingleStateStrategy.class)
     void setTabPostion(String title);
 
+    @StateStrategyType(SkipStrategy.class)
     void refreshActivity();
 
     @StateStrategyType(SkipStrategy.class)
@@ -34,11 +37,9 @@ public interface Activity extends MvpView {
 
     void setTimeEnd(int timeEnd);
 
-    @StateStrategyType(SkipStrategy.class)
     void setImageDrawable(int id);
 
     void setSelected(int id, String name);
-
 
     @StateStrategyType(SkipStrategy.class)
     void broadcastSend(@NonNull Intent intent);
@@ -48,4 +49,10 @@ public interface Activity extends MvpView {
 
     @StateStrategyType(SkipStrategy.class)
     void myUnbindService(@NonNull ServiceConnection serviceConnection);
+
+    void stateCollapsed();
+
+    void stateExpanded();
+
+    void stateElse();
 }

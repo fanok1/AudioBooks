@@ -5,7 +5,6 @@ import static java.lang.Integer.MAX_VALUE;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MarginItemDecoration;
 import com.fanok.audiobooks.R;
@@ -94,9 +94,15 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     TextView mLike;
     @BindView(R.id.disLike)
     TextView mDisLike;
-    private String mUrl;
     private BooksOtherAdapter mAdapterBooksRecomended;
     private boolean showMore;
+
+    @ProvidePresenter
+    BookDescriptionPresenter provide() {
+        String url = Objects.requireNonNull(getArguments()).getString(ARG_URL);
+        if (url == null || url.isEmpty()) throw new NullPointerException();
+        return new BookDescriptionPresenter(url);
+    }
 
     public static DescriptionBookFragment newInstance(@NonNull String url) {
         Bundle args = new Bundle();
@@ -104,16 +110,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         DescriptionBookFragment fragment = new DescriptionBookFragment();
         fragment.setArguments(args);
         return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate: called");
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mUrl = getArguments().getString(ARG_URL);
-            if (mUrl == null || mUrl.isEmpty()) throw new NullPointerException();
-        }
     }
 
     @Nullable
@@ -128,9 +124,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         int margin = (int) getContext().getResources().getDimension(R.dimen.books_other_margin);
         mRecommendedBooks.addItemDecoration(new MarginItemDecoration(margin));
-        if (savedInstanceState == null) {
-            mPresenter.onCreate(mUrl);
-        }
         return view;
     }
 

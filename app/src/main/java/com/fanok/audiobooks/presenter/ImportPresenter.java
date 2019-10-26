@@ -25,8 +25,7 @@ public class ImportPresenter extends MvpPresenter<ActivityImportInterface> imple
     private ImportModel mImportModel;
     private boolean loading = false;
 
-    @Override
-    public void onCreate(@NotNull Context context, int src) {
+    public ImportPresenter(@NotNull Context context, int src) {
         mImportModel = new ImportModel(context, src);
     }
 

@@ -21,6 +21,7 @@ import androidx.preference.PreferenceManager;
 
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.import_favorite.ActivityImportInterface;
@@ -54,6 +55,14 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
 
     }
 
+    @ProvidePresenter
+    ImportPresenter provide() {
+        Intent intent = getIntent();
+        int site = intent.getIntExtra(IMPORT, -1);
+        if (site == -1) throw new IllegalArgumentException();
+        return new ImportPresenter(this, site);
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,9 +70,6 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
         setContentView(R.layout.activity_import);
         ButterKnife.bind(this);
         Slidr.attach(this);
-        Intent intent = getIntent();
-        int site = intent.getIntExtra(IMPORT, -1);
-        if (site == -1) throw new IllegalArgumentException();
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -92,8 +98,6 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
             }
             return false;
         });
-
-        mPresenter.onCreate(this, site);
 
     }
 

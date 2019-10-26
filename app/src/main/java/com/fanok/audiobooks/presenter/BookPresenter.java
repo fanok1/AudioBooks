@@ -37,8 +37,6 @@ import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.service.MediaPlayerService;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -99,8 +97,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         this.serviceBound = serviceBound;
     }
 
-    @Override
-    public void onCreate(@NonNull BookPOJO bookPOJO, @NonNull Context context) {
+    public BookPresenter(@NonNull BookPOJO bookPOJO, @NonNull Context context) {
         mContext = context;
         mBookPOJO = bookPOJO;
         mBooksDBModel = new BooksDBModel(context);
@@ -110,6 +107,9 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         if (mAudioDBModel.isset(mBookPOJO.getUrl())) {
             last = mAudioDBModel.getName(mBookPOJO.getUrl());
         }
+        context.getSystemService(AUDIO_SERVICE);
+
+
         if (!MediaPlayerService.isPlay()) {
             if (!last.isEmpty()) {
                 getViewState().showTitle(last);
@@ -119,7 +119,13 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
             getViewState().broadcastSend(broadcastIntent);
         }
-        context.getSystemService(AUDIO_SERVICE);
+
+    }
+
+    @Override
+    protected void onFirstViewAttach() {
+        super.onFirstViewAttach();
+        getAudio();
     }
 
     @Override
@@ -324,20 +330,6 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     }
 
     @Override
-    public void onOrintationChangeListner(@NotNull BookPOJO bookPOJO) {
-        if (mBookPOJO == null) mBookPOJO = bookPOJO;
-        if (MediaPlayerService.isPlay()) {
-            getViewState().setImageDrawable(R.drawable.ic_pause);
-            Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
-            getViewState().broadcastSend(broadcastIntent);
-        } else {
-            getViewState().setImageDrawable(R.drawable.ic_play);
-            Intent broadcastIntent = new Intent(Broadcast_GET_POSITION);
-            getViewState().broadcastSend(broadcastIntent);
-        }
-    }
-
-    @Override
     public void buttonSpeedClick(View view) {
 
         final int step = 25;
@@ -393,6 +385,41 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
         popDialog.create();
         popDialog.show();
+    }
+
+    @Override
+    public void setImageDrawable(int id) {
+        getViewState().setImageDrawable(id);
+    }
+
+    @Override
+    public void updateTime(int timeCurrent, int timeEnd) {
+        getViewState().updateTime(timeCurrent, timeEnd);
+    }
+
+    @Override
+    public void setSelected(int pos, @NonNull String name) {
+        getViewState().setSelected(pos, name);
+    }
+
+    @Override
+    public void showTitle(@NonNull String title) {
+        getViewState().showTitle(title);
+    }
+
+    @Override
+    public void stateCollapsed() {
+        getViewState().stateCollapsed();
+    }
+
+    @Override
+    public void stateExpanded() {
+        getViewState().stateExpanded();
+    }
+
+    @Override
+    public void stateElse() {
+        getViewState().stateElse();
     }
 
     private void setSpeed(float value) {

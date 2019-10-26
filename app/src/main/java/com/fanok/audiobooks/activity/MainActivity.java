@@ -110,7 +110,6 @@ public class MainActivity extends MvpAppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
-        mPresenter.onCreate();
         fragmentsTag = new ArrayList<>();
         isSavedInstanceState = savedInstanceState != null;
     }

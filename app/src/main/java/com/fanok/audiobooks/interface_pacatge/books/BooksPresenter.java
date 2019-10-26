@@ -1,6 +1,5 @@
 package com.fanok.audiobooks.interface_pacatge.books;
 
-import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,8 +7,6 @@ import android.view.View;
 import androidx.annotation.NonNull;
 
 public interface BooksPresenter {
-
-    void onCreate(@NonNull String url, int modelID, String subTitle, Context context);
 
     void onDestroy();
 

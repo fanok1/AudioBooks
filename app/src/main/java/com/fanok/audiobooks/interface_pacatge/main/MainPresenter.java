@@ -9,8 +9,6 @@ public interface MainPresenter {
 
     void onDestroy();
 
-    void onCreate();
-
     void startFragment(int fragment, String url);
 
     void startFragment(int fragment);

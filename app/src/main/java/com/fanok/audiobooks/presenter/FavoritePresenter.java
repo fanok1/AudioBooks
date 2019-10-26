@@ -50,8 +50,8 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
     private Context mContext;
     private View mView;
 
-    @Override
-    public void onCreate(@NotNull Context context, int table) {
+
+    public FavoritePresenter(@NotNull Context context, int table) {
         mBooksDBModel = new BooksDBModel(context);
         mAudioDBModel = new AudioDBModel(context);
         mFavoriteModel = new FavoriteModel(context);
@@ -59,9 +59,16 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         mContext = context;
     }
 
+
     @Override
     public void setView(@NotNull View view) {
         mView = view;
+    }
+
+    @Override
+    protected void onFirstViewAttach() {
+        super.onFirstViewAttach();
+        loadBooks();
     }
 
     @Override
@@ -136,8 +143,6 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
         TextView authorName = layout.findViewById(R.id.authorName);
         authorName.setText(books.get(position).getAutor());
-
-        TextView timeTextView = layout.findViewById(R.id.time);
 
         if (books.get(position).getSeries() == null || books.get(position).getUrlSeries() == null) {
             series.setVisibility(View.GONE);

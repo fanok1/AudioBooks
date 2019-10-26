@@ -3,8 +3,6 @@ package com.fanok.audiobooks.presenter;
 
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.R;
@@ -31,14 +29,18 @@ public class BookSeriesPresenter extends MvpPresenter<Series> implements
     private ArrayList<SeriesPOJO> mComentsPOJOS;
     private String mUrl;
 
-
-    @Override
-    public void onCreate(@NonNull String url) {
+    public BookSeriesPresenter(String url) {
         mComentsPOJOS = new ArrayList<>();
         mComentsModel = new com.fanok.audiobooks.model.SeriesModel();
         mUrl = url;
+    }
+
+    @Override
+    protected void onFirstViewAttach() {
+        super.onFirstViewAttach();
         loadComents();
     }
+
 
     @Override
     public void onDestroy() {

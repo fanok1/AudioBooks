@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
@@ -54,9 +56,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
     private String mUrl;
 
-
-    @Override
-    public void onCreate(int modelId, Context context) {
+    public SearchbalePresenter(int modelId, @NonNull Context context) {
         mModelId = modelId;
         switch (modelId) {
             case Consts.MODEL_BOOKS:

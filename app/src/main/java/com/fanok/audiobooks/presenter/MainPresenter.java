@@ -68,11 +68,6 @@ public class MainPresenter extends MvpPresenter<MainView> implements
     }
 
     @Override
-    public void onCreate() {
-
-    }
-
-    @Override
     public void startFragment(int fragmentID, String url) {
         if (url == null || url.isEmpty()) {
             startFragment(fragmentID);

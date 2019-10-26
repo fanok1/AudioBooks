@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.R;
@@ -70,6 +71,15 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     private int titleId;
     private int table;
 
+    @ProvidePresenter
+    FavoritePresenter provide() {
+        Bundle arg = getArguments();
+        if (arg != null) {
+            table = arg.getInt(ARG_TABLE, 0);
+        }
+        return new FavoritePresenter(Objects.requireNonNull(getContext()), table);
+    }
+
     public static FavoriteFragment newInstance(int title, int table) {
         FavoriteFragment fragment = new FavoriteFragment();
         Bundle args = new Bundle();
@@ -87,9 +97,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         if (arg != null) {
             titleId = arg.getInt(ARG_TITLE, 0);
             table = arg.getInt(ARG_TABLE, 0);
-        }
-        if (savedInstanceState == null) {
-            getPresenter().onCreate(Objects.requireNonNull(getContext()), table);
         }
     }
 
@@ -215,8 +222,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                     break;
             }
         }
-        getPresenter().cealrData();
-        getPresenter().loadBooks();
     }
 
     @Override

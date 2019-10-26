@@ -1,16 +1,12 @@
 package com.fanok.audiobooks.interface_pacatge.book_content;
 
-import android.content.Context;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import com.fanok.audiobooks.pojo.BookPOJO;
-
 public interface ActivityPresenter {
-    void onCreate(@NonNull BookPOJO bookPOJO, @NonNull Context context);
 
     void onDestroy();
 
@@ -34,7 +30,21 @@ public interface ActivityPresenter {
 
     void seekChange(View view);
 
-    void onOrintationChangeListner(BookPOJO bookPOJO);
-
     void buttonSpeedClick(View view);
+
+    void setImageDrawable(int id);
+
+    void updateTime(int timeCurrent, int timeEnd);
+
+    void setSelected(int pos, @NonNull String name);
+
+    void showTitle(String title);
+
+    void stateCollapsed();
+
+    void stateExpanded();
+
+    void stateElse();
+
+
 }

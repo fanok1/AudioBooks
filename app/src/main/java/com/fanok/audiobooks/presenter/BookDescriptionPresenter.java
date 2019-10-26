@@ -30,10 +30,13 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
     private DescriptionModel mModelDescription;
     private DescriptionPOJO mDescriptionPOJO;
 
+    public BookDescriptionPresenter(@NonNull String url) {
+        mModelDescription = new BookDescriptionModel(url);
+    }
 
     @Override
-    public void onCreate(@NonNull String url) {
-        mModelDescription = new BookDescriptionModel(url);
+    protected void onFirstViewAttach() {
+        super.onFirstViewAttach();
         loadDescription();
         loadBooks();
     }
@@ -65,7 +68,9 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
 
                     @Override
                     public void onError(Throwable e) {
-                        Log.d(TAG, e.getMessage());
+                        if (e.getMessage() != null) {
+                            Log.d(TAG, e.getMessage());
+                        }
                     }
 
                     @Override

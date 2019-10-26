@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.adapter.SeriesListAddapter;
@@ -48,6 +49,13 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
     BookSeriesPresenter mPresenter;
     @BindView(R.id.placeholder)
     TextView mPlaceholder;
+
+    @ProvidePresenter
+    BookSeriesPresenter provide() {
+        mUrl = Objects.requireNonNull(getArguments()).getString(ARG_URL);
+        if (mUrl == null || mUrl.isEmpty()) throw new NullPointerException();
+        return new BookSeriesPresenter(mUrl);
+    }
 
 
     private String mUrl;
@@ -93,10 +101,6 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
         mList.addItemDecoration(
                 new DividerItemDecoration(mList.getContext(), DividerItemDecoration.VERTICAL));
 
-
-        if (savedInstanceState == null) {
-            mPresenter.onCreate(mUrl);
-        }
 
 
         return view;

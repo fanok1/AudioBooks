@@ -31,12 +31,16 @@ public class BookComentsPresenter extends MvpPresenter<Coments> implements
     private ArrayList<ComentsPOJO> mComentsPOJOS;
     private String mUrl;
 
-
-    @Override
-    public void onCreate(@NonNull String url) {
+    public BookComentsPresenter(@NonNull String url) {
+        mUrl = url;
         mComentsPOJOS = new ArrayList<>();
         mComentsModel = new com.fanok.audiobooks.model.ComentsModel();
         mUrl = url;
+    }
+
+    @Override
+    protected void onFirstViewAttach() {
+        super.onFirstViewAttach();
         loadComents();
     }
 

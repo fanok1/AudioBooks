@@ -16,6 +16,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -31,6 +32,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
@@ -64,6 +66,12 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     public static final String Broadcast_SET_TITLE = "SetTitle";
 
     private static String showingView;
+    @BindView(R.id.buttonCollapse)
+    ImageButton mButtonCollapse;
+    @BindView(R.id.topButtonsControls)
+    LinearLayout mTopButtonsControls;
+    @BindView(R.id.player)
+    LinearLayout mPlayer;
 
     public static String getShowingView() {
         return showingView;
@@ -108,8 +116,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     private BottomSheetBehavior bottomSheetBehavior;
 
     private AudioAdapter mAudioAdapter;
-    private boolean savedInstanceState;
-
+    private BroadcastReceiver setImage = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int id = intent.getIntExtra("id", R.drawable.ic_play);
+            mPresenter.setImageDrawable(id);
+        }
+    };
 
 
     public static void startNewActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO) {
@@ -118,59 +131,57 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         intent.putExtra(ARG_BOOK, json);
         context.startActivity(intent);
     }
-
-    private BroadcastReceiver setImage = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            int id = intent.getIntExtra("id", R.drawable.ic_play);
-            setImageDrawable(id);
-        }
-    };
-
     private BroadcastReceiver setProgress = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int timeCurrent = intent.getIntExtra("timeCurrent", 0);
             int timeEnd = intent.getIntExtra("timeEnd", 0);
-            updateTime(timeCurrent, timeEnd);
+            mPresenter.updateTime(timeCurrent, timeEnd);
         }
     };
-
     private BroadcastReceiver setSelectionBroadcast = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int pos = intent.getIntExtra("postion", -1);
             String name = intent.getStringExtra("name");
-            setSelected(pos, name);
+            if (name != null) {
+                mPresenter.setSelected(pos, name);
+            }
         }
     };
-
     private BroadcastReceiver setTitleBroadcast = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String title = intent.getStringExtra("title");
             if (title != null) {
-                showTitle(title);
+                mPresenter.showTitle(title);
             }
         }
     };
+
+    @ProvidePresenter
+    BookPresenter provideBookPresenter() {
+        Intent intent = getIntent();
+        String json = intent.getStringExtra(ARG_BOOK);
+        if (json == null) throw new NullPointerException();
+        return new BookPresenter(BookPOJO.parceJsonToBookPojo(json), this);
+    }
 
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(LocaleManager.onAttach(base));
     }
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate: called");
-        Intent intent = getIntent();
 
+        Intent intent = getIntent();
         String json = intent.getStringExtra(ARG_BOOK);
         if (json == null) throw new NullPointerException();
-
         mBookPOJO = BookPOJO.parceJsonToBookPojo(json);
+
         setContentView(R.layout.activity_book);
         ButterKnife.bind(this);
 
@@ -185,33 +196,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             setTheme(R.style.LightAppTheme_NoActionBar);
         }
 
-
         setTitle(mBookPOJO.getName().trim());
-
-        /*//translation
-        String lang = Locale.getDefault().toLanguageTag();
-        if(!lang.equals("ru")) {
-            FirebaseTranslatorOptions options =
-                    new FirebaseTranslatorOptions.Builder()
-                            .setSourceLanguage(FirebaseTranslateLanguage.RU)
-                            .setTargetLanguage(FirebaseTranslateLanguage.languageForLanguageCode
-                            (lang))
-                            .build();
-            final FirebaseTranslator translator =
-                    FirebaseNaturalLanguage.getInstance().getTranslator(options);
-
-            FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
-            .Builder()
-                    .requireWifi()
-                    .build();
-            translator.downloadModelIfNeeded(conditions)
-                    .addOnSuccessListener(
-                            v -> {
-                                translator.translate(mBookPOJO.getName().trim())
-                                        .addOnSuccessListener(this::setTitle);
-                            });
-        }*/
-
         sectionsPagerAdapter = new SectionsPagerAdapter(this,
                 getSupportFragmentManager(), mBookPOJO.getUrl());
         ViewPager viewPager = findViewById(R.id.view_pager);
@@ -221,41 +206,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         setSupportActionBar(toolbar);
         tabs.setupWithViewPager(viewPager);
 
-        View llBottomSheet = findViewById(R.id.player);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setSubtitle(mBookPOJO.getAutor().trim());
-
-            /*//translation
-            if(!lang.equals("ru")) {
-                FirebaseTranslatorOptions options =
-                        new FirebaseTranslatorOptions.Builder()
-                                .setSourceLanguage(FirebaseTranslateLanguage.RU)
-                                .setTargetLanguage(FirebaseTranslateLanguage
-                                .languageForLanguageCode(lang))
-                                .build();
-                final FirebaseTranslator translator =
-                        FirebaseNaturalLanguage.getInstance().getTranslator(options);
-
-                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
-                .Builder()
-                        .requireWifi()
-                        .build();
-                translator.downloadModelIfNeeded(conditions)
-                        .addOnSuccessListener(
-                                v -> {
-                                    translator.translate(mBookPOJO.getAutor().trim())
-                                            .addOnSuccessListener(actionBar::setSubtitle);
-                                });
-            }*/
-
         }
-        View topBarButtonsControl = llBottomSheet.findViewById(R.id.topButtonsControls);
-        ImageButton buttonCollapse = findViewById(R.id.buttonCollapse);
-        buttonCollapse.setVisibility(View.INVISIBLE);
-        ProgressBar progressBar = findViewById(R.id.progressBar);
+        mButtonCollapse.setVisibility(View.INVISIBLE);
         TextView nameCurent = findViewById(R.id.name_curent);
 
         registerReceiver(setImage, new IntentFilter(Broadcast_SET_IMAGE));
@@ -267,8 +224,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         registerReceiver(setTitleBroadcast, new IntentFilter(Broadcast_SET_TITLE));
 
 
-        bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
-
+        bottomSheetBehavior = BottomSheetBehavior.from(mPlayer);
 
 
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
@@ -276,33 +232,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
                 if (actionBar != null) {
                     if (BottomSheetBehavior.STATE_COLLAPSED == newState) {
-                        if (topBarButtonsControl.getVisibility() != View.GONE) {
-                            topBarButtonsControl.setVisibility(View.GONE);
-                        }
-                        if (progressBar.getVisibility() != View.VISIBLE) {
-                            progressBar.setVisibility(
-                                    View.VISIBLE);
-                        }
-                        if (buttonCollapse.getVisibility() != View.INVISIBLE) {
-                            buttonCollapse.setVisibility(View.INVISIBLE);
-                        }
+                        mPresenter.stateCollapsed();
                     }
                 }
 
                 if (BottomSheetBehavior.STATE_EXPANDED == newState) {
-                    if (topBarButtonsControl.getVisibility() != View.GONE) {
-                        topBarButtonsControl.setVisibility(View.GONE);
-                    }
-                    if (progressBar.getVisibility() != View.INVISIBLE) {
-                        progressBar.setVisibility(
-                                View.INVISIBLE);
-                    }
-                    if (buttonCollapse.getVisibility() != View.VISIBLE) {
-                        buttonCollapse.setVisibility(View.VISIBLE);
-                    }
+                    mPresenter.stateExpanded();
                 } else {
-                    topBarButtonsControl.setVisibility(View.VISIBLE);
-                    progressBar.setVisibility(View.VISIBLE);
+                    mPresenter.stateElse();
                 }
             }
 
@@ -310,47 +247,44 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             @Override
             public void onSlide(@NonNull View bottomSheet, float slideOffset) {
                 float alpha = 1 - slideOffset * 2;
-                topBarButtonsControl.animate().alpha(alpha).setDuration(0);
-                progressBar.animate().alpha(alpha).setDuration(0);
+                mTopButtonsControls.animate().alpha(alpha).setDuration(0);
+                mProgressBar.animate().alpha(alpha).setDuration(0);
                 nameCurent.animate().alpha(alpha).setDuration(0);
                 if (alpha <= 0.0) {
-                    topBarButtonsControl.setVisibility(View.GONE);
-                    progressBar.setVisibility(View.INVISIBLE);
+                    mTopButtonsControls.setVisibility(View.GONE);
+                    mProgressBar.setVisibility(View.INVISIBLE);
                 } else {
-                    topBarButtonsControl.setVisibility(View.VISIBLE);
-                    progressBar.setVisibility(View.VISIBLE);
+                    mTopButtonsControls.setVisibility(View.VISIBLE);
+                    mProgressBar.setVisibility(View.VISIBLE);
                 }
 
                 if (slideOffset > Consts.COLLAPS_BUTTON_VISIBLE) {
-                    if (buttonCollapse.getVisibility() != View.VISIBLE) {
-                        buttonCollapse.setVisibility(View.VISIBLE);
+                    if (mButtonCollapse.getVisibility() != View.VISIBLE) {
+                        mButtonCollapse.setVisibility(View.VISIBLE);
                     }
 
                     double alphaCollapse = (slideOffset - Consts.COLLAPS_BUTTON_VISIBLE)
                             / Consts.COLLAPS_BUTTON_VISIBLE_STEP;
-                    buttonCollapse.animate().alpha((float) alphaCollapse).setDuration(0);
+                    mButtonCollapse.animate().alpha((float) alphaCollapse).setDuration(0);
                     nameCurent.animate().alpha((float) alphaCollapse).setDuration(0);
-                } else if (buttonCollapse.getVisibility() != View.INVISIBLE) {
-                    buttonCollapse.setVisibility(View.INVISIBLE);
+                } else if (mButtonCollapse.getVisibility() != View.INVISIBLE) {
+                    mButtonCollapse.setVisibility(View.INVISIBLE);
                 }
             }
         });
 
-        llBottomSheet.setOnClickListener(
+        mPlayer.setOnClickListener(
                 view -> {
                     if (BottomSheetBehavior.STATE_COLLAPSED == bottomSheetBehavior.getState()) {
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                     }
                 });
 
-        buttonCollapse.setOnClickListener(view -> {
+        mButtonCollapse.setOnClickListener(view -> {
             if (BottomSheetBehavior.STATE_EXPANDED == bottomSheetBehavior.getState()) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
         });
-
-
-        this.savedInstanceState = savedInstanceState != null;
 
 
         mAudioAdapter = new AudioAdapter();
@@ -398,16 +332,44 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     }
 
     @Override
+    public void stateCollapsed() {
+        if (mTopButtonsControls.getVisibility() != View.GONE) {
+            mTopButtonsControls.setVisibility(View.GONE);
+        }
+        if (mProgressBar.getVisibility() != View.VISIBLE) {
+            mProgressBar.setVisibility(
+                    View.VISIBLE);
+        }
+        if (mButtonCollapse.getVisibility() != View.INVISIBLE) {
+            mButtonCollapse.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    @Override
+    public void stateExpanded() {
+        if (mTopButtonsControls.getVisibility() != View.GONE) {
+            mTopButtonsControls.setVisibility(View.GONE);
+        }
+        if (mProgressBar.getVisibility() != View.INVISIBLE) {
+            mProgressBar.setVisibility(
+                    View.INVISIBLE);
+        }
+        if (mButtonCollapse.getVisibility() != View.VISIBLE) {
+            mButtonCollapse.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void stateElse() {
+        mTopButtonsControls.setVisibility(View.VISIBLE);
+        mProgressBar.setVisibility(View.VISIBLE);
+    }
+
+    /*@Override
     protected void onStart() {
         super.onStart();
-        if (savedInstanceState) {
-            mPresenter.onOrintationChangeListner(mBookPOJO);
-        } else {
-            mPresenter.onCreate(mBookPOJO, this);
-            mPresenter.getAudio();
-        }
-        savedInstanceState = true;
-    }
+        mPresenter.onOrintationChangeListner(mBookPOJO);
+    }*/
 
     public void showSiries() {
         showPage(getResources().getString(R.string.tab_text_3));

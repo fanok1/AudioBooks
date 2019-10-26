@@ -58,6 +58,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     private static final int REQUEST_WRITE_STORAGE = 112;
     private static final int EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 342;
 
+
     private DialogInterface.OnClickListener mOnClickListener = (dialogInterface, i) -> {
 
 
@@ -99,7 +100,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
 
         chooser.setOnSelectListener(path -> {
-            if (backup(path)) {
+            String filePath = backup(path);
+            if (filePath != null) {
                 Toast.makeText(getContext(), getString(R.string.backup_created),
                         Toast.LENGTH_SHORT).show();
             } else {
@@ -327,13 +329,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 }
             }
         }
-
-
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-
-    private boolean backup(@NotNull String dir) {
+    private String backup(@NotNull String dir) {
         BackupPOJO backup = new BackupPOJO();
         BooksDBModel booksDBModel = new BooksDBModel(getContext());
         AudioDBModel audioDBModel = new AudioDBModel(getContext());
@@ -344,16 +343,20 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         Gson gson = builder.create();
         FileWriter writer;
         Date dateNow = new Date();
-        SimpleDateFormat formatForDateNow = new SimpleDateFormat("'Backup_'yyyy_MM_dd_HH_mm_ss",
+        SimpleDateFormat formatForDateNow = new SimpleDateFormat(
+                "'AudioBook_backup_'yyyy_MM_dd_HH_mm_ss",
                 Locale.forLanguageTag("UK"));
+
+        String name = dir + "/" + formatForDateNow.format(dateNow) + ".json";
+
         try {
-            writer = new FileWriter(dir + "/" + formatForDateNow.format(dateNow) + ".json");
+            writer = new FileWriter(name);
             writer.write(gson.toJson(backup));
             writer.close();
         } catch (IOException e) {
-            return false;
+            return null;
         }
-        return true;
+        return name;
     }
 
     private boolean restore(@NotNull String file) {

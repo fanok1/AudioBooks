@@ -32,6 +32,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.R;
@@ -82,6 +83,27 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     private String subTitleString;
     private int modelID;
     private String mUrl;
+
+    @ProvidePresenter
+    BooksPresenter provideBookPresenter() {
+        Bundle arg = getArguments();
+        String url = "";
+        if (arg != null) {
+            url = arg.getString(ARG_URL, "");
+            titleId = arg.getInt(ARG_TITLE, 0);
+            subTitleId = arg.getInt(ARG_SUB_TITLE, 0);
+            subTitleString = arg.getString(ARG_SUB_TITLE_STRING, "");
+            modelID = arg.getInt(ARG_MODEL, -1);
+        }
+        if (url.isEmpty()) throw new IllegalArgumentException("Variable 'url' contains not url");
+        if (modelID == -1) throw new IllegalArgumentException("Illegal model id");
+        mUrl = url;
+        String subTitle = "";
+        if (!subTitleString.isEmpty()) {
+            subTitle = subTitleString;
+        } else if (subTitleId != 0) subTitle = getResources().getString(subTitleId);
+        return new BooksPresenter(url, modelID, subTitle, Objects.requireNonNull(getContext()));
+    }
 
     public static BooksFragment newInstance(@NonNull String url, int title, int modelID) {
         BooksFragment fragment = new BooksFragment();
@@ -145,13 +167,6 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         if (url.isEmpty()) throw new IllegalArgumentException("Variable 'url' contains not url");
         if (modelID == -1) throw new IllegalArgumentException("Illegal model id");
         mUrl = url;
-        if (savedInstanceState == null) {
-            String subTitle = "";
-            if (!subTitleString.isEmpty()) {
-                subTitle = subTitleString;
-            } else if (subTitleId != 0) subTitle = getResources().getString(subTitleId);
-            getPresenter().onCreate(url, modelID, subTitle, getContext());
-        }
     }
 
     @Override
@@ -217,9 +232,6 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                 mAddapterGenre = new GenreListAddapter();
                 mRecyclerView.setAdapter(mAddapterGenre);
                 break;
-        }
-        if (savedInstanceState == null) {
-            getPresenter().loadBoks();
         }
         setHasOptionsMenu(true);
 

@@ -1,12 +1,9 @@
 package com.fanok.audiobooks.interface_pacatge.searchable;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 
 public interface SearchablePresenter {
-
-    void onCreate(int modelID, Context context);
 
     void onDestroy();
 

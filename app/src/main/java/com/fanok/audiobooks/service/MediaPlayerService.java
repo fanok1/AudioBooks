@@ -487,7 +487,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     public boolean isPlaying() {
-        return mediaPlayer != null && mediaPlayer.isPlaying();
+        try {
+            return mediaPlayer != null && mediaPlayer.isPlaying();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**

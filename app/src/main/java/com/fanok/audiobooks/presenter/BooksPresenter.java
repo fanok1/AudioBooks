@@ -51,23 +51,18 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
     private com.fanok.audiobooks.interface_pacatge.books.BooksModel mModelBook;
     private com.fanok.audiobooks.interface_pacatge.books.GenreModel mModelGenre;
     private BooksDBModel mBooksDBModel;
-    private LayoutInflater mLayoutInflater;
-
     private Context mContext;
 
 
     private String mUrl;
     private boolean isEnd;
 
-
-    @Override
-    public void onCreate(@NonNull String url, int modelId, @NonNull String subTitle,
-            Context context) {
+    public BooksPresenter(@NonNull String url, int modelId, @NonNull String subTitle,
+            @NonNull Context context) {
         mUrl = url;
         mModelId = modelId;
         mSubTitle = subTitle;
         isEnd = false;
-        mContext = context;
         mBooksDBModel = new BooksDBModel(context);
         switch (mModelId) {
             case Consts.MODEL_BOOKS:
@@ -84,11 +79,18 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                 mModelGenre = new AutorsModel();
                 break;
         }
+        mContext = context;
+
     }
 
     @Override
     public void onDestroy() {
+    }
 
+    @Override
+    protected void onFirstViewAttach() {
+        super.onFirstViewAttach();
+        loadBoks();
     }
 
     @Override
@@ -496,7 +498,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
     }
 
     private String getStringById(int id) {
-        return mContext.getResources().getString(id);
+        return mContext.getString(id);
     }
 
     @Override

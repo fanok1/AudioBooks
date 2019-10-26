@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.adapter.OtherArtistListAddapter;
@@ -50,9 +51,14 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
     TextView mPlaceholder;
 
 
-    private String mUrl;
     private OtherArtistListAddapter mOtherArtistListAddapter;
 
+    @ProvidePresenter
+    OtherArtistPresenter provide() {
+        String url = Objects.requireNonNull(getArguments()).getString(ARG_URL);
+        if (url == null || url.isEmpty()) throw new NullPointerException();
+        return new OtherArtistPresenter(url);
+    }
 
     public static OtherArtistFragment newInstance(@NonNull String url) {
         Bundle args = new Bundle();
@@ -66,10 +72,6 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: called");
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mUrl = getArguments().getString(ARG_URL);
-            if (mUrl == null || mUrl.isEmpty()) throw new NullPointerException();
-        }
     }
 
     @Nullable
@@ -90,12 +92,6 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
         mList.setAdapter(mOtherArtistListAddapter);
         mList.addItemDecoration(
                 new DividerItemDecoration(mList.getContext(), DividerItemDecoration.VERTICAL));
-
-
-        if (savedInstanceState == null) {
-            mPresenter.onCreate(mUrl);
-        }
-
 
         return view;
     }
