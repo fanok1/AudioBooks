@@ -68,6 +68,7 @@ dependencies {
     implementation 'com.github.codekidX:storage-chooser:2.0.4.4'
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'
     implementation 'androidx.palette:palette:1.0.0'
+    implementation 'com.google.firebase:firebase-ads:18.2.0'
 
 
 

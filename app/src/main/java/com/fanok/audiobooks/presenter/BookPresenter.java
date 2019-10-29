@@ -1,9 +1,11 @@
 package com.fanok.audiobooks.presenter;
 
+import static android.content.Context.ACTIVITY_SERVICE;
 import static android.content.Context.AUDIO_SERVICE;
 
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_PLAY_NEW_AUDIO;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -60,6 +62,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     public static final String Broadcast_GET_POSITION = "GET_POSITION";
     public static final String Broadcast_SET_SPEED = "SET_SPEED";
     public static boolean start = false;
+    public static boolean resume = false;
 
     private BookPOJO mBookPOJO;
     private BooksDBModel mBooksDBModel;
@@ -104,11 +107,15 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         mBooksDBModel.addHistory(mBookPOJO);
         mAudioModel = new AudioModel();
         mAudioDBModel = new AudioDBModel(context);
+
+    }
+
+    @Override
+    protected void onFirstViewAttach() {
+        super.onFirstViewAttach();
         if (mAudioDBModel.isset(mBookPOJO.getUrl())) {
             last = mAudioDBModel.getName(mBookPOJO.getUrl());
         }
-        context.getSystemService(AUDIO_SERVICE);
-
 
         if (!MediaPlayerService.isPlay()) {
             if (!last.isEmpty()) {
@@ -119,12 +126,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
             getViewState().broadcastSend(broadcastIntent);
         }
-
-    }
-
-    @Override
-    protected void onFirstViewAttach() {
-        super.onFirstViewAttach();
+        mContext.getSystemService(AUDIO_SERVICE);
         getAudio();
     }
 
@@ -285,6 +287,21 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void buttomPlayClick(View view) {
+        if (!isServiceRunning(MediaPlayerService.class) && mAudioPOJO != null
+                && mAudioPOJO.size() != 0 &&
+                curentTrack >= 0 && mAudioPOJO.size() > curentTrack) {
+            serviceBound = false;
+            start = true;
+            resume = true;
+            curentTrack = 0;
+            for (int i = 0; i < mAudioPOJO.size(); i++) {
+                if (mAudioPOJO.get(i).getName().equals(last)) {
+                    curentTrack = i;
+                }
+            }
+
+            playAudio(curentTrack, mAudioDBModel.getTime(mBookPOJO.getUrl()));
+        }
         Intent broadcastIntent = new Intent(Broadcast_PLAY);
         getViewState().broadcastSend(broadcastIntent);
     }
@@ -425,5 +442,18 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private void setSpeed(float value) {
         speed = value;
         getViewState().broadcastSend(new Intent(Broadcast_SET_SPEED));
+    }
+
+    private boolean isServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
+        if (manager != null) {
+            for (ActivityManager.RunningServiceInfo serviceInfo : manager.getRunningServices(
+                    Integer.MAX_VALUE)) {
+                if (serviceClass.getName().equals(serviceInfo.service.getClassName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

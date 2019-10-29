@@ -16,6 +16,7 @@
             android:id="@+id/imageView"
             android:layout_width="36dp"
             android:layout_height="36dp"
+            android:layout_gravity="center_vertical"
             tools:src="@tools:sample/avatars" />
 
         <LinearLayout
@@ -28,9 +29,9 @@
                 android:id="@+id/parentName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/subTextColor"
-                android:textSize="@dimen/titleSize"
                 android:drawableStart="@drawable/ic_undo"
+                android:textColor="?attr/subTextColor"
+                android:textSize="@dimen/subTextSize"
                 tools:text="➠Мyх๑м๑р✎" />
 
             <LinearLayout
@@ -40,22 +41,32 @@
 
                 <TextView
                     android:id="@+id/name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/subTextSize"
+                    tools:text="Мyх๑м๑р✎" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/item_genre_title_top_margin"
+                    android:layout_marginEnd="@dimen/item_genre_title_top_margin"
+                    android:text="•"
+                    android:textColor="?attr/subTextColor"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:id="@+id/time"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:textColor="?attr/subTextColor"
-                    android:textSize="@dimen/titleSize"
-                    tools:text="Мyх๑м๑р✎" />
-
-                <TextView
-                    android:id="@+id/time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/text_margin"
-                    android:textColor="?attr/subTextColor"
-                    android:textSize="@dimen/titleSize"
+                    android:textSize="@dimen/subTextSize"
                     tools:text="2 апреля 2019, 15:15" />
             </LinearLayout>
 
@@ -64,9 +75,8 @@
                 android:id="@+id/text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/text_margin"
+                android:layout_marginTop="@dimen/item_genre_title_top_margin"
                 android:textColor="?attr/colorPrimaryText"
-                android:textSize="@dimen/titleSize"
                 tools:text="Увлекательно и атмосферно, герои симпатичны, динамичны и слишком нереальные роботы. Девочка, попавшая непростую ситуацию, «Чем старше она становилась, тем становил" />
 
             <TextView
@@ -74,17 +84,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/show_more"
-                android:textColor="?attr/subTextColor"
-                android:textSize="@dimen/titleSize" />
+                android:textColor="?attr/subTextColor" />
 
             <TextView
                 android:id="@+id/reting"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/text_margin"
-                android:textColor="?attr/subTextColor"
-                android:textSize="@dimen/titleSize"
                 android:drawableStart="@drawable/ic_reting"
+                android:textColor="?attr/subTextColor"
+                android:textSize="@dimen/subTextSize"
                 tools:text="+7" />
 
         </LinearLayout>

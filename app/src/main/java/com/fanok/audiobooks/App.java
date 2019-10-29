@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.PreferenceManager;
 
+import com.google.android.gms.ads.MobileAds;
+
 public class App extends Application {
 
     @Override
@@ -30,6 +32,7 @@ public class App extends Application {
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
+        MobileAds.initialize(this, "ca-app-pub-3595775191373219~2371571769");
     }
 
 

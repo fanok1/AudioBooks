@@ -24,6 +24,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3595775191373219~2371571769" />
+
         <activity
             android:name=".activity.SelectDirectoryActivity"
             android:configChanges="locale|uiMode|orientation|screenSize"
@@ -63,7 +68,7 @@
 
         <activity
             android:name=".activity.MainActivity"
-            android:configChanges="locale|uiMode|orientation|screenSize"
+            android:configChanges="locale|uiMode"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>

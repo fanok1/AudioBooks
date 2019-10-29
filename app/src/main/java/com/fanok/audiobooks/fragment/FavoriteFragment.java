@@ -39,6 +39,9 @@ import com.fanok.audiobooks.adapter.BooksListAddapter;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.presenter.FavoritePresenter;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.material.navigation.NavigationView;
 
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +70,9 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     View mView;
 
     private BooksListAddapter mAddapterBooks;
+    private InterstitialAd mInterstitialAd;
+    private View clickView;
+    private int clickPosition;
 
     private int titleId;
     private int table;
@@ -98,6 +104,18 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
             titleId = arg.getInt(ARG_TITLE, 0);
             table = arg.getInt(ARG_TABLE, 0);
         }
+
+        mInterstitialAd = new InterstitialAd(Objects.requireNonNull(getContext()));
+        mInterstitialAd.setAdUnitId(getResources().getString(R.string.interstitialID));
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                mInterstitialAd.loadAd(new AdRequest.Builder().build());
+                mPresenter.onBookItemClick(clickView, clickPosition);
+            }
+
+        });
     }
 
     @Override
@@ -109,23 +127,33 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         if (titleId != 0) {
             Objects.requireNonNull(getActivity()).setTitle(titleId);
         }
+
+        mAddapterBooks = new BooksListAddapter();
+        mRecyclerView.setAdapter(mAddapterBooks);
+        setHasOptionsMenu(true);
+        mAddapterBooks.setListener(
+                (view12, position) -> {
+                    clickView = view12;
+                    clickPosition = position;
+                    if (Consts.adsCount % Consts.ADDS_SHOWING_COUNT == 0
+                            && mInterstitialAd.isLoaded()) {
+                        mInterstitialAd.show();
+                    } else {
+                        mPresenter.onBookItemClick(view12, position);
+                    }
+                    Consts.adsCount++;
+                });
+
+        mAddapterBooks.setLongListener(
+                (view13, position) -> mPresenter.onBookItemLongClick(view13, position,
+                        getLayoutInflater()));
+        getPresenter().setView(mView);
         int orientation = this.getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_PORTRAIT) {
             setLayoutManager();
         } else {
             setLayoutManager(2);
         }
-
-        mAddapterBooks = new BooksListAddapter();
-        mRecyclerView.setAdapter(mAddapterBooks);
-        setHasOptionsMenu(true);
-        mAddapterBooks.setListener(
-                (view12, position) -> mPresenter.onBookItemClick(view12, position));
-
-        mAddapterBooks.setLongListener(
-                (view13, position) -> mPresenter.onBookItemLongClick(view13, position,
-                        getLayoutInflater()));
-        getPresenter().setView(mView);
         return view;
     }
 
@@ -290,4 +318,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         intent.putExtra(Consts.ARG_MODEL, modelId);
         startActivityForResult(intent, REQEST_CODE_SEARCH);
     }
+
+
 }

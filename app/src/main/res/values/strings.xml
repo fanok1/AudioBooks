@@ -156,4 +156,8 @@
     <string name="back">Назад</string>
     <string name="error_load_photo">Не удалось загрузить изображение</string>
 
+    <!--ADS -->
+    <string name="bunerID" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="interstitialID" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
+
 </resources>

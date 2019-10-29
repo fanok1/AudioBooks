@@ -415,7 +415,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             if (timeStart != 0) seekTo(timeStart * 1000);
             pauseMedia();
             BookPresenter.start = true;
+        } else if (BookPresenter.resume) {
+            if (timeStart != 0) seekTo(timeStart * 1000);
+            BookPresenter.resume = false;
         }
+
+
     }
 
     @Override

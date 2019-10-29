@@ -97,7 +97,8 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
             ComentsPOJO comentsPOJO = mComentsListAddapter.getItem(position);
             if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                ArrayList<SubComentsPOJO> subComentsPOJOArrayList = comentsPOJO.getChildComents();
+                ArrayList<SubComentsPOJO> subComentsPOJOArrayList =
+                        (ArrayList<SubComentsPOJO>) comentsPOJO.getChildComents().clone();
                 SubComentsPOJO subComentsPOJO = new SubComentsPOJO();
                 subComentsPOJO.setName(comentsPOJO.getName());
                 subComentsPOJO.setDate(comentsPOJO.getDate());

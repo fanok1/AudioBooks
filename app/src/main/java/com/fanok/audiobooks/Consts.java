@@ -56,6 +56,9 @@ public class Consts {
     public static final String APP_PREFERENCES = "audiobooks_settings";
     public static final String APP_FRAGMENT = "start_fragment";
 
+    public static final int ADDS_SHOWING_COUNT = 3;
+    public static int adsCount = 0;
+
 
     public static int getAttributeColor(Context context, int attributeId) {
         TypedValue typedValue = new TypedValue();

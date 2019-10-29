@@ -45,6 +45,9 @@ import com.fanok.audiobooks.interface_pacatge.books.BooksView;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.fanok.audiobooks.presenter.BooksPresenter;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.material.navigation.NavigationView;
 
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +86,11 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     private String subTitleString;
     private int modelID;
     private String mUrl;
+    private InterstitialAd mInterstitialAd;
+
+    private View clickView;
+    private int clickPosition;
+
 
     @ProvidePresenter
     BooksPresenter provideBookPresenter() {
@@ -167,6 +175,17 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         if (url.isEmpty()) throw new IllegalArgumentException("Variable 'url' contains not url");
         if (modelID == -1) throw new IllegalArgumentException("Illegal model id");
         mUrl = url;
+        mInterstitialAd = new InterstitialAd(Objects.requireNonNull(getContext()));
+        mInterstitialAd.setAdUnitId(getResources().getString(R.string.interstitialID));
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                mInterstitialAd.loadAd(new AdRequest.Builder().build());
+                mPresenter.onBookItemClick(clickView, clickPosition);
+            }
+
+        });
     }
 
     @Override
@@ -183,42 +202,11 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         if (toolbar != null) {
             if (!subTitleString.isEmpty()) {
                 toolbar.setSubtitle(subTitleString);
-                /*//translation
-                String lang = Locale.getDefault().toLanguageTag();
-                if(!lang.equals("ru")) {
-                    FirebaseTranslatorOptions options =
-                            new FirebaseTranslatorOptions.Builder()
-                                    .setSourceLanguage(FirebaseTranslateLanguage.RU)
-                                    .setTargetLanguage(FirebaseTranslateLanguage
-                                    .languageForLanguageCode(lang))
-                                    .build();
-                    final FirebaseTranslator translator =
-                            FirebaseNaturalLanguage.getInstance().getTranslator(options);
-
-                    FirebaseModelDownloadConditions conditions = new
-                    FirebaseModelDownloadConditions.Builder()
-                            .requireWifi()
-                            .build();
-                    translator.downloadModelIfNeeded(conditions)
-                            .addOnSuccessListener(
-                                    v -> {
-                                        translator.translate(subTitleString)
-                                                .addOnSuccessListener(
-                                                        toolbar::setSubtitle);
-                                    });
-                }*/
             } else if (subTitleId != 0) {
                 toolbar.setSubtitle(subTitleId);
             } else {
                 toolbar.setSubtitle("");
             }
-        }
-
-        int orientation = this.getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            setLayoutManager();
-        } else {
-            setLayoutManager(2);
         }
 
         switch (modelID) {
@@ -258,15 +246,34 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
 
         if (mAddapterBooks != null) {
             mAddapterBooks.setListener(
-                    (view12, position) -> mPresenter.onBookItemClick(view12, position));
+                    (view12, position) -> {
+                        clickView = view12;
+                        clickPosition = position;
+                        if (Consts.adsCount % Consts.ADDS_SHOWING_COUNT == 0
+                                && mInterstitialAd.isLoaded()) {
+                            mInterstitialAd.show();
+                        } else {
+                            mPresenter.onBookItemClick(view12, position);
+                        }
+                        Consts.adsCount++;
+
+                    });
 
             mAddapterBooks.setLongListener(
                     (view13, position) -> mPresenter.onBookItemLongClick(view13, position,
                             getLayoutInflater()));
         }
 
+        int orientation = this.getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            setLayoutManager();
+        } else {
+            setLayoutManager(2);
+        }
+
         return view;
     }
+
 
     private int getCount() {
         if (mAddapterBooks != null) {
@@ -287,14 +294,18 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
 
     @Override
     public void setLayoutManager() {
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
-        setItemDecoration(1);
+        if (mRecyclerView != null) {
+            mRecyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
+            setItemDecoration(1);
+        }
     }
 
     @Override
     public void setLayoutManager(int count) {
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this.getContext(), count));
-        setItemDecoration(count);
+        if (mRecyclerView != null) {
+            mRecyclerView.setLayoutManager(new GridLayoutManager(this.getContext(), count));
+            setItemDecoration(count);
+        }
     }
 
     private void setItemDecoration(int count) {

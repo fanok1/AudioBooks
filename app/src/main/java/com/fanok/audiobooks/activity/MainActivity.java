@@ -26,12 +26,18 @@ import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.presenter.MainPresenter;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.material.navigation.NavigationView;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Locale;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 
 public class MainActivity extends MvpAppCompatActivity
@@ -42,6 +48,8 @@ public class MainActivity extends MvpAppCompatActivity
     private static final String EXSTRA_FRAGMENT = "startFragment";
     private static final String EXSTRA_URL = "url";
     private static boolean closeApp = false;
+    @BindView(R.id.adView)
+    AdView mAdView;
     private boolean isSavedInstanceState = false;
 
     public static boolean isCloseApp() {
@@ -89,6 +97,7 @@ public class MainActivity extends MvpAppCompatActivity
         closeApp = false;
         Log.d(TAG, "onCreate: called");
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
@@ -112,6 +121,12 @@ public class MainActivity extends MvpAppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
         fragmentsTag = new ArrayList<>();
         isSavedInstanceState = savedInstanceState != null;
+
+        MobileAds.initialize(this, initializationStatus -> {
+        });
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+
     }
 
     @Override
