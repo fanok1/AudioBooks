@@ -26,6 +26,9 @@ public class Consts {
     public static final Pattern REGEXP_SIKRET_KEY = Pattern.compile(
             "\"security_ls_key\":\"(\\w+)\"");
 
+    public static final Pattern REGEXP_EMAIL = Pattern.compile(
+            "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+
     public static final int MODEL_BOOKS = 0;
     public static final int MODEL_GENRE = 1;
     public static final int MODEL_AUTOR = 2;
@@ -58,6 +61,8 @@ public class Consts {
 
     public static final int ADDS_SHOWING_COUNT = 3;
     public static int adsCount = 0;
+
+    public static final String MY_EMAIL = "fanok.inc@gmail.com";
 
 
     public static int getAttributeColor(Context context, int attributeId) {

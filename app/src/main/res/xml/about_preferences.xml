@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:icon="@drawable/ic_version"
+        android:key="version"
+        android:selectable="false" />
+
+    <Preference
+        android:icon="@drawable/ic_plus_version"
+        android:key="version_plus"
+        android:summary="@string/how_is"
+        android:title="@string/getPlus" />
+
+    <Preference
+        android:icon="@drawable/ic_privacy"
+        android:key="privacy"
+        android:title="@string/privacy" />
+
+    <PreferenceScreen
+        android:icon="@drawable/ic_donate"
+        android:key="donate"
+        android:summary="@string/donate_summary"
+        android:title="@string/donate">
+
+        <PreferenceScreen
+            android:icon="@drawable/ic_mastercard"
+            android:key="mono"
+            android:title="@string/Monobanck">
+
+            <Preference
+                android:key="monoUAH"
+                android:summary="@string/MonobanckNumberUAH"
+                android:title="@string/MonobanckUAH" />
+
+            <Preference
+                android:key="monoUSD"
+                android:summary="@string/MonobanckNumberUSD"
+                android:title="@string/MonobanckUSD" />
+
+            <Preference
+                android:key="monoEUR"
+                android:summary="@string/MonobanckNumberEUR"
+                android:title="@string/MonobanckEUR" />
+
+        </PreferenceScreen>
+
+
+        <Preference
+            android:icon="@drawable/ic_mastercard"
+            android:key="privat"
+            android:summary="@string/privatNumber"
+            android:title="@string/privat" />
+
+        <Preference
+            android:icon="@drawable/ic_mastercard"
+            android:key="alpha"
+            android:summary="@string/alphaNumber"
+            android:title="@string/alpha" />
+
+        <Preference
+            android:icon="@drawable/ic_paypal"
+            android:key="paypal"
+            android:summary="@string/paypalEmail"
+            android:title="@string/paypal" />
+
+        <Preference
+            android:icon="@drawable/ic_qiwi"
+            android:key="qiwi"
+            android:summary="@string/qiwiNumber"
+            android:title="@string/qiwi" />
+
+        <PreferenceScreen
+            android:icon="@drawable/ic_webmoney"
+            android:key="webmoney"
+            android:title="@string/webmoney">
+
+            <Preference
+                android:key="wmu"
+                android:summary="@string/wmuNumber"
+                android:title="@string/wmu" />
+
+            <Preference
+                android:key="wmr"
+                android:summary="@string/wmrNumber"
+                android:title="@string/wmr" />
+
+            <Preference
+                android:key="wmz"
+                android:summary="@string/wmzNumber"
+                android:title="@string/wmz" />
+
+            <Preference
+                android:key="wme"
+                android:summary="@string/wmeNumber"
+                android:title="@string/wme" />
+
+        </PreferenceScreen>
+
+
+    </PreferenceScreen>
+
+    <Preference
+        android:icon="@drawable/ic_write"
+        android:key="write_autor"
+        android:title="@string/write_autor" />
+
+
+</PreferenceScreen>

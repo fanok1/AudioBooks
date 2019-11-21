@@ -61,6 +61,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     public static final String Broadcast_SHOW_TITLE = "SHOW_TITLE";
     public static final String Broadcast_GET_POSITION = "GET_POSITION";
     public static final String Broadcast_SET_SPEED = "SET_SPEED";
+    public static final String Broadcast_CloseNotPrepered = "CloseNotPrepered";
     public static boolean start = false;
     public static boolean resume = false;
 
@@ -146,7 +147,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     }
 
     @Override
-    public void onDestroy() {
+    public void onStop() {
         Crashlytics.setBool("serviceBound", serviceBound);
         if (serviceBound) {
             getViewState().myUnbindService(serviceConnection);
@@ -155,6 +156,13 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             }*/
         }
 
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Intent broadcastIntent = new Intent(Broadcast_CloseNotPrepered);
+        mContext.sendBroadcast(broadcastIntent);
     }
 
     @Override
@@ -210,7 +218,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         StorageUtil storage = new StorageUtil(mContext.getApplicationContext());
         storage.storeAudioIndex(audioIndex);
         //Check is service is active
-        if (!serviceBound) {
+        if (!serviceBound || !isServiceRunning(MediaPlayerService.class)) {
             Crashlytics.setBool("playAudio", true);
             storage.storeAudio(mAudioPOJO);
             storage.storeUrlBook(mBookPOJO.getUrl());

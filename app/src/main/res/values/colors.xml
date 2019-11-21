@@ -20,6 +20,8 @@
     <color name="selectableItemBackgroundLight">#efefef</color>
     <color name="colorNavigayionItemLight">#626368</color>
 
+    <color name="colorAcentPopupWindow">#FFD004</color>
+
 
     <color name="actionBarTrac">#b3000000</color>
 

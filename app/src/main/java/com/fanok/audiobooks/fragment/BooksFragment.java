@@ -176,7 +176,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         if (modelID == -1) throw new IllegalArgumentException("Illegal model id");
         mUrl = url;
         mInterstitialAd = new InterstitialAd(Objects.requireNonNull(getContext()));
-        mInterstitialAd.setAdUnitId(getResources().getString(R.string.interstitialID));
+        mInterstitialAd.setAdUnitId(getResources().getString(R.string.interstitiaID));
         mInterstitialAd.loadAd(new AdRequest.Builder().build());
         mInterstitialAd.setAdListener(new AdListener() {
             @Override

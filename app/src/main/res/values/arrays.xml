@@ -60,6 +60,12 @@
         <item>@string/sort_value_series</item>
     </string-array>
 
+    <string-array name="email_catigory">
+        <item>@string/help</item>
+        <item>@string/error</item>
+        <item>@string/recommendation</item>
+    </string-array>
+
     <array name="paranoid_theme">
         <!-- Overview -->
         <item>#151515</item> <!--  Top Header bg -->

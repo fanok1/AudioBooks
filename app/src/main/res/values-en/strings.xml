@@ -201,5 +201,35 @@
     <string name="worong_data_sorce">Invalid data source</string>
     <string name="back">Back</string>
     <string name="error_load_photo">Failed to dowland image.</string>
+    <string name="setIgnoredBatteryOptimyze">For the application to work correctly, you must add the application to the ignore list of battery optimize.</string>
+    <string name="donate_summary">Support the project</string>
+    <string name="getPlus">Get Plus version</string>
+    <string name="how_is">What is it?</string>
+    <string name="privacy">Terms of Use</string>
+    <string name="version">Version</string>
+    <string name="write_autor">Write to the author</string>
+    <string name="privacy_message">All audiobooks in the application are played from open resources. The application only searches on such resources. Application developers are not responsible for audio data. If you find audio that violates your intellectual property rights, please click on the link to the source site and contact the administration of this site.</string>
+    <string name="ads_free">Without advertising</string>
+    <string name="alpha">AlfaBank</string>
+    <string name="buy">Buy</string>
+    <string name="copied">Copied</string>
+    <string name="download_plus">Download your favorite</string>
+    <string name="email_send">Message sent</string>
+    <string name="error">Mistake</string>
+    <string name="error_send_mail">Failed to send message!</string>
+    <string name="getPlusSubTitle">By purchasing the Plus version you will get full access to the application for an unlimited period.</string>
+    <string name="getPlusTitle">Get Plus Version</string>
+    <string name="help">Help</string>
+    <string name="incorect_email">Invalid email</string>
+    <string name="message">Message</string>
+    <string name="message_help_disable_battery_optimisetion">Hello! Please help me turn off the battery saving mode on my device.</string>
+    <string name="no_books">The search has not given any results.</string>
+    <string name="price">Price: $ 2.50</string>
+    <string name="privat">PrivatBank</string>
+    <string name="recommendation">Recommendation</string>
+    <string name="send">Submit</string>
+    <string name="sending_email">Sending message...</string>
+    <string name="shortcut">Create shortcuts</string>
+    <string name="support_project">Project support</string>
 
 </resources>

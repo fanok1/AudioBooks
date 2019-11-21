@@ -37,6 +37,27 @@
         <item name="android:windowAnimationStyle">@null</item>
     </style>
 
+    <style name="AppTheme.Popup" parent="AppTheme.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="windowActionBarOverlay">true</item>
+        <item name="android:statusBarColor">@color/actionBarTrac</item>
+
+        <!-- specify enter and exit transitions -->
+        <!--<item name="android:windowEnterTransition">@transition/explode</item>
+        <item name="android:windowExitTransition">@transition/explode</item>
+-->
+        <!-- specify shared element transitions -->
+        <item name="android:windowSharedElementEnterTransition">
+            @transition/change_image_transform
+        </item>
+        <item name="android:windowSharedElementExitTransition">
+            @transition/change_image_transform
+        </item>
+    </style>
+
     <!-- LIGHT application theme. -->
 
 
@@ -92,6 +113,29 @@
         <item name="android:windowSharedElementExitTransition">
             @transition/change_image_transform
         </item>
+    </style>
+
+    <style name="LightAppTheme.Popup" parent="LightAppTheme.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="windowActionBarOverlay">true</item>
+        <item name="android:statusBarColor">@color/actionBarTrac</item>
+
+        <!-- specify enter and exit transitions -->
+        <!--<item name="android:windowEnterTransition">@transition/explode</item>
+        <item name="android:windowExitTransition">@transition/explode</item>
+-->
+        <!-- specify shared element transitions -->
+        <item name="android:windowSharedElementEnterTransition">
+            @transition/change_image_transform
+        </item>
+        <item name="android:windowSharedElementExitTransition">
+            @transition/change_image_transform
+        </item>
+
+
     </style>
 
 

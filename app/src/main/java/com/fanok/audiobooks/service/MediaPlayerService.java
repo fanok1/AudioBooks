@@ -89,8 +89,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private ArrayList<AudioPOJO> audioList;
     private int audioIndex = -1;
     private AudioPOJO activeAudio;
-    //Handle incoming phone calls
-    private boolean ongoingCall = false;
+
     private PhoneStateListener phoneStateListener;
     private TelephonyManager telephonyManager;
     private boolean buttonClick;
@@ -217,6 +216,14 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
     };
 
+    private BroadcastReceiver closeNotPrerepred = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive: closeNotPrerepred");
+            if (!prepared) stopSelf();
+        }
+    };
+
 
     public static boolean isPlay() {
         return isPlay;
@@ -252,6 +259,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         register_showTitle();
         register_getPosition();
         register_setSpeed();
+        register_closeIfNotPrepered();
     }
 
     //The system calls this method when an activity, requests the service be started
@@ -352,6 +360,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         unregisterReceiver(showTitle);
         unregisterReceiver(getPosition);
         unregisterReceiver(setSpeed);
+        unregisterReceiver(closeNotPrerepred);
 
         //clear cached playlist
         new StorageUtil(getApplicationContext()).clearCachedAudioPlaylist();
@@ -539,11 +548,16 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private void playMedia() {
-        isPlay = true;
-        mediaPlayer.start();
-        mediaSession.setActive(true);
-        startPlayProgressUpdater();
-        startTimeProgressUpdater();
+        if (prepared) {
+            if (!requestAudioFocus()) {
+                stopSelf();
+            }
+            isPlay = true;
+            mediaPlayer.start();
+            mediaSession.setActive(true);
+            startPlayProgressUpdater();
+            startTimeProgressUpdater();
+        }
     }
 
     private void stopMedia() {
@@ -556,7 +570,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private void pauseMedia() {
-        if (isPlaying()) {
+        if (isPlaying() && prepared) {
             buildNotification(PlaybackStatus.PAUSED);
             isPlay = false;
             mediaPlayer.pause();
@@ -568,19 +582,26 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private void resumeMedia() {
-        if (!isPlaying()) {
-            isPlay = true;
-            mediaPlayer.seekTo(resumePosition);
-            mediaPlayer.start();
-            mediaSession.setActive(true);
-            startPlayProgressUpdater();
-            startTimeProgressUpdater();
-            buildNotification(PlaybackStatus.PLAYING);
+        try {
+            if (!isPlaying() && prepared) {
+                if (!requestAudioFocus()) {
+                    stopSelf();
+                }
+                isPlay = true;
+                mediaPlayer.seekTo(resumePosition);
+                mediaPlayer.start();
+                mediaSession.setActive(true);
+                startPlayProgressUpdater();
+                startTimeProgressUpdater();
+                buildNotification(PlaybackStatus.PLAYING);
+            }
+        } catch (Exception ignored) {
+
         }
     }
 
     private void skipToNext() {
-
+        if (!prepared) return;
         if (audioIndex == audioList.size() - 1) {
             if (!buttonClick) {
                 stopMedia();
@@ -608,7 +629,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private void skipToPrevious() {
-
+        if (!prepared) return;
         if (audioIndex != 0) {
             activeAudio = audioList.get(--audioIndex);
             new StorageUtil(getApplicationContext()).storeAudioIndex(audioIndex);
@@ -649,6 +670,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         //Starting listening for PhoneState changes
         phoneStateListener = new PhoneStateListener() {
+            boolean playing = false;
             @Override
             public void onCallStateChanged(int state, String incomingNumber) {
                 switch (state) {
@@ -658,17 +680,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                     case TelephonyManager.CALL_STATE_RINGING:
                         if (mediaPlayer != null) {
                             pauseMedia();
-                            ongoingCall = true;
                         }
                         break;
                     case TelephonyManager.CALL_STATE_IDLE:
-                        // Phone idle. Start playing.
-                        if (mediaPlayer != null) {
-                            if (ongoingCall) {
-                                ongoingCall = false;
-                                resumeMedia();
-                            }
-                        }
+                        requestAudioFocus();
                         break;
                 }
             }
@@ -1037,6 +1052,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private void register_setSpeed() {
         IntentFilter filter = new IntentFilter(BookPresenter.Broadcast_SET_SPEED);
         registerReceiver(setSpeed, filter);
+    }
+
+    private void register_closeIfNotPrepered() {
+        IntentFilter filter = new IntentFilter(BookPresenter.Broadcast_CloseNotPrepered);
+        registerReceiver(closeNotPrerepred, filter);
     }
 
     /**

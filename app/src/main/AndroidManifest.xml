@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.fanok.audiobooks">
 
     <permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
@@ -14,6 +15,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="com.android.vending.BILLING" />
 
     <application
         android:name=".App"
@@ -23,7 +25,9 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true">
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:supportsRtl="true"
+        tools:ignore="UnusedAttribute">
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
@@ -58,6 +62,12 @@
             android:name=".activity.ActivityImport"
             android:configChanges="locale|uiMode"
             android:label="@string/import_favorite"
+            android:theme="@style/AppTheme.SwipeOnClose" />
+
+        <activity
+            android:name=".activity.ActivitySendEmail"
+            android:configChanges="locale|uiMode"
+            android:label="@string/write_autor"
             android:theme="@style/AppTheme.SwipeOnClose" />
 
         <activity
@@ -110,6 +120,11 @@
             android:noHistory="true"
             android:screenOrientation="locked"
             android:theme="@style/AppTheme.NoAnimTheme" />
+
+        <activity
+            android:name=".activity.PopupGetPlus"
+            android:configChanges="locale|uiMode"
+            android:theme="@style/LightAppTheme.Popup" />
 
         <provider
             android:name=".MySuggestionProvider"

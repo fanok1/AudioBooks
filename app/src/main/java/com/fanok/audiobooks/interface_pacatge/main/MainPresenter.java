@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.interface_pacatge.main;
 
+import android.content.DialogInterface;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
@@ -12,4 +13,6 @@ public interface MainPresenter {
     void startFragment(int fragment, String url);
 
     void startFragment(int fragment);
+
+    void openSettingsOptimizeBattery(DialogInterface dialogInterface);
 }

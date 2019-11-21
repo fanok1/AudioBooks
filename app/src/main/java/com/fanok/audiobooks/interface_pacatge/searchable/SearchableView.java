@@ -36,4 +36,6 @@ public interface SearchableView extends MvpView {
     @StateStrategyType(SkipStrategy.class)
     void startBookActivity(@NonNull BookPOJO bookPOJO);
 
+    void setNotFoundVisibile(boolean b);
+
 }

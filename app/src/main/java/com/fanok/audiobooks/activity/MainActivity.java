@@ -5,12 +5,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -35,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Objects;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -61,7 +65,10 @@ public class MainActivity extends MvpAppCompatActivity
 
     private ArrayList<FragmentTagSteck> fragmentsTag;
     private NavigationView navigationView;
+    private AlertDialog.Builder alert;
     private boolean firstStart = true;
+
+    private SharedPreferences preferences;
 
 
     public NavigationView getNavigationView() {
@@ -102,6 +109,8 @@ public class MainActivity extends MvpAppCompatActivity
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
+        preferences = getSharedPreferences("FIRST", Context.MODE_PRIVATE);
+
         String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
         if (themeName.equals(getString(R.string.theme_dark_value))) {
             setTheme(R.style.AppTheme_NoAnimTheme);
@@ -127,6 +136,22 @@ public class MainActivity extends MvpAppCompatActivity
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
 
+        alert = new AlertDialog.Builder(this);
+        alert.setTitle(R.string.app_name);
+        alert.setMessage(R.string.setIgnoredBatteryOptimyze);
+        alert.setNegativeButton(R.string.cancel, null);
+        alert.setCancelable(true);
+        alert.setNeutralButton(R.string.help, (dialogInterface, i) -> {
+            Intent intent = new Intent(alert.getContext(), ActivitySendEmail.class);
+            intent.putExtra("enebled", false);
+            intent.putExtra("message",
+                    getString(R.string.message_help_disable_battery_optimisetion));
+            intent.putExtra("subject", 0);
+            startActivity(intent);
+        });
+        alert.setPositiveButton("OK",
+                (dialogInterface, i) -> mPresenter.openSettingsOptimizeBattery(dialogInterface));
+
     }
 
     @Override
@@ -134,6 +159,35 @@ public class MainActivity extends MvpAppCompatActivity
         super.onStart();
         if (!isSavedInstanceState) {
             if (firstStart) {
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+                    PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                    if (pm != null) {
+                        if (!pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks")) {
+                            alert.show();
+                        }
+                    }
+                }
+
+                if (!preferences.getBoolean("first", false)) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(
+                            Objects.requireNonNull(this));
+                    builder.setTitle(getString(R.string.privacy))
+                            .setMessage(getString(R.string.privacy_message))
+                            .setIcon(R.drawable.ic_privacy)
+                            .setCancelable(false)
+                            .setNegativeButton(getString(R.string.yes),
+                                    (dialog, id) -> {
+                                        SharedPreferences.Editor editor = preferences.edit();
+                                        editor.putBoolean("first", true);
+                                        editor.apply();
+                                        dialog.cancel();
+                                    });
+                    AlertDialog alert = builder.create();
+                    alert.show();
+                }
+
                 Intent intent = getIntent();
                 int fragment = intent.getIntExtra(EXSTRA_FRAGMENT, -1);
                 String url = intent.getStringExtra(EXSTRA_URL);

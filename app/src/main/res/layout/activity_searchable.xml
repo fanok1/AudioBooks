@@ -96,6 +96,19 @@
 
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/booksNotFound"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/no_books"
+            android:textColor="?attr/colorPrimaryText"
+            android:textSize="@dimen/titleSize"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/liner"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <include
             android:id="@+id/progressBar"
             layout="@layout/progres_bottom"
@@ -104,7 +117,6 @@
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/liner" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 
 
 </LinearLayout>

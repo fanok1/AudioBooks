@@ -1,5 +1,10 @@
 package com.fanok.audiobooks.presenter;
 
+import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS;
+
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Build;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
@@ -10,6 +15,7 @@ import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.fragment.AboutFragment;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.fragment.FavoriteFragment;
 import com.fanok.audiobooks.fragment.SettingsFragment;
@@ -18,6 +24,8 @@ import com.fanok.audiobooks.interface_pacatge.main.MainView;
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> implements
         com.fanok.audiobooks.interface_pacatge.main.MainPresenter {
+
+    private static final String TAG = "MainPresenter";
 
 
     @Override
@@ -54,11 +62,11 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             getViewState().showFragment(fragment, "history");
 
         } else if (id == R.id.nav_settings) {
-            getViewState().showFragment(new SettingsFragment(), "swttings");
+            getViewState().showFragment(new SettingsFragment(), "settings");
 
 
         } else if (id == R.id.nav_about) {
-
+            getViewState().showFragment(new AboutFragment(), "about");
         }
     }
 
@@ -135,6 +143,13 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             Fragment fragment = FavoriteFragment.newInstance(R.string.menu_history,
                     Consts.TABLE_HISTORY);
             getViewState().showFragment(fragment, "history");
+        }
+    }
+
+    @Override
+    public void openSettingsOptimizeBattery(@NonNull DialogInterface dialogInterface) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getViewState().openActivity(new Intent(ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
         }
     }
 

@@ -201,5 +201,35 @@
     <string name="worong_data_sorce">Невірне джерело даних</string>
     <string name="back">Назад</string>
     <string name="error_load_photo">Не вдалося завантажити зображення</string>
+    <string name="setIgnoredBatteryOptimyze">Для коректної роботи програми необхідно додати додаток до списку ігнорування економії зараяда батареї (Battery optimizetion).</string>
+    <string name="donate_summary">Підтримати проект</string>
+    <string name="getPlus">Отримати Plus версію</string>
+    <string name="how_is">Що це?</string>
+    <string name="privacy">Умови використання</string>
+    <string name="version">Версія</string>
+    <string name="write_autor">Написати автору</string>
+    <string name="privacy_message">Всі аудіокниги в додатку програються з відкритих ресурсів. Додаток здійснює тільки пошук на таких ресурсах. Розробники програми не несуть відповідальність за дані аудіо. Якщо ви виявили аудіо, яке порушує Ваші права інтелектуальної власності, просимо перейти за посиланням на сайт джерело і звернутися до адміністрації даного сайту.</string>
+    <string name="ads_free">Без реклами</string>
+    <string name="alpha">АльфаБанк</string>
+    <string name="buy">Купити</string>
+    <string name="copied">Скопійовано</string>
+    <string name="download_plus">Завантажуйте улюблене</string>
+    <string name="email_send">Повідомлення надіслано</string>
+    <string name="error">Помилка</string>
+    <string name="error_send_mail">Чи не вдалося відправити повідомлення!</string>
+    <string name="getPlusSubTitle">Купивши Plus версію ви отримаєте повний доступ до додатка на необмежений термін.</string>
+    <string name="getPlusTitle">Отримати Plus версію</string>
+    <string name="help">Допомога</string>
+    <string name="incorect_email">Неправильну адресу електронної пошти</string>
+    <string name="message">Повідомлення</string>
+    <string name="message_help_disable_battery_optimisetion">Вітаю! Допоможіть будь ласка відключити режим економії заряду батареї на моєму пристрої.</string>
+    <string name="no_books">Пошук не дав результатів.</string>
+    <string name="price">Ціна: 2.50 $</string>
+    <string name="privat">ПриватБанк</string>
+    <string name="recommendation">Рекомендація</string>
+    <string name="send">Відправити</string>
+    <string name="sending_email">Відправка повідомлення…</string>
+    <string name="shortcut">Створюйте ярлики</string>
+    <string name="support_project">Підтримка проекту</string>
 
 </resources>

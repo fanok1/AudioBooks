@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 
 public interface ActivityPresenter {
 
+    void onStop();
+
     void onDestroy();
 
     void onCreateOptionsMenu(Menu menu);

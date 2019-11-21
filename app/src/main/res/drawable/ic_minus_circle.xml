@@ -1,10 +1,10 @@
-<!-- drawable/minus_circle.xml -->
+<!-- drawable/delete.xml -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
     android:height="24dp"
+    android:width="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="?attr/prefIconColor"
-        android:pathData="M17,13H7V11H17M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+        android:fillColor="?attr/colorItemMenu"
+        android:pathData="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
 </vector>

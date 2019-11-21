@@ -4,15 +4,25 @@ apply plugin: 'com.google.firebase.firebase-perf'
 apply plugin: "io.fabric"
 
 android {
+    signingConfigs {
+        release {
+            storeFile file('D:\\Android\\Keys\\audio_books.jks')
+            keyAlias = 'AudioBooks'
+            storePassword 'fks-T=?UT$UT-A4s'
+            keyPassword 'fks-T=?UT$UT-A4s'
+
+        }
+    }
     compileSdkVersion 29
     defaultConfig {
         applicationId "com.fanok.audiobooks"
         minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+        signingConfig signingConfigs.release
     }
     buildTypes {
         release {
@@ -32,7 +42,7 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.1.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
@@ -55,7 +65,7 @@ dependencies {
     implementation 'com.google.android.exoplayer:extension-okhttp:2.10.4'
     implementation 'com.google.firebase:firebase-analytics:17.2.1'
     implementation 'com.google.firebase:firebase-core:17.2.1'
-    implementation 'com.google.firebase:firebase-perf:19.0.1'
+    implementation 'com.google.firebase:firebase-perf:19.0.2'
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
     implementation 'tech.schoolhelper:moxy-x-androidx:1.7.0'
 
@@ -68,7 +78,10 @@ dependencies {
     implementation 'com.github.codekidX:storage-chooser:2.0.4.4'
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'
     implementation 'androidx.palette:palette:1.0.0'
-    implementation 'com.google.firebase:firebase-ads:18.2.0'
+    implementation 'com.google.firebase:firebase-ads:18.3.0'
+
+
+
 
 
 

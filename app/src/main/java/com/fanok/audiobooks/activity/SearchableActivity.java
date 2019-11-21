@@ -74,6 +74,8 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     ProgressBar mProgressBarTop;
     @BindView(R.id.topList)
     LinearLayout mTopList;
+    @BindView(R.id.booksNotFound)
+    TextView mBooksNotFound;
     private int mModelId;
 
     private BooksListAddapter mAddapterBooks;
@@ -81,7 +83,6 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
 
     private SearchebleAdapter mAdapterAutors;
     private SearchebleAdapter mAdapterSeries;
-
 
     private String query;
 
@@ -189,11 +190,17 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                             getLayoutInflater()));
         }
 
-        mAdapterSeries.setListener(
-                (view, position) -> mPresenter.onSeriesListItemClick(view, position));
 
-        mAdapterAutors.setListener(
-                (view, position) -> mPresenter.onAutorsListItemClick(view, position));
+        if (mAdapterSeries != null) {
+            mAdapterSeries.setListener(
+                    (view, position) -> mPresenter.onSeriesListItemClick(view, position));
+        }
+
+
+        if (mAdapterAutors != null) {
+            mAdapterAutors.setListener(
+                    (view, position) -> mPresenter.onAutorsListItemClick(view, position));
+        }
 
 
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -333,8 +340,8 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     }
 
     @Override
-    public void showSeriesAndAutors(@NonNull SearcheblPOJO searcheblPOJO) {
-        if (mAdapterSeries != null && mAdapterAutors != null) {
+    public void showSeriesAndAutors(SearcheblPOJO searcheblPOJO) {
+        if (mAdapterSeries != null && mAdapterAutors != null && searcheblPOJO != null) {
             if (searcheblPOJO.getAutorsList().size() == 0) {
                 mAutors.setVisibility(View.GONE);
                 mAuthorList.setVisibility(View.GONE);
@@ -354,6 +361,8 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                 mSeries.setText(searcheblPOJO.getSeriesCount());
                 mAdapterSeries.setItem(searcheblPOJO.getSeriesList());
             }
+        } else {
+            mTopList.setVisibility(View.GONE);
         }
 
     }
@@ -361,6 +370,15 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     @Override
     public void startBookActivity(@NotNull @NonNull BookPOJO bookPOJO) {
         BookActivity.startNewActivity(this, bookPOJO);
+    }
+
+    @Override
+    public void setNotFoundVisibile(boolean b) {
+        if (b) {
+            mBooksNotFound.setVisibility(View.VISIBLE);
+        } else {
+            mBooksNotFound.setVisibility(View.GONE);
+        }
     }
 
     @Override

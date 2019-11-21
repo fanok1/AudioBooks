@@ -106,7 +106,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         }
 
         mInterstitialAd = new InterstitialAd(Objects.requireNonNull(getContext()));
-        mInterstitialAd.setAdUnitId(getResources().getString(R.string.interstitialID));
+        mInterstitialAd.setAdUnitId(getResources().getString(R.string.interstitiaID));
         mInterstitialAd.loadAd(new AdRequest.Builder().build());
         mInterstitialAd.setAdListener(new AdListener() {
             @Override

@@ -405,7 +405,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @Override
     protected void onStop() {
-        mPresenter.onDestroy();
+        mPresenter.onStop();
         super.onStop();
     }
 
@@ -416,6 +416,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         unregisterReceiver(setSelectionBroadcast);
         unregisterReceiver(setTitleBroadcast);
         showingView = "";
+        mPresenter.onDestroy();
         super.onDestroy();
     }
 

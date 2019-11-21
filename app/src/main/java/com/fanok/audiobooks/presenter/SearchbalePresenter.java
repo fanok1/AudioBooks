@@ -41,6 +41,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
     private static final String TAG = "SearchablePresenter";
     private boolean isLoading = false;
+    private boolean isLoadAutors = false;
     private int page = 0;
     private int mModelId;
     private ArrayList<BookPOJO> books;
@@ -82,6 +83,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             case Consts.MODEL_ARTIST:
                 genre = new ArrayList<>();
                 mModelGenre = new AutorsModel();
+                getViewState().showSeriesAndAutors(null);
                 break;
         }
     }
@@ -113,46 +115,6 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         isEnd = false;
         page = 0;
         loadNext(qery);
-        /*
-        FirebaseLanguageIdentification languageIdentifier =
-                FirebaseNaturalLanguage.getInstance().getLanguageIdentification();
-        languageIdentifier.identifyLanguage(qery)
-                .addOnSuccessListener(
-                        languageCode -> {
-                            if (!Objects.equals(languageCode, "und")) {
-                                FirebaseTranslatorOptions options =
-                                        new FirebaseTranslatorOptions.Builder()
-                                                .setSourceLanguage(FirebaseTranslateLanguage
-                                                .languageForLanguageCode(languageCode))
-                                                .setTargetLanguage(FirebaseTranslateLanguage.RU)
-                                                .build();
-                                final FirebaseTranslator translator =
-                                        FirebaseNaturalLanguage.getInstance().getTranslator
-                                        (options);
-
-                                FirebaseModelDownloadConditions conditions = new
-                                FirebaseModelDownloadConditions.Builder()
-                                        .requireWifi()
-                                        .build();
-                                translator.downloadModelIfNeeded(conditions)
-                                        .addOnSuccessListener(
-                                                v -> translator.translate(qery)
-                                                        .addOnSuccessListener(
-                                                                this::loadNext)
-                                                        .addOnFailureListener(
-                                                                e -> loadNext(qery)))
-                                        .addOnFailureListener(
-                                                e -> loadNext(qery));
-
-                            } else {
-                                loadNext(qery);
-                            }
-                        })
-                .addOnFailureListener(
-                        e -> loadNext(qery));
-
-         */
-
     }
 
 
@@ -326,6 +288,13 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                                 getViewState().showData(books);
                                 getViewState().showProgres(false);
                                 isLoading = false;
+                                if (isLoadAutors && mSearcheblPOJO.getAutorsList().isEmpty() &&
+                                        mSearcheblPOJO.getSeriesList().isEmpty() &&
+                                        books.isEmpty()) {
+                                    getViewState().setNotFoundVisibile(true);
+                                } else {
+                                    getViewState().setNotFoundVisibile(false);
+                                }
                             }
                         });
             } else {
@@ -360,6 +329,11 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                                 getViewState().showData(genre);
                                 getViewState().showProgres(false);
                                 isLoading = false;
+                                if (genre.isEmpty()) {
+                                    getViewState().setNotFoundVisibile(true);
+                                } else {
+                                    getViewState().setNotFoundVisibile(false);
+                                }
                             }
                         });
             }
@@ -391,6 +365,15 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                         Log.d(TAG, "onComplete");
                         getViewState().showSeriesAndAutors(mSearcheblPOJO);
                         getViewState().showProgresTop(false);
+                        isLoadAutors = true;
+                        if (!isLoading && ((books != null && books.isEmpty()) || (genre != null
+                                && genre.isEmpty())) &&
+                                mSearcheblPOJO.getAutorsList().isEmpty()
+                                && mSearcheblPOJO.getSeriesList().isEmpty()) {
+                            getViewState().setNotFoundVisibile(true);
+                        } else {
+                            getViewState().setNotFoundVisibile(false);
+                        }
                     }
                 });
     }
