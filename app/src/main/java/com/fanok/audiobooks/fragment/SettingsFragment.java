@@ -167,16 +167,24 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         preferenceClickListner("clear_history", preference -> {
             showAllert(preference.getContext(), R.string.confirm_clear_history,
                     (dialogInterface, i) -> {
-                        new BooksDBModel(preference.getContext()).clearHistory();
-                        new AudioDBModel(preference.getContext()).clearAll();
+                        BooksDBModel booksDBModel = new BooksDBModel(preference.getContext());
+                        booksDBModel.clearHistory();
+                        booksDBModel.closeDB();
+                        AudioDBModel audioDBModel = new AudioDBModel(preference.getContext());
+                        audioDBModel.clearAll();
+                        audioDBModel.closeDB();
                     });
             return true;
         });
 
         preferenceClickListner("clear_favorite", preference -> {
             showAllert(preference.getContext(), R.string.confirm_clear_favorite,
-                    (dialogInterface, i) -> new BooksDBModel(
-                            preference.getContext()).clearFavorite());
+                    (dialogInterface, i) -> {
+                        BooksDBModel dbModel = new BooksDBModel(
+                                preference.getContext());
+                        dbModel.clearFavorite();
+                        dbModel.closeDB();
+                    });
             return true;
         });
 
@@ -349,6 +357,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
         String name = dir + "/" + formatForDateNow.format(dateNow) + ".json";
 
+        booksDBModel.closeDB();
+        audioDBModel.closeDB();
+
         try {
             writer = new FileWriter(name);
             writer.write(gson.toJson(backup));
@@ -356,15 +367,17 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         } catch (IOException e) {
             return null;
         }
+
         return name;
     }
 
     private boolean restore(@NotNull String file) {
+        BooksDBModel booksDBModel = new BooksDBModel(getContext());
+        AudioDBModel audioDBModel = new AudioDBModel(getContext());
+        boolean returnValue = true;
         try {
             Gson gson = new Gson();
             BackupPOJO backup = gson.fromJson(file, BackupPOJO.class);
-            BooksDBModel booksDBModel = new BooksDBModel(getContext());
-            AudioDBModel audioDBModel = new AudioDBModel(getContext());
             booksDBModel.clearFavorite();
             if (backup.getBooksFavorite() != null) {
                 for (int i = 0; i < backup.getBooksFavorite().size(); i++) {
@@ -388,9 +401,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 }
             }
         } catch (Exception e) {
-            return false;
+            returnValue = false;
         }
-        return true;
+        audioDBModel.closeDB();
+        booksDBModel.closeDB();
+        return returnValue;
     }
 
     private String readTextFile(Uri uri) {

@@ -23,6 +23,7 @@ public class LoadBook extends AppCompatActivity {
 
     private BookPOJO mBookPOJO;
     private String mUrl;
+    private boolean mNotificationClick;
     private Context mContext;
 
     @Override
@@ -48,6 +49,7 @@ public class LoadBook extends AppCompatActivity {
         mContext = this;
         Intent intent = getIntent();
         mUrl = intent.getStringExtra("url");
+        mNotificationClick = intent.getBooleanExtra("notificationClick", false);
         String text = BookActivity.getShowingView();
         if (mUrl == null || mUrl.equals(text)) finish();
     }
@@ -75,7 +77,7 @@ public class LoadBook extends AppCompatActivity {
 
                     @Override
                     public void onComplete() {
-                        BookActivity.startNewActivity(mContext, mBookPOJO);
+                        BookActivity.startNewActivity(mContext, mBookPOJO, mNotificationClick);
                     }
                 });
     }

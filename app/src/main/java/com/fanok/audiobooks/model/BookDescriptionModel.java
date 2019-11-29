@@ -55,7 +55,13 @@ public class BookDescriptionModel implements DescriptionModel {
         if (posterElements.size() != 0) {
             Elements img = posterElements.first().getElementsByTag("img");
             if (img.size() != 0) {
-                descriptionPOJO.setPoster(img.first().attr("src"));
+                String imgUrl = img.first().attr("src");
+                int lastPos = imgUrl.indexOf("?");
+                if (lastPos != -1) {
+                    imgUrl = imgUrl.substring(0, lastPos);
+                }
+
+                descriptionPOJO.setPoster(imgUrl);
             }
         }
 
@@ -148,7 +154,12 @@ public class BookDescriptionModel implements DescriptionModel {
                     bookPOJO.setUrl(Url.SERVER + a.attr("href"));
                     Elements img = a.getElementsByTag("img");
                     if (img.size() > 0) {
-                        bookPOJO.setPhoto(img.first().attr("src"));
+                        String imgUrl = img.first().attr("src");
+                        int lastPos = imgUrl.indexOf("?");
+                        if (lastPos != -1) {
+                            imgUrl = imgUrl.substring(0, lastPos);
+                        }
+                        bookPOJO.setPhoto(imgUrl);
                     }
                     Elements name = a.getElementsByClass("suggested_book_name");
                     if (name.size() > 0) {

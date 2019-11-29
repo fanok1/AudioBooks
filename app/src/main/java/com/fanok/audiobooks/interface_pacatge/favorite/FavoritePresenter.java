@@ -19,9 +19,7 @@ public interface FavoritePresenter {
 
     void cealrData();
 
-    void onOptionsItemSelected(int id);
-
-    void setView(@NotNull View view);
+    void onOptionsItemSelected(@NotNull View view, int id);
 
 
 

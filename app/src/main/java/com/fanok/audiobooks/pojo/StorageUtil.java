@@ -94,4 +94,16 @@ public class StorageUtil {
         return preferences.getInt("timeStart", 0);
     }
 
+    public void storeCountAudioListnered(int count) {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("countAudioListnered", count);
+        editor.apply();
+    }
+
+    public int loadCountAudioListnered() {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        return preferences.getInt("countAudioListnered", 0);
+    }
+
 }

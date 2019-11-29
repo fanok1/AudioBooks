@@ -131,7 +131,7 @@
         
     <string name="open_site">Відкрити на сайті</string>
         
-    <string name="worning_loading_not_finish">Дані завантажені не до кінця.</string>
+    <string name="worning_loading_not_finish">Дані завантажені не до кінця. Зачекайте</string>
         
     <string name="title_set_speed_popup">Оберіть швидкість</string>
 
@@ -231,5 +231,9 @@
     <string name="sending_email">Відправка повідомлення…</string>
     <string name="shortcut">Створюйте ярлики</string>
     <string name="support_project">Підтримка проекту</string>
+    <string name="congratulations">Вітаємо</string>
+    <string name="error_buy">Не вдалося оформити Plus версію</string>
+    <string name="good">Добре</string>
+    <string name="plusSubTitle">Plus версія успішно оформлена. Дякую що ви підтримали проект.</string>
 
 </resources>

@@ -88,4 +88,9 @@ public class FavoriteModel implements
             return (bookPOJO, t1) -> 0;
         }
     }
+
+    public void closeDB() {
+        mBooksDBModel.closeDB();
+        mContext = null;
+    }
 }

@@ -131,7 +131,7 @@
         
     <string name="open_site">Open on site</string>
         
-    <string name="worning_loading_not_finish">Data is not fully uploaded.</string>
+    <string name="worning_loading_not_finish">Data is not fully uploaded. Wait.</string>
         
     <string name="title_set_speed_popup">Select a speed</string>
 
@@ -228,8 +228,12 @@
     <string name="privat">PrivatBank</string>
     <string name="recommendation">Recommendation</string>
     <string name="send">Submit</string>
-    <string name="sending_email">Sending message...</string>
+    <string name="sending_email">Sending message…</string>
     <string name="shortcut">Create shortcuts</string>
     <string name="support_project">Project support</string>
+    <string name="congratulations">Congratulations</string>
+    <string name="error_buy">Failed to issue Plus version</string>
+    <string name="good">Good</string>
+    <string name="plusSubTitle">Plus version is successfully framed. Thank you for supporting the project.</string>
 
 </resources>

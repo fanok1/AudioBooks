@@ -15,6 +15,7 @@ import androidx.appcompat.widget.PopupMenu;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
@@ -47,8 +48,6 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
     private FavoriteModel mFavoriteModel;
     private int table;
     private boolean isLoading = false;
-    private Context mContext;
-    private View mView;
 
 
     public FavoritePresenter(@NotNull Context context, int table) {
@@ -56,14 +55,8 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         mAudioDBModel = new AudioDBModel(context);
         mFavoriteModel = new FavoriteModel(context);
         this.table = table;
-        mContext = context;
     }
 
-
-    @Override
-    public void setView(@NotNull View view) {
-        mView = view;
-    }
 
     @Override
     protected void onFirstViewAttach() {
@@ -109,6 +102,10 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
     @Override
     public void onDestroy() {
+        mAudioDBModel.closeDB();
+        mBooksDBModel.closeDB();
+        mFavoriteModel.closeDB();
+        //mContext = null;
     }
 
     @Override
@@ -157,6 +154,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
         open.setOnClickListener(view1 -> {
             dialog.dismiss();
+            MyInterstitialAd.increase();
             getViewState().showBooksActivity(books.get(position));
         });
 
@@ -232,12 +230,12 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
     }
 
     @Override
-    public void onOptionsItemSelected(int id) {
+    public void onOptionsItemSelected(@NotNull View view, int id) {
         if (books != null && id != R.id.filter && id != R.id.order) {
             Comparator<BookPOJO> comparator = getComparator(id);
             if (id == R.id.genre_filter || id == R.id.autor_filter ||
                     id == R.id.artist_filter || id == R.id.series_filter) {
-                showPopupMenu(id);
+                showPopupMenu(view, id);
             } else {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     if (flter == null) {
@@ -263,77 +261,76 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
     }
 
-    private void showPopupMenu(int id) {
-        if (mView != null) {
-            ArrayList<String> arrayList;
-            switch (id) {
-                case R.id.genre_filter:
-                    arrayList = mBooksDBModel.getGenre();
-                    break;
-                case R.id.autor_filter:
-                    arrayList = mBooksDBModel.getAutors();
-                    break;
-                case R.id.artist_filter:
-                    arrayList = mBooksDBModel.getArtists();
-                    break;
-                case R.id.series_filter:
-                    arrayList = mBooksDBModel.getSeries();
-                    break;
-                default:
-                    arrayList = new ArrayList<>();
-            }
-            if (arrayList.isEmpty()) {
-                return;
-            } else {
-                arrayList.add(0, "Все");
-            }
-
-            PopupMenu popupMenu = new PopupMenu(mContext, mView, Gravity.END);
-            for (int i = 0; i < arrayList.size(); i++) {
-                popupMenu.getMenu().add(1, i, 0, arrayList.get(i));
-            }
-            popupMenu.setOnMenuItemClickListener(item -> {
-                if (books != null) {
-                    if (item.getTitle().equals("Все")) {
-                        this.flter = null;
-                        getViewState().showData(books);
-                        return false;
-                    }
-                    if (item.getTitle().equals("Все")) {
-                        getViewState().setSubTitle("");
-                    } else {
-                        getViewState().setSubTitle(item.getTitle().toString());
-                    }
-                    ArrayList<BookPOJO> filter = new ArrayList<>();
-                    for (BookPOJO book : books) {
-                        String text;
-                        switch (id) {
-                            case R.id.genre_filter:
-                                text = book.getGenre();
-                                break;
-                            case R.id.autor_filter:
-                                text = book.getAutor();
-                                break;
-                            case R.id.artist_filter:
-                                text = book.getArtist();
-                                break;
-                            case R.id.series_filter:
-                                text = book.getSeries();
-                                break;
-                            default:
-                                return false;
-                        }
-                        if (item.getTitle().equals(text)) {
-                            filter.add(book);
-                        }
-                    }
-                    this.flter = filter;
-                    getViewState().showData(filter);
-                }
-                return false;
-            });
-            popupMenu.show();
+    private void showPopupMenu(@NotNull View view, int id) {
+        ArrayList<String> arrayList;
+        switch (id) {
+            case R.id.genre_filter:
+                arrayList = mBooksDBModel.getGenre();
+                break;
+            case R.id.autor_filter:
+                arrayList = mBooksDBModel.getAutors();
+                break;
+            case R.id.artist_filter:
+                arrayList = mBooksDBModel.getArtists();
+                break;
+            case R.id.series_filter:
+                arrayList = mBooksDBModel.getSeries();
+                break;
+            default:
+                arrayList = new ArrayList<>();
         }
+        if (arrayList.isEmpty()) {
+            return;
+        } else {
+            arrayList.add(0, "Все");
+        }
+
+        PopupMenu popupMenu = new PopupMenu(view.getContext(), view, Gravity.END);
+        for (int i = 0; i < arrayList.size(); i++) {
+            popupMenu.getMenu().add(1, i, 0, arrayList.get(i));
+        }
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (books != null) {
+                if (item.getTitle().equals("Все")) {
+                    this.flter = null;
+                    getViewState().showData(books);
+                    return false;
+                }
+                if (item.getTitle().equals("Все")) {
+                    getViewState().setSubTitle("");
+                } else {
+                    getViewState().setSubTitle(item.getTitle().toString());
+                }
+                ArrayList<BookPOJO> filter = new ArrayList<>();
+                for (BookPOJO book : books) {
+                    String text;
+                    switch (id) {
+                        case R.id.genre_filter:
+                            text = book.getGenre();
+                            break;
+                        case R.id.autor_filter:
+                            text = book.getAutor();
+                            break;
+                        case R.id.artist_filter:
+                            text = book.getArtist();
+                            break;
+                        case R.id.series_filter:
+                            text = book.getSeries();
+                            break;
+                        default:
+                            return false;
+                    }
+                    if (item.getTitle().equals(text)) {
+                        filter.add(book);
+                    }
+                }
+                this.flter = filter;
+                getViewState().showData(filter);
+            }
+            return false;
+        });
+        popupMenu.show();
+
     }
 
     private Comparator<BookPOJO> getComparator(int sort) {

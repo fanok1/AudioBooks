@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -39,9 +41,6 @@ import com.fanok.audiobooks.adapter.BooksListAddapter;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.presenter.FavoritePresenter;
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.material.navigation.NavigationView;
 
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +59,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
     @BindView(R.id.list)
     RecyclerView mRecyclerView;
-    @BindView(R.id.progressBar)
+    @BindView(R.id.progressBarLayout)
     LinearLayout mProgressBar;
     Unbinder unbinder;
 
@@ -70,9 +69,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     View mView;
 
     private BooksListAddapter mAddapterBooks;
-    private InterstitialAd mInterstitialAd;
-    private View clickView;
-    private int clickPosition;
 
     private int titleId;
     private int table;
@@ -83,7 +79,8 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         if (arg != null) {
             table = arg.getInt(ARG_TABLE, 0);
         }
-        return new FavoritePresenter(Objects.requireNonNull(getContext()), table);
+        return new FavoritePresenter(Objects.requireNonNull(getContext()).getApplicationContext(),
+                table);
     }
 
     public static FavoriteFragment newInstance(int title, int table) {
@@ -105,18 +102,8 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
             table = arg.getInt(ARG_TABLE, 0);
         }
 
-        mInterstitialAd = new InterstitialAd(Objects.requireNonNull(getContext()));
-        mInterstitialAd.setAdUnitId(getResources().getString(R.string.interstitiaID));
-        mInterstitialAd.loadAd(new AdRequest.Builder().build());
-        mInterstitialAd.setAdListener(new AdListener() {
-            @Override
-            public void onAdClosed() {
-                mInterstitialAd.loadAd(new AdRequest.Builder().build());
-                mPresenter.onBookItemClick(clickView, clickPosition);
-            }
-
-        });
     }
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -131,28 +118,28 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         mAddapterBooks = new BooksListAddapter();
         mRecyclerView.setAdapter(mAddapterBooks);
         setHasOptionsMenu(true);
-        mAddapterBooks.setListener(
-                (view12, position) -> {
-                    clickView = view12;
-                    clickPosition = position;
-                    if (Consts.adsCount % Consts.ADDS_SHOWING_COUNT == 0
-                            && mInterstitialAd.isLoaded()) {
-                        mInterstitialAd.show();
-                    } else {
-                        mPresenter.onBookItemClick(view12, position);
-                    }
-                    Consts.adsCount++;
-                });
+        mAddapterBooks.setListener(this::onItemSelected);
 
         mAddapterBooks.setLongListener(
                 (view13, position) -> mPresenter.onBookItemLongClick(view13, position,
                         getLayoutInflater()));
-        getPresenter().setView(mView);
         int orientation = this.getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            setLayoutManager();
-        } else {
-            setLayoutManager(2);
+
+        int isTablet = getResources().getInteger(R.integer.isTablet);
+
+        if (isTablet == 0) {
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setLayoutManager();
+            } else {
+                setLayoutManager(2);
+            }
+        }
+        if (isTablet > 0) {
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setLayoutManager(2);
+            } else {
+                setLayoutManager(3);
+            }
         }
         return view;
     }
@@ -161,6 +148,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     @Override
     public void onDestroyView() {
         getPresenter().onDestroy();
+        mAddapterBooks = null;
         super.onDestroyView();
         unbinder.unbind();
     }
@@ -241,12 +229,24 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         MainActivity activity = (MainActivity) getActivity();
         if (activity != null) {
             NavigationView navigationView = activity.getNavigationView();
+            ArrayList<TextView> mTextViewArrayList = activity.getTextViewArrayList();
+            final TypedValue SelectedValue = new TypedValue();
+            activity.getTheme().resolveAttribute(R.attr.mySelectableItemBackground, SelectedValue,
+                    true);
             switch (table) {
                 case TABLE_FAVORITE:
-                    navigationView.setCheckedItem(R.id.nav_favorite);
+                    if (navigationView != null) {
+                        navigationView.setCheckedItem(R.id.nav_favorite);
+                    } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 4) {
+                        mTextViewArrayList.get(4).setBackgroundResource(SelectedValue.resourceId);
+                    }
                     break;
                 case TABLE_HISTORY:
-                    navigationView.setCheckedItem(R.id.nav_history);
+                    if (navigationView != null) {
+                        navigationView.setCheckedItem(R.id.nav_history);
+                    } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 5) {
+                        mTextViewArrayList.get(5).setBackgroundResource(SelectedValue.resourceId);
+                    }
                     break;
             }
         }
@@ -302,7 +302,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        mPresenter.onOptionsItemSelected(item.getItemId());
+        mPresenter.onOptionsItemSelected(mView, item.getItemId());
         item.setChecked(true);
         return super.onOptionsItemSelected(item);
     }
@@ -320,4 +320,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     }
 
 
+    private void onItemSelected(View view12, int position) {
+        mPresenter.onBookItemClick(view12, position);
+    }
 }

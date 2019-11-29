@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchableModel;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchablePresenter;
@@ -53,9 +54,14 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
     private boolean isEnd;
 
     private SearcheblPOJO mSearcheblPOJO;
+    private String query;
 
 
     private String mUrl;
+
+    public void setQuery(@NonNull String query) {
+        this.query = query;
+    }
 
     public SearchbalePresenter(int modelId, @NonNull Context context) {
         mModelId = modelId;
@@ -90,40 +96,44 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
     @Override
     public void onDestroy() {
-
+        mBooksDBModel.closeDB();
     }
 
     @Override
-    public void loadBoks(String qery) {
-        if (books != null) {
-            books.clear();
-            getViewState().showData(books);
-        }
-        if (genre != null) {
-            genre.clear();
-            getViewState().showData(genre);
-        }
+    public void loadBoks() {
+        if (query != null) {
+            if (books != null) {
+                books.clear();
+                getViewState().showData(books);
+            }
+            if (genre != null) {
+                genre.clear();
+                getViewState().showData(genre);
+            }
 
-        mSearcheblPOJO = new SearcheblPOJO();
-        getViewState().showSeriesAndAutors(mSearcheblPOJO);
+            mSearcheblPOJO = new SearcheblPOJO();
+            getViewState().showSeriesAndAutors(mSearcheblPOJO);
 
-        if (mModelId == Consts.MODEL_BOOKS) {
-            getViewState().showProgresTop(true);
-            getDataSeriesAndAutors(mUrl.replace("<qery>", qery).replace("<page>", "1"));
+            if (mModelId == Consts.MODEL_BOOKS) {
+                getViewState().showProgresTop(true);
+                getDataSeriesAndAutors(mUrl.replace("<qery>", query).replace("<page>", "1"));
+            }
+
+            isEnd = false;
+            page = 0;
+            loadNext();
         }
-
-        isEnd = false;
-        page = 0;
-        loadNext(qery);
     }
 
 
     @Override
-    public void loadNext(String qery) {
-        if (!isEnd && !isLoading) {
-            getViewState().showProgres(true);
-            page++;
-            getData(mUrl.replace("<qery>", qery).replace("<page>", String.valueOf(page)));
+    public void loadNext() {
+        if (query != null) {
+            if (!isEnd && !isLoading) {
+                getViewState().showProgres(true);
+                page++;
+                getData(mUrl.replace("<qery>", query).replace("<page>", String.valueOf(page)));
+            }
         }
     }
 
@@ -199,6 +209,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
         open.setOnClickListener(view1 -> {
             dialog.dismiss();
+            MyInterstitialAd.increase();
             getViewState().startBookActivity(books.get(position));
         });
 

@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.fragment.BooksFragment;
@@ -85,6 +86,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
     @Override
     public void onDestroy() {
+        mBooksDBModel.closeDB();
+        //mContext = null;
     }
 
     @Override
@@ -240,7 +243,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         url,
                         R.string.menu_audiobooks,
                         subTitle + " " + getStringById(R.string.order_reting), Consts.MODEL_BOOKS),
-                        "audioBooksOrederBestWeek");
+                        "audioBooksOrederBestDay");
                 break;
             case R.id.popular_all_time:
                 getViewState().showFragment(BooksFragment.newInstance(
@@ -272,7 +275,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         R.string.menu_audiobooks,
                         subTitle + " " + getStringById(R.string.order_popular),
                         Consts.MODEL_BOOKS),
-                        "audioBooksOrederDiscussedWeek");
+                        "audioBooksOrederDiscussedDay");
                 break;
         }
     }
@@ -356,6 +359,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
         open.setOnClickListener(view1 -> {
             dialog.dismiss();
+            MyInterstitialAd.increase();
             getViewState().showBooksActivity(books.get(position));
         });
 
@@ -428,6 +432,11 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                                     books.clear();
                                 }
                                 books.addAll(bookPOJOS);
+                                if (isRefreshing) {
+                                    isRefreshing = false;
+                                    getViewState().showData(books);
+                                    getViewState().setPosition(0);
+                                }
                             }
 
                             @Override
@@ -446,11 +455,9 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             public void onComplete() {
                                 Log.d(TAG, "onComplete");
                                 getViewState().showData(books);
-                                if (isRefreshing) getViewState().setPosition(0);
                                 getViewState().showProgres(false);
                                 getViewState().showRefreshing(false);
                                 isLoading = false;
-                                isRefreshing = false;
                             }
                         });
             } else {
@@ -468,6 +475,11 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                                     genre.clear();
                                 }
                                 genre.addAll(bookPOJOS);
+                                if (isRefreshing) {
+                                    isRefreshing = false;
+                                    getViewState().showData(genre);
+                                    getViewState().setPosition(0);
+                                }
                             }
 
                             @Override
@@ -486,11 +498,9 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             public void onComplete() {
                                 Log.d(TAG, "onComplete");
                                 getViewState().showData(genre);
-                                if (isRefreshing) getViewState().setPosition(0);
                                 getViewState().showProgres(false);
                                 getViewState().showRefreshing(false);
                                 isLoading = false;
-                                isRefreshing = false;
                             }
                         });
             }

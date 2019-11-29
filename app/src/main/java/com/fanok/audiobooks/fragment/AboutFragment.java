@@ -27,8 +27,6 @@ import java.util.Objects;
 
 public class AboutFragment extends PreferenceFragmentCompat {
 
-    private StorageAds mStorageAds;
-
     @Override
     public void onNavigateToScreen(PreferenceScreen preferenceScreen) {
         AboutFragment settingsFragment = new AboutFragment();
@@ -59,7 +57,6 @@ public class AboutFragment extends PreferenceFragmentCompat {
                 Objects.requireNonNull(getActivity()).getApplicationContext(),
                 R.xml.about_preferences,
                 false);
-        mStorageAds = new StorageAds(getContext());
 
         preferenceClickListner("privacy", preference -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(
@@ -123,7 +120,7 @@ public class AboutFragment extends PreferenceFragmentCompat {
         Preference version = findPreference("version");
         if (version != null) {
             version.setSummary(getString(R.string.version) + " " + BuildConfig.VERSION_NAME);
-            if (mStorageAds.idDisableAds()) {
+            if (StorageAds.idDisableAds()) {
                 version.setTitle(getString(R.string.app_name) + " Plus");
             } else {
                 version.setTitle(getString(R.string.app_name));

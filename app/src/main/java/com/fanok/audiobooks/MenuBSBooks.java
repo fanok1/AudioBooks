@@ -42,10 +42,7 @@ public class MenuBSBooks extends BottomSheetDialogFragment {
     private BooksView mViewState;
 
     public MenuBSBooks(@NotNull BooksView viewState) {
-        mBooksDBModel = new BooksDBModel(getContext());
         mViewState = viewState;
-
-
     }
 
     public BooksView getViewState() {
@@ -60,6 +57,7 @@ public class MenuBSBooks extends BottomSheetDialogFragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
+        mBooksDBModel = new BooksDBModel(getContext());
         return inflater.inflate(R.layout.bootom_sheet_books_menu, container, false);
     }
 
@@ -135,6 +133,10 @@ public class MenuBSBooks extends BottomSheetDialogFragment {
 
     }
 
-
+    @Override
+    public void onDestroyView() {
+        mBooksDBModel.closeDB();
+        super.onDestroyView();
+    }
 }
 

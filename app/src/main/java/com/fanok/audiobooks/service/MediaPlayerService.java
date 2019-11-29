@@ -4,6 +4,7 @@ import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_IMAGE;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_PROGRESS;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_SELECTION;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_TITLE;
+import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SHOW_GET_PLUS;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -43,6 +44,7 @@ import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.broadcasts.OnCancelBroadcastReceiver;
 import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.pojo.AudioPOJO;
+import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.squareup.picasso.Picasso;
@@ -66,6 +68,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public static final String ACTION_NEXT = "audioBook.ACTION_NEXT";
     public static final String ACTION_STOP = "audioBook.ACTION_STOP";
     public static final String Broadcast_DELETE_NOTIFICATION = "brodcast.DELETE_NOTIFICATION";
+    public static final String Broadcast_CloseIfPause = "brodcast.CloseIfPause";
 
     private static final String TAG = "MediaPlayerService";
     //AudioPlayer notification ID
@@ -73,6 +76,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private static final String CHANNEL_ID = "124";
     private static final String CHANNEL_NAME = "Notification";
     private static boolean isPlay = false;
+
+    private static final int countAudioWereShowingActivity = 25;
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
     private final Handler handler = new Handler();
@@ -100,6 +105,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private String imageUrl = "";
     private Bitmap image = null;
     private int timeStart = 0;
+    private StorageUtil storage;
 
 
     /**
@@ -120,7 +126,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         public void onReceive(Context context, Intent intent) {
             buttonClick = true;
             //Get the new media index form SharedPreferences
-            audioIndex = new StorageUtil(getApplicationContext()).loadAudioIndex();
+            audioIndex = storage.loadAudioIndex();
             if (audioIndex != -1 && audioIndex < audioList.size()) {
                 //index is in a valid range
                 activeAudio = audioList.get(audioIndex);
@@ -177,12 +183,18 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         @Override
         public void onReceive(Context context, Intent intent) {
             seekTo(mediaPlayer.getCurrentPosition() + 30000);
+            if (!isPlaying()) {
+                resumeMedia();
+            }
         }
     };
     private BroadcastReceiver seekToPrevious10Sec = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             seekTo(mediaPlayer.getCurrentPosition() - 10000);
+            if (!isPlaying()) {
+                resumeMedia();
+            }
         }
     };
     private BroadcastReceiver showTitle = new BroadcastReceiver() {
@@ -224,6 +236,16 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
     };
 
+    private BroadcastReceiver closeIfPause = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (mediaPlayer == null || !mediaPlayer.isPlaying()) {
+                stopForeground(true);
+                stopSelf();
+            }
+        }
+    };
+
 
     public static boolean isPlay() {
         return isPlay;
@@ -260,15 +282,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         register_getPosition();
         register_setSpeed();
         register_closeIfNotPrepered();
+        register_closeIfPause();
     }
 
     //The system calls this method when an activity, requests the service be started
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
+        storage = new StorageUtil(getApplicationContext());
+
         try {
             //Load data from SharedPreferences
-            StorageUtil storage = new StorageUtil(getApplicationContext());
             urlBook = storage.loadUrlBook();
             audioList = storage.loadAudio();
             audioIndex = storage.loadAudioIndex();
@@ -361,9 +385,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         unregisterReceiver(getPosition);
         unregisterReceiver(setSpeed);
         unregisterReceiver(closeNotPrerepred);
+        unregisterReceiver(closeIfPause);
 
         //clear cached playlist
-        new StorageUtil(getApplicationContext()).clearCachedAudioPlaylist();
+        storage.clearCachedAudioPlaylist();
+        mAudioDBModel.closeDB();
     }
 
     /**
@@ -428,8 +454,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             if (timeStart != 0) seekTo(timeStart * 1000);
             BookPresenter.resume = false;
         }
-
-
     }
 
     @Override
@@ -543,8 +567,19 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
 
         mediaPlayer.prepareAsync();
-        Log.d(TAG, "initMediaPlayer: calld");
 
+        if (!StorageAds.idDisableAds()) {
+
+            int countAudioListnered = storage.loadCountAudioListnered() + 1;
+            if (countAudioListnered >= countAudioWereShowingActivity) {
+                storage.storeCountAudioListnered(0);
+                Intent broadcastIntent = new Intent(Broadcast_SHOW_GET_PLUS);
+                sendBroadcast(broadcastIntent);
+            } else {
+                storage.storeCountAudioListnered(countAudioListnered);
+            }
+        }
+        Log.d(TAG, "initMediaPlayer: calld");
     }
 
     private void playMedia() {
@@ -610,7 +645,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         } else {
             //get next in playlist
             activeAudio = audioList.get(++audioIndex);
-            new StorageUtil(getApplicationContext()).storeAudioIndex(audioIndex);
+            storage.storeAudioIndex(audioIndex);
 
             stopMedia();
             mediaSession.setActive(false);
@@ -632,8 +667,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (!prepared) return;
         if (audioIndex != 0) {
             activeAudio = audioList.get(--audioIndex);
-            new StorageUtil(getApplicationContext()).storeAudioIndex(audioIndex);
-
+            storage.storeAudioIndex(audioIndex);
             stopMedia();
             mediaSession.setActive(false);
             //reset mediaPlayer
@@ -670,7 +704,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         //Starting listening for PhoneState changes
         phoneStateListener = new PhoneStateListener() {
-            boolean playing = false;
             @Override
             public void onCallStateChanged(int state, String incomingNumber) {
                 switch (state) {
@@ -829,6 +862,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
         Intent intent = new Intent(this, LoadBook.class);
         intent.putExtra("url", urlBook);
+        intent.putExtra("notificationClick", true);
         PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -1057,6 +1091,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private void register_closeIfNotPrepered() {
         IntentFilter filter = new IntentFilter(BookPresenter.Broadcast_CloseNotPrepered);
         registerReceiver(closeNotPrerepred, filter);
+    }
+
+    private void register_closeIfPause() {
+        IntentFilter filter = new IntentFilter(Broadcast_CloseIfPause);
+        registerReceiver(closeIfPause, filter);
     }
 
     /**

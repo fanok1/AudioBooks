@@ -147,9 +147,13 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
         unbinder.unbind();
+        mComentsListAddapter = null;
+        mAnswerListAddapter = null;
+        mPresenter.onDestroy();
+        super.onDestroyView();
     }
+
 
     @Override
     public void setPlaceholder(int id) {

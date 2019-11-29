@@ -64,6 +64,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     public static final String Broadcast_SET_PROGRESS = "SetProgress";
     public static final String Broadcast_SET_SELECTION = "SetSelection";
     public static final String Broadcast_SET_TITLE = "SetTitle";
+    public static final String Broadcast_SHOW_GET_PLUS = "ShowGetPlus";
 
     private static String showingView;
     @BindView(R.id.buttonCollapse)
@@ -115,6 +116,11 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     private BookPOJO mBookPOJO;
     private BottomSheetBehavior bottomSheetBehavior;
 
+    private MenuItem mAddFavorite;
+    private MenuItem mRemoveFavorite;
+
+    private boolean mNotificationClick;
+
     private AudioAdapter mAudioAdapter;
     private BroadcastReceiver setImage = new BroadcastReceiver() {
         @Override
@@ -123,13 +129,17 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             mPresenter.setImageDrawable(id);
         }
     };
-
+    private BroadcastReceiver showGetPlus = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Intent start = new Intent(context, PopupGetPlus.class);
+            start.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            startActivity(start);
+        }
+    };
 
     public static void startNewActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO) {
-        Intent intent = new Intent(context, BookActivity.class);
-        String json = new GsonBuilder().serializeNulls().create().toJson(bookPOJO);
-        intent.putExtra(ARG_BOOK, json);
-        context.startActivity(intent);
+        startNewActivity(context, bookPOJO, false);
     }
     private BroadcastReceiver setProgress = new BroadcastReceiver() {
         @Override
@@ -159,12 +169,21 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         }
     };
 
+    public static void startNewActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO,
+            boolean notificationClick) {
+        Intent intent = new Intent(context, BookActivity.class);
+        intent.putExtra("notificationClick", notificationClick);
+        String json = new GsonBuilder().serializeNulls().create().toJson(bookPOJO);
+        intent.putExtra(ARG_BOOK, json);
+        context.startActivity(intent);
+    }
+
     @ProvidePresenter
     BookPresenter provideBookPresenter() {
         Intent intent = getIntent();
         String json = intent.getStringExtra(ARG_BOOK);
         if (json == null) throw new NullPointerException();
-        return new BookPresenter(BookPOJO.parceJsonToBookPojo(json), this);
+        return new BookPresenter(BookPOJO.parceJsonToBookPojo(json), getApplicationContext());
     }
 
     @Override
@@ -185,6 +204,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         setContentView(R.layout.activity_book);
         ButterKnife.bind(this);
 
+        MainActivity.setCloseApp(false);
+
+        mNotificationClick = intent.getBooleanExtra("notificationClick", false);
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
@@ -222,6 +244,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         registerReceiver(setSelectionBroadcast, new IntentFilter(Broadcast_SET_SELECTION));
 
         registerReceiver(setTitleBroadcast, new IntentFilter(Broadcast_SET_TITLE));
+        registerReceiver(showGetPlus, new IntentFilter(Broadcast_SHOW_GET_PLUS));
 
 
         bottomSheetBehavior = BottomSheetBehavior.from(mPlayer);
@@ -328,6 +351,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             mSpeed.setVisibility(View.GONE);
         }
 
+        getSystemService(AUDIO_SERVICE);
+
+
 
     }
 
@@ -363,6 +389,17 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     public void stateElse() {
         mTopButtonsControls.setVisibility(View.VISIBLE);
         mProgressBar.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void setIsFavorite(boolean b) {
+        if (b) {
+            mAddFavorite.setVisible(false);
+            mRemoveFavorite.setVisible(true);
+        } else {
+            mAddFavorite.setVisible(true);
+            mRemoveFavorite.setVisible(false);
+        }
     }
 
     /*@Override
@@ -415,6 +452,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         unregisterReceiver(setProgress);
         unregisterReceiver(setSelectionBroadcast);
         unregisterReceiver(setTitleBroadcast);
+        unregisterReceiver(showGetPlus);
         showingView = "";
         mPresenter.onDestroy();
         super.onDestroy();
@@ -424,6 +462,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.book_activity_options_menu, menu);
+        mAddFavorite = menu.findItem(R.id.addFavorite);
+        mRemoveFavorite = menu.findItem(R.id.removeFavorite);
         mPresenter.onCreateOptionsMenu(menu);
         return true;
     }
@@ -472,7 +512,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         } else {
-            super.onBackPressed();
+            if (mNotificationClick) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 
@@ -588,4 +634,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
     }
+
+
 }

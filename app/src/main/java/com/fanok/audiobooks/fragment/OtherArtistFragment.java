@@ -137,6 +137,7 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
 
     @Override
     public void onDestroyView() {
+        mPresenter.onDestroy();
         super.onDestroyView();
         unbinder.unbind();
     }

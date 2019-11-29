@@ -18,7 +18,7 @@ public class Consts {
     public static final Pattern REGEXP_URL = Pattern.compile(
             "^https?://.+\\..+$");
     public static final Pattern REGEXP_URL_PHOTO = Pattern.compile(
-            "^https?://.+\\.((jpg)|(png)|(jpeg)).*$");
+            "^https?://.+\\.((jpg)|(png)|(jpeg))$");
 
     public static final Pattern REGEXP_URL_MP3 = Pattern.compile(
             "^https?://.+\\.mp3.*$");
@@ -59,8 +59,7 @@ public class Consts {
     public static final String APP_PREFERENCES = "audiobooks_settings";
     public static final String APP_FRAGMENT = "start_fragment";
 
-    public static final int ADDS_SHOWING_COUNT = 3;
-    public static int adsCount = 0;
+    public static final String mSkuId = "android.test.purchased";
 
     public static final String MY_EMAIL = "fanok.inc@gmail.com";
 

@@ -53,8 +53,17 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
         return Observable.create(observableEmitter -> {
             ArrayList<GenrePOJO> articlesModels;
             try {
-                articlesModels = loadBooksList(url, page);
-                observableEmitter.onNext(articlesModels);
+                if (url.contains(String.valueOf(page))) {
+                    for (int i = 1; i <= 4; i++) {
+                        int temp = (page - 1) * 4 + i;
+                        articlesModels = loadBooksList(
+                                url.replace(String.valueOf(page), String.valueOf(temp)), temp);
+                        observableEmitter.onNext(articlesModels);
+                    }
+                } else {
+                    articlesModels = loadBooksList(url, page);
+                    observableEmitter.onNext(articlesModels);
+                }
             } catch (Exception e) {
                 observableEmitter.onError(e);
             } finally {

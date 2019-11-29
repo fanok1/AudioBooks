@@ -9,9 +9,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.BookPOJO;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -43,7 +44,9 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
     }
 
     public void setItem(ArrayList<BookPOJO> model) {
-        mModel = model;
+        if (mModel != model) {
+            mModel = model;
+        }
         notifyDataSetChanged();
     }
 
@@ -101,7 +104,10 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             mArtist = itemView.findViewById(R.id.artist);
 
             itemView.setOnClickListener(view -> {
-                if (mListener != null) mListener.onItemSelected(view, getAdapterPosition());
+                if (mListener != null) {
+                    MyInterstitialAd.increase();
+                    mListener.onItemSelected(view, getAdapterPosition());
+                }
             });
 
             itemView.setOnLongClickListener(view -> {
@@ -121,7 +127,10 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 throw new NullPointerException();
             }
 
-            Picasso.get().load(book.getPhoto()).into(mImageView);
+            Glide.with(mImageView).load(book.getPhoto())
+                    .thumbnail(0.1f)
+                    .override(mImageView.getWidth(), mImageView.getHeight()).into(mImageView);
+
             mTitle.setText(book.getName());
             mGenre.setText(book.getGenre());
             if (!book.getReting().equals("0")) {
@@ -159,65 +168,6 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 mSiresle.setVisibility(View.GONE);
             }
 
-            /*//translation
-            String lang = Locale.getDefault().toLanguageTag();
-            if(!lang.equals("ru")) {
-                FirebaseTranslatorOptions options =
-                        new FirebaseTranslatorOptions.Builder()
-                                .setSourceLanguage(FirebaseTranslateLanguage.RU)
-                                .setTargetLanguage(FirebaseTranslateLanguage
-                                .languageForLanguageCode(lang))
-                                .build();
-                final FirebaseTranslator translator =
-                        FirebaseNaturalLanguage.getInstance().getTranslator(options);
-
-                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
-                .Builder()
-                        .requireWifi()
-                        .build();
-                translator.downloadModelIfNeeded(conditions)
-                        .addOnSuccessListener(
-                                v -> {
-                                    translator.translate(book.getName())
-                                            .addOnSuccessListener(
-                                                    translatedText -> mTitle.setText
-                                                    (translatedText));
-
-                                    translator.translate(book.getGenre())
-                                            .addOnSuccessListener(
-                                                    translatedText -> mGenre.setText
-                                                    (translatedText));
-
-                                    if (book.getAutor() != null && !book.getAutor().isEmpty()) {
-                                        translator.translate(book.getAutor())
-                                                .addOnSuccessListener(
-                                                        translatedText -> mAutor.setText
-                                                        (translatedText));
-                                    }
-                                    translator.translate(book.getArtist())
-                                            .addOnSuccessListener(
-                                                    translatedText -> mArtist.setText
-                                                    (translatedText));
-
-                                    if (book.getSeries() != null && book.getUrlSeries() != null &&
-                                            !book.getSeries().isEmpty() && !book.getUrlSeries()
-                                            .isEmpty()) {
-                                        translator.translate(book.getSeries())
-                                                .addOnSuccessListener(
-                                                        translatedText -> mSiresle.setText
-                                                        (translatedText));
-                                    }
-
-                                    if (book.getTime() != null && !book.getTime().isEmpty()) {
-                                        translator.translate(book.getTime())
-                                                .addOnSuccessListener(
-                                                        translatedText -> mTime.setText
-                                                        (translatedText));
-                                    }
-
-
-                                });
-            }*/
         }
     }
 }

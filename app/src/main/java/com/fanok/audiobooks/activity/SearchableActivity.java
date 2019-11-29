@@ -60,7 +60,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
 
     @InjectPresenter
     SearchbalePresenter mPresenter;
-    @BindView(R.id.progressBar)
+    @BindView(R.id.progressBarLayout)
     LinearLayout mProgressBar;
     @BindView(R.id.autors)
     TextView mAutors;
@@ -84,14 +84,13 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     private SearchebleAdapter mAdapterAutors;
     private SearchebleAdapter mAdapterSeries;
 
-    private String query;
 
     @ProvidePresenter
     SearchbalePresenter provide() {
         Intent intent = getIntent();
         int model = intent.getIntExtra(Consts.ARG_MODEL, -1);
         if (model == -1) throw new IllegalArgumentException("ModelId require parameter");
-        return new SearchbalePresenter(model, this);
+        return new SearchbalePresenter(model, getApplicationContext());
     }
 
     @Override
@@ -135,10 +134,28 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
 
 
         int orientation = this.getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            setLayoutManager();
-        } else {
-            setLayoutManager(2);
+
+        int isTablet = getResources().getInteger(R.integer.isTablet);
+
+        if (isTablet == 0) {
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setLayoutManager();
+            } else {
+                setLayoutManager(2);
+            }
+        }
+        if (isTablet == 2) {
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setLayoutManager(2);
+            } else {
+                setLayoutManager(4);
+            }
+        } else if (isTablet == 1) {
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setLayoutManager(2);
+            } else {
+                setLayoutManager(3);
+            }
         }
 
         switch (mModelId) {
@@ -171,7 +188,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                                 recyclerView.getLayoutManager())).findLastVisibleItemPosition();
                 if (mModelId != Consts.MODEL_GENRE
                         && lastCompletelyVisibleItemPosition > getCount() - 3 && dy > 0) {
-                    mPresenter.loadNext(query);
+                    mPresenter.loadNext();
                 }
             }
         });
@@ -237,6 +254,10 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     @Override
     protected void onDestroy() {
         mPresenter.onDestroy();
+        mAddapterBooks = null;
+        mAddapterGenre = null;
+        mAdapterAutors = null;
+        mAdapterSeries = null;
         super.onDestroy();
     }
 
@@ -250,12 +271,15 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-            query = intent.getStringExtra(SearchManager.QUERY);
-            SearchRecentSuggestions suggestions = new SearchRecentSuggestions(this,
-                    MySuggestionProvider.AUTHORITY, MySuggestionProvider.MODE);
-            suggestions.saveRecentQuery(query, null);
-            mSearchView.setQuery(query, false);
-            mPresenter.loadBoks(query);
+            String query = intent.getStringExtra(SearchManager.QUERY);
+            if (query != null) {
+                SearchRecentSuggestions suggestions = new SearchRecentSuggestions(this,
+                        MySuggestionProvider.AUTHORITY, MySuggestionProvider.MODE);
+                suggestions.saveRecentQuery(query, null);
+                mSearchView.setQuery(query, false);
+                mPresenter.setQuery(query);
+                mPresenter.loadBoks();
+            }
         }
         mRecyclerView.requestFocus();
     }
@@ -403,4 +427,6 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(LocaleManager.onAttach(base));
     }
+
+
 }

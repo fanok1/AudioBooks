@@ -1,12 +1,9 @@
 package com.fanok.audiobooks.interface_pacatge.main;
 
 import android.content.DialogInterface;
-import android.view.MenuItem;
-
-import androidx.annotation.NonNull;
 
 public interface MainPresenter {
-    void onItemSelected(@NonNull MenuItem item);
+    void onItemSelected(int id);
 
     void onDestroy();
 

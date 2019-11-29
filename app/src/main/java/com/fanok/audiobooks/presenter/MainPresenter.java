@@ -5,7 +5,6 @@ import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTI
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
-import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -29,43 +28,42 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
 
     @Override
-    public void onItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
+    public void onItemSelected(int id) {
 
-        if (id == R.id.nav_audiobooks) {
+        if (id == R.id.nav_audiobooks || id == R.id.layout_nav_audiobooks) {
             Fragment fragment = BooksFragment.newInstance(Url.INDEX,
                     R.string.menu_audiobooks, Consts.MODEL_BOOKS);
             getViewState().showFragment(fragment, "audioBook");
-        } else if (id == R.id.nav_genre) {
+        } else if (id == R.id.nav_genre || id == R.id.layout_nav_genre) {
             Fragment fragment = BooksFragment.newInstance(Url.SECTIONS,
                     R.string.menu_genre, Consts.MODEL_GENRE);
             getViewState().showFragment(fragment, "genre");
 
-        } else if (id == R.id.nav_autor) {
+        } else if (id == R.id.nav_autor || id == R.id.layout_nav_autor) {
             Fragment fragment = BooksFragment.newInstance(Url.AUTHORS,
                     R.string.menu_autor, Consts.MODEL_AUTOR);
             getViewState().showFragment(fragment, "autor");
 
-        } else if (id == R.id.nav_artist) {
+        } else if (id == R.id.nav_artist || id == R.id.layout_nav_artist) {
             Fragment fragment = BooksFragment.newInstance(
                     Url.PERFORMERS, R.string.menu_artist, Consts.MODEL_ARTIST);
             getViewState().showFragment(fragment, "artist");
 
-        } else if (id == R.id.nav_favorite) {
+        } else if (id == R.id.nav_favorite || id == R.id.layout_nav_favorite) {
             Fragment fragment = FavoriteFragment.newInstance(R.string.menu_favorite,
                     Consts.TABLE_FAVORITE);
             getViewState().showFragment(fragment, "favorite");
 
-        } else if (id == R.id.nav_history) {
+        } else if (id == R.id.nav_history || id == R.id.layout_nav_history) {
             Fragment fragment = FavoriteFragment.newInstance(R.string.menu_history,
                     Consts.TABLE_HISTORY);
             getViewState().showFragment(fragment, "history");
 
-        } else if (id == R.id.nav_settings) {
+        } else if (id == R.id.nav_settings || id == R.id.layout_nav_settings) {
             getViewState().showFragment(new SettingsFragment(), "settings");
 
 
-        } else if (id == R.id.nav_about) {
+        } else if (id == R.id.nav_about || id == R.id.layout_nav_about) {
             getViewState().showFragment(new AboutFragment(), "about");
         }
     }

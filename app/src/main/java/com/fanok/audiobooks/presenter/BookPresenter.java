@@ -1,7 +1,6 @@
 package com.fanok.audiobooks.presenter;
 
 import static android.content.Context.ACTIVITY_SERVICE;
-import static android.content.Context.AUDIO_SERVICE;
 
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_PLAY_NEW_AUDIO;
 
@@ -27,6 +26,7 @@ import androidx.appcompat.app.AlertDialog;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.crashlytics.android.Crashlytics;
+import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.book_content.Activity;
 import com.fanok.audiobooks.interface_pacatge.book_content.ActivityPresenter;
@@ -67,8 +67,6 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     private BookPOJO mBookPOJO;
     private BooksDBModel mBooksDBModel;
-    private MenuItem mAddFavorite;
-    private MenuItem mRemoveFavorite;
     private AudioDBModel mAudioDBModel;
     private ArrayList<AudioPOJO> mAudioPOJO;
     private String last = "";
@@ -127,21 +125,18 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
             getViewState().broadcastSend(broadcastIntent);
         }
-        mContext.getSystemService(AUDIO_SERVICE);
         getAudio();
+
+        MyInterstitialAd.show();
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu) {
-        mAddFavorite = menu.findItem(R.id.addFavorite);
-        mRemoveFavorite = menu.findItem(R.id.removeFavorite);
         if (mBookPOJO != null && mBooksDBModel != null) {
             if (mBooksDBModel.inFavorite(mBookPOJO)) {
-                mAddFavorite.setVisible(false);
-                mRemoveFavorite.setVisible(true);
+                getViewState().setIsFavorite(true);
             } else {
-                mAddFavorite.setVisible(true);
-                mRemoveFavorite.setVisible(false);
+                getViewState().setIsFavorite(false);
             }
         }
     }
@@ -160,9 +155,14 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void onDestroy() {
+        mAudioDBModel.closeDB();
+        mBooksDBModel.closeDB();
+        if (mContext != null) {
+            Intent broadcastIntent = new Intent(Broadcast_CloseNotPrepered);
+            mContext.sendBroadcast(broadcastIntent);
+            //mContext = null;
+        }
         super.onDestroy();
-        Intent broadcastIntent = new Intent(Broadcast_CloseNotPrepered);
-        mContext.sendBroadcast(broadcastIntent);
     }
 
     @Override
@@ -171,15 +171,13 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             case R.id.addFavorite:
                 if (!mBooksDBModel.inFavorite(mBookPOJO)) {
                     mBooksDBModel.addFavorite(mBookPOJO);
-                    mAddFavorite.setVisible(false);
-                    mRemoveFavorite.setVisible(true);
+                    getViewState().setIsFavorite(true);
                 }
                 break;
             case R.id.removeFavorite:
                 if (mBooksDBModel.inFavorite(mBookPOJO)) {
                     mBooksDBModel.removeFavorite(mBookPOJO);
-                    mAddFavorite.setVisible(true);
-                    mRemoveFavorite.setVisible(false);
+                    getViewState().setIsFavorite(false);
                 }
                 break;
             case R.id.refresh:
@@ -326,7 +324,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void buttomNextClick(View view) {
-        if (mAudioPOJO.size() - 1 > curentTrack) {
+        if (mAudioPOJO.size() - 2 > curentTrack) {
             curentTrack++;
             Intent broadcastIntent = new Intent(Broadcast_PLAY_NEXT);
             getViewState().broadcastSend(broadcastIntent);

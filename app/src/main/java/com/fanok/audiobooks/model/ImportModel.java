@@ -131,6 +131,7 @@ public class ImportModel {
                     }
 
                 }
+                booksDBModel.closeDB();
             }
             return true;
         }

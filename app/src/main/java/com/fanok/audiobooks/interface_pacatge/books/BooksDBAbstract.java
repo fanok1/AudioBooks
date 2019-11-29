@@ -19,4 +19,10 @@ public abstract class BooksDBAbstract {
         mDBHelper = DBHelper;
     }
 
+    public void closeDB() {
+        if (mDBHelper != null) {
+            mDBHelper.close();
+        }
+    }
+
 }

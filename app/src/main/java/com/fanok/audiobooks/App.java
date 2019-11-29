@@ -33,6 +33,10 @@ public class App extends Application {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
         MobileAds.initialize(this, "ca-app-pub-3595775191373219~2371571769");
+
+        Billing.initBilding(getBaseContext());
+
+
     }
 
 

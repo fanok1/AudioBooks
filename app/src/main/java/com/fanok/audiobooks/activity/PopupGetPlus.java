@@ -1,28 +1,39 @@
 package com.fanok.audiobooks.activity;
 
+import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.preference.PreferenceManager;
 
+import com.fanok.audiobooks.Billing;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.pojo.StorageAds;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class PopupGetPlus extends AppCompatActivity {
+
+    public static final String Broadcast_RECREATE = "recreate";
+
     @BindView(R.id.ib_close)
     ImageButton mIbClose;
     @BindView(R.id.title)
@@ -35,17 +46,30 @@ public class PopupGetPlus extends AppCompatActivity {
     LinearLayout mLinearLayout;
     @BindView(R.id.coordinator)
     CoordinatorLayout mCoordinator;
+    @BindView(R.id.buttonTitle)
+    TextView mButtonTitle;
+    @BindView(R.id.buttonSubTitle)
+    TextView mButtonSubTitle;
 
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(LocaleManager.onAttach(base));
     }
 
+    private BroadcastReceiver recreate = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            recreate();
+        }
+    };
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.plus_version_info);
         ButterKnife.bind(this);
+
+        register_recreate();
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
@@ -73,13 +97,23 @@ public class PopupGetPlus extends AppCompatActivity {
         mIbClose.setOnClickListener(view -> finish());
         mCoordinator.setOnClickListener(view -> finish());
 
-        mTitle.setText(R.string.getPlusTitle);
-        mSubTitle.setText(R.string.getPlusSubTitle);
+        if (!StorageAds.idDisableAds()) {
+            mTitle.setText(R.string.getPlusTitle);
+            mSubTitle.setText(R.string.getPlusSubTitle);
+            mButtonTitle.setText(R.string.buy);
+            mButtonSubTitle.setText(R.string.price);
+            mBuy.setOnClickListener(view -> Billing.launchBilling(getActivity(), Consts.mSkuId));
+        } else {
+            mTitle.setText(R.string.congratulations);
+            mSubTitle.setText(R.string.plusSubTitle);
+            mButtonTitle.setText(R.string.good);
+            mButtonSubTitle.setVisibility(View.GONE);
+            mBuy.setOnClickListener(view -> finish());
+        }
 
-        mBuy.setOnClickListener(
-                view -> Toast.makeText(view.getContext(), "Данная функция находиться в разработке",
-                        Toast.LENGTH_SHORT).show());
+
     }
+
 
     @Override
     public Resources.Theme getTheme() {
@@ -103,5 +137,27 @@ public class PopupGetPlus extends AppCompatActivity {
     public void finish() {
         super.finish();
         overridePendingTransition(0, 0);
+    }
+
+    private Activity getActivity() {
+        Context context = this;
+        while (context instanceof ContextWrapper) {
+            if (context instanceof Activity) {
+                return (Activity) context;
+            }
+            context = ((ContextWrapper) context).getBaseContext();
+        }
+        return null;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(recreate);
+    }
+
+    private void register_recreate() {
+        IntentFilter filter = new IntentFilter(Broadcast_RECREATE);
+        registerReceiver(recreate, filter);
     }
 }

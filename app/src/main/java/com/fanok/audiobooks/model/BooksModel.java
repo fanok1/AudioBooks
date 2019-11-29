@@ -65,7 +65,13 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                 if (litRes.size() != 0) continue;
                 BookPOJO bookPOJO = new BookPOJO();
                 String img = book.getElementsByTag("img").get(0).attr("src");
-                if (img != null) bookPOJO.setPhoto(img);
+                if (img != null) {
+                    int lastPos = img.indexOf("?");
+                    if (lastPos != -1) {
+                        img = img.substring(0, lastPos);
+                    }
+                    bookPOJO.setPhoto(img);
+                }
                 Elements aTags = book.getElementsByClass("bookitem_name");
                 if (aTags.size() != 0) {
                     Element a = aTags.first().child(0);
@@ -147,8 +153,12 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         return Observable.create(observableEmitter -> {
             ArrayList<BookPOJO> articlesModels;
             try {
-                articlesModels = loadBooksList(url, page);
-                observableEmitter.onNext(articlesModels);
+                for (int i = 1; i <= 4; i++) {
+                    int temp = (page - 1) * 4 + i;
+                    articlesModels = loadBooksList(
+                            url.replace(String.valueOf(page), String.valueOf(temp)), temp);
+                    observableEmitter.onNext(articlesModels);
+                }
             } catch (Exception e) {
                 observableEmitter.onError(e);
             } finally {

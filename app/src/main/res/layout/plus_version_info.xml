@@ -134,18 +134,18 @@
                     android:padding="8dp">
 
                     <TextView
+                        android:id="@+id/buttonTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="@string/buy"
                         android:textColor="@android:color/black"
                         android:textSize="@dimen/titleSize" />
 
                     <TextView
+                        android:id="@+id/buttonSubTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="@string/price"
                         android:textColor="#6b6948"
                         android:textSize="@dimen/subTextSize" />
 

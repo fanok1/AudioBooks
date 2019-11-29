@@ -55,4 +55,7 @@ public interface Activity extends MvpView {
     void stateExpanded();
 
     void stateElse();
+
+    @StateStrategyType(SkipStrategy.class)
+    void setIsFavorite(boolean b);
 }

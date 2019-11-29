@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -45,9 +47,6 @@ import com.fanok.audiobooks.interface_pacatge.books.BooksView;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.fanok.audiobooks.presenter.BooksPresenter;
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.material.navigation.NavigationView;
 
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +70,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     RecyclerView mRecyclerView;
     @BindView(R.id.refresh)
     SwipeRefreshLayout mRefresh;
-    @BindView(R.id.progressBar)
+    @BindView(R.id.mProgressBarLayout)
     LinearLayout mProgressBar;
     Unbinder unbinder;
 
@@ -86,10 +85,6 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     private String subTitleString;
     private int modelID;
     private String mUrl;
-    private InterstitialAd mInterstitialAd;
-
-    private View clickView;
-    private int clickPosition;
 
 
     @ProvidePresenter
@@ -110,7 +105,8 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         if (!subTitleString.isEmpty()) {
             subTitle = subTitleString;
         } else if (subTitleId != 0) subTitle = getResources().getString(subTitleId);
-        return new BooksPresenter(url, modelID, subTitle, Objects.requireNonNull(getContext()));
+        return new BooksPresenter(url, modelID, subTitle,
+                Objects.requireNonNull(getContext()).getApplicationContext());
     }
 
     public static BooksFragment newInstance(@NonNull String url, int title, int modelID) {
@@ -175,17 +171,6 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         if (url.isEmpty()) throw new IllegalArgumentException("Variable 'url' contains not url");
         if (modelID == -1) throw new IllegalArgumentException("Illegal model id");
         mUrl = url;
-        mInterstitialAd = new InterstitialAd(Objects.requireNonNull(getContext()));
-        mInterstitialAd.setAdUnitId(getResources().getString(R.string.interstitiaID));
-        mInterstitialAd.loadAd(new AdRequest.Builder().build());
-        mInterstitialAd.setAdListener(new AdListener() {
-            @Override
-            public void onAdClosed() {
-                mInterstitialAd.loadAd(new AdRequest.Builder().build());
-                mPresenter.onBookItemClick(clickView, clickPosition);
-            }
-
-        });
     }
 
     @Override
@@ -233,7 +218,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                         ((LinearLayoutManager) Objects.requireNonNull(
                                 recyclerView.getLayoutManager())).findLastVisibleItemPosition();
                 if (modelID != Consts.MODEL_GENRE
-                        && lastCompletelyVisibleItemPosition > getCount() - 3 && dy > 0) {
+                        && lastCompletelyVisibleItemPosition > getCount() - 15 && dy > 0) {
                     getPresenter().loadBoks();
                 }
             }
@@ -245,19 +230,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         }
 
         if (mAddapterBooks != null) {
-            mAddapterBooks.setListener(
-                    (view12, position) -> {
-                        clickView = view12;
-                        clickPosition = position;
-                        if (Consts.adsCount % Consts.ADDS_SHOWING_COUNT == 0
-                                && mInterstitialAd.isLoaded()) {
-                            mInterstitialAd.show();
-                        } else {
-                            mPresenter.onBookItemClick(view12, position);
-                        }
-                        Consts.adsCount++;
-
-                    });
+            mAddapterBooks.setListener(this::onItemSelected);
 
             mAddapterBooks.setLongListener(
                     (view13, position) -> mPresenter.onBookItemLongClick(view13, position,
@@ -265,10 +238,22 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         }
 
         int orientation = this.getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            setLayoutManager();
-        } else {
-            setLayoutManager(2);
+
+        int isTablet = getResources().getInteger(R.integer.isTablet);
+
+        if (isTablet == 0) {
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setLayoutManager();
+            } else {
+                setLayoutManager(2);
+            }
+        }
+        if (isTablet > 0) {
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setLayoutManager(2);
+            } else {
+                setLayoutManager(3);
+            }
         }
 
         return view;
@@ -288,9 +273,12 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     @Override
     public void onDestroyView() {
         getPresenter().onDestroy();
+        mAddapterBooks = null;
+        mAddapterGenre = null;
         super.onDestroyView();
         unbinder.unbind();
     }
+
 
     @Override
     public void setLayoutManager() {
@@ -420,18 +408,38 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         MainActivity activity = (MainActivity) getActivity();
         if (activity != null) {
             NavigationView navigationView = activity.getNavigationView();
+            ArrayList<TextView> mTextViewArrayList = activity.getTextViewArrayList();
+            final TypedValue SelectedValue = new TypedValue();
+            activity.getTheme().resolveAttribute(R.attr.mySelectableItemBackground, SelectedValue,
+                    true);
             switch (modelID) {
                 case MODEL_BOOKS:
-                    navigationView.setCheckedItem(R.id.nav_audiobooks);
+                    if (navigationView != null) {
+                        navigationView.setCheckedItem(R.id.nav_audiobooks);
+                    } else if (mTextViewArrayList != null && !mTextViewArrayList.isEmpty()) {
+                        mTextViewArrayList.get(0).setBackgroundResource(SelectedValue.resourceId);
+                    }
                     break;
                 case MODEL_GENRE:
-                    navigationView.setCheckedItem(R.id.nav_genre);
+                    if (navigationView != null) {
+                        navigationView.setCheckedItem(R.id.nav_genre);
+                    } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 1) {
+                        mTextViewArrayList.get(1).setBackgroundResource(SelectedValue.resourceId);
+                    }
                     break;
                 case MODEL_AUTOR:
-                    navigationView.setCheckedItem(R.id.nav_autor);
+                    if (navigationView != null) {
+                        navigationView.setCheckedItem(R.id.nav_autor);
+                    } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 2) {
+                        mTextViewArrayList.get(2).setBackgroundResource(SelectedValue.resourceId);
+                    }
                     break;
                 case MODEL_ARTIST:
-                    navigationView.setCheckedItem(R.id.nav_artist);
+                    if (navigationView != null) {
+                        navigationView.setCheckedItem(R.id.nav_artist);
+                    } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 3) {
+                        mTextViewArrayList.get(3).setBackgroundResource(SelectedValue.resourceId);
+                    }
                     break;
             }
         }
@@ -450,5 +458,9 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     @Override
     public void showBooksActivity(@NotNull @NonNull BookPOJO bookPOJO) {
         BookActivity.startNewActivity(Objects.requireNonNull(getContext()), bookPOJO);
+    }
+
+    private void onItemSelected(View view12, int position) {
+        mPresenter.onBookItemClick(view12, position);
     }
 }

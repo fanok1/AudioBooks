@@ -1,7 +1,9 @@
 package com.fanok.audiobooks.activity;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -9,7 +11,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -28,7 +34,9 @@ import com.fanok.audiobooks.FragmentTagSteck;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
+import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.presenter.MainPresenter;
+import com.fanok.audiobooks.service.MediaPlayerService;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
@@ -47,6 +55,7 @@ import butterknife.ButterKnife;
 public class MainActivity extends MvpAppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MainView {
     private static final String TAG = "MainActivity";
+    public static final String Broadcast_DISABLE_ADS = "DISABLE_ADS";
 
 
     private static final String EXSTRA_FRAGMENT = "startFragment";
@@ -60,6 +69,8 @@ public class MainActivity extends MvpAppCompatActivity
         return closeApp;
     }
 
+    private ArrayList<TextView> mTextViewArrayList;
+
     @InjectPresenter
     MainPresenter mPresenter;
 
@@ -69,7 +80,24 @@ public class MainActivity extends MvpAppCompatActivity
     private boolean firstStart = true;
 
     private SharedPreferences preferences;
+    private BroadcastReceiver disebledAds = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!StorageAds.idDisableAds()) {
+                MobileAds.initialize(context, initializationStatus -> {
+                });
+                AdRequest adRequest = new AdRequest.Builder().build();
+                mAdView.loadAd(adRequest);
+                mAdView.setVisibility(View.VISIBLE);
+            } else {
+                mAdView.setVisibility(View.GONE);
+            }
+        }
+    };
 
+    public static void setCloseApp(boolean closeApp) {
+        MainActivity.closeApp = closeApp;
+    }
 
     public NavigationView getNavigationView() {
         return navigationView;
@@ -98,60 +126,8 @@ public class MainActivity extends MvpAppCompatActivity
         super.attachBaseContext(LocaleManager.onAttach(base));
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        closeApp = false;
-        Log.d(TAG, "onCreate: called");
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
-
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-
-        preferences = getSharedPreferences("FIRST", Context.MODE_PRIVATE);
-
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
-            setTheme(R.style.AppTheme_NoAnimTheme);
-        } else if (themeName.equals(getString(R.string.theme_light_value))) {
-            setTheme(R.style.LightAppTheme_NoAnimTheme);
-        }
-
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        navigationView = findViewById(R.id.nav_view);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open,
-                R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-        navigationView.setNavigationItemSelectedListener(this);
-        fragmentsTag = new ArrayList<>();
-        isSavedInstanceState = savedInstanceState != null;
-
-        MobileAds.initialize(this, initializationStatus -> {
-        });
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
-
-        alert = new AlertDialog.Builder(this);
-        alert.setTitle(R.string.app_name);
-        alert.setMessage(R.string.setIgnoredBatteryOptimyze);
-        alert.setNegativeButton(R.string.cancel, null);
-        alert.setCancelable(true);
-        alert.setNeutralButton(R.string.help, (dialogInterface, i) -> {
-            Intent intent = new Intent(alert.getContext(), ActivitySendEmail.class);
-            intent.putExtra("enebled", false);
-            intent.putExtra("message",
-                    getString(R.string.message_help_disable_battery_optimisetion));
-            intent.putExtra("subject", 0);
-            startActivity(intent);
-        });
-        alert.setPositiveButton("OK",
-                (dialogInterface, i) -> mPresenter.openSettingsOptimizeBattery(dialogInterface));
-
+    public ArrayList<TextView> getTextViewArrayList() {
+        return mTextViewArrayList;
     }
 
     @Override
@@ -230,18 +206,94 @@ public class MainActivity extends MvpAppCompatActivity
     }
 
     @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        mPresenter.onItemSelected(item);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        closeApp = false;
+        Log.d(TAG, "onCreate: called");
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        preferences = getSharedPreferences("FIRST", Context.MODE_PRIVATE);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            setTheme(R.style.AppTheme_NoAnimTheme);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            setTheme(R.style.LightAppTheme_NoAnimTheme);
+        }
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
+        navigationView = findViewById(R.id.nav_view);
+        if (drawer != null && navigationView != null) {
+            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                    this, drawer, toolbar, R.string.navigation_drawer_open,
+                    R.string.navigation_drawer_close);
+            drawer.addDrawerListener(toggle);
+            toggle.syncState();
+            navigationView.setNavigationItemSelectedListener(this);
+        } else {
+            LinearLayout linearLayout = findViewById(R.id.liner_nav_view);
+            if (linearLayout != null) {
+                mTextViewArrayList = new ArrayList<>();
+                final TypedValue outValue = new TypedValue();
+                getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue,
+                        true);
+                final TypedValue SelectedValue = new TypedValue();
+                getTheme().resolveAttribute(R.attr.mySelectableItemBackground, SelectedValue, true);
+                for (int i = 0; i < linearLayout.getChildCount(); i++) {
+                    View view = linearLayout.getChildAt(i);
+                    if (view instanceof TextView) {
+                        mTextViewArrayList.add((TextView) view);
+                        view.setOnClickListener(view1 -> {
+                            for (TextView textView : mTextViewArrayList) {
+                                textView.setBackgroundResource(outValue.resourceId);
+                            }
+                            view1.setBackgroundResource(SelectedValue.resourceId);
+                            mPresenter.onItemSelected(view1.getId());
+                        });
+
+                    }
+                }
+            }
+        }
+
+
+        fragmentsTag = new ArrayList<>();
+        isSavedInstanceState = savedInstanceState != null;
+        register_disebledAds();
+        mAdView.setVisibility(View.GONE);
+
+        alert = new AlertDialog.Builder(this);
+        alert.setTitle(R.string.app_name);
+        alert.setMessage(R.string.setIgnoredBatteryOptimyze);
+        alert.setNegativeButton(R.string.cancel, null);
+        alert.setCancelable(true);
+        alert.setNeutralButton(R.string.help, (dialogInterface, i) -> {
+            Intent intent = new Intent(alert.getContext(), ActivitySendEmail.class);
+            intent.putExtra("enebled", false);
+            intent.putExtra("message",
+                    getString(R.string.message_help_disable_battery_optimisetion));
+            intent.putExtra("subject", 0);
+            startActivity(intent);
+        });
+        alert.setPositiveButton("OK",
+                (dialogInterface, i) -> mPresenter.openSettingsOptimizeBattery(dialogInterface));
+
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mPresenter.onDestroy();
-        closeApp = true;
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        mPresenter.onItemSelected(item.getItemId());
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        if (drawer != null) {
+            drawer.closeDrawer(GravityCompat.START);
+        }
+        return true;
     }
 
     @Override
@@ -299,5 +351,19 @@ public class MainActivity extends MvpAppCompatActivity
         Locale locale = new Locale(lang);
         newConfig.setLocale(locale);
         super.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(disebledAds);
+        mPresenter.onDestroy();
+        sendBroadcast(new Intent(MediaPlayerService.Broadcast_CloseIfPause));
+        closeApp = true;
+    }
+
+    private void register_disebledAds() {
+        IntentFilter filter = new IntentFilter(Broadcast_DISABLE_ADS);
+        registerReceiver(disebledAds, filter);
     }
 }

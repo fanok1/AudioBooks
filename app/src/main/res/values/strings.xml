@@ -72,7 +72,7 @@
     <string name="notification_channel_name" translatable="false">channelId</string>
     <string name="no_comments">Комментарии отсутствуют</string>
     <string name="open_site">Открыть на сайте</string>
-    <string name="worning_loading_not_finish">Данные загружены не до конца.</string>
+    <string name="worning_loading_not_finish">Данные загружены не до конца. Подождите.</string>
     <string name="title_set_speed_popup">Выберите скорость</string>
 
     <!--Settings -->
@@ -168,8 +168,8 @@
         ca-app-pub-3940256099942544/1033173712 debug
 
      -->
-    <string name="bunerID" translatable="false">ca-app-pub-3595775191373219/3956116171</string>
-    <string name="interstitiaID" translatable="false">ca-app-pub-3595775191373219/9647426557</string>
+    <string name="bunerID" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="interstitiaID" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
     <string name="setIgnoredBatteryOptimyze">Для корректной работы приложения необходимо добавить приложение в список игнорирования экономии зараяда батареи (Battery optimizetion).</string>
 
 
@@ -228,5 +228,9 @@
     <string name="price">Цена: 2.50 $</string>
     <string name="getPlusTitle">Получить Plus версию</string>
     <string name="getPlusSubTitle">Купив Plus версию вы получите полный доступ к приложению на неограниченый срок.</string>
+    <string name="congratulations">Поздравляем</string>
+    <string name="plusSubTitle">Plus версия успешно оформлена. Спасибо что вы поддержали проект.</string>
+    <string name="error_buy">Не удалось оформить Plus версию</string>
+    <string name="good">Хорошо</string>
 
 </resources>

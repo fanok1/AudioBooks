@@ -7,9 +7,9 @@ public interface SearchablePresenter {
 
     void onDestroy();
 
-    void loadBoks(String qery);
+    void loadBoks();
 
-    void loadNext(String qery);
+    void loadNext();
 
     void onGenreItemClick(View view, int position);
 

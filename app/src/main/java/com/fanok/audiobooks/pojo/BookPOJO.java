@@ -190,7 +190,14 @@ public class BookPOJO {
         if (posterElements.size() != 0) {
             Elements img = posterElements.first().getElementsByTag("img");
             if (img.size() != 0) {
-                bookPOJO.setPhoto(img.first().attr("src"));
+                String imgUrl = img.first().attr("src");
+                if (imgUrl != null) {
+                    int lastPos = imgUrl.indexOf("?");
+                    if (lastPos != -1) {
+                        imgUrl = imgUrl.substring(0, lastPos);
+                    }
+                    bookPOJO.setPhoto(imgUrl);
+                }
             }
         }
 
