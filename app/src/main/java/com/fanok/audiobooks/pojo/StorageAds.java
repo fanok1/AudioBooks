@@ -2,7 +2,7 @@ package com.fanok.audiobooks.pojo;
 
 public class StorageAds {
 
-    private static boolean disable = false;
+    private static boolean disable = true;
 
     public StorageAds(boolean disable) {
         StorageAds.disable = disable;

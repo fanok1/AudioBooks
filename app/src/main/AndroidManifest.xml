@@ -52,11 +52,6 @@
             android:configChanges="locale|uiMode"
             android:label="@string/title_activity_book"
             android:theme="@style/AppTheme.NoActionBar">
-            <intent-filter>
-                <action android:name="com.catinean.appshortcutsdemo.OPEN_DYNAMIC_SHORTCUT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
         </activity>
 
         <activity

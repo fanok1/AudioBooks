@@ -232,14 +232,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive: closeNotPrerepred");
-            if (!prepared) stopSelf();
+            if (!prepared) {
+                stopForeground(true);
+                stopSelf();
+            }
         }
     };
 
     private BroadcastReceiver closeIfPause = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (mediaPlayer == null || !mediaPlayer.isPlaying()) {
+            if (!isPlaying()) {
                 stopForeground(true);
                 stopSelf();
             }
@@ -487,8 +490,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 if (isPlaying()) {
-                    pause = false;
                     pauseMedia();
+                    pause = false;
                 } else {
                     pause = true;
                 }

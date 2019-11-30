@@ -83,17 +83,21 @@ public class MainActivity extends MvpAppCompatActivity
     private BroadcastReceiver disebledAds = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (!StorageAds.idDisableAds()) {
-                MobileAds.initialize(context, initializationStatus -> {
-                });
-                AdRequest adRequest = new AdRequest.Builder().build();
-                mAdView.loadAd(adRequest);
-                mAdView.setVisibility(View.VISIBLE);
-            } else {
-                mAdView.setVisibility(View.GONE);
-            }
+            showAds(context);
         }
     };
+
+    private void showAds(Context context) {
+        if (!StorageAds.idDisableAds()) {
+            MobileAds.initialize(context, initializationStatus -> {
+            });
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
+            mAdView.setVisibility(View.VISIBLE);
+        } else {
+            mAdView.setVisibility(View.GONE);
+        }
+    }
 
     public static void setCloseApp(boolean closeApp) {
         MainActivity.closeApp = closeApp;
@@ -266,7 +270,9 @@ public class MainActivity extends MvpAppCompatActivity
         fragmentsTag = new ArrayList<>();
         isSavedInstanceState = savedInstanceState != null;
         register_disebledAds();
-        mAdView.setVisibility(View.GONE);
+
+
+        showAds(this);
 
         alert = new AlertDialog.Builder(this);
         alert.setTitle(R.string.app_name);

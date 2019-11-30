@@ -22,6 +22,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ShareCompat;
@@ -67,8 +68,10 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     public static final String Broadcast_SHOW_GET_PLUS = "ShowGetPlus";
 
     private static String showingView;
+    @Nullable
     @BindView(R.id.buttonCollapse)
     ImageButton mButtonCollapse;
+    @Nullable
     @BindView(R.id.topButtonsControls)
     LinearLayout mTopButtonsControls;
     @BindView(R.id.player)
@@ -85,12 +88,17 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     RecyclerView mList;
     @BindView(R.id.name_curent)
     TextView mNameCurent;
+
+    @Nullable
     @BindView(R.id.progressBar)
     ProgressBar mProgressBar;
+    @Nullable
     @BindView(R.id.previousTop)
     ImageButton mPreviousTop;
+    @Nullable
     @BindView(R.id.playTop)
     ImageButton mPlayTop;
+    @Nullable
     @BindView(R.id.nextTop)
     ImageButton mNextTop;
     @BindView(R.id.timeStart)
@@ -234,7 +242,11 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setSubtitle(mBookPOJO.getAutor().trim());
         }
-        mButtonCollapse.setVisibility(View.INVISIBLE);
+
+        if (mButtonCollapse != null) {
+            mButtonCollapse.setVisibility(View.INVISIBLE);
+        }
+
         TextView nameCurent = findViewById(R.id.name_curent);
 
         registerReceiver(setImage, new IntentFilter(Broadcast_SET_IMAGE));
@@ -246,68 +258,84 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         registerReceiver(setTitleBroadcast, new IntentFilter(Broadcast_SET_TITLE));
         registerReceiver(showGetPlus, new IntentFilter(Broadcast_SHOW_GET_PLUS));
 
+        int isTablet = getResources().getInteger(R.integer.isTablet);
+        if (isTablet == 0) {
+            bottomSheetBehavior = BottomSheetBehavior.from(mPlayer);
 
-        bottomSheetBehavior = BottomSheetBehavior.from(mPlayer);
+
+            bottomSheetBehavior.setBottomSheetCallback(
+                    new BottomSheetBehavior.BottomSheetCallback() {
+                        @Override
+                        public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                            if (actionBar != null) {
+                                if (BottomSheetBehavior.STATE_COLLAPSED == newState) {
+                                    mPresenter.stateCollapsed();
+                                }
+                            }
+
+                            if (BottomSheetBehavior.STATE_EXPANDED == newState) {
+                                mPresenter.stateExpanded();
+                            } else {
+                                mPresenter.stateElse();
+                            }
+                        }
 
 
-        bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-            @Override
-            public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                if (actionBar != null) {
-                    if (BottomSheetBehavior.STATE_COLLAPSED == newState) {
-                        mPresenter.stateCollapsed();
-                    }
+                        @Override
+                        public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                            float alpha = 1 - slideOffset * 2;
+                            if (mTopButtonsControls != null) {
+                                mTopButtonsControls.animate().alpha(alpha).setDuration(0);
+                            }
+                            if (mProgressBar != null) {
+                                mProgressBar.animate().alpha(alpha).setDuration(0);
+                            }
+                            nameCurent.animate().alpha(alpha).setDuration(0);
+                            if (alpha <= 0.0) {
+                                mTopButtonsControls.setVisibility(View.GONE);
+                                mProgressBar.setVisibility(View.INVISIBLE);
+                            } else {
+                                mTopButtonsControls.setVisibility(View.VISIBLE);
+                                mProgressBar.setVisibility(View.VISIBLE);
+                            }
+
+                            if (slideOffset > Consts.COLLAPS_BUTTON_VISIBLE) {
+                                if (mButtonCollapse != null
+                                        && mButtonCollapse.getVisibility() != View.VISIBLE) {
+                                    mButtonCollapse.setVisibility(View.VISIBLE);
+                                }
+
+                                double alphaCollapse = (slideOffset - Consts.COLLAPS_BUTTON_VISIBLE)
+                                        / Consts.COLLAPS_BUTTON_VISIBLE_STEP;
+                                if (mButtonCollapse != null) {
+                                    mButtonCollapse.animate().alpha(
+                                            (float) alphaCollapse).setDuration(
+                                            0);
+                                }
+                                nameCurent.animate().alpha((float) alphaCollapse).setDuration(0);
+                            } else if (mButtonCollapse != null
+                                    && mButtonCollapse.getVisibility() != View.INVISIBLE) {
+                                mButtonCollapse.setVisibility(View.INVISIBLE);
+                            }
+                        }
+                    });
+            mPlayer.setOnClickListener(
+                    view -> {
+                        if (BottomSheetBehavior.STATE_COLLAPSED == bottomSheetBehavior.getState()) {
+                            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                        }
+                    });
+
+
+            mButtonCollapse.setOnClickListener(view -> {
+                if (BottomSheetBehavior.STATE_EXPANDED == bottomSheetBehavior.getState()) {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 }
+            });
 
-                if (BottomSheetBehavior.STATE_EXPANDED == newState) {
-                    mPresenter.stateExpanded();
-                } else {
-                    mPresenter.stateElse();
-                }
-            }
+        }
 
 
-            @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                float alpha = 1 - slideOffset * 2;
-                mTopButtonsControls.animate().alpha(alpha).setDuration(0);
-                mProgressBar.animate().alpha(alpha).setDuration(0);
-                nameCurent.animate().alpha(alpha).setDuration(0);
-                if (alpha <= 0.0) {
-                    mTopButtonsControls.setVisibility(View.GONE);
-                    mProgressBar.setVisibility(View.INVISIBLE);
-                } else {
-                    mTopButtonsControls.setVisibility(View.VISIBLE);
-                    mProgressBar.setVisibility(View.VISIBLE);
-                }
-
-                if (slideOffset > Consts.COLLAPS_BUTTON_VISIBLE) {
-                    if (mButtonCollapse.getVisibility() != View.VISIBLE) {
-                        mButtonCollapse.setVisibility(View.VISIBLE);
-                    }
-
-                    double alphaCollapse = (slideOffset - Consts.COLLAPS_BUTTON_VISIBLE)
-                            / Consts.COLLAPS_BUTTON_VISIBLE_STEP;
-                    mButtonCollapse.animate().alpha((float) alphaCollapse).setDuration(0);
-                    nameCurent.animate().alpha((float) alphaCollapse).setDuration(0);
-                } else if (mButtonCollapse.getVisibility() != View.INVISIBLE) {
-                    mButtonCollapse.setVisibility(View.INVISIBLE);
-                }
-            }
-        });
-
-        mPlayer.setOnClickListener(
-                view -> {
-                    if (BottomSheetBehavior.STATE_COLLAPSED == bottomSheetBehavior.getState()) {
-                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                    }
-                });
-
-        mButtonCollapse.setOnClickListener(view -> {
-            if (BottomSheetBehavior.STATE_EXPANDED == bottomSheetBehavior.getState()) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            }
-        });
 
 
         mAudioAdapter = new AudioAdapter();
@@ -317,7 +345,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
 
         mSeekBar.setMax(100);
-        mProgressBar.setMax(100);
+        if (mProgressBar != null) {
+            mProgressBar.setMax(100);
+        }
 
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -335,11 +365,17 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         });
 
 
-        mPlayTop.setOnClickListener(view -> mPresenter.buttomPlayClick(view));
+        if (mPlayTop != null) {
+            mPlayTop.setOnClickListener(view -> mPresenter.buttomPlayClick(view));
+        }
+        if (mPreviousTop != null) {
+            mPreviousTop.setOnClickListener(view -> mPresenter.buttomPreviousClick(view));
+        }
+        if (mNextTop != null) {
+            mNextTop.setOnClickListener(view -> mPresenter.buttomNextClick(view));
+        }
         mPlayBottom.setOnClickListener(view -> mPresenter.buttomPlayClick(view));
-        mPreviousTop.setOnClickListener(view -> mPresenter.buttomPreviousClick(view));
         mPreviousBottom.setOnClickListener(view -> mPresenter.buttomPreviousClick(view));
-        mNextTop.setOnClickListener(view -> mPresenter.buttomNextClick(view));
         mNextBottom.setOnClickListener(view -> mPresenter.buttomNextClick(view));
         mRewind.setOnClickListener(view -> mPresenter.buttomRewindClick(view));
         mForward.setOnClickListener(view -> mPresenter.buttomForwardClick(view));
@@ -359,36 +395,40 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @Override
     public void stateCollapsed() {
-        if (mTopButtonsControls.getVisibility() != View.GONE) {
+        if (mTopButtonsControls != null && mTopButtonsControls.getVisibility() != View.GONE) {
             mTopButtonsControls.setVisibility(View.GONE);
         }
-        if (mProgressBar.getVisibility() != View.VISIBLE) {
+        if (mProgressBar != null && mProgressBar.getVisibility() != View.VISIBLE) {
             mProgressBar.setVisibility(
                     View.VISIBLE);
         }
-        if (mButtonCollapse.getVisibility() != View.INVISIBLE) {
+        if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.INVISIBLE) {
             mButtonCollapse.setVisibility(View.INVISIBLE);
         }
     }
 
     @Override
     public void stateExpanded() {
-        if (mTopButtonsControls.getVisibility() != View.GONE) {
+        if (mTopButtonsControls != null && mTopButtonsControls.getVisibility() != View.GONE) {
             mTopButtonsControls.setVisibility(View.GONE);
         }
-        if (mProgressBar.getVisibility() != View.INVISIBLE) {
+        if (mProgressBar != null && mProgressBar.getVisibility() != View.INVISIBLE) {
             mProgressBar.setVisibility(
                     View.INVISIBLE);
         }
-        if (mButtonCollapse.getVisibility() != View.VISIBLE) {
+        if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.VISIBLE) {
             mButtonCollapse.setVisibility(View.VISIBLE);
         }
     }
 
     @Override
     public void stateElse() {
-        mTopButtonsControls.setVisibility(View.VISIBLE);
-        mProgressBar.setVisibility(View.VISIBLE);
+        if (mTopButtonsControls != null) {
+            mTopButtonsControls.setVisibility(View.VISIBLE);
+        }
+        if (mProgressBar != null) {
+            mProgressBar.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -509,7 +549,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @Override
     public void onBackPressed() {
-        if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+        if (bottomSheetBehavior != null
+                && bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         } else {
             if (mNotificationClick) {
@@ -534,9 +575,11 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @Override
     public void updateTime(int timeCurent, int timeEnd) {
-        mProgressBar.setMax(timeEnd);
+        if (mProgressBar != null) {
+            mProgressBar.setMax(timeEnd);
+            mProgressBar.setProgress(timeCurent);
+        }
         mSeekBar.setMax(timeEnd);
-        mProgressBar.setProgress(timeCurent);
         mSeekBar.setProgress(timeCurent);
 
         timeCurent /= 1000;
@@ -561,7 +604,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @Override
     public void setImageDrawable(int id) {
-        mPlayTop.setImageResource(id);
+        if (mPlayTop != null) {
+            mPlayTop.setImageResource(id);
+        }
         mPlayBottom.setImageResource(id);
     }
 
