@@ -15,4 +15,5 @@ public class Url {
     public static final String RATING_WEEK = SERVER + "/rating/?w=week&page=";
     public static final String RATING_MONTH = SERVER + "/rating/?w=month&page=";
     public static final String RATING_ALL_TIME = SERVER + "/rating/?w=alltime&page=";
+
 }

@@ -229,11 +229,19 @@
     <string name="recommendation">Рекомендація</string>
     <string name="send">Відправити</string>
     <string name="sending_email">Відправка повідомлення…</string>
-    <string name="shortcut">Створюйте ярлики</string>
+    <string name="shortcut">Створюйте ярлики (Android 8 та вище)</string>
     <string name="support_project">Підтримка проекту</string>
     <string name="congratulations">Вітаємо</string>
     <string name="error_buy">Не вдалося оформити Plus версію</string>
     <string name="good">Добре</string>
     <string name="plusSubTitle">Plus версія успішно оформлена. Дякую що ви підтримали проект.</string>
+    <string name="enabled_parental_control">Ви хочете включити батьківський контроль?</string>
+    <string name="enter_new_password">Введіть новий пароль</string>
+    <string name="enter_password">Введіть пароль</string>
+    <string name="incorect_password">Невірний пароль</string>
+    <string name="parental_control">Батьківський контроль</string>
+    <string name="parental_control_enabled">Включити батьківський контроль</string>
+    <string name="title_activity_parental_control">Батьківський контроль</string>
+    <string name="only_plus">Ця функція доступна тільки для власників Plus версії.</string>
 
 </resources>

@@ -151,18 +151,39 @@ public class MainActivity extends MvpAppCompatActivity
                 }
 
                 if (!preferences.getBoolean("first", false)) {
+
+                    AlertDialog.Builder parentalControlBuilder =
+                            new AlertDialog.Builder(this);
+                    parentalControlBuilder.setTitle(R.string.parental_control)
+                            .setMessage(R.string.enabled_parental_control)
+                            .setIcon(R.drawable.ic_lock)
+                            .setCancelable(false)
+                            .setPositiveButton(getString(R.string.yes),
+                                    (dialogInterface, i) -> {
+                                        dialogInterface.dismiss();
+                                        Intent intent = new Intent(getApplicationContext(),
+                                                ParentalControlActivity.class);
+                                        intent.putExtra("enabled", true);
+                                        startActivity(intent);
+                                    })
+                            .setNegativeButton(getString(R.string.cancel), null);
+
+
                     AlertDialog.Builder builder = new AlertDialog.Builder(
                             Objects.requireNonNull(this));
                     builder.setTitle(getString(R.string.privacy))
                             .setMessage(getString(R.string.privacy_message))
                             .setIcon(R.drawable.ic_privacy)
                             .setCancelable(false)
-                            .setNegativeButton(getString(R.string.yes),
+                            .setPositiveButton(getString(R.string.yes),
                                     (dialog, id) -> {
                                         SharedPreferences.Editor editor = preferences.edit();
                                         editor.putBoolean("first", true);
                                         editor.apply();
                                         dialog.cancel();
+                                        AlertDialog parentControlAlert =
+                                                parentalControlBuilder.create();
+                                        parentControlAlert.show();
                                     });
                     AlertDialog alert = builder.create();
                     alert.show();

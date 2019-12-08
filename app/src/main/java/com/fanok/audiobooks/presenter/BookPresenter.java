@@ -187,7 +187,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                 getViewState().shareTextUrl();
                 break;
             case R.id.addMainScreen:
-                getViewState().addToMainScreen();
+                getViewState().addToMainScreen(mBookPOJO);
                 break;
             case R.id.openSite:
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW,
@@ -215,14 +215,12 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private void playAudio(int audioIndex, int timeStart) {
         StorageUtil storage = new StorageUtil(mContext.getApplicationContext());
         storage.storeAudioIndex(audioIndex);
-        //Check is service is active
         if (!serviceBound || !isServiceRunning(MediaPlayerService.class)) {
             Crashlytics.setBool("playAudio", true);
             storage.storeAudio(mAudioPOJO);
             storage.storeUrlBook(mBookPOJO.getUrl());
             storage.storeImageUrl(mBookPOJO.getPhoto());
             storage.storeTimeStart(timeStart);
-            //Store Serializable audioList to SharedPreferences
             Intent playerIntent = new Intent(mContext, MediaPlayerService.class);
             playerIntent.setAction("start");
             mContext.startService(playerIntent);

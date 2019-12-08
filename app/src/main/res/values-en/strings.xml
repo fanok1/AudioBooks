@@ -229,11 +229,19 @@
     <string name="recommendation">Recommendation</string>
     <string name="send">Submit</string>
     <string name="sending_email">Sending message…</string>
-    <string name="shortcut">Create shortcuts</string>
+    <string name="shortcut">Create shortcuts (Android 8 and higher)</string>
     <string name="support_project">Project support</string>
     <string name="congratulations">Congratulations</string>
     <string name="error_buy">Failed to issue Plus version</string>
     <string name="good">Good</string>
     <string name="plusSubTitle">Plus version is successfully framed. Thank you for supporting the project.</string>
+    <string name="enabled_parental_control">Do you want to enable parental control?</string>
+    <string name="enter_new_password">Enter a new password</string>
+    <string name="enter_password">Enter password</string>
+    <string name="incorect_password">Invalid password</string>
+    <string name="parental_control">Parental control</string>
+    <string name="parental_control_enabled">Enable Parental Control</string>
+    <string name="title_activity_parental_control">Parental control</string>
+    <string name="only_plus">This function is available only for owners of the Plus version.</string>
 
 </resources>

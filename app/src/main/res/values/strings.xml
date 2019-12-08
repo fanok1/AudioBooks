@@ -222,7 +222,7 @@
     <string name="icon" translatable="false">icon</string>
     <string name="support_project">Поддержка проекта</string>
     <string name="download_plus">Скачивайте любимое</string>
-    <string name="shortcut">Создавайте ярлыки</string>
+    <string name="shortcut">Создавайте ярлыки (Android 8 и выше)</string>
     <string name="ads_free">Без рекламы</string>
     <string name="buy">Купить</string>
     <string name="price">Цена: 2.50 $</string>
@@ -232,5 +232,14 @@
     <string name="plusSubTitle">Plus версия успешно оформлена. Спасибо что вы поддержали проект.</string>
     <string name="error_buy">Не удалось оформить Plus версию</string>
     <string name="good">Хорошо</string>
+
+    <string name="parental_control">Родительский контроль</string>
+    <string name="enabled_parental_control">Вы хотите включить родительский контроль?</string>
+    <string name="title_activity_parental_control">Родительский контроль</string>
+    <string name="parental_control_enabled">Включить родительский контроль</string>
+    <string name="enter_password">Введите пароль</string>
+    <string name="incorect_password">Неверный пароль</string>
+    <string name="enter_new_password">Введите новый пароль</string>
+    <string name="only_plus">Данная функция доступна только для обладателей Plus версии.</string>
 
 </resources>

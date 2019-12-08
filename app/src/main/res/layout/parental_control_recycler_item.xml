@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/recycler_item_height_genre"
+    android:background="?attr/backgroundItem"
+    android:orientation="horizontal"
+    tools:background="@color/colorBackgraund">
+
+
+    <CheckedTextView
+        android:id="@+id/checkedTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checkMark="?android:attr/listChoiceIndicatorMultiple"
+        android:padding="@dimen/text_margin_book_description"
+        android:textSize="@dimen/titleSize" />
+</LinearLayout>

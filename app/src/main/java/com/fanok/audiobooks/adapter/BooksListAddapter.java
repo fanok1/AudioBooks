@@ -1,5 +1,11 @@
 package com.fanok.audiobooks.adapter;
 
+import static android.content.Context.MODE_PRIVATE;
+
+import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_ENABLED;
+import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
+
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -90,6 +96,8 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
         private TextView mAutor;
         private TextView mArtist;
 
+        private SharedPreferences mPreferences;
+
         MyHolder(@NonNull final View itemView) {
             super(itemView);
 
@@ -102,6 +110,8 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             mTime = itemView.findViewById(R.id.time);
             mAutor = itemView.findViewById(R.id.autor);
             mArtist = itemView.findViewById(R.id.artist);
+            mPreferences = mArtist.getContext().getSharedPreferences(PARENTAL_CONTROL_PREFERENCES,
+                    MODE_PRIVATE);
 
             itemView.setOnClickListener(view -> {
                 if (mListener != null) {
@@ -127,9 +137,15 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 throw new NullPointerException();
             }
 
-            Glide.with(mImageView).load(book.getPhoto())
-                    .thumbnail(0.1f)
-                    .override(mImageView.getWidth(), mImageView.getHeight()).into(mImageView);
+            if (mPreferences.getBoolean(PARENTAL_CONTROL_ENABLED, false) &&
+                    !mPreferences.getBoolean(book.getGenre(), false)) {
+                Glide.with(mImageView).load(R.drawable.ic_parental_control).into(mImageView);
+
+            } else {
+                Glide.with(mImageView).load(book.getPhoto())
+                        .thumbnail(0.1f)
+                        .override(mImageView.getWidth(), mImageView.getHeight()).into(mImageView);
+            }
 
             mTitle.setText(book.getName());
             mGenre.setText(book.getGenre());

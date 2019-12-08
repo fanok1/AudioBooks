@@ -26,6 +26,11 @@
         android:key="pref_start_screen"
         android:title="@string/setting_start_menu" />
 
+    <Preference
+        android:icon="@drawable/ic_lock"
+        android:key="parentalControl"
+        android:title="@string/parental_control" />
+
     <ListPreference
         android:defaultValue="@string/sort_value_date"
         android:dialogTitle="@string/setting_sort_favorite"

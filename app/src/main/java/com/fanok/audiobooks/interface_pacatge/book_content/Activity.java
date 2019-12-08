@@ -11,6 +11,7 @@ import com.arellomobile.mvp.viewstate.strategy.SingleStateStrategy;
 import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.fanok.audiobooks.pojo.AudioPOJO;
+import com.fanok.audiobooks.pojo.BookPOJO;
 
 import java.util.ArrayList;
 
@@ -25,7 +26,7 @@ public interface Activity extends MvpView {
     void shareTextUrl();
 
     @StateStrategyType(SkipStrategy.class)
-    void addToMainScreen();
+    void addToMainScreen(BookPOJO bookPOJO);
 
     void showProgres(boolean b);
 

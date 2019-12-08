@@ -32,6 +32,7 @@ import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.ActivityImport;
+import com.fanok.audiobooks.activity.ParentalControlActivity;
 import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BackupPOJO;
@@ -185,6 +186,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                         dbModel.clearFavorite();
                         dbModel.closeDB();
                     });
+            return true;
+        });
+
+        preferenceClickListner("parentalControl", preference -> {
+            startActivity(new Intent(getContext(), ParentalControlActivity.class));
             return true;
         });
 

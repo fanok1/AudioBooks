@@ -1,29 +1,48 @@
 package com.fanok.audiobooks.activity;
 
+import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_ENABLED;
+import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
+import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_PASSWORD;
+
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Xml;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ShareCompat;
 import androidx.preference.PreferenceManager;
@@ -31,6 +50,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
+import com.alimuzaffar.lib.pin.PinEntryEditText;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
@@ -42,14 +62,19 @@ import com.fanok.audiobooks.adapter.SectionsPagerAdapter;
 import com.fanok.audiobooks.interface_pacatge.book_content.Activity;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.tabs.TabLayout;
 import com.google.gson.GsonBuilder;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import org.jetbrains.annotations.NotNull;
+import org.xmlpull.v1.XmlPullParser;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -146,9 +171,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         }
     };
 
-    public static void startNewActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO) {
-        startNewActivity(context, bookPOJO, false);
-    }
     private BroadcastReceiver setProgress = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -177,14 +199,113 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         }
     };
 
+    public static void startNewActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO) {
+        startNewActivity(context, bookPOJO, false);
+    }
+
     public static void startNewActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO,
             boolean notificationClick) {
         Intent intent = new Intent(context, BookActivity.class);
         intent.putExtra("notificationClick", notificationClick);
         String json = new GsonBuilder().serializeNulls().create().toJson(bookPOJO);
         intent.putExtra(ARG_BOOK, json);
-        context.startActivity(intent);
+        SharedPreferences preferences =
+                context.getSharedPreferences(PARENTAL_CONTROL_PREFERENCES, MODE_PRIVATE);
+        if (preferences.getBoolean(PARENTAL_CONTROL_ENABLED, false) &&
+                !preferences.getBoolean(bookPOJO.getGenre(), false) && !notificationClick) {
+
+            XmlPullParser parser = context.getResources().getXml(R.xml.pin_entry);
+            try {
+                parser.next();
+                parser.nextTag();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            AttributeSet attr = Xml.asAttributeSet(parser);
+            PinEntryEditText editText = new PinEntryEditText(context, attr);
+
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setTitle(R.string.enter_password)
+                    .setCancelable(false)
+                    .setView(editText)
+                    .setNeutralButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.confirm, null);
+
+            AlertDialog dialog = builder.create();
+            dialog.setOnShowListener(dialogInterface -> {
+                Objects.requireNonNull(editText.getText()).clear();
+                editText.requestFocus();
+                Button b = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                b.setEnabled(false);
+                b.setOnClickListener(view -> {
+                    if (preferences.getInt(PARENTAL_PASSWORD, 0) == Integer.parseInt(
+                            editText.getText().toString())) {
+                        dialog.cancel();
+                        context.startActivity(intent);
+                    } else {
+                        Toast.makeText(context,
+                                context.getString(R.string.incorect_password),
+                                Toast.LENGTH_SHORT).show();
+                        editText.getText().clear();
+                    }
+                });
+            });
+
+            editText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    int size = Objects.requireNonNull(editText.getText()).toString().length();
+                    if (size == 4) {
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                    } else {
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+                    }
+                }
+            });
+
+            editText.setOnPinEnteredListener(str -> {
+                if (preferences.getInt(PARENTAL_PASSWORD, 0) == Integer.parseInt(
+                        Objects.requireNonNull(editText.getText()).toString())) {
+                    dialog.cancel();
+                    context.startActivity(intent);
+                } else {
+                    Toast.makeText(context,
+                            context.getString(R.string.incorect_password),
+                            Toast.LENGTH_SHORT).show();
+                    editText.getText().clear();
+                }
+            });
+
+            dialog.show();
+
+        } else {
+            context.startActivity(intent);
+        }
     }
+
+    private static void refreshActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO,
+            boolean notificationClick) {
+        Intent intent = new Intent(context, BookActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        intent.putExtra("notificationClick", notificationClick);
+        String json = new GsonBuilder().serializeNulls().create().toJson(bookPOJO);
+        intent.putExtra(ARG_BOOK, json);
+        context.startActivity(intent);
+        ((AppCompatActivity) context).finish();
+    }
+
 
     @ProvidePresenter
     BookPresenter provideBookPresenter() {
@@ -442,11 +563,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         }
     }
 
-    /*@Override
-    protected void onStart() {
-        super.onStart();
-        mPresenter.onOrintationChangeListner(mBookPOJO);
-    }*/
 
     public void showSiries() {
         showPage(getResources().getString(R.string.tab_text_3));
@@ -474,7 +590,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if (menuItem.getItemId() == android.R.id.home) {
-            finish();
+            if (mNotificationClick) {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            } else {
+                finish();
+            }
         }
         mPresenter.onOptionsMenuItemSelected(menuItem);
         return (super.onOptionsItemSelected(menuItem));
@@ -504,6 +626,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         inflater.inflate(R.menu.book_activity_options_menu, menu);
         mAddFavorite = menu.findItem(R.id.addFavorite);
         mRemoveFavorite = menu.findItem(R.id.removeFavorite);
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            menu.findItem(R.id.addMainScreen).setVisible(false);
+        }
         mPresenter.onCreateOptionsMenu(menu);
         return true;
     }
@@ -520,12 +645,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @Override
     public void refreshActivity() {
-        finish();
-        Intent intent = new Intent(this, BookActivity.class);
-        String json = new GsonBuilder().serializeNulls().create().toJson(mBookPOJO);
-        intent.putExtra(ARG_BOOK, json);
-        overridePendingTransition(0, 0);
-        BookActivity.startNewActivity(this, mBookPOJO);
+        BookActivity.refreshActivity(this, mBookPOJO, mNotificationClick);
     }
 
     @Override
@@ -537,9 +657,70 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
-    public void addToMainScreen() {
-        Log.d(TAG, "addToMainScreen: callded");
+    public void addToMainScreen(BookPOJO pojo) {
+        if (StorageAds.idDisableAds()) {
+            Picasso.get().load(pojo.getPhoto()).into(new Target() {
+                @Override
+                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                    ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
+
+                    Intent intent = new Intent(getApplicationContext(), LoadBook.class);
+                    intent.setAction(Intent.ACTION_VIEW);
+                    intent.putExtra("url", pojo.getUrl());
+                    intent.putExtra("notificationClick", true);
+
+                    ShortcutInfo shortcut = new ShortcutInfo.Builder(getApplicationContext(),
+                            pojo.getUrl())
+                            .setShortLabel(pojo.getName())
+                            .setLongLabel(pojo.getName())
+                            .setIcon(Icon.createWithBitmap(bitmap))
+                            .setIntent(intent)
+                            .build();
+
+                    if (shortcutManager != null) {
+                        shortcutManager.setDynamicShortcuts(Collections.singletonList(shortcut));
+                        if (shortcutManager.isRequestPinShortcutSupported()) {
+                            ShortcutInfo pinShortcutInfo = new ShortcutInfo
+                                    .Builder(getApplicationContext(), pojo.getUrl())
+                                    .build();
+                            Intent pinnedShortcutCallbackIntent =
+                                    shortcutManager.createShortcutResultIntent(pinShortcutInfo);
+
+
+                            PendingIntent successCallback = PendingIntent.getBroadcast(
+                                    getApplicationContext(), 0,
+                                    pinnedShortcutCallbackIntent, 0);
+                            shortcutManager.requestPinShortcut(pinShortcutInfo,
+                                    successCallback.getIntentSender());
+                        }
+                    }
+                }
+
+                @Override
+                public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+
+                }
+
+                @Override
+                public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                }
+            });
+
+        } else {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.getPlus);
+            builder.setMessage(R.string.only_plus);
+            builder.setPositiveButton(R.string.buy, (dialogInterface, i) -> {
+                Intent start = new Intent(BookActivity.this, PopupGetPlus.class);
+                start.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                startActivity(start);
+            });
+            builder.setNeutralButton(R.string.cancel, null);
+            builder.show();
+        }
     }
 
     @Override

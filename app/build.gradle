@@ -85,6 +85,9 @@ dependencies {
     annotationProcessor 'com.github.bumptech.glide:compiler:4.10.0'
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0-beta-5'
 
+    implementation 'com.alimuzaffar.lib:pinentryedittext:2.0.6'
+
+
 
     /*implementation('com.google.firebase:firebase-ml-natural-language:21.0.2') {
         exclude module: 'androidx.activity'
