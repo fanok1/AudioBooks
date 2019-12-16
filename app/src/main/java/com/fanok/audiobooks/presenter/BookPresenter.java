@@ -36,10 +36,12 @@ import com.fanok.audiobooks.model.AudioModel;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.service.MediaPlayerService;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
 
 import io.reactivex.Observer;
@@ -441,6 +443,17 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     @Override
     public void stateElse() {
         getViewState().stateElse();
+    }
+
+    @Override
+    public void dowland(HashSet<String> data) {
+        if (!StorageAds.idDisableAds()) {
+            getViewState().showGetPlus();
+        } else {
+            for (String url : data) {
+                getViewState().downloadFile(url, mBookPOJO.getName());
+            }
+        }
     }
 
     private void setSpeed(float value) {

@@ -5,6 +5,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RadioButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Locale;
 
 public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> {
@@ -23,9 +25,25 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
 
     private ArrayList<AudioPOJO> mData;
     private AudioAdapter.OnListItemSelectedInterface mListener;
+    private AudioAdapter.OnSelectedListner mSelectedListner;
+    private HashSet<String> mSelectedItems;
 
     public AudioAdapter() {
         mData = new ArrayList<>();
+        mSelectedItems = new HashSet<>();
+    }
+
+    public void setSelectedListner(
+            OnSelectedListner selectedListner) {
+        mSelectedListner = selectedListner;
+    }
+
+    public HashSet<String> getSelectedItems() {
+        return mSelectedItems;
+    }
+
+    public int getSelectedItemsSize() {
+        return mSelectedItems.size();
     }
 
     public void setData(@NonNull ArrayList<AudioPOJO> data) {
@@ -71,12 +89,23 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         viewHolder.mTitle.setText(mData.get(i).getName());
 
         viewHolder.mView.setOnClickListener(view -> {
-            indexSelected = i;
-            if (mListener != null) {
-                mListener.onItemSelected(view, i);
+            if (mSelectedItems.isEmpty()) {
+                indexSelected = i;
+                if (mListener != null) {
+                    mListener.onItemSelected(view, i);
+                }
+                notifyDataSetChanged();
+            } else {
+                selectedItemsAdd(mData.get(i).getUrl());
             }
-            notifyDataSetChanged();
         });
+
+
+        viewHolder.mView.setOnLongClickListener(view -> {
+            selectedItemsAdd(mData.get(i).getUrl());
+            return true;
+        });
+
 
         if (indexSelected != i) {
             TypedValue outValue = new TypedValue();
@@ -86,6 +115,20 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         } else {
             viewHolder.mView.setBackgroundColor(
                     Consts.getAttributeColor(viewHolder.mView.getContext(), R.attr.backgroundItem));
+        }
+
+        if (!mSelectedItems.isEmpty()) {
+            viewHolder.mRadioButton.setVisibility(View.VISIBLE);
+        } else {
+            viewHolder.mRadioButton.setVisibility(View.GONE);
+        }
+
+        viewHolder.mRadioButton.setOnClickListener(view -> selectedItemsAdd(mData.get(i).getUrl()));
+
+        if (mSelectedItems.contains(mData.get(i).getUrl())) {
+            viewHolder.mRadioButton.setChecked(true);
+        } else {
+            viewHolder.mRadioButton.setChecked(false);
         }
     }
 
@@ -98,18 +141,61 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         void onItemSelected(View view, int position);
     }
 
+    private void selectedItemsAdd(String s) {
+        if (mSelectedItems.contains(s)) {
+            mSelectedItems.remove(s);
+        } else {
+            mSelectedItems.add(s);
+        }
+        if (mSelectedListner != null) {
+            mSelectedListner.onItemSelected();
+        }
+        notifyDataSetChanged();
+    }
+
+    public void selectedItemsAddAll() {
+
+        if (mSelectedItems.size() == mData.size()) {
+            mSelectedItems.clear();
+        } else {
+            mSelectedItems.clear();
+            for (AudioPOJO audioPOJO : mData) {
+                mSelectedItems.add(audioPOJO.getUrl());
+            }
+        }
+        if (mSelectedListner != null) {
+            mSelectedListner.onItemSelected();
+        }
+
+        notifyDataSetChanged();
+    }
+
+    public void clearSelected() {
+        mSelectedItems.clear();
+        if (mSelectedListner != null) {
+            mSelectedListner.onItemSelected();
+        }
+        notifyDataSetChanged();
+    }
+
+    public interface OnSelectedListner {
+        void onItemSelected();
+    }
+
     class ViewHolder extends RecyclerView.ViewHolder {
 
 
         private View mView;
         private TextView mTitle;
         private TextView mTime;
+        private RadioButton mRadioButton;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             mView = itemView;
             mTitle = itemView.findViewById(R.id.title);
             mTime = itemView.findViewById(R.id.time);
+            mRadioButton = itemView.findViewById(R.id.radio);
         }
     }
 }

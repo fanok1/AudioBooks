@@ -241,5 +241,13 @@
     <string name="incorect_password">Неверный пароль</string>
     <string name="enter_new_password">Введите новый пароль</string>
     <string name="only_plus">Данная функция доступна только для обладателей Plus версии.</string>
+    <string name="all">Все</string>
+    <string name="dowland">Скачать</string>
+    <string name="of">из</string>
+    <string name="completed">Завершено</string>
+    <string name="pause">Пауза</string>
+    <string name="stop">Остановить</string>
+    <string name="loading_completed">Загрузка завершена</string>
+    <string name="error_load_file">Не удалось загрузить файл</string>
 
 </resources>

@@ -243,5 +243,13 @@
     <string name="parental_control_enabled">Включити батьківський контроль</string>
     <string name="title_activity_parental_control">Батьківський контроль</string>
     <string name="only_plus">Ця функція доступна тільки для власників Plus версії.</string>
+    <string name="all">Всі</string>
+    <string name="completed">Завершено</string>
+    <string name="dowland">Завантажити</string>
+    <string name="error_load_file">Не вдалося завантажити файл</string>
+    <string name="loading_completed">Завантаження завершено</string>
+    <string name="of">з</string>
+    <string name="pause">Пауза</string>
+    <string name="stop">Зупинити</string>
 
 </resources>

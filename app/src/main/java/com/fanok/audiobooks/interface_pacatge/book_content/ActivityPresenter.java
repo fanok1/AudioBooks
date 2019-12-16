@@ -6,6 +6,8 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
+import java.util.HashSet;
+
 public interface ActivityPresenter {
 
     void onStop();
@@ -47,6 +49,8 @@ public interface ActivityPresenter {
     void stateExpanded();
 
     void stateElse();
+
+    void dowland(HashSet<String> data);
 
 
 }

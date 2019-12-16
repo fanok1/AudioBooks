@@ -8,6 +8,17 @@
     android:padding="@dimen/text_margin_book_description"
     tools:background="@color/colorBackgraund">
 
+    <RadioButton
+        android:id="@+id/radio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="9dp"
+        android:layout_marginEnd="@dimen/text_margin_book_description"
+        android:button="@null"
+        android:drawableStart="@drawable/radio_select"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/title"
         android:layout_width="0dp"

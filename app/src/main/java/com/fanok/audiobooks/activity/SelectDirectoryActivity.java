@@ -42,6 +42,7 @@ public class SelectDirectoryActivity extends AppCompatActivity {
     @BindView(R.id.button)
     Button mButton;
 
+
     private static final int REQUEST_DIRECTORY = 165;
 
     private StorageChooser chooser;
@@ -124,12 +125,11 @@ public class SelectDirectoryActivity extends AppCompatActivity {
                     new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     REQUEST_DIRECTORY);
         } else {
-            showDirPiker(view.getContext());
+            showDirPiker();
         }
     }
 
-    private void showDirPiker(@NotNull Context context) {
-
+    private void showDirPiker() {
         chooser.setOnSelectListener(path -> mTextInputEditText.setText(path));
         chooser.show();
     }
@@ -168,7 +168,7 @@ public class SelectDirectoryActivity extends AppCompatActivity {
                         getString(R.string.worning_not_allowed_write_storege),
                         Toast.LENGTH_LONG).show();
             } else {
-                showDirPiker(this);
+                showDirPiker();
             }
         }
     }

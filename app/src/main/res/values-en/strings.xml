@@ -243,5 +243,13 @@
     <string name="parental_control_enabled">Enable Parental Control</string>
     <string name="title_activity_parental_control">Parental control</string>
     <string name="only_plus">This function is available only for owners of the Plus version.</string>
+    <string name="all">All</string>
+    <string name="completed">Completed</string>
+    <string name="dowland">Download</string>
+    <string name="error_load_file">Failed to upload file</string>
+    <string name="loading_completed">Loading is complete</string>
+    <string name="of">of</string>
+    <string name="pause">Pause</string>
+    <string name="stop">Stop</string>
 
 </resources>

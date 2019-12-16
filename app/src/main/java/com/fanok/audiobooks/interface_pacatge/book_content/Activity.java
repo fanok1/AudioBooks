@@ -59,4 +59,10 @@ public interface Activity extends MvpView {
 
     @StateStrategyType(SkipStrategy.class)
     void setIsFavorite(boolean b);
+
+    @StateStrategyType(SkipStrategy.class)
+    void downloadFile(String url, String fileName);
+
+    @StateStrategyType(SkipStrategy.class)
+    void showGetPlus();
 }

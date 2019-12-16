@@ -3,7 +3,9 @@ package com.fanok.audiobooks.activity;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_ENABLED;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_PASSWORD;
+import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_SHOW_TITLE;
 
+import android.Manifest;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,6 +13,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.content.res.Resources;
@@ -33,6 +36,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,7 +48,9 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.ShareCompat;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -64,6 +70,7 @@ import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.presenter.BookPresenter;
+import com.fanok.audiobooks.service.Download;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.tabs.TabLayout;
 import com.google.gson.GsonBuilder;
@@ -91,6 +98,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     public static final String Broadcast_SET_SELECTION = "SetSelection";
     public static final String Broadcast_SET_TITLE = "SetTitle";
     public static final String Broadcast_SHOW_GET_PLUS = "ShowGetPlus";
+    private static final int REQUEST_WRITE_STORAGE = 145;
 
     private static String showingView;
     @Nullable
@@ -101,6 +109,10 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     LinearLayout mTopButtonsControls;
     @BindView(R.id.player)
     LinearLayout mPlayer;
+    @BindView(R.id.radioAll)
+    RadioButton mRadioAll;
+    @BindView(R.id.dowland)
+    ImageButton mDowland;
 
     public static String getShowingView() {
         return showingView;
@@ -368,8 +380,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             mButtonCollapse.setVisibility(View.INVISIBLE);
         }
 
-        TextView nameCurent = findViewById(R.id.name_curent);
-
         registerReceiver(setImage, new IntentFilter(Broadcast_SET_IMAGE));
 
         registerReceiver(setProgress, new IntentFilter(Broadcast_SET_PROGRESS));
@@ -411,7 +421,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                             if (mProgressBar != null) {
                                 mProgressBar.animate().alpha(alpha).setDuration(0);
                             }
-                            nameCurent.animate().alpha(alpha).setDuration(0);
+                            mNameCurent.animate().alpha(alpha).setDuration(0);
                             if (alpha <= 0.0) {
                                 mTopButtonsControls.setVisibility(View.GONE);
                                 mProgressBar.setVisibility(View.INVISIBLE);
@@ -422,8 +432,24 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
                             if (slideOffset > Consts.COLLAPS_BUTTON_VISIBLE) {
                                 if (mButtonCollapse != null
-                                        && mButtonCollapse.getVisibility() != View.VISIBLE) {
+                                        && mButtonCollapse.getVisibility() != View.VISIBLE
+                                        && mAudioAdapter.getSelectedItemsSize() == 0) {
                                     mButtonCollapse.setVisibility(View.VISIBLE);
+                                }
+
+                                if (mRadioAll != null && mRadioAll.getVisibility() != View.VISIBLE
+                                        &&
+                                        mAudioAdapter.getSelectedItemsSize() > 0) {
+                                    mRadioAll.setVisibility(View.VISIBLE);
+
+                                    if (mButtonCollapse != null) {
+                                        mButtonCollapse.setVisibility(View.GONE);
+                                    }
+                                }
+
+                                if (mDowland != null && mDowland.getVisibility() != View.VISIBLE &&
+                                        mAudioAdapter.getSelectedItemsSize() > 0) {
+                                    mDowland.setVisibility(View.VISIBLE);
                                 }
 
                                 double alphaCollapse = (slideOffset - Consts.COLLAPS_BUTTON_VISIBLE)
@@ -433,10 +459,54 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                                             (float) alphaCollapse).setDuration(
                                             0);
                                 }
-                                nameCurent.animate().alpha((float) alphaCollapse).setDuration(0);
-                            } else if (mButtonCollapse != null
-                                    && mButtonCollapse.getVisibility() != View.INVISIBLE) {
-                                mButtonCollapse.setVisibility(View.INVISIBLE);
+
+                                if (mRadioAll != null) {
+                                    mRadioAll.animate().alpha(
+                                            (float) alphaCollapse).setDuration(
+                                            0);
+                                }
+
+                                if (mDowland != null) {
+                                    mDowland.animate().alpha(
+                                            (float) alphaCollapse).setDuration(
+                                            0);
+                                }
+
+                                if (mAudioAdapter.getSelectedItemsSize() == 0) {
+                                    if (mNameCurent.getText().toString().equals(
+                                            String.valueOf(mAudioAdapter.getSelectedItemsSize()))) {
+                                        Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
+                                        broadcastSend(broadcastIntent);
+                                    }
+                                } else {
+                                    if (!mNameCurent.getText().toString().equals(
+                                            String.valueOf(mAudioAdapter.getSelectedItemsSize()))) {
+                                        mNameCurent.setText(String.valueOf(
+                                                mAudioAdapter.getSelectedItemsSize()));
+                                    }
+                                }
+
+                                mNameCurent.animate().alpha((float) alphaCollapse).setDuration(0);
+                            } else {
+                                if (mButtonCollapse != null
+                                        && mButtonCollapse.getVisibility() != View.INVISIBLE) {
+                                    mButtonCollapse.setVisibility(View.INVISIBLE);
+                                }
+
+                                if (mRadioAll != null && mRadioAll.getVisibility() != View.GONE) {
+                                    mRadioAll.setVisibility(View.GONE);
+                                }
+
+                                if (mDowland != null && mDowland.getVisibility() != View.GONE) {
+                                    mDowland.setVisibility(View.GONE);
+                                }
+
+                                if (mNameCurent.getText().toString().equals(
+                                        String.valueOf(mAudioAdapter.getSelectedItemsSize()))) {
+                                    Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
+                                    broadcastSend(broadcastIntent);
+                                }
+
                             }
                         }
                     });
@@ -453,16 +523,78 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 }
             });
-
         }
 
 
+        mRadioAll.setOnClickListener(view -> {
+            mAudioAdapter.selectedItemsAddAll();
+            if (mAudioAdapter.getSelectedItemsSize() > 0) {
+                mRadioAll.setChecked(true);
+            } else {
+                mRadioAll.setChecked(false);
+                mRadioAll.setVisibility(View.GONE);
+                if (mButtonCollapse != null) {
+                    mButtonCollapse.setVisibility(View.VISIBLE);
+                }
+            }
+        });
 
+        mDowland.setOnClickListener(view -> {
+            boolean hasPermission = (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED);
+            if (!hasPermission) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        REQUEST_WRITE_STORAGE);
+            } else {
+                mPresenter.dowland(mAudioAdapter.getSelectedItems());
+            }
+        });
 
         mAudioAdapter = new AudioAdapter();
         mAudioAdapter.setListener((view, position) -> mPresenter.onItemSelected(view, position));
         mList.setAdapter(mAudioAdapter);
         mList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        mAudioAdapter.setSelectedListner(() -> {
+            if (mAudioAdapter.getSelectedItemsSize() == 0) {
+                if (mRadioAll != null && mRadioAll.getVisibility() != View.GONE) {
+                    mRadioAll.setVisibility(View.GONE);
+                }
+
+                if (mDowland != null && mDowland.getVisibility() != View.GONE) {
+                    mDowland.setVisibility(View.GONE);
+                }
+                if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.VISIBLE) {
+                    mButtonCollapse.setVisibility(View.VISIBLE);
+                }
+                Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
+                broadcastSend(broadcastIntent);
+            } else {
+
+                mNameCurent.setText(String.valueOf(mAudioAdapter.getSelectedItemsSize()));
+
+                if (mRadioAll != null) {
+                    if (mRadioAll.getVisibility() != View.VISIBLE) {
+                        mRadioAll.setVisibility(View.VISIBLE);
+                    }
+                    if (mAudioAdapter.getItemCount() == mAudioAdapter.getSelectedItemsSize()) {
+                        mRadioAll.setChecked(true);
+                    } else {
+                        mRadioAll.setChecked(false);
+                    }
+                }
+
+                if (mDowland != null) {
+                    if (mDowland.getVisibility() != View.VISIBLE) {
+                        mDowland.setVisibility(View.VISIBLE);
+                    }
+                }
+                if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.GONE) {
+                    mButtonCollapse.setVisibility(View.GONE);
+                }
+            }
+        });
 
 
         mSeekBar.setMax(100);
@@ -511,7 +643,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         getSystemService(AUDIO_SERVICE);
 
 
-
     }
 
     @Override
@@ -526,6 +657,17 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.INVISIBLE) {
             mButtonCollapse.setVisibility(View.INVISIBLE);
         }
+
+        if (mRadioAll != null && mRadioAll.getVisibility() != View.GONE) {
+            mRadioAll.setVisibility(View.GONE);
+        }
+
+        if (mDowland != null && mDowland.getVisibility() != View.GONE) {
+            mDowland.setVisibility(View.GONE);
+        }
+
+        Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
+        broadcastSend(broadcastIntent);
     }
 
     @Override
@@ -537,8 +679,29 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             mProgressBar.setVisibility(
                     View.INVISIBLE);
         }
-        if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.VISIBLE) {
+        if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.VISIBLE
+                && mAudioAdapter.getSelectedItemsSize() == 0) {
             mButtonCollapse.setVisibility(View.VISIBLE);
+        }
+
+        if (mRadioAll != null && mRadioAll.getVisibility() != View.VISIBLE
+                && mAudioAdapter.getSelectedItemsSize() > 0) {
+            mRadioAll.setVisibility(View.VISIBLE);
+            if (mButtonCollapse != null) {
+                mButtonCollapse.setVisibility(View.GONE);
+            }
+        }
+
+        if (mDowland != null && mDowland.getVisibility() != View.VISIBLE
+                && mAudioAdapter.getSelectedItemsSize() > 0) {
+            mDowland.setVisibility(View.VISIBLE);
+        }
+
+        if (mAudioAdapter.getSelectedItemsSize() > 0) {
+            mNameCurent.setText(String.valueOf(mAudioAdapter.getSelectedItemsSize()));
+        } else {
+            Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
+            broadcastSend(broadcastIntent);
         }
     }
 
@@ -626,7 +789,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         inflater.inflate(R.menu.book_activity_options_menu, menu);
         mAddFavorite = menu.findItem(R.id.addFavorite);
         mRemoveFavorite = menu.findItem(R.id.removeFavorite);
-        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             menu.findItem(R.id.addMainScreen).setVisible(false);
         }
         mPresenter.onCreateOptionsMenu(menu);
@@ -710,17 +873,22 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             });
 
         } else {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.getPlus);
-            builder.setMessage(R.string.only_plus);
-            builder.setPositiveButton(R.string.buy, (dialogInterface, i) -> {
-                Intent start = new Intent(BookActivity.this, PopupGetPlus.class);
-                start.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                startActivity(start);
-            });
-            builder.setNeutralButton(R.string.cancel, null);
-            builder.show();
+            showGetPlus();
         }
+    }
+
+    @Override
+    public void showGetPlus() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.getPlus);
+        builder.setMessage(R.string.only_plus);
+        builder.setPositiveButton(R.string.buy, (dialogInterface, i) -> {
+            Intent start = new Intent(BookActivity.this, PopupGetPlus.class);
+            start.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            startActivity(start);
+        });
+        builder.setNeutralButton(R.string.cancel, null);
+        builder.show();
     }
 
     @Override
@@ -732,7 +900,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     public void onBackPressed() {
         if (bottomSheetBehavior != null
                 && bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            if (mAudioAdapter.getSelectedItemsSize() > 0) {
+                mAudioAdapter.clearSelected();
+            } else {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            }
+        } else if (bottomSheetBehavior == null && mAudioAdapter.getSelectedItemsSize() > 0) {
+            mAudioAdapter.clearSelected();
         } else {
             if (mNotificationClick) {
                 Intent intent = new Intent(this, MainActivity.class);
@@ -859,7 +1033,66 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
+
+        if (bottomSheetBehavior != null) {
+            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                if (mTopButtonsControls != null
+                        && mTopButtonsControls.getVisibility() != View.GONE) {
+                    mTopButtonsControls.setVisibility(View.GONE);
+                }
+                if (mProgressBar != null && mProgressBar.getVisibility() != View.GONE) {
+                    mProgressBar.setVisibility(View.GONE);
+                }
+                if (mAudioAdapter.getSelectedItemsSize() > 0) {
+                    if (mRadioAll.getVisibility() != View.VISIBLE) {
+                        mRadioAll.setVisibility(View.VISIBLE);
+                    }
+                    if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.GONE) {
+                        mButtonCollapse.setVisibility(View.GONE);
+                    }
+                } else {
+                    if (mRadioAll.getVisibility() != View.GONE) {
+                        mRadioAll.setVisibility(View.GONE);
+                    }
+                    if (mButtonCollapse != null
+                            && mButtonCollapse.getVisibility() != View.VISIBLE) {
+                        mButtonCollapse.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+        } else {
+            if (mAudioAdapter.getSelectedItemsSize() > 0) {
+                if (mRadioAll.getVisibility() != View.VISIBLE) {
+                    mRadioAll.setVisibility(View.VISIBLE);
+                }
+            } else {
+                if (mRadioAll.getVisibility() != View.GONE) {
+                    mRadioAll.setVisibility(View.GONE);
+                }
+            }
+        }
     }
 
+    @Override
+    public void downloadFile(String url, String fileName) {
+        Intent intent = new Intent(this, Download.class);
+        intent.putExtra("url", url);
+        intent.putExtra("fileName", fileName);
+        startService(intent);
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NotNull String[] permissions,
+            @NotNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_WRITE_STORAGE) {
+            if (grantResults.length <= 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this,
+                        getString(R.string.worning_not_allowed_write_storege),
+                        Toast.LENGTH_LONG).show();
+            } else {
+                mPresenter.dowland(mAudioAdapter.getSelectedItems());
+            }
+        }
+    }
 }

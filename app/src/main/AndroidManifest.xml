@@ -129,6 +129,10 @@
             android:name=".broadcasts.OnCancelBroadcastReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".broadcasts.OnNotificationButtonClick"
+            android:exported="false" />
+
         <service
             android:name=".service.MediaPlayerService"
             android:exported="true"
@@ -138,6 +142,11 @@
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".service.Download"
+            android:enabled="true"
+            android:permission="audioBookDownload" />
     </application>
 
 </manifest>

@@ -42,6 +42,18 @@
                 android:contentDescription="@string/collapse"
                 android:src="@drawable/ic_arrow_down_drop_circle_outline" />
 
+
+            <RadioButton
+                android:id="@+id/radioAll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@null"
+                android:drawableStart="@drawable/radio_select"
+                android:drawablePadding="@dimen/text_margin_book_description"
+                android:text="@string/all"
+                android:textColor="?attr/colorPrimaryText"
+                android:visibility="gone" />
+
             <TextView
                 android:id="@+id/name_curent"
                 android:layout_width="0dp"
@@ -52,6 +64,15 @@
                 android:singleLine="true"
                 android:textColor="?attr/colorPrimaryText"
                 tools:text="0001" />
+
+            <ImageButton
+                android:id="@+id/dowland"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?selectableItemBackgroundBorderless"
+                android:contentDescription="@string/dowland"
+                android:src="@drawable/ic_download"
+                android:visibility="gone" />
 
             <LinearLayout
                 android:id="@+id/topButtonsControls"

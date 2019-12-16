@@ -74,7 +74,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     //AudioPlayer notification ID
     private static final int NOTIFICATION_ID = 101;
     private static final String CHANNEL_ID = "124";
-    private static final String CHANNEL_NAME = "Notification";
+    private static final String CHANNEL_NAME = "Player";
     private static boolean isPlay = false;
 
     private static final int countAudioWereShowingActivity = 25;
@@ -396,7 +396,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     /**
-     * MediaPlayer callback methods
+     * MediaPlayer @+id/ methods
      */
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
@@ -744,7 +744,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         //set MediaSession -> ready to receive media commands
         mediaSession.setActive(true);
         //indicate that the MediaSession handles transport control commands
-        // through its MediaSessionCompat.Callback.
+        // through its MediaSessionCompat.@+id/.
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
                 | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
@@ -879,6 +879,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 .setContentText("")
                 .setContentTitle(activeAudio.getName())
                 .setContentInfo("")
+                .setGroup("GroupPlayer")
                 .addAction(R.drawable.ic_notification_previous, "previous", playbackAction(3))
                 .addAction(notificationAction, "pause", play_pauseAction)
                 .addAction(R.drawable.ic_notification_next, "next", playbackAction(2))
