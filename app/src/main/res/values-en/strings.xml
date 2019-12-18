@@ -251,5 +251,13 @@
     <string name="of">of</string>
     <string name="pause">Pause</string>
     <string name="stop">Stop</string>
+    <string name="bad">Poorly</string>
+    <string name="excellent">Excellent</string>
+    <string name="later">Later</string>
+    <string name="normal">Fine</string>
+    <string name="rating_title">Do you like the app?</string>
+    <string name="ration_desc">Please rate the app</string>
+    <string name="submit">Submit</string>
+    <string name="vary_bad">Very bad</string>
 
 </resources>

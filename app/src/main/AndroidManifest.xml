@@ -74,10 +74,9 @@
             android:name=".activity.MainActivity"
             android:configChanges="locale|uiMode"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.Launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
@@ -128,7 +127,6 @@
         <receiver
             android:name=".broadcasts.OnCancelBroadcastReceiver"
             android:exported="false" />
-
         <receiver
             android:name=".broadcasts.OnNotificationButtonClick"
             android:exported="false" />
@@ -142,7 +140,6 @@
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
-
         <service
             android:name=".service.Download"
             android:enabled="true"

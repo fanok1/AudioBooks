@@ -106,4 +106,28 @@ public class StorageUtil {
         return preferences.getInt("countAudioListnered", 0);
     }
 
+    public void storeCountAudioListneredForRating(int count) {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt("countAudioListneredForRating", count);
+        editor.apply();
+    }
+
+    public int loadCountAudioListneredForRating() {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        return preferences.getInt("countAudioListneredForRating", 0);
+    }
+
+    public void storeShowRating(boolean b) {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("showRating", b);
+        editor.apply();
+    }
+
+    public boolean loadShowRating() {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        return preferences.getBoolean("showRating", true);
+    }
+
 }

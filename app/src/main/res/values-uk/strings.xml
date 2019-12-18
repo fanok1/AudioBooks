@@ -251,5 +251,13 @@
     <string name="of">з</string>
     <string name="pause">Пауза</string>
     <string name="stop">Зупинити</string>
+    <string name="bad">Погано</string>
+    <string name="excellent">Відмінно</string>
+    <string name="later">Пізніше</string>
+    <string name="normal">Нормально</string>
+    <string name="rating_title">Вам подобатися додаток?</string>
+    <string name="ration_desc">Будь ласка, оцініть додаток</string>
+    <string name="submit">Відправити</string>
+    <string name="vary_bad">Дуже погано</string>
 
 </resources>

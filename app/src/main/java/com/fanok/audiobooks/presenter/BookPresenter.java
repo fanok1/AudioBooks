@@ -162,7 +162,6 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         if (mContext != null) {
             Intent broadcastIntent = new Intent(Broadcast_CloseNotPrepered);
             mContext.sendBroadcast(broadcastIntent);
-            //mContext = null;
         }
         super.onDestroy();
     }
@@ -455,6 +454,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             }
         }
     }
+
 
     private void setSpeed(float value) {
         speed = value;

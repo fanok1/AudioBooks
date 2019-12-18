@@ -23,9 +23,6 @@ public class Consts {
     public static final Pattern REGEXP_URL_MP3 = Pattern.compile(
             "^https?://.+\\.mp3.*$");
 
-    public static final Pattern REGEXP_SIKRET_KEY = Pattern.compile(
-            "\"security_ls_key\":\"(\\w+)\"");
-
     public static final Pattern REGEXP_EMAIL = Pattern.compile(
             "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 
@@ -56,12 +53,9 @@ public class Consts {
 
     public static final int IMPORT_SITE_KNIGA_V_UHE = 0;
 
-    public static final String APP_PREFERENCES = "audiobooks_settings";
-    public static final String APP_FRAGMENT = "start_fragment";
-
     public static final String mSkuId = "android.test.purchased";
+//plus_version | android.test.purchased
 
-    public static final String MY_EMAIL = "fanok.inc@gmail.com";
 
 
     public static int getAttributeColor(Context context, int attributeId) {

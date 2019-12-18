@@ -5,6 +5,7 @@ import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_PROGRESS;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_SELECTION;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_TITLE;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SHOW_GET_PLUS;
+import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SHOW_RATING;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -37,6 +38,7 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
+import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.PlaybackStatus;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.BookActivity;
@@ -52,6 +54,7 @@ import com.squareup.picasso.Target;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Objects;
 
 public class MediaPlayerService extends Service implements MediaPlayer.OnCompletionListener,
@@ -77,7 +80,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private static final String CHANNEL_NAME = "Player";
     private static boolean isPlay = false;
 
+    private static final int countAudioWereShowingRatingPopUp = 50;
+
     private static final int countAudioWereShowingActivity = 25;
+    private long timeStarting;
+
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
     private final Handler handler = new Handler();
@@ -106,6 +113,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private Bitmap image = null;
     private int timeStart = 0;
     private StorageUtil storage;
+
+    public static int getNotificationId() {
+        return NOTIFICATION_ID;
+    }
 
 
     /**
@@ -286,6 +297,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         register_setSpeed();
         register_closeIfNotPrepered();
         register_closeIfPause();
+        timeStarting = new Date().getTime();
     }
 
     //The system calls this method when an activity, requests the service be started
@@ -449,6 +461,14 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         timeDuration = mp.getDuration();
         playMedia();
 
+        if (BookPresenter.start && !StorageAds.idDisableAds()) {
+            long carentTime = new Date().getTime();
+            if ((carentTime - timeStarting) / 60000 >= 30) {
+                timeStarting = carentTime;
+                MyInterstitialAd.showRequire();
+            }
+        }
+
         if (!BookPresenter.start) {
             if (timeStart != 0) seekTo(timeStart * 1000);
             pauseMedia();
@@ -457,6 +477,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             if (timeStart != 0) seekTo(timeStart * 1000);
             BookPresenter.resume = false;
         }
+
     }
 
     @Override
@@ -582,6 +603,18 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 storage.storeCountAudioListnered(countAudioListnered);
             }
         }
+
+        if (storage.loadShowRating()) {
+            int countAudioListnered = storage.loadCountAudioListneredForRating() + 1;
+            if (countAudioListnered >= countAudioWereShowingRatingPopUp) {
+                storage.storeCountAudioListneredForRating(0);
+                Intent broadcastIntent = new Intent(Broadcast_SHOW_RATING);
+                sendBroadcast(broadcastIntent);
+            } else {
+                storage.storeCountAudioListneredForRating(countAudioListnered);
+            }
+        }
+
         Log.d(TAG, "initMediaPlayer: calld");
     }
 

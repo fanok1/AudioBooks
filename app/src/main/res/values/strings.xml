@@ -249,5 +249,13 @@
     <string name="stop">Остановить</string>
     <string name="loading_completed">Загрузка завершена</string>
     <string name="error_load_file">Не удалось загрузить файл</string>
+    <string name="submit">Отправить</string>
+    <string name="later">Позже</string>
+    <string name="rating_title">Вам нравиться приложение?</string>
+    <string name="ration_desc">Пожалуйста, оцените приложение</string>
+    <string name="vary_bad">Очень плохо</string>
+    <string name="bad">Плохо</string>
+    <string name="normal">Нормально</string>
+    <string name="excellent">Отлично</string>
 
 </resources>

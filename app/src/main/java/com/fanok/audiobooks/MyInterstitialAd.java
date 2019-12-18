@@ -39,6 +39,13 @@ public class MyInterstitialAd {
         }
     }
 
+    public static void showRequire() {
+        if (!StorageAds.idDisableAds() && mInterstitialAd != null
+                && mInterstitialAd.isLoaded()) {
+            mInterstitialAd.show();
+        }
+    }
+
     public static void increase() {
         adsCount++;
     }

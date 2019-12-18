@@ -1,5 +1,8 @@
 package com.fanok.audiobooks.activity;
 
+import static com.fanok.audiobooks.service.MediaPlayerService.getNotificationId;
+
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -382,10 +385,15 @@ public class MainActivity extends MvpAppCompatActivity
 
     @Override
     protected void onDestroy() {
+        sendBroadcast(new Intent(MediaPlayerService.Broadcast_CloseIfPause));
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (notificationManager != null) {
+            notificationManager.cancel(getNotificationId());
+        }
         super.onDestroy();
         unregisterReceiver(disebledAds);
         mPresenter.onDestroy();
-        sendBroadcast(new Intent(MediaPlayerService.Broadcast_CloseIfPause));
         closeApp = true;
     }
 

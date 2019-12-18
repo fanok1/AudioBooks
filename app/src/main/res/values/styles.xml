@@ -58,6 +58,17 @@
         </item>
     </style>
 
+
+    <style name="MyDialogFadeAnimation">
+        <item name="android:windowEnterAnimation">@anim/enter</item>
+        <item name="android:windowExitAnimation">@anim/exit</item>
+    </style>
+
+
+    <style name="AppTheme.Launcher">
+        <item name="android:windowBackground">@drawable/launch_screen</item>
+    </style>
+
     <!-- LIGHT application theme. -->
 
 

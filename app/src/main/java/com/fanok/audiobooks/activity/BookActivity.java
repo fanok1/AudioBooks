@@ -20,6 +20,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
@@ -69,6 +70,7 @@ import com.fanok.audiobooks.interface_pacatge.book_content.Activity;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageAds;
+import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.fanok.audiobooks.service.Download;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -76,11 +78,14 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.gson.GsonBuilder;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
+import com.stepstone.apprating.AppRatingDialog;
+import com.stepstone.apprating.listener.RatingDialogListener;
 
 import org.jetbrains.annotations.NotNull;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
@@ -88,7 +93,7 @@ import java.util.Objects;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class BookActivity extends MvpAppCompatActivity implements Activity {
+public class BookActivity extends MvpAppCompatActivity implements Activity, RatingDialogListener {
 
     private static final String TAG = "BookActivity";
 
@@ -98,6 +103,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     public static final String Broadcast_SET_SELECTION = "SetSelection";
     public static final String Broadcast_SET_TITLE = "SetTitle";
     public static final String Broadcast_SHOW_GET_PLUS = "ShowGetPlus";
+    public static final String Broadcast_SHOW_RATING = "ShowRating";
     private static final int REQUEST_WRITE_STORAGE = 145;
 
     private static String showingView;
@@ -180,6 +186,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             Intent start = new Intent(context, PopupGetPlus.class);
             start.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
             startActivity(start);
+        }
+    };
+
+    private BroadcastReceiver showRating = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            showRatingDialog();
         }
     };
 
@@ -388,7 +401,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
         registerReceiver(setTitleBroadcast, new IntentFilter(Broadcast_SET_TITLE));
         registerReceiver(showGetPlus, new IntentFilter(Broadcast_SHOW_GET_PLUS));
-
+        registerReceiver(showRating, new IntentFilter(Broadcast_SHOW_RATING));
         int isTablet = getResources().getInteger(R.integer.isTablet);
         if (isTablet == 0) {
             bottomSheetBehavior = BottomSheetBehavior.from(mPlayer);
@@ -778,6 +791,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         unregisterReceiver(setSelectionBroadcast);
         unregisterReceiver(setTitleBroadcast);
         unregisterReceiver(showGetPlus);
+        unregisterReceiver(showRating);
         showingView = "";
         mPresenter.onDestroy();
         super.onDestroy();
@@ -889,6 +903,25 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         });
         builder.setNeutralButton(R.string.cancel, null);
         builder.show();
+    }
+
+    @Override
+    public void showRatingDialog() {
+        new AppRatingDialog.Builder()
+                .setPositiveButtonText(R.string.submit)
+                .setNegativeButtonText(R.string.cancel)
+                .setNeutralButtonText(R.string.later)
+                .setNoteDescriptions(
+                        Arrays.asList(getResources().getStringArray(R.array.ratingStarName)))
+                .setDefaultRating(5)
+                .setTitle(R.string.rating_title)
+                .setDescription(R.string.ration_desc)
+                .setCommentInputEnabled(false)
+                .setWindowAnimation(R.style.MyDialogFadeAnimation)
+                .setCancelable(false)
+                .setCanceledOnTouchOutside(false)
+                .create(this)
+                .show();
     }
 
     @Override
@@ -1093,6 +1126,29 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             } else {
                 mPresenter.dowland(mAudioAdapter.getSelectedItems());
             }
+        }
+    }
+
+    @Override
+    public void onNegativeButtonClicked() {
+        new StorageUtil(this).storeShowRating(false);
+    }
+
+    @Override
+    public void onNeutralButtonClicked() {
+
+    }
+
+    @Override
+    public void onPositiveButtonClicked(int i, @NotNull String s) {
+        new StorageUtil(this).storeShowRating(false);
+        String packageName = getPackageName();
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("market://details?id=" + packageName)));
+        } catch (android.content.ActivityNotFoundException anfe) {
+            startActivity(new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://play.google.com/store/apps/details?id=" + packageName)));
         }
     }
 }

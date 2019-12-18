@@ -30,7 +30,7 @@ public class Billing {
     private static BillingClient mBillingClient;
     private static Map<String, SkuDetails> mSkuDetailsMap = new HashMap<>();
 
-    public static void initBilding(Context context) {
+    static void initBilding(Context context) {
         mBillingClient = BillingClient.newBuilder(context).enablePendingPurchases().setListener(
                 (billingResult, purchases) -> {
                     if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
