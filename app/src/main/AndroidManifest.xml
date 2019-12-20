@@ -79,16 +79,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="m.knigavuhe.org"
-                    android:scheme="https" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".activity.SearchableActivity"
@@ -112,7 +102,18 @@
             android:configChanges="locale|uiMode"
             android:noHistory="true"
             android:screenOrientation="locked"
-            android:theme="@style/AppTheme.NoAnimTheme" />
+            android:theme="@style/AppTheme.NoAnimTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="m.knigavuhe.org"
+                    android:scheme="https" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".activity.PopupGetPlus"
             android:configChanges="locale|uiMode"

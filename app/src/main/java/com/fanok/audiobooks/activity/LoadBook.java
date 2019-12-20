@@ -49,6 +49,15 @@ public class LoadBook extends AppCompatActivity {
         mContext = this;
         Intent intent = getIntent();
         mUrl = intent.getStringExtra("url");
+        if (mUrl == null && intent.getData() != null) {
+            mUrl = intent.getData().toString();
+            if (!mUrl.contains("/book/")) {
+                startActivity(new Intent(this, MainActivity.class));
+                finish();
+            } else {
+                mUrl = mUrl.replace("https://m.", "https://");
+            }
+        }
         mNotificationClick = intent.getBooleanExtra("notificationClick", false);
         String text = BookActivity.getShowingView();
         if (mUrl == null || mUrl.equals(text)) finish();
