@@ -4,6 +4,7 @@ import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CON
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_PASSWORD;
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_SHOW_TITLE;
+import static com.google.android.gms.ads.AdRequest.ERROR_CODE_NETWORK_ERROR;
 
 import android.Manifest;
 import android.app.PendingIntent;
@@ -73,6 +74,11 @@ import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.fanok.audiobooks.service.Download;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.rewarded.RewardItem;
+import com.google.android.gms.ads.rewarded.RewardedAd;
+import com.google.android.gms.ads.rewarded.RewardedAdCallback;
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.tabs.TabLayout;
 import com.google.gson.GsonBuilder;
@@ -166,6 +172,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     private SectionsPagerAdapter sectionsPagerAdapter;
     private BookPOJO mBookPOJO;
     private BottomSheetBehavior bottomSheetBehavior;
+    private RewardedAd rewardedAd;
+    private boolean showedAd = false;
 
     private MenuItem mAddFavorite;
     private MenuItem mRemoveFavorite;
@@ -359,6 +367,10 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         ButterKnife.bind(this);
 
         MainActivity.setCloseApp(false);
+
+        if (!StorageAds.idDisableAds()) {
+            rewardedAd = createAndLoadRewardedAd();
+        }
 
         mNotificationClick = intent.getBooleanExtra("notificationClick", false);
 
@@ -658,6 +670,26 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
     }
 
+    private RewardedAd createAndLoadRewardedAd() {
+        RewardedAd rewardedAd = new RewardedAd(this,
+                getString(R.string.rewardedID));
+        RewardedAdLoadCallback adLoadCallback = new RewardedAdLoadCallback() {
+            @Override
+            public void onRewardedAdLoaded() {
+            }
+
+            @Override
+            public void onRewardedAdFailedToLoad(int errorCode) {
+                if (errorCode == ERROR_CODE_NETWORK_ERROR) {
+                    Toast.makeText(BookActivity.this, R.string.error_load_data,
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        };
+        rewardedAd.loadAd(new AdRequest.Builder().build(), adLoadCallback);
+        return rewardedAd;
+    }
+
     @Override
     public void stateCollapsed() {
         if (mTopButtonsControls != null && mTopButtonsControls.getVisibility() != View.GONE) {
@@ -903,6 +935,43 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         });
         builder.setNeutralButton(R.string.cancel, null);
         builder.show();
+    }
+
+    @Override
+    public void showShowAdsBeforeDownload() {
+        if (showedAd) {
+            mPresenter.loadBooks(mAudioAdapter.getSelectedItems());
+        } else if (rewardedAd != null && rewardedAd.isLoaded() && !StorageAds.idDisableAds()) {
+            RewardedAdCallback adCallback = new RewardedAdCallback() {
+                @Override
+                public void onRewardedAdOpened() {
+                    // Ad opened.
+                }
+
+                @Override
+                public void onRewardedAdClosed() {
+                    rewardedAd = createAndLoadRewardedAd();
+                }
+
+                @Override
+                public void onUserEarnedReward(@NonNull RewardItem reward) {
+                    showedAd = true;
+                    mPresenter.loadBooks(mAudioAdapter.getSelectedItems());
+                }
+
+                @Override
+                public void onRewardedAdFailedToShow(int errorCode) {
+                    if (errorCode == ERROR_CODE_AD_REUSED) {
+                        mPresenter.loadBooks(mAudioAdapter.getSelectedItems());
+                    }
+                }
+            };
+            rewardedAd.show(this, adCallback);
+        } else {
+            Log.d(TAG, "The rewarded ad wasn't loaded yet.");
+            Toast.makeText(this, R.string.rewardedad_not_loaded, Toast.LENGTH_SHORT).show();
+        }
+
     }
 
     @Override

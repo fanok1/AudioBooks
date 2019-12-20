@@ -259,5 +259,7 @@
     <string name="ration_desc">Please rate the app</string>
     <string name="submit">Submit</string>
     <string name="vary_bad">Very bad</string>
+    <string name="rewardedad_not_loaded">Ads not yet uploaded</string>
+    <string name="tech_support_plus">Improved technical support</string>
 
 </resources>

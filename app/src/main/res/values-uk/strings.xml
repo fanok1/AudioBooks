@@ -259,5 +259,7 @@
     <string name="ration_desc">Будь ласка, оцініть додаток</string>
     <string name="submit">Відправити</string>
     <string name="vary_bad">Дуже погано</string>
+    <string name="rewardedad_not_loaded">Реклама ще не завантажена</string>
+    <string name="tech_support_plus">Покращена техпідтримка</string>
 
 </resources>

@@ -68,4 +68,7 @@ public interface Activity extends MvpView {
 
     @StateStrategyType(SkipStrategy.class)
     void showRatingDialog();
+
+    @StateStrategyType(SkipStrategy.class)
+    void showShowAdsBeforeDownload();
 }

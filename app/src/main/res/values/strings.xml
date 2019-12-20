@@ -167,9 +167,14 @@
         ca-app-pub-3595775191373219/9647426557 release
         ca-app-pub-3940256099942544/1033173712 debug
 
+        rewarded
+        ca-app-pub-3595775191373219/9946826337 release
+        ca-app-pub-3940256099942544/5224354917 debug
+
      -->
     <string name="bunerID" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
     <string name="interstitiaID" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
+    <string name="rewardedID" translatable="false">ca-app-pub-3940256099942544/5224354917</string>
     <string name="setIgnoredBatteryOptimyze">Для корректной работы приложения необходимо добавить приложение в список игнорирования экономии зараяда батареи (Battery optimizetion).</string>
 
 
@@ -257,5 +262,7 @@
     <string name="bad">Плохо</string>
     <string name="normal">Нормально</string>
     <string name="excellent">Отлично</string>
+    <string name="tech_support_plus">Улучшенная техподдержка</string>
+    <string name="rewardedad_not_loaded">Реклама еще не загружена</string>
 
 </resources>

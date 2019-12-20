@@ -98,6 +98,18 @@ public class Download extends Service {
 
     private void start() {
         if (!mList.isEmpty()) {
+            NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && notificationManager != null) {
+                NotificationChannel channel = new NotificationChannel(chanalId, chanalName,
+                        NotificationManager.IMPORTANCE_LOW);
+                channel.enableVibration(true);
+                channel.setLightColor(Color.BLUE);
+                channel.enableLights(true);
+                channel.setShowBadge(true);
+                notificationManager.createNotificationChannel(channel);
+            }
             NotificationCompat.Builder builder =
                     new NotificationCompat.Builder(getApplicationContext(), chanalId)
                             .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -171,6 +183,8 @@ public class Download extends Service {
     }
 
     private void showNotification(int postion, int progress) {
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(getApplicationContext(), chanalId)
@@ -200,19 +214,7 @@ public class Download extends Service {
         }
 
         Notification notification = builder.build();
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (notificationManager != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // I would suggest that you use IMPORTANCE_DEFAULT instead of IMPORTANCE_HIGH
-                NotificationChannel channel = new NotificationChannel(chanalId, chanalName,
-                        NotificationManager.IMPORTANCE_LOW);
-                channel.enableVibration(true);
-                channel.setLightColor(Color.BLUE);
-                channel.enableLights(true);
-                channel.setShowBadge(true);
-                notificationManager.createNotificationChannel(channel);
-            }
             notificationManager.notify(notificationId, notification);
         }
     }

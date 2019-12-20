@@ -447,11 +447,15 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     @Override
     public void dowland(HashSet<String> data) {
         if (!StorageAds.idDisableAds()) {
-            getViewState().showGetPlus();
+            getViewState().showShowAdsBeforeDownload();
         } else {
-            for (String url : data) {
-                getViewState().downloadFile(url, mBookPOJO.getName());
-            }
+            loadBooks(data);
+        }
+    }
+
+    public void loadBooks(HashSet<String> data) {
+        for (String url : data) {
+            getViewState().downloadFile(url, mBookPOJO.getName());
         }
     }
 
