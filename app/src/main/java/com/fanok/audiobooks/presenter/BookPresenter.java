@@ -1,10 +1,8 @@
 package com.fanok.audiobooks.presenter;
 
-import static android.content.Context.ACTIVITY_SERVICE;
-
+import static com.fanok.audiobooks.Consts.isServiceRunning;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_PLAY_NEW_AUDIO;
 
-import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -216,7 +214,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private void playAudio(int audioIndex, int timeStart) {
         StorageUtil storage = new StorageUtil(mContext.getApplicationContext());
         storage.storeAudioIndex(audioIndex);
-        if (!serviceBound || !isServiceRunning(MediaPlayerService.class)) {
+        if (!serviceBound || !isServiceRunning(mContext, MediaPlayerService.class)) {
             Crashlytics.setBool("playAudio", true);
             storage.storeAudio(mAudioPOJO);
             storage.storeUrlBook(mBookPOJO.getUrl());
@@ -292,7 +290,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void buttomPlayClick(View view) {
-        if (!isServiceRunning(MediaPlayerService.class) && mAudioPOJO != null
+        if (!isServiceRunning(mContext, MediaPlayerService.class) && mAudioPOJO != null
                 && mAudioPOJO.size() != 0 &&
                 curentTrack >= 0 && mAudioPOJO.size() > curentTrack) {
             serviceBound = false;
@@ -314,7 +312,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void buttomPreviousClick(View view) {
-        if (mAudioPOJO.size() > 0) {
+        if (mAudioPOJO != null && mAudioPOJO.size() > 0) {
             curentTrack--;
             Intent broadcastIntent = new Intent(Broadcast_PLAY_PREVIOUS);
             getViewState().broadcastSend(broadcastIntent);
@@ -323,7 +321,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void buttomNextClick(View view) {
-        if (mAudioPOJO.size() - 2 > curentTrack) {
+        if (mAudioPOJO != null && mAudioPOJO.size() - 2 > curentTrack) {
             curentTrack++;
             Intent broadcastIntent = new Intent(Broadcast_PLAY_NEXT);
             getViewState().broadcastSend(broadcastIntent);
@@ -463,18 +461,5 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private void setSpeed(float value) {
         speed = value;
         getViewState().broadcastSend(new Intent(Broadcast_SET_SPEED));
-    }
-
-    private boolean isServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
-        if (manager != null) {
-            for (ActivityManager.RunningServiceInfo serviceInfo : manager.getRunningServices(
-                    Integer.MAX_VALUE)) {
-                if (serviceClass.getName().equals(serviceInfo.service.getClassName())) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 }

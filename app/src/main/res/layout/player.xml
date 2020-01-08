@@ -18,7 +18,7 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/player_row_height"
         android:orientation="vertical"
-        tools:showIn="@layout/player">
+        tools:showIn="@layout/player_television">
 
 
         <ProgressBar

@@ -1,8 +1,10 @@
 package com.fanok.audiobooks.activity;
 
+import static com.fanok.audiobooks.Consts.handleUserInput;
 import static com.fanok.audiobooks.service.MediaPlayerService.getNotificationId;
 
 import android.app.NotificationManager;
+import android.app.UiModeManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +17,7 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -38,6 +41,7 @@ import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.pojo.StorageAds;
+import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.MainPresenter;
 import com.fanok.audiobooks.service.MediaPlayerService;
 import com.google.android.gms.ads.AdRequest;
@@ -148,7 +152,13 @@ public class MainActivity extends MvpAppCompatActivity
                     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
                     if (pm != null) {
                         if (!pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks")) {
-                            alert.show();
+                            UiModeManager uiModeManager = (UiModeManager) getSystemService(
+                                    UI_MODE_SERVICE);
+                            boolean b = new StorageUtil(this).loadBattaryOptimizeDisenbled();
+                            if (uiModeManager != null && uiModeManager.getCurrentModeType()
+                                    != Configuration.UI_MODE_TYPE_TELEVISION && !b) {
+                                alert.show();
+                            }
                         }
                     }
                 }
@@ -211,10 +221,25 @@ public class MainActivity extends MvpAppCompatActivity
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
+        if (drawer != null && drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
             if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                if (drawer == null) {
+                    LinearLayout linearLayout = findViewById(R.id.liner_nav_view);
+                    if (linearLayout != null) {
+                        final TypedValue outValue = new TypedValue();
+                        getTheme().resolveAttribute(android.R.attr.selectableItemBackground,
+                                outValue,
+                                true);
+                        for (int i = 0; i < linearLayout.getChildCount(); i++) {
+                            View view = linearLayout.getChildAt(i);
+                            if (view instanceof TextView) {
+                                view.setBackgroundResource(outValue.resourceId);
+                            }
+                        }
+                    }
+                }
                 if (fragmentsTag.size() > 0) fragmentsTag.remove(fragmentsTag.size() - 1);
                 getSupportFragmentManager().popBackStack();
                 while (true) {
@@ -238,7 +263,13 @@ public class MainActivity extends MvpAppCompatActivity
         super.onCreate(savedInstanceState);
         closeApp = false;
         Log.d(TAG, "onCreate: called");
-        setContentView(R.layout.activity_main);
+        UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+        if (uiModeManager != null
+                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            setContentView(R.layout.activity_main_television);
+        } else {
+            setContentView(R.layout.activity_main);
+        }
         ButterKnife.bind(this);
 
         SharedPreferences pref = PreferenceManager
@@ -347,6 +378,11 @@ public class MainActivity extends MvpAppCompatActivity
 
     }
 
+    @Override
+    public void setBattaryOptimizeDisenbled(boolean b) {
+        new StorageUtil(this).storeBattaryOptimizeDisenbled(b);
+    }
+
     private void addFragmentTag(@NonNull String tag) {
         for (int i = 0; i < fragmentsTag.size(); i++) {
             if (fragmentsTag.get(i).getTag().equals(tag)) fragmentsTag.get(i).setSkip(true);
@@ -400,5 +436,15 @@ public class MainActivity extends MvpAppCompatActivity
     private void register_disebledAds() {
         IntentFilter filter = new IntentFilter(Broadcast_DISABLE_ADS);
         registerReceiver(disebledAds, filter);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            if (handleUserInput(getApplicationContext(), event.getKeyCode())) {
+                return true;
+            }
+        }
+        return super.dispatchKeyEvent(event);
     }
 }

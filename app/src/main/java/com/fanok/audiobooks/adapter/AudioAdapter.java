@@ -1,7 +1,15 @@
 package com.fanok.audiobooks.adapter;
 
+import static android.content.Context.UI_MODE_SERVICE;
+import static android.view.KeyEvent.KEYCODE_DPAD_CENTER;
+import static android.view.KeyEvent.KEYCODE_ENTER;
+import static android.view.KeyEvent.KEYCODE_NUMPAD_ENTER;
+
+import android.app.UiModeManager;
+import android.content.res.Configuration;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,9 +76,21 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         Log.d(TAG, "onCreateViewHolder: called");
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                R.layout.audio_recycler_item,
-                viewGroup, false);
+
+        View view;
+        UiModeManager uiModeManager = (UiModeManager) viewGroup.getContext().getSystemService(
+                UI_MODE_SERVICE);
+        if (uiModeManager != null
+                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                    R.layout.audio_recycler_item_television,
+                    viewGroup, false);
+        } else {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                    R.layout.audio_recycler_item,
+                    viewGroup, false);
+        }
+
         return new ViewHolder(view);
     }
 
@@ -88,17 +108,20 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         viewHolder.mTime.setText(timeString);
         viewHolder.mTitle.setText(mData.get(i).getName());
 
-        viewHolder.mView.setOnClickListener(view -> {
-            if (mSelectedItems.isEmpty()) {
-                indexSelected = i;
-                if (mListener != null) {
-                    mListener.onItemSelected(view, i);
+        viewHolder.mView.setOnClickListener(view -> click(view, i));
+
+
+        viewHolder.mView.setOnKeyListener((view, i1, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (event.getKeyCode() == KEYCODE_DPAD_CENTER || event.getKeyCode() == KEYCODE_ENTER
+                        || event.getKeyCode() == KEYCODE_NUMPAD_ENTER) {
+                    click(viewHolder.mView, i);
+                    return true;
                 }
-                notifyDataSetChanged();
-            } else {
-                selectedItemsAdd(mData.get(i).getUrl());
             }
+            return false;
         });
+
 
 
         viewHolder.mView.setOnLongClickListener(view -> {
@@ -129,6 +152,18 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
             viewHolder.mRadioButton.setChecked(true);
         } else {
             viewHolder.mRadioButton.setChecked(false);
+        }
+    }
+
+    private void click(View view, int pos) {
+        if (mSelectedItems.isEmpty()) {
+            indexSelected = pos;
+            if (mListener != null) {
+                mListener.onItemSelected(view, pos);
+            }
+            notifyDataSetChanged();
+        } else {
+            selectedItemsAdd(mData.get(pos).getUrl());
         }
     }
 

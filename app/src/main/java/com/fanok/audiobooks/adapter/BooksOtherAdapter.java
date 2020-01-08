@@ -1,8 +1,16 @@
 package com.fanok.audiobooks.adapter;
 
+import static android.content.Context.UI_MODE_SERVICE;
+import static android.view.KeyEvent.KEYCODE_DPAD_CENTER;
+import static android.view.KeyEvent.KEYCODE_ENTER;
+import static android.view.KeyEvent.KEYCODE_NUMPAD_ENTER;
+
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,8 +48,19 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         Log.d(TAG, "onCreateViewHolder: called");
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.slider_item,
-                viewGroup, false);
+
+        View view;
+        UiModeManager uiModeManager = (UiModeManager) viewGroup.getContext().getSystemService(
+                UI_MODE_SERVICE);
+        if (uiModeManager != null
+                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                    R.layout.slider_item_television,
+                    viewGroup, false);
+        } else {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.slider_item,
+                    viewGroup, false);
+        }
         return new ViewHolder(view);
     }
 
@@ -53,6 +72,26 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
         viewHolder.mImageView.setOnClickListener(
                 view -> myOnClick(viewHolder.getAdapterPosition()));
         viewHolder.mTitle.setOnClickListener(view -> myOnClick(viewHolder.getAdapterPosition()));
+        viewHolder.mTitle.setOnKeyListener((view, i12, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (event.getKeyCode() == KEYCODE_DPAD_CENTER || event.getKeyCode() == KEYCODE_ENTER
+                        || event.getKeyCode() == KEYCODE_NUMPAD_ENTER) {
+                    myOnClick(viewHolder.getAdapterPosition());
+                    return true;
+                }
+            }
+            return false;
+        });
+        viewHolder.mImageView.setOnKeyListener((view, i1, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (event.getKeyCode() == KEYCODE_DPAD_CENTER || event.getKeyCode() == KEYCODE_ENTER
+                        || event.getKeyCode() == KEYCODE_NUMPAD_ENTER) {
+                    myOnClick(viewHolder.getAdapterPosition());
+                    return true;
+                }
+            }
+            return false;
+        });
 
         /*//translation
         String lang = Locale.getDefault().toLanguageTag();

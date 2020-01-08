@@ -2,6 +2,7 @@ package com.fanok.audiobooks.presenter;
 
 import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS;
 
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
@@ -147,7 +148,12 @@ public class MainPresenter extends MvpPresenter<MainView> implements
     @Override
     public void openSettingsOptimizeBattery(@NonNull DialogInterface dialogInterface) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            getViewState().openActivity(new Intent(ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+            try {
+                getViewState().openActivity(
+                        new Intent(ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+            } catch (ActivityNotFoundException e) {
+                getViewState().setBattaryOptimizeDisenbled(true);
+            }
         }
     }
 

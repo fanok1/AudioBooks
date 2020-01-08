@@ -10,7 +10,8 @@
         android:id="@+id/contentConteiner"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?android:selectableItemBackground"
+        android:background="@drawable/focusable"
+        android:focusable="true"
         android:orientation="horizontal">
 
         <ImageView
@@ -68,12 +69,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/recycler_item_textmargin"
+                        android:drawableStart="@drawable/ic_rating_2"
                         android:gravity="center_vertical"
                         android:maxLines="1"
                         android:singleLine="true"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/subTextSize"
-                        android:drawableStart="@drawable/ic_rating_2"
                         tools:text="+7" />
 
                     <TextView
@@ -81,12 +82,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/recycler_item_textmargin"
+                        android:drawableStart="@drawable/ic_coments"
                         android:gravity="center_vertical"
                         android:maxLines="1"
                         android:singleLine="true"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/subTextSize"
-                        android:drawableStart="@drawable/ic_coments"
                         tools:text="5" />
                 </LinearLayout>
 
@@ -105,12 +106,12 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:drawableStart="@drawable/ic_book"
                             android:gravity="center_vertical"
                             android:maxLines="1"
                             android:singleLine="true"
                             android:textColor="?attr/hrefColor"
                             android:textSize="@dimen/subTextSize"
-                            android:drawableStart="@drawable/ic_book"
                             tools:text="Темная башня" />
 
                         <TextView
@@ -118,12 +119,12 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="@dimen/recycler_item_textmargin"
+                            android:drawableStart="@drawable/ic_clock"
                             android:gravity="center_vertical|end"
                             android:maxLines="1"
                             android:singleLine="true"
                             android:textColor="?attr/subTextColor"
                             android:textSize="@dimen/subTextSize"
-                            android:drawableStart="@drawable/ic_clock"
                             tools:text="13 часов 15 минут" />
                     </LinearLayout>
 
@@ -138,12 +139,12 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:drawableStart="@drawable/ic_artist"
                             android:gravity="center_vertical"
                             android:maxLines="1"
                             android:singleLine="true"
                             android:textColor="?attr/hrefColor"
                             android:textSize="@dimen/subTextSize"
-                            android:drawableStart="@drawable/ic_artist"
                             tools:text="Кинг Стивен" />
 
                         <TextView
@@ -153,12 +154,12 @@
                             android:layout_marginStart="@dimen/recycler_item_textmargin"
                             android:layout_marginEnd="@dimen/recycler_item_textmargin"
                             android:layout_weight="1"
+                            android:drawableStart="@drawable/ic_autor"
                             android:gravity="center_vertical"
                             android:maxLines="1"
                             android:singleLine="true"
                             android:textColor="?attr/hrefColor"
                             android:textSize="@dimen/subTextSize"
-                            android:drawableStart="@drawable/ic_autor"
                             tools:text="Кинг Стивен" />
                     </LinearLayout>
                 </LinearLayout>

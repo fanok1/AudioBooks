@@ -1,11 +1,20 @@
 package com.fanok.audiobooks;
 
 
+import static android.content.Context.ACTIVITY_SERVICE;
+
+import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_PLAY;
+import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_PLAY_NEXT;
+import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_PLAY_PREVIOUS;
+
+import android.app.ActivityManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
@@ -88,5 +97,45 @@ public class Consts {
             }
         }
         return -1;
+    }
+
+    public static boolean handleUserInput(@NonNull Context context, int keycode) {
+        Log.d(TAG, "Keycode " + keycode);
+        Intent broadcastIntent;
+        switch (keycode) {
+            case KeyEvent.KEYCODE_MEDIA_PLAY:
+            case KeyEvent.KEYCODE_MEDIA_PAUSE:
+            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                broadcastIntent = new Intent(Broadcast_PLAY);
+                context.sendBroadcast(broadcastIntent);
+                return true;
+            case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
+            case KeyEvent.KEYCODE_3:
+            case KeyEvent.KEYCODE_MEDIA_NEXT:
+                broadcastIntent = new Intent(Broadcast_PLAY_NEXT);
+                context.sendBroadcast(broadcastIntent);
+                break;
+            case KeyEvent.KEYCODE_MEDIA_REWIND:
+            case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                broadcastIntent = new Intent(Broadcast_PLAY_PREVIOUS);
+                context.sendBroadcast(broadcastIntent);
+                break;
+            default:
+        }
+
+        return false;
+    }
+
+    public static boolean isServiceRunning(@NonNull Context context, Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
+        if (manager != null) {
+            for (ActivityManager.RunningServiceInfo serviceInfo : manager.getRunningServices(
+                    Integer.MAX_VALUE)) {
+                if (serviceClass.getName().equals(serviceInfo.service.getClassName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

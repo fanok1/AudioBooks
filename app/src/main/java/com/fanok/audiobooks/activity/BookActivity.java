@@ -1,5 +1,10 @@
 package com.fanok.audiobooks.activity;
 
+import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY;
+import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
+
+import static com.fanok.audiobooks.Consts.handleUserInput;
+import static com.fanok.audiobooks.Consts.isServiceRunning;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_ENABLED;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_PASSWORD;
@@ -8,6 +13,7 @@ import static com.google.android.gms.ads.AdRequest.ERROR_CODE_NETWORK_ERROR;
 
 import android.Manifest;
 import android.app.PendingIntent;
+import android.app.UiModeManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +23,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -30,6 +37,7 @@ import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -74,6 +82,7 @@ import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.fanok.audiobooks.service.Download;
+import com.fanok.audiobooks.service.MediaPlayerService;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
@@ -363,7 +372,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         if (json == null) throw new NullPointerException();
         mBookPOJO = BookPOJO.parceJsonToBookPojo(json);
 
-        setContentView(R.layout.activity_book);
+        UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+        if (uiModeManager != null
+                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            setContentView(R.layout.activity_book_television);
+        } else {
+            setContentView(R.layout.activity_book);
+        }
         ButterKnife.bind(this);
 
         MainActivity.setCloseApp(false);
@@ -384,7 +399,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             setTheme(R.style.LightAppTheme_NoActionBar);
         }
 
-        setTitle(mBookPOJO.getName().trim());
+        if (mBookPOJO != null && mBookPOJO.getName() != null) {
+            setTitle(mBookPOJO.getName().trim());
+        }
         sectionsPagerAdapter = new SectionsPagerAdapter(this,
                 getSupportFragmentManager(), mBookPOJO.getUrl());
         ViewPager viewPager = findViewById(R.id.view_pager);
@@ -398,7 +415,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         if (actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setSubtitle(mBookPOJO.getAutor().trim());
+            if (mBookPOJO != null && mBookPOJO.getAutor() != null) {
+                actionBar.setSubtitle(mBookPOJO.getAutor().trim());
+            }
         }
 
         if (mButtonCollapse != null) {
@@ -415,7 +434,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         registerReceiver(showGetPlus, new IntentFilter(Broadcast_SHOW_GET_PLUS));
         registerReceiver(showRating, new IntentFilter(Broadcast_SHOW_RATING));
         int isTablet = getResources().getInteger(R.integer.isTablet);
-        if (isTablet == 0) {
+        if (isTablet == 0 && (uiModeManager == null
+                || uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION)) {
             bottomSheetBehavior = BottomSheetBehavior.from(mPlayer);
 
 
@@ -1217,7 +1237,24 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                     Uri.parse("market://details?id=" + packageName)));
         } catch (android.content.ActivityNotFoundException anfe) {
             startActivity(new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://play.google.com/store/apps/details?id=" + packageName)));
+                    Uri.parse("https://4pda.ru/forum/index.php?showtopic=978445")));
         }
     }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            if ((!isServiceRunning(getApplicationContext(), MediaPlayerService.class))
+                    && (event.getKeyCode() == KEYCODE_MEDIA_PLAY
+                    || event.getKeyCode() == KEYCODE_MEDIA_PLAY_PAUSE)) {
+                mPresenter.buttomPlayClick(mPlayTop);
+                return true;
+            } else if (handleUserInput(getApplicationContext(), event.getKeyCode())) {
+                return true;
+            }
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+
 }

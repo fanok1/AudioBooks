@@ -1,22 +1,25 @@
 package com.fanok.audiobooks.adapter;
 
 import static android.content.Context.MODE_PRIVATE;
+import static android.content.Context.UI_MODE_SERVICE;
 
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_ENABLED;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
 
+import android.app.UiModeManager;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.BookPOJO;
 
@@ -64,8 +67,17 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
     @NonNull
     @Override
     public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                R.layout.books_recycler_item, viewGroup, false);
+        View view;
+        UiModeManager uiModeManager = (UiModeManager) viewGroup.getContext().getSystemService(
+                UI_MODE_SERVICE);
+        if (uiModeManager != null
+                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                    R.layout.books_recycler_item_television, viewGroup, false);
+        } else {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                    R.layout.books_recycler_item, viewGroup, false);
+        }
         return new MyHolder(view);
     }
 
@@ -95,6 +107,7 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
         private TextView mTime;
         private TextView mAutor;
         private TextView mArtist;
+        private LinearLayout mLinearLayout;
 
         private SharedPreferences mPreferences;
 
@@ -110,17 +123,20 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             mTime = itemView.findViewById(R.id.time);
             mAutor = itemView.findViewById(R.id.autor);
             mArtist = itemView.findViewById(R.id.artist);
+            mLinearLayout = itemView.findViewById(R.id.contentConteiner);
             mPreferences = mArtist.getContext().getSharedPreferences(PARENTAL_CONTROL_PREFERENCES,
                     MODE_PRIVATE);
 
-            itemView.setOnClickListener(view -> {
+
+            mLinearLayout.setOnClickListener(view -> {
                 if (mListener != null) {
-                    MyInterstitialAd.increase();
-                    mListener.onItemSelected(view, getAdapterPosition());
+                    mListener.onItemSelected(view,
+                            getAdapterPosition());
                 }
             });
 
-            itemView.setOnLongClickListener(view -> {
+
+            mLinearLayout.setOnLongClickListener(view -> {
                 if (mLongListener != null) {
                     mLongListener.onItemLongSelected(view,
                             getAdapterPosition());
@@ -129,6 +145,7 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             });
 
         }
+
 
         void bind(BookPOJO book) {
             if (book.getName() == null || book.getGenre() == null || book.getAutor() == null ||

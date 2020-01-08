@@ -13,7 +13,8 @@ public class StorageAds {
     }
 
     public static boolean idDisableAds() {
-        return disable;
+        //return disable;
+        return true;
     }
 
 }

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <ScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/liner_nav_view"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/layout_nav_audiobooks"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/focusable"
+                android:drawableStart="@drawable/ic_menu_audiobooks"
+                android:drawablePadding="20dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/menu_audiobooks"
+                android:textColor="?attr/prefIconColor"
+                tools:textColor="" />
+
+            <TextView
+                android:id="@+id/layout_nav_genre"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/focusable"
+                android:drawableStart="@drawable/ic_menu_genre"
+                android:drawablePadding="20dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/menu_genre"
+                android:textColor="?attr/prefIconColor"
+                tools:textColor="" />
+
+            <TextView
+                android:id="@+id/layout_nav_autor"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/focusable"
+                android:drawableStart="@drawable/ic_menu_autor"
+                android:drawablePadding="20dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/menu_autor"
+                android:textColor="?attr/prefIconColor"
+                tools:textColor="" />
+
+            <TextView
+                android:id="@+id/layout_nav_artist"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/focusable"
+                android:drawableStart="@drawable/ic_menu_artist"
+                android:drawablePadding="20dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/menu_artist"
+                android:textColor="?attr/prefIconColor"
+                tools:textColor="" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:layout_marginTop="@dimen/text_margin_book_description"
+                android:background="?attr/subTextColor" />
+
+            <TextView
+                android:id="@+id/layout_nav_favorite"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/focusable"
+                android:drawableStart="@drawable/ic_menu_favorite"
+                android:drawablePadding="20dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/menu_favorite"
+                android:textColor="?attr/prefIconColor"
+                tools:textColor="" />
+
+            <TextView
+                android:id="@+id/layout_nav_history"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/focusable"
+                android:drawableStart="@drawable/ic_menu_history"
+                android:drawablePadding="20dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/menu_history"
+                android:textColor="?attr/prefIconColor"
+                tools:textColor="" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:layout_marginTop="@dimen/text_margin_book_description"
+                android:background="?attr/subTextColor" />
+
+            <TextView
+                android:id="@+id/layout_nav_settings"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/focusable"
+                android:drawableStart="@drawable/ic_menu_settings"
+                android:drawablePadding="20dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/menu_settings"
+                android:textColor="?attr/prefIconColor"
+                tools:textColor="" />
+
+            <TextView
+                android:id="@+id/layout_nav_about"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/focusable"
+                android:drawableStart="@drawable/ic_menu_about"
+                android:drawablePadding="20dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/menu_about"
+                android:textColor="?attr/prefIconColor"
+                tools:textColor="" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <include
+        layout="@layout/app_bar_main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>

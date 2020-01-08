@@ -130,4 +130,15 @@ public class StorageUtil {
         return preferences.getBoolean("showRating", true);
     }
 
+    public void storeBattaryOptimizeDisenbled(boolean b) {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("battaryOptimizeDisenbled", b);
+        editor.apply();
+    }
+
+    public boolean loadBattaryOptimizeDisenbled() {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        return preferences.getBoolean("battaryOptimizeDisenbled", false);
+    }
 }

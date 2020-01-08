@@ -1,7 +1,11 @@
 package com.fanok.audiobooks.fragment;
 
+import static android.content.Context.UI_MODE_SERVICE;
+
 import static java.lang.Integer.MAX_VALUE;
 
+import android.app.UiModeManager;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -112,7 +116,17 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_book_description, container, false);
+
+        View view;
+        UiModeManager uiModeManager = (UiModeManager) Objects.requireNonNull(
+                container).getContext().getSystemService(UI_MODE_SERVICE);
+        if (uiModeManager != null
+                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            view = inflater.inflate(R.layout.fragment_book_description_television, container,
+                    false);
+        } else {
+            view = inflater.inflate(R.layout.fragment_book_description, container, false);
+        }
         unbinder = ButterKnife.bind(this, view);
         mAdapterBooksRecomended = new BooksOtherAdapter(Objects.requireNonNull(getContext()));
         mRecommendedBooks.setAdapter(mAdapterBooksRecomended);

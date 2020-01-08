@@ -763,6 +763,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 PhoneStateListener.LISTEN_CALL_STATE);
     }
 
+
     /**
      * MediaSession and Notification actions
      */
@@ -780,6 +781,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         // through its MediaSessionCompat.@+id/.
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
                 | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+
 
         //Set mediaSession's MetaData
         updateMetaData();

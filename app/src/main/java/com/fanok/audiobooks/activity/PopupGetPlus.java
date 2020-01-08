@@ -1,6 +1,7 @@
 package com.fanok.audiobooks.activity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -21,8 +22,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.preference.PreferenceManager;
 
-import com.fanok.audiobooks.Billing;
-import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.StorageAds;
@@ -102,7 +101,21 @@ public class PopupGetPlus extends AppCompatActivity {
             mSubTitle.setText(R.string.getPlusSubTitle);
             mButtonTitle.setText(R.string.buy);
             mButtonSubTitle.setText(R.string.price);
-            mBuy.setOnClickListener(view -> Billing.launchBilling(getActivity(), Consts.mSkuId));
+            mBuy.setOnClickListener(view -> {
+                //Billing.launchBilling(getActivity(), Consts.mSkuId);
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Плюс версия");
+                builder.setMessage(
+                        "Гугл заблокировали возможность совершать покупки через приложение."
+                                + "Как только мы разберемся из-за чего это произошло мы вернем "
+                                + "возможность купить Plus версию приложения."
+                                + "Извините за вызванные неудобства.\n"
+                                + "С уважением, администрация приложения");
+                builder.setIcon(R.drawable.ic_launcher_foreground);
+                builder.setPositiveButton("OK", (dialogInterface, i) -> dialogInterface.cancel());
+                builder.setCancelable(true);
+                builder.show();
+            });
         } else {
             mTitle.setText(R.string.congratulations);
             mSubTitle.setText(R.string.plusSubTitle);
