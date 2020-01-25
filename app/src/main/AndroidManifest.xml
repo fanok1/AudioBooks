@@ -54,8 +54,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         tools:ignore="UnusedAttribute">
+
+        <activity
+            android:name=".activity.SleepTimerActivity"
+            android:configChanges="locale|uiMode"
+            android:label="@string/sleep_timer"
+            android:theme="@style/AppTheme.SwipeOnClose" />
         <activity
             android:name=".activity.ParentalControlActivity"
+            android:configChanges="locale|uiMode"
             android:label="@string/title_activity_parental_control"
             android:theme="@style/AppTheme.SwipeOnClose" />
 
@@ -102,6 +109,7 @@
             android:theme="@style/AppTheme.Launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -166,6 +174,12 @@
         <receiver
             android:name=".broadcasts.OnNotificationButtonClick"
             android:exported="false" />
+
+        <receiver android:name="androidx.media.session.MediaButtonReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
 
         <service
             android:name=".service.MediaPlayerService"

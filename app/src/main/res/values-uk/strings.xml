@@ -261,5 +261,13 @@
     <string name="vary_bad">Дуже погано</string>
     <string name="rewardedad_not_loaded">Реклама ще не завантажена</string>
     <string name="tech_support_plus">Покращена техпідтримка</string>
+    <string name="delete">Видалити</string>
+    <string name="equalizer">Еквалайзер</string>
+    <string name="hours">г.</string>
+    <string name="minutes">м.</string>
+    <string name="seconds">с.</string>
+    <string name="sleep_timer">Таймер сну</string>
+    <string name="yd">Яндекс Гроші</string>
+    <string name="yandex_form">Яндекс Форма</string>
 
 </resources>

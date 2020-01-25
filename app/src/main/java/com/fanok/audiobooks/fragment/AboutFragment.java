@@ -6,6 +6,7 @@ import android.app.ActivityOptions;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -33,8 +34,8 @@ public class AboutFragment extends PreferenceFragmentCompat {
         Bundle args = new Bundle();
         args.putString("rootKey", preferenceScreen.getKey());
         settingsFragment.setArguments(args);
-        if (getFragmentManager() != null) {
-            getFragmentManager()
+        if (getActivity() != null) {
+            getActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(getId(), settingsFragment)
                     .addToBackStack(null)
@@ -72,6 +73,20 @@ public class AboutFragment extends PreferenceFragmentCompat {
             return true;
         });
 
+        preferenceClickListner("yandexForm", preference -> {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("http://mdpu.mcdir.ru/yd.html"));
+            startActivity(browserIntent);
+            return true;
+        });
+
+        preferenceClickListner("qiwi", preference -> {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("http://qiwi.com/n/ONAMA629"));
+            startActivity(browserIntent);
+            return true;
+        });
+
         preferenceClickListner("version_plus", preference -> {
             ActivityOptions options = ActivityOptions
                     .makeSceneTransitionAnimation(getActivity(), getView(), "robot");
@@ -104,8 +119,8 @@ public class AboutFragment extends PreferenceFragmentCompat {
         preferenceClickListner("monoEUR", clickToCopy);
         preferenceClickListner("privat", clickToCopy);
         preferenceClickListner("alpha", clickToCopy);
-        preferenceClickListner("paypal", clickToCopy);
-        preferenceClickListner("qiwi", clickToCopy);
+        //preferenceClickListner("paypal", clickToCopy);
+        preferenceClickListner("yd", clickToCopy);
         preferenceClickListner("wmu", clickToCopy);
         preferenceClickListner("wmr", clickToCopy);
         preferenceClickListner("wmz", clickToCopy);

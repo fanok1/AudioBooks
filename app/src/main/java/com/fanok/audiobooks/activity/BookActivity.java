@@ -9,11 +9,13 @@ import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CON
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_PASSWORD;
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_SHOW_TITLE;
+import static com.fanok.audiobooks.service.MediaPlayerService.countAudioWereShowingRatingPopUp;
 import static com.google.android.gms.ads.AdRequest.ERROR_CODE_NETWORK_ERROR;
 
 import android.Manifest;
 import android.app.PendingIntent;
 import android.app.UiModeManager;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -83,6 +85,7 @@ import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.fanok.audiobooks.service.Download;
 import com.fanok.audiobooks.service.MediaPlayerService;
+import com.fanok.audiobooks.аndroid_equalizer.DialogEqualizerFragment;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
@@ -119,6 +122,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     public static final String Broadcast_SET_TITLE = "SetTitle";
     public static final String Broadcast_SHOW_GET_PLUS = "ShowGetPlus";
     public static final String Broadcast_SHOW_RATING = "ShowRating";
+    public static final String Broadcast_SHOW_EQUALIZER = "ShowEqualizer";
     private static final int REQUEST_WRITE_STORAGE = 145;
 
     private static String showingView;
@@ -237,6 +241,28 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             String title = intent.getStringExtra("title");
             if (title != null) {
                 mPresenter.showTitle(title);
+            }
+        }
+    };
+
+    private BroadcastReceiver showEqualizer = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int sessionId = intent.getIntExtra("id", 0);
+            if (sessionId > 0) {
+                try {
+                    DialogEqualizerFragment fragment = DialogEqualizerFragment.newBuilder()
+                            .setAudioSessionId(sessionId)
+                            .themeColor(ContextCompat.getColor(context, R.color.primaryColorEq))
+                            .textColor(ContextCompat.getColor(context, R.color.textColor))
+                            .accentAlpha(ContextCompat.getColor(context, R.color.playingCardColor))
+                            .darkColor(ContextCompat.getColor(context, R.color.primaryDarkColorEq))
+                            .setAccentColor(ContextCompat.getColor(context, R.color.secondaryColor))
+                            .build();
+
+                    fragment.show(getSupportFragmentManager(), "eq");
+                } catch (IllegalStateException ignored) {
+                }
             }
         }
     };
@@ -420,9 +446,10 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             }
         }
 
-        if (mButtonCollapse != null) {
+        if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.INVISIBLE) {
             mButtonCollapse.setVisibility(View.INVISIBLE);
         }
+
 
         registerReceiver(setImage, new IntentFilter(Broadcast_SET_IMAGE));
 
@@ -433,6 +460,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         registerReceiver(setTitleBroadcast, new IntentFilter(Broadcast_SET_TITLE));
         registerReceiver(showGetPlus, new IntentFilter(Broadcast_SHOW_GET_PLUS));
         registerReceiver(showRating, new IntentFilter(Broadcast_SHOW_RATING));
+        registerReceiver(showEqualizer, new IntentFilter(Broadcast_SHOW_EQUALIZER));
         int isTablet = getResources().getInteger(R.integer.isTablet);
         if (isTablet == 0 && (uiModeManager == null
                 || uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION)) {
@@ -482,6 +510,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                                     mButtonCollapse.setVisibility(View.VISIBLE);
                                 }
 
+
                                 if (mRadioAll != null && mRadioAll.getVisibility() != View.VISIBLE
                                         &&
                                         mAudioAdapter.getSelectedItemsSize() > 0) {
@@ -490,6 +519,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                                     if (mButtonCollapse != null) {
                                         mButtonCollapse.setVisibility(View.GONE);
                                     }
+
                                 }
 
                                 if (mDowland != null && mDowland.getVisibility() != View.VISIBLE &&
@@ -613,6 +643,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                 if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.VISIBLE) {
                     mButtonCollapse.setVisibility(View.VISIBLE);
                 }
+
                 Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
                 broadcastSend(broadcastIntent);
             } else {
@@ -844,6 +875,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         unregisterReceiver(setTitleBroadcast);
         unregisterReceiver(showGetPlus);
         unregisterReceiver(showRating);
+        unregisterReceiver(showEqualizer);
         showingView = "";
         mPresenter.onDestroy();
         super.onDestroy();
@@ -996,7 +1028,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
     @Override
     public void showRatingDialog() {
-        new AppRatingDialog.Builder()
+        AppRatingDialog builder = new AppRatingDialog.Builder()
                 .setPositiveButtonText(R.string.submit)
                 .setNegativeButtonText(R.string.cancel)
                 .setNeutralButtonText(R.string.later)
@@ -1009,8 +1041,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                 .setWindowAnimation(R.style.MyDialogFadeAnimation)
                 .setCancelable(false)
                 .setCanceledOnTouchOutside(false)
-                .create(this)
-                .show();
+                .create(this);
+
+        try {
+            builder.show();
+        } catch (IllegalStateException e) {
+            new StorageUtil(this).storeCountAudioListneredForRating(
+                    countAudioWereShowingRatingPopUp - 1);
+        }
     }
 
     @Override
@@ -1112,17 +1150,17 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     }
 
     @Override
-    public void broadcastSend(@NotNull @NonNull Intent intent) {
+    public void broadcastSend(@NotNull Intent intent) {
         sendBroadcast(intent);
     }
 
     @Override
-    public void activityStart(@NotNull @NonNull Intent intent) {
+    public void activityStart(@NotNull Intent intent) {
         startActivity(intent);
     }
 
     @Override
-    public void myUnbindService(@NotNull @NonNull ServiceConnection serviceConnection) {
+    public void myUnbindService(@NotNull ServiceConnection serviceConnection) {
         try {
             unbindService(serviceConnection);
         } catch (Exception ignored) {
@@ -1165,6 +1203,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                 if (mProgressBar != null && mProgressBar.getVisibility() != View.GONE) {
                     mProgressBar.setVisibility(View.GONE);
                 }
+
+
                 if (mAudioAdapter.getSelectedItemsSize() > 0) {
                     if (mRadioAll.getVisibility() != View.VISIBLE) {
                         mRadioAll.setVisibility(View.VISIBLE);
@@ -1235,7 +1275,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         try {
             startActivity(new Intent(Intent.ACTION_VIEW,
                     Uri.parse("market://details?id=" + packageName)));
-        } catch (android.content.ActivityNotFoundException anfe) {
+        } catch (ActivityNotFoundException anfe) {
             startActivity(new Intent(Intent.ACTION_VIEW,
                     Uri.parse("https://4pda.ru/forum/index.php?showtopic=978445")));
         }

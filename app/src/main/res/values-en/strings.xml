@@ -261,5 +261,13 @@
     <string name="vary_bad">Very bad</string>
     <string name="rewardedad_not_loaded">Ads not yet uploaded</string>
     <string name="tech_support_plus">Improved technical support</string>
+    <string name="delete">Delete</string>
+    <string name="equalizer">Equalizer</string>
+    <string name="hours">h</string>
+    <string name="minutes">m</string>
+    <string name="seconds">s</string>
+    <string name="sleep_timer">Sleep timer</string>
+    <string name="yd">Yandex Money</string>
+    <string name="yandex_form">Yandex Form</string>
 
 </resources>

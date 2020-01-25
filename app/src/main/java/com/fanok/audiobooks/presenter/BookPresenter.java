@@ -26,6 +26,7 @@ import com.arellomobile.mvp.MvpPresenter;
 import com.crashlytics.android.Crashlytics;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.activity.SleepTimerActivity;
 import com.fanok.audiobooks.interface_pacatge.book_content.Activity;
 import com.fanok.audiobooks.interface_pacatge.book_content.ActivityPresenter;
 import com.fanok.audiobooks.interface_pacatge.book_content.AudioModelInterfece;
@@ -62,6 +63,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     public static final String Broadcast_GET_POSITION = "GET_POSITION";
     public static final String Broadcast_SET_SPEED = "SET_SPEED";
     public static final String Broadcast_CloseNotPrepered = "CloseNotPrepered";
+    public static final String Broadcast_Equalizer = "Equalizer";
     public static boolean start = false;
     public static boolean resume = false;
 
@@ -72,33 +74,10 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private String last = "";
     private Context mContext;
     private boolean serviceBound = false;
-    private int curentTrack = 0;
-    public static float speed = 1;
+    private static float speed = 1;
+    private ServiceConnection serviceConnection;
 
     private AudioModelInterfece mAudioModel;
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            //Crashlytics.setBool("onServiceConnected", true);
-            serviceBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            serviceConnection = null;
-            serviceBound = false;
-        }
-    };
-
-    public boolean isServiceBound() {
-        return serviceBound;
-    }
-
-    public void setServiceBound(boolean serviceBound) {
-        this.serviceBound = serviceBound;
-    }
-
     public BookPresenter(@NonNull BookPOJO bookPOJO, @NonNull Context context) {
         mContext = context;
         mBookPOJO = bookPOJO;
@@ -106,7 +85,35 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         mBooksDBModel.addHistory(mBookPOJO);
         mAudioModel = new AudioModel();
         mAudioDBModel = new AudioDBModel(context);
+        serviceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                serviceBound = true;
+            }
 
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                serviceConnection = null;
+                serviceBound = false;
+            }
+        };
+        Crashlytics.setString("urlBooks", bookPOJO.getUrl());
+
+    }
+
+    public static float getSpeed() {
+        return speed;
+    }
+
+    private void setSpeed(float value) {
+        speed = value;
+        Intent intent = new Intent(Broadcast_SET_SPEED);
+        intent.putExtra("speed", value);
+        getViewState().broadcastSend(intent);
+    }
+
+    public boolean isServiceBound() {
+        return serviceBound;
     }
 
     @Override
@@ -143,7 +150,6 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void onStop() {
-        Crashlytics.setBool("serviceBound", serviceBound);
         if (serviceBound) {
             getViewState().myUnbindService(serviceConnection);
             /*if(!MediaPlayerService.isPlay()&&player!=null){
@@ -162,6 +168,24 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             mContext.sendBroadcast(broadcastIntent);
         }
         super.onDestroy();
+    }
+
+    public void setServiceBound(boolean serviceBound) {
+        this.serviceBound = serviceBound;
+    }
+
+    @Override
+    public void onItemSelected(View view, int position) {
+        if (mAudioDBModel.isset(mBookPOJO.getUrl())) {
+            mAudioDBModel.remove(mBookPOJO.getUrl());
+        }
+        if (mAudioPOJO != null) {
+            mAudioDBModel.add(mBookPOJO.getUrl(), mAudioPOJO.get(position).getName());
+            last = mAudioPOJO.get(position).getName();
+            getViewState().showTitle(last);
+            playAudio(position, 0);
+        }
+
     }
 
     @Override
@@ -193,43 +217,50 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                         Uri.parse(mBookPOJO.getUrl()));
                 getViewState().activityStart(browserIntent);
                 break;
+            case R.id.sleep_timer:
+                Intent sleepIntent = new Intent(mContext, SleepTimerActivity.class);
+                getViewState().activityStart(sleepIntent);
+                break;
+            case R.id.equalizer:
+                Intent breadCast = new Intent(Broadcast_Equalizer);
+                getViewState().broadcastSend(breadCast);
+                break;
         }
-    }
-
-    @Override
-    public void onItemSelected(View view, int position) {
-        if (mAudioDBModel.isset(mBookPOJO.getUrl())) {
-            mAudioDBModel.remove(mBookPOJO.getUrl());
-        }
-        if (mAudioPOJO != null) {
-            mAudioDBModel.add(mBookPOJO.getUrl(), mAudioPOJO.get(position).getName());
-            last = mAudioPOJO.get(position).getName();
-            getViewState().showTitle(last);
-            curentTrack = position;
-            playAudio(position, 0);
-        }
-
     }
 
     private void playAudio(int audioIndex, int timeStart) {
         StorageUtil storage = new StorageUtil(mContext.getApplicationContext());
         storage.storeAudioIndex(audioIndex);
         if (!serviceBound || !isServiceRunning(mContext, MediaPlayerService.class)) {
-            Crashlytics.setBool("playAudio", true);
             storage.storeAudio(mAudioPOJO);
             storage.storeUrlBook(mBookPOJO.getUrl());
             storage.storeImageUrl(mBookPOJO.getPhoto());
             storage.storeTimeStart(timeStart);
             Intent playerIntent = new Intent(mContext, MediaPlayerService.class);
             playerIntent.setAction("start");
-            mContext.startService(playerIntent);
-            mContext.bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+            if (serviceConnection != null) {
+                mContext.startService(playerIntent);
+                mContext.bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+            } else {
+                serviceConnection = new ServiceConnection() {
+                    @Override
+                    public void onServiceConnected(ComponentName name, IBinder service) {
+                        serviceBound = true;
+                    }
+
+                    @Override
+                    public void onServiceDisconnected(ComponentName name) {
+                        serviceConnection = null;
+                        serviceBound = false;
+                    }
+                };
+                playAudio(audioIndex, timeStart);
+            }
         } else {
             Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
             getViewState().broadcastSend(broadcastIntent);
         }
     }
-
 
     @Override
     public void getAudio() {
@@ -256,7 +287,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                     @Override
                     public void onComplete() {
                         Log.d(TAG, "onComplete");
-
+                        int curentTrack = 0;
                         AudioPOJO pojo = null;
                         for (int i = 0; i < mAudioPOJO.size(); i++) {
                             if (mAudioPOJO.get(i).getName().equals(last)) {
@@ -288,15 +319,23 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                 });
     }
 
+
+    @Override
+    public void buttomPreviousClick(View view) {
+        if (mAudioPOJO != null && mAudioPOJO.size() > 0) {
+            Intent broadcastIntent = new Intent(Broadcast_PLAY_PREVIOUS);
+            getViewState().broadcastSend(broadcastIntent);
+        }
+    }
+
     @Override
     public void buttomPlayClick(View view) {
         if (!isServiceRunning(mContext, MediaPlayerService.class) && mAudioPOJO != null
-                && mAudioPOJO.size() != 0 &&
-                curentTrack >= 0 && mAudioPOJO.size() > curentTrack) {
+                && mAudioPOJO.size() != 0) {
             serviceBound = false;
             start = true;
             resume = true;
-            curentTrack = 0;
+            int curentTrack = 0;
             for (int i = 0; i < mAudioPOJO.size(); i++) {
                 if (mAudioPOJO.get(i).getName().equals(last)) {
                     curentTrack = i;
@@ -307,26 +346,6 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         }
         Intent broadcastIntent = new Intent(Broadcast_PLAY);
         getViewState().broadcastSend(broadcastIntent);
-    }
-
-
-    @Override
-    public void buttomPreviousClick(View view) {
-        if (mAudioPOJO != null && mAudioPOJO.size() > 0) {
-            curentTrack--;
-            Intent broadcastIntent = new Intent(Broadcast_PLAY_PREVIOUS);
-            getViewState().broadcastSend(broadcastIntent);
-        }
-    }
-
-    @Override
-    public void buttomNextClick(View view) {
-        if (mAudioPOJO != null && mAudioPOJO.size() - 2 > curentTrack) {
-            curentTrack++;
-            Intent broadcastIntent = new Intent(Broadcast_PLAY_NEXT);
-            getViewState().broadcastSend(broadcastIntent);
-        }
-
     }
 
     @Override
@@ -350,61 +369,12 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     }
 
     @Override
-    public void buttonSpeedClick(View view) {
+    public void buttomNextClick(View view) {
+        if (mAudioPOJO != null && mAudioPOJO.size() > 0) {
+            Intent broadcastIntent = new Intent(Broadcast_PLAY_NEXT);
+            getViewState().broadcastSend(broadcastIntent);
+        }
 
-        final int step = 25;
-
-        final AlertDialog.Builder popDialog = new AlertDialog.Builder(view.getContext());
-        final LinearLayout linearLayout = new LinearLayout(view.getContext());
-        linearLayout.setOrientation(LinearLayout.VERTICAL);
-        final TextView textView = new TextView(view.getContext());
-        textView.setGravity(Gravity.CENTER_HORIZONTAL);
-        textView.setText(String.valueOf(speed));
-        linearLayout.addView(textView);
-        final SeekBar seek = new SeekBar(view.getContext());
-        seek.setMax(200);
-        seek.incrementProgressBy(step);
-        seek.setProgress((int) (speed * 100 - 100));
-        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                progress = progress / step;
-                progress = progress * step;
-                String s = progress / 100 + 1 + "." + progress % 100;
-                textView.setText(s);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-        linearLayout.addView(seek);
-
-        popDialog.setIcon(R.drawable.ic_play_speed);
-        popDialog.setTitle(view.getContext().getString(R.string.title_set_speed_popup));
-        popDialog.setView(linearLayout);
-
-
-        // Button OK
-        popDialog.setPositiveButton("OK",
-                (dialog, which) -> {
-                    float s = Float.valueOf(textView.getText().toString());
-                    if (s != speed) {
-                        setSpeed(s);
-                    }
-                    dialog.dismiss();
-                });
-
-
-        popDialog.create();
-        popDialog.show();
     }
 
     @Override
@@ -457,9 +427,61 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         }
     }
 
+    @Override
+    public void buttonSpeedClick(View view) {
 
-    private void setSpeed(float value) {
-        speed = value;
-        getViewState().broadcastSend(new Intent(Broadcast_SET_SPEED));
+        final int step = 10;
+
+        final AlertDialog.Builder popDialog = new AlertDialog.Builder(view.getContext());
+        final LinearLayout linearLayout = new LinearLayout(view.getContext());
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        final TextView textView = new TextView(view.getContext());
+        textView.setGravity(Gravity.CENTER_HORIZONTAL);
+        textView.setText(String.valueOf(speed));
+        linearLayout.addView(textView);
+        final SeekBar seek = new SeekBar(view.getContext());
+        seek.setMax(200);
+        seek.incrementProgressBy(step);
+        seek.setProgress((int) (speed * 100 - 100));
+        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progress = progress / step;
+                progress = progress * step;
+                String s = progress / 100 + 1 + "." + progress % 100;
+                textView.setText(s);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        linearLayout.addView(seek);
+
+        popDialog.setIcon(R.drawable.ic_play_speed);
+        popDialog.setTitle(view.getContext().getString(R.string.title_set_speed_popup));
+        popDialog.setView(linearLayout);
+
+
+        // Button OK
+        popDialog.setPositiveButton("OK",
+                (dialog, which) -> {
+                    float s = Float.valueOf(textView.getText().toString());
+                    if (s != speed) {
+                        setSpeed(s);
+                    }
+                    dialog.dismiss();
+                });
+
+
+        popDialog.create();
+        popDialog.show();
     }
 }

@@ -58,11 +58,22 @@
             android:summary="@string/alphaNumber"
             android:title="@string/alpha" />
 
-        <Preference
+        <!--<Preference
             android:icon="@drawable/ic_paypal"
             android:key="paypal"
             android:summary="@string/paypalEmail"
-            android:title="@string/paypal" />
+            android:title="@string/paypal" />-->
+
+        <Preference
+            android:icon="@drawable/ic_yd"
+            android:key="yd"
+            android:summary="@string/ydNumb"
+            android:title="@string/yd" />
+
+        <Preference
+            android:icon="@drawable/ic_yd"
+            android:key="yandexForm"
+            android:title="@string/yandex_form" />
 
         <Preference
             android:icon="@drawable/ic_qiwi"

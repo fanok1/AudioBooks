@@ -110,11 +110,6 @@ public class SelectDirectoryActivity extends AppCompatActivity {
         chooser = builder.build();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
     private void click(@NotNull View view) {
         boolean hasPermission = (ContextCompat.checkSelfPermission(
                 view.getContext(),

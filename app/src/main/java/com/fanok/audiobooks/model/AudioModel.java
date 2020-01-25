@@ -39,7 +39,7 @@ public class AudioModel implements
                 value = deleteComnets(value);
                 value = value.substring(value.indexOf("var player = new BookPlayer"));
                 value = value.substring(0, value.indexOf("\n"));
-                String json = value.substring(value.indexOf("["), value.indexOf("]") + 1);
+                String json = value.substring(value.indexOf("["), value.indexOf("], ") + 1);
                 JsonElement jsonTree = new JsonParser().parse(json);
                 if (jsonTree.isJsonArray()) {
                     JsonArray jsonArray = jsonTree.getAsJsonArray();

@@ -176,35 +176,45 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 .error(android.R.drawable.ic_menu_gallery)
                 .into(mImageView);
 
-        mImageView.setOnClickListener(view -> ImageFullScreenActivity.start(
-                Objects.requireNonNull(getActivity()),
-                description.getPoster(), description.getTitle(),
-                mImageView));
+        BookActivity activity = (BookActivity) getActivity();
 
-        if (!description.getGenre().isEmpty()) {
-            mGenre.setText(description.getGenre());
-        } else {
-            mGenre.setVisibility(View.GONE);
+        if (activity != null) {
+            mImageView.setOnClickListener(view ->
+                    ImageFullScreenActivity.start(activity,
+                            description.getPoster(), description.getTitle(),
+                            mImageView));
+        }
+
+        if (mGenre != null) {
+            if (!description.getGenre().isEmpty()) {
+                mGenre.setText(description.getGenre());
+            } else if (mGenre.getVisibility() != View.GONE) {
+                mGenre.setVisibility(View.GONE);
+            }
         }
 
         String reting = String.valueOf(description.getReiting());
         mReting.setText(reting);
-        if (description.getTime().isEmpty()) {
-            mTime.setVisibility(View.GONE);
-        } else {
-            mTime.setText(description.getTime());
+
+        if (mTime != null) {
+            if (!description.getTime().isEmpty()) {
+                mTime.setText(description.getTime());
+            } else if (mTime.getVisibility() != View.GONE) {
+                mTime.setVisibility(View.GONE);
+            }
         }
 
 
         mAuthor.setText(description.getAutor());
         mArtist.setText(description.getArtist());
-        BookActivity activity = (BookActivity) getActivity();
-        if (description.getSeries().isEmpty()) {
-            mSeriesConteiner.setVisibility(View.GONE);
-        } else {
+        if (!description.getSeries().isEmpty()) {
             mSeries.setText(description.getSeries());
             if (activity != null) {
                 activity.showSiries();
+            }
+        } else {
+            if (mSeriesConteiner != null && mSeriesConteiner.getVisibility() != View.GONE) {
+                mSeriesConteiner.setVisibility(View.GONE);
             }
         }
 
@@ -215,28 +225,41 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         }
 
 
-        mDesc.setMaxLines(MAX_VALUE);
-        mDesc.setText(description.getDescription());
-        mDesc.post(() -> {
-            if (mDesc.getLineCount() <= MAX_LINES) {
-                mShowMore.setVisibility(View.GONE);
+        if (mDesc != null) {
+            mDesc.setMaxLines(MAX_VALUE);
+            if (description.getDescription() != null) {
+                mDesc.setText(description.getDescription());
             } else {
-                mShowMore.setVisibility(View.VISIBLE);
+                mDesc.setText("");
             }
-            mDesc.setMaxLines(MAX_LINES);
-            showMore = false;
-
-            mShowMore.setOnClickListener(view1 -> {
-                if (!showMore) {
-                    mDesc.setMaxLines(MAX_VALUE);
-                    mShowMore.setText(R.string.show_less);
-                } else {
-                    mDesc.setMaxLines(MAX_LINES);
-                    mShowMore.setText(R.string.show_more);
+            mDesc.post(() -> {
+                if (mShowMore != null) {
+                    if (mDesc == null || mDesc.getLineCount() <= MAX_LINES) {
+                        mShowMore.setVisibility(View.GONE);
+                    } else {
+                        mShowMore.setVisibility(View.VISIBLE);
+                    }
+                    mShowMore.setOnClickListener(view1 -> {
+                        if (!showMore) {
+                            mDesc.setMaxLines(MAX_VALUE);
+                            mShowMore.setText(R.string.show_less);
+                        } else {
+                            mDesc.setMaxLines(MAX_LINES);
+                            mShowMore.setText(R.string.show_more);
+                        }
+                        showMore = !showMore;
+                    });
                 }
-                showMore = !showMore;
+                mDesc.setMaxLines(MAX_LINES);
+                showMore = false;
+
             });
-        });
+        } else {
+            if (mShowMore != null && mShowMore.getVisibility() != View.GONE) {
+                mShowMore.setVisibility(View.GONE);
+            }
+        }
+
 
         mFavorite.setText(String.valueOf(description.getFavorite()));
         mLike.setText(String.valueOf(description.getLike()));
@@ -260,55 +283,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 activity.setTabPostion(getResources().getString(R.string.tab_text_3));
             }
         });
-
-        //translation
-        /*String lang = Locale.getDefault().toLanguageTag();
-        if(!lang.equals("ru")) {
-            FirebaseTranslatorOptions options =
-                    new FirebaseTranslatorOptions.Builder()
-                            .setSourceLanguage(FirebaseTranslateLanguage.RU)
-                            .setTargetLanguage(FirebaseTranslateLanguage.languageForLanguageCode
-                            (lang))
-                            .build();
-            final FirebaseTranslator translator =
-                    FirebaseNaturalLanguage.getInstance().getTranslator(options);
-
-            FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
-            .Builder()
-                    .requireWifi()
-                    .build();
-            translator.downloadModelIfNeeded(conditions)
-                    .addOnSuccessListener(
-                            v -> {
-                                translator.translate(description.getTitle())
-                                        .addOnSuccessListener(
-                                                translatedText -> mTitle.setText(translatedText));
-                                if (!description.getGenre().isEmpty()) {
-                                    translator.translate(description.getGenre())
-                                            .addOnSuccessListener(
-                                                    translatedText -> mGenre.setText
-                                                    (translatedText));
-                                }
-
-                                translator.translate(description.getAutor())
-                                        .addOnSuccessListener(
-                                                translatedText -> mAuthor.setText(translatedText));
-
-                                translator.translate(description.getArtist())
-                                        .addOnSuccessListener(
-                                                translatedText -> mArtist.setText(translatedText));
-                                if (!description.getSeries().isEmpty()) {
-                                    translator.translate(description.getSeries())
-                                            .addOnSuccessListener(
-                                                    translatedText -> mSeries.setText
-                                                    (translatedText));
-                                }
-
-                                translator.translate(description.getDescription())
-                                        .addOnSuccessListener(
-                                                translatedText -> mDesc.setText(translatedText));
-                            });
-        }*/
     }
 
 

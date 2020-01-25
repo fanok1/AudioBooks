@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 
+import com.fanok.audiobooks.аndroid_equalizer.EqualizerModel;
+import com.fanok.audiobooks.аndroid_equalizer.Settings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -18,11 +20,10 @@ public class StorageUtil {
 
     public StorageUtil(Context context) {
         this.context = context;
+        this.preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
     }
 
     public void storeAudio(ArrayList<AudioPOJO> arrayList) {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
-
         SharedPreferences.Editor editor = preferences.edit();
         Gson gson = new Gson();
         String json = gson.toJson(arrayList);
@@ -31,7 +32,6 @@ public class StorageUtil {
     }
 
     public ArrayList<AudioPOJO> loadAudio() {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         Gson gson = new Gson();
         String json = preferences.getString("audioArrayList", null);
         Type type = new TypeToken<ArrayList<AudioPOJO>>() {
@@ -40,98 +40,76 @@ public class StorageUtil {
     }
 
     public void storeAudioIndex(int index) {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("audioIndex", index);
         editor.apply();
     }
 
     public int loadAudioIndex() {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getInt("audioIndex", -1);//return -1 if no data found
     }
 
-    public void clearCachedAudioPlaylist() {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.clear();
-        editor.apply();
-    }
-
     public String loadUrlBook() {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getString("urlBook", "");
     }
 
     public void storeUrlBook(@NonNull String url) {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString("urlBook", url);
         editor.apply();
     }
 
     public String loadImageUrl() {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getString("imageUrl", "");
     }
 
     public void storeImageUrl(@NonNull String url) {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString("imageUrl", url);
         editor.apply();
     }
 
     public void storeTimeStart(int time) {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("timeStart", time);
         editor.apply();
     }
 
     public int loadTimeStart() {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getInt("timeStart", 0);
     }
 
     public void storeCountAudioListnered(int count) {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("countAudioListnered", count);
         editor.apply();
     }
 
     public int loadCountAudioListnered() {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getInt("countAudioListnered", 0);
     }
 
     public void storeCountAudioListneredForRating(int count) {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("countAudioListneredForRating", count);
         editor.apply();
     }
 
     public int loadCountAudioListneredForRating() {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getInt("countAudioListneredForRating", 0);
     }
 
     public void storeShowRating(boolean b) {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("showRating", b);
         editor.apply();
     }
 
     public boolean loadShowRating() {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getBoolean("showRating", true);
     }
 
     public void storeBattaryOptimizeDisenbled(boolean b) {
-        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("battaryOptimizeDisenbled", b);
         editor.apply();
@@ -140,5 +118,42 @@ public class StorageUtil {
     public boolean loadBattaryOptimizeDisenbled() {
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
         return preferences.getBoolean("battaryOptimizeDisenbled", false);
+    }
+
+    public void saveEqualizerSettings() {
+        if (Settings.equalizerModel != null) {
+            EqualizerSettings settings = new EqualizerSettings();
+            settings.bassStrength = Settings.equalizerModel.getBassStrength();
+            settings.presetPos = Settings.equalizerModel.getPresetPos();
+            settings.reverbPreset = Settings.equalizerModel.getReverbPreset();
+            settings.seekbarpos = Settings.equalizerModel.getSeekbarpos();
+            settings.equalizerEnabled = Settings.isEqualizerEnabled;
+
+            Gson gson = new Gson();
+            preferences.edit()
+                    .putString("equalizer", gson.toJson(settings))
+                    .apply();
+        }
+    }
+
+    public void loadEqualizerSettings() {
+
+        Gson gson = new Gson();
+        EqualizerSettings settings = gson.fromJson(preferences.getString("equalizer", "{}"),
+                EqualizerSettings.class);
+        EqualizerModel model = new EqualizerModel();
+        model.setBassStrength(settings.bassStrength);
+        model.setPresetPos(settings.presetPos);
+        model.setReverbPreset(settings.reverbPreset);
+        model.setSeekbarpos(settings.seekbarpos);
+        model.setEqualizerEnabled(settings.equalizerEnabled);
+
+        Settings.isEqualizerReloaded = true;
+        Settings.isEqualizerEnabled = settings.equalizerEnabled;
+        Settings.bassStrength = settings.bassStrength;
+        Settings.presetPos = settings.presetPos;
+        Settings.reverbPreset = settings.reverbPreset;
+        Settings.seekbarpos = settings.seekbarpos;
+        Settings.equalizerModel = model;
     }
 }

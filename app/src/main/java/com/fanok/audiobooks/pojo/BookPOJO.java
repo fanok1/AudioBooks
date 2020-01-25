@@ -39,9 +39,20 @@ public class BookPOJO {
         return name;
     }
 
-    public void setName(String name) {
-        if (name.isEmpty()) throw new IllegalArgumentException("Value must be not empty");
-        this.name = name;
+    public static Observable<BookPOJO> getDescription(String url) {
+        return Observable.create(observableEmitter -> {
+            if (url != null) {
+                BookPOJO articlesModels;
+                try {
+                    articlesModels = getBookByUrl(url);
+                    observableEmitter.onNext(articlesModels);
+                } catch (Exception e) {
+                    observableEmitter.onError(e);
+                } finally {
+                    observableEmitter.onComplete();
+                }
+            }
+        });
     }
 
     public String getUrl() {
@@ -302,18 +313,9 @@ public class BookPOJO {
                 || name == null || url == null;
     }
 
-    public static Observable<BookPOJO> getDescription(String url) {
-        return Observable.create(observableEmitter -> {
-            BookPOJO articlesModels;
-            try {
-                articlesModels = getBookByUrl(url);
-                observableEmitter.onNext(articlesModels);
-            } catch (Exception e) {
-                observableEmitter.onError(e);
-            } finally {
-                observableEmitter.onComplete();
-            }
-        });
+    public void setName(@NonNull String name) {
+        if (name.isEmpty()) throw new IllegalArgumentException("Value must be not empty");
+        this.name = name;
     }
 
     @NonNull

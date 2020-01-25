@@ -46,6 +46,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
     private BooksDBModel mBooksDBModel;
     private AudioDBModel mAudioDBModel;
     private FavoriteModel mFavoriteModel;
+    private ArrayList<BookPOJO> filterSearch;
     private int table;
     private boolean isLoading = false;
 
@@ -54,6 +55,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         mBooksDBModel = new BooksDBModel(context);
         mAudioDBModel = new AudioDBModel(context);
         mFavoriteModel = new FavoriteModel(context);
+        filterSearch = new ArrayList<>();
         this.table = table;
     }
 
@@ -212,13 +214,15 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
     @Override
     public void onSearch(String qery) {
-        ArrayList<BookPOJO> filter = new ArrayList<>();
-        for (BookPOJO book : books) {
-            if (book.getName().toLowerCase().contains(qery.toLowerCase())) {
-                filter.add(book);
+        filterSearch.clear();
+        if (books != null && books.size() > 0) {
+            for (BookPOJO book : books) {
+                if (book.getName().toLowerCase().contains(qery.toLowerCase())) {
+                    filterSearch.add(book);
+                }
             }
         }
-        getViewState().showData(filter);
+        getViewState().showData(filterSearch);
     }
 
     @Override

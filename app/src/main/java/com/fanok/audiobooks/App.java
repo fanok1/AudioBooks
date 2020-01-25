@@ -34,7 +34,7 @@ public class App extends Application {
         }
         MobileAds.initialize(this, "ca-app-pub-3595775191373219~2371571769");
 
-        Billing.initBilding(getBaseContext());
+        //Billing.initBilding(getBaseContext());
     }
 
 

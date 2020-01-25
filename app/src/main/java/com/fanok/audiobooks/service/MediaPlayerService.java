@@ -4,8 +4,13 @@ import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_IMAGE;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_PROGRESS;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_SELECTION;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_TITLE;
+import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SHOW_EQUALIZER;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SHOW_GET_PLUS;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SHOW_RATING;
+import static com.fanok.audiobooks.activity.SleepTimerActivity.bradcast_FinishTimer;
+import static com.fanok.audiobooks.activity.SleepTimerActivity.bradcast_UpdateTimer;
+import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_Equalizer;
+import static com.fanok.audiobooks.аndroid_equalizer.EqualizerFragment.Broadcast_EqualizerEnabled;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -20,9 +25,13 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.audiofx.BassBoost;
+import android.media.audiofx.Equalizer;
+import android.media.audiofx.PresetReverb;
 import android.media.session.MediaSessionManager;
 import android.os.Binder;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -37,6 +46,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
+import androidx.media.session.MediaButtonReceiver;
 
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.PlaybackStatus;
@@ -49,6 +59,9 @@ import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
+import com.fanok.audiobooks.presenter.SleepTimerPresenter;
+import com.fanok.audiobooks.аndroid_equalizer.EqualizerModel;
+import com.fanok.audiobooks.аndroid_equalizer.Settings;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -68,6 +81,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public static final String ACTION_PLAY = "audioBook.ACTION_PLAY";
     public static final String ACTION_PAUSE = "audioBook.ACTION_PAUSE";
     public static final String ACTION_PREVIOUS = "audioBook.ACTION_PREVIOUS";
+    public static final String ACTION_REWIND = "audioBook.ACTION_REWIND";
+    public static final String ACTION_FORWARD = "audioBook.ACTION_FAST_FORWARD";
     public static final String ACTION_NEXT = "audioBook.ACTION_NEXT";
     public static final String ACTION_STOP = "audioBook.ACTION_STOP";
     public static final String Broadcast_DELETE_NOTIFICATION = "brodcast.DELETE_NOTIFICATION";
@@ -79,15 +94,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private static final String CHANNEL_ID = "124";
     private static final String CHANNEL_NAME = "Player";
     private static boolean isPlay = false;
-
-    private static final int countAudioWereShowingRatingPopUp = 50;
+    public static final int countAudioWereShowingRatingPopUp = 50;
+    private static final int REWIND = 30000;
+    private static final int FAST_FORWARD = 30000;
 
     private static final int countAudioWereShowingActivity = 25;
     private long timeStarting;
 
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
-    private final Handler handler = new Handler();
+    private final Handler handler1 = new Handler();
+    private final Handler handler2 = new Handler();
     private MediaPlayer mediaPlayer;
     //MediaSession
     private MediaSessionManager mediaSessionManager;
@@ -113,6 +130,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private Bitmap image = null;
     private int timeStart = 0;
     private StorageUtil storage;
+    private CountDownTimer mCountDownTimer;
+    private boolean mEqualizerEnabled = true;
+
+    private Equalizer mEqualizer;
+    private BassBoost bassBoost;
+    private PresetReverb presetReverb;
 
     public static int getNotificationId() {
         return NOTIFICATION_ID;
@@ -193,21 +216,39 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private BroadcastReceiver seekToNext30Sec = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            seekTo(mediaPlayer.getCurrentPosition() + 30000);
-            if (!isPlaying()) {
-                resumeMedia();
-            }
+            fastForward(FAST_FORWARD);
         }
     };
     private BroadcastReceiver seekToPrevious10Sec = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            seekTo(mediaPlayer.getCurrentPosition() - 10000);
-            if (!isPlaying()) {
+            rewind(REWIND);
+        }
+    };
+    private BroadcastReceiver equalizer = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Intent broadcastIntent = new Intent(Broadcast_SHOW_EQUALIZER);
+            if (mediaPlayer != null) {
+                broadcastIntent.putExtra("id", mediaPlayer.getAudioSessionId());
+            }
+            sendBroadcast(broadcastIntent);
+        }
+    };
+    private BroadcastReceiver setSpeed = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mediaPlayer != null) {
                 resumeMedia();
+                try {
+                    mediaPlayer.setPlaybackParams(
+                            mediaPlayer.getPlaybackParams().setSpeed(BookPresenter.getSpeed()));
+                } catch (IllegalArgumentException ignored) {
+                }
             }
         }
     };
+
     private BroadcastReceiver showTitle = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -225,40 +266,143 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             sendBroadcast(broadcastIntent);
         }
     };
-
-    private BroadcastReceiver setSpeed = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mediaPlayer != null) {
-                Intent broadcastIntent = new Intent(Broadcast_SET_IMAGE);
-                broadcastIntent.putExtra("id", R.drawable.ic_pause);
-                sendBroadcast(broadcastIntent);
-                mediaPlayer.setPlaybackParams(
-                        mediaPlayer.getPlaybackParams().setSpeed(BookPresenter.speed));
-            }
-        }
-    };
-
     private BroadcastReceiver closeNotPrerepred = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive: closeNotPrerepred");
             if (!prepared) {
+                stopMedia();
                 stopForeground(true);
                 stopSelf();
             }
         }
     };
-
     private BroadcastReceiver closeIfPause = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (!isPlaying()) {
+                stopMedia();
                 stopForeground(true);
                 stopSelf();
             }
         }
     };
+    private BroadcastReceiver equalizerEnabled = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mEqualizerEnabled = intent.getBooleanExtra("enabled", false);
+            if (!mEqualizerEnabled) {
+                stopEqualizer();
+            } else {
+                storage.loadEqualizerSettings();
+                startEqualizer();
+            }
+        }
+    };
+    private BroadcastReceiver sleepTimer = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (SleepTimerPresenter.isTimerStarted()) {
+                //startTimer
+                long time = intent.getLongExtra("time", 0);
+                mCountDownTimer = new CountDownTimer(time, 1000) {
+                    @Override
+                    public void onTick(long l) {
+                        Intent broadcastIntent = new Intent(bradcast_UpdateTimer);
+                        broadcastIntent.putExtra("time", l);
+                        sendBroadcast(broadcastIntent);
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        SleepTimerPresenter.setTimerStarted(false);
+                        sendBroadcast(new Intent(bradcast_FinishTimer));
+                        stopMedia();
+                        stopForeground(true);
+                        stopSelf();
+                    }
+                };
+                mCountDownTimer.start();
+            } else {
+                //stopTimer
+                if (mCountDownTimer != null) {
+                    mCountDownTimer.cancel();
+                }
+            }
+        }
+    };
+
+    private void rewind(int ms) {
+        seekTo(mediaPlayer.getCurrentPosition() - ms);
+        if (!isPlaying()) {
+            resumeMedia();
+        }
+    }
+
+    private void fastForward(int ms) {
+        seekTo(mediaPlayer.getCurrentPosition() + ms);
+        if (!isPlaying()) {
+            resumeMedia();
+        }
+    }
+
+    private void startEqualizer() {
+        if (mediaPlayer == null) return;
+        stopEqualizer();
+        int audioSesionId = mediaPlayer.getAudioSessionId();
+        if (audioSesionId > 0) {
+            if (Settings.equalizerModel == null) {
+                Settings.equalizerModel = new EqualizerModel();
+                Settings.equalizerModel.setReverbPreset(PresetReverb.PRESET_NONE);
+                Settings.equalizerModel.setBassStrength((short) (1000 / 19));
+            }
+
+            try {
+                mEqualizer = new Equalizer(0, audioSesionId);
+
+                bassBoost = new BassBoost(0, audioSesionId);
+                bassBoost.setEnabled(Settings.isEqualizerEnabled);
+                BassBoost.Settings bassBoostSettingTemp = bassBoost.getProperties();
+                BassBoost.Settings bassBoostSetting = new BassBoost.Settings(
+                        bassBoostSettingTemp.toString());
+                bassBoostSetting.strength = Settings.equalizerModel.getBassStrength();
+                bassBoost.setProperties(bassBoostSetting);
+
+                presetReverb = new PresetReverb(0, audioSesionId);
+                presetReverb.setPreset(Settings.equalizerModel.getReverbPreset());
+                presetReverb.setEnabled(Settings.isEqualizerEnabled);
+
+                mEqualizer.setEnabled(Settings.isEqualizerEnabled);
+
+                if (Settings.presetPos == 0) {
+                    for (short bandIdx = 0; bandIdx < mEqualizer.getNumberOfBands(); bandIdx++) {
+                        mEqualizer.setBandLevel(bandIdx, (short) Settings.seekbarpos[bandIdx]);
+                    }
+                } else {
+                    mEqualizer.usePreset((short) Settings.presetPos);
+                }
+            } catch (RuntimeException e) {
+                stopEqualizer();
+            }
+        }
+    }
+
+    private void stopEqualizer() {
+        if (mEqualizer != null) {
+            mEqualizer.release();
+            mEqualizer = null;
+        }
+
+        if (bassBoost != null) {
+            bassBoost.release();
+            bassBoost = null;
+        }
+
+        if (presetReverb != null) {
+            presetReverb.release();
+            presetReverb = null;
+        }
+    }
 
 
     public static boolean isPlay() {
@@ -297,6 +441,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         register_setSpeed();
         register_closeIfNotPrepered();
         register_closeIfPause();
+        register_sleepTimer();
+        register_equalizer();
+        register_equalizerEnabled();
         timeStarting = new Date().getTime();
     }
 
@@ -312,8 +459,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             audioList = storage.loadAudio();
             audioIndex = storage.loadAudioIndex();
             timeStart = storage.loadTimeStart();
-            mAudioDBModel = new AudioDBModel(this);
             String urlImage = storage.loadImageUrl();
+            mAudioDBModel = new AudioDBModel(this);
             if (urlImage.isEmpty()) {
                 imageUrl = "";
                 image = null;
@@ -358,6 +505,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
         //Handle Intent action from MediaSession.TransportControls
         handleIncomingActions(intent);
+        MediaButtonReceiver.handleIntent(mediaSession, intent);
         return START_NOT_STICKY;
     }
 
@@ -401,10 +549,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         unregisterReceiver(setSpeed);
         unregisterReceiver(closeNotPrerepred);
         unregisterReceiver(closeIfPause);
-
-        //clear cached playlist
-        storage.clearCachedAudioPlaylist();
+        unregisterReceiver(sleepTimer);
+        unregisterReceiver(equalizer);
+        unregisterReceiver(equalizerEnabled);
         mAudioDBModel.closeDB();
+        SleepTimerPresenter.setTimerStarted(false);
     }
 
     /**
@@ -476,6 +625,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         } else if (BookPresenter.resume) {
             if (timeStart != 0) seekTo(timeStart * 1000);
             BookPresenter.resume = false;
+        }
+
+        if (mEqualizerEnabled) {
+            storage.loadEqualizerSettings();
+            if (Settings.isEqualizerEnabled) {
+                startEqualizer();
+            }
         }
 
     }
@@ -586,8 +742,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mediaPlayer.setPlaybackParams(
-                    mediaPlayer.getPlaybackParams().setSpeed(BookPresenter.speed));
+            try {
+                mediaPlayer.setPlaybackParams(
+                        mediaPlayer.getPlaybackParams().setSpeed(BookPresenter.getSpeed()));
+            } catch (IllegalArgumentException ignored) {
+            }
         }
 
         mediaPlayer.prepareAsync();
@@ -633,11 +792,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     private void stopMedia() {
         if (mediaPlayer == null) return;
-        if (isPlaying()) {
-            isPlay = false;
-            mediaPlayer.stop();
-            mediaSession.setActive(false);
-        }
+        isPlay = false;
+        mediaPlayer.stop();
+        mediaSession.setActive(false);
+
     }
 
     private void pauseMedia() {
@@ -799,6 +957,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
         mediaSession.setPlaybackState(state);
 
+        Intent mediaButtonIntent = new Intent(
+                Intent.ACTION_MEDIA_BUTTON, null, getApplicationContext(),
+                MediaButtonReceiver.class);
+        mediaSession.setMediaButtonReceiver(
+                PendingIntent.getBroadcast(getApplicationContext(), 0, mediaButtonIntent, 0));
+
         // Attach Callback to receive MediaSession updates
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
             // Implement callbacks
@@ -847,7 +1011,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 seekTo(position);
             }
 
+            @Override
+            public void onRewind() {
+                super.onRewind();
+                rewind(REWIND);
+            }
 
+            @Override
+            public void onFastForward() {
+                super.onFastForward();
+                fastForward(FAST_FORWARD);
+            }
         });
     }
 
@@ -915,9 +1089,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 .setContentTitle(activeAudio.getName())
                 .setContentInfo("")
                 .setGroup("GroupPlayer")
+                .addAction(R.drawable.ic_notification_rewind_30, "rewind", playbackAction(4))
                 .addAction(R.drawable.ic_notification_previous, "previous", playbackAction(3))
                 .addAction(notificationAction, "pause", play_pauseAction)
                 .addAction(R.drawable.ic_notification_next, "next", playbackAction(2))
+                .addAction(R.drawable.ic_notification_fast_forward_30, "forward", playbackAction(5))
                 .setAutoCancel(true)
                 .setContentIntent(resultPendingIntent)
                 .setLargeIcon(image);
@@ -982,6 +1158,14 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 // Previous track
                 playbackAction.setAction(ACTION_PREVIOUS);
                 return PendingIntent.getService(this, actionNumber, playbackAction, 0);
+            case 4:
+                // Rewind track
+                playbackAction.setAction(ACTION_REWIND);
+                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
+            case 5:
+                // Fast Froward track
+                playbackAction.setAction(ACTION_FORWARD);
+                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
             default:
                 break;
         }
@@ -1009,6 +1193,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             transportControls.skipToPrevious();
         } else if (actionString.equalsIgnoreCase(ACTION_STOP)) {
             transportControls.stop();
+        } else if (actionString.equalsIgnoreCase(ACTION_REWIND)) {
+            transportControls.rewind();
+        } else if (actionString.equalsIgnoreCase(ACTION_FORWARD)) {
+            transportControls.fastForward();
         }
     }
 
@@ -1051,7 +1239,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
                 if (isPlaying()) {
                     Runnable notification = this::startPlayProgressUpdater;
-                    handler.postDelayed(notification, 200);
+                    handler1.postDelayed(notification, 200);
                 }
             }
         } catch (IllegalStateException ignored) {
@@ -1066,7 +1254,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                     int time = mediaPlayer.getCurrentPosition() / 1000;
                     mAudioDBModel.setTime(urlBook, time);
                     Runnable notification = this::startTimeProgressUpdater;
-                    handler.postDelayed(notification, 10000);
+                    handler2.postDelayed(notification, 10000);
                 }
             }
         } catch (IllegalStateException ignored) {
@@ -1136,6 +1324,23 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         IntentFilter filter = new IntentFilter(Broadcast_CloseIfPause);
         registerReceiver(closeIfPause, filter);
     }
+
+    private void register_sleepTimer() {
+        IntentFilter filter = new IntentFilter(SleepTimerPresenter.Broadcast_SleepTimer);
+        registerReceiver(sleepTimer, filter);
+    }
+
+    private void register_equalizer() {
+        IntentFilter filter = new IntentFilter(Broadcast_Equalizer);
+        registerReceiver(equalizer, filter);
+    }
+
+    private void register_equalizerEnabled() {
+        IntentFilter filter = new IntentFilter(Broadcast_EqualizerEnabled);
+        registerReceiver(equalizerEnabled, filter);
+    }
+
+
 
     /**
      * Service Binder

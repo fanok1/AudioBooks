@@ -19,11 +19,15 @@
     <color name="BackgroundItemColor">#eff2ed</color>
     <color name="selectableItemBackgroundLight">#efefef</color>
     <color name="colorNavigayionItemLight">#626368</color>
-
     <color name="colorAcentPopupWindow">#FFD004</color>
-
-
     <color name="actionBarTrac">#b3000000</color>
+
+    <color name="secondaryColor">#4caf50</color>
+    <color name="primaryColorEq">#212121</color>
+    <color name="primaryLightColorEq">#313131</color>
+    <color name="primaryDarkColorEq">#101010</color>
+    <color name="playingCardColor">#444caf50</color>
+    <color name="textColor">#FAFAFA</color>
 
 
 </resources>

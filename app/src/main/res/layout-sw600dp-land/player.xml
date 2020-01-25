@@ -45,6 +45,7 @@
             tools:text="0001"
             tools:textColor="#000" />
 
+
         <ImageButton
             android:id="@+id/dowland"
             android:layout_width="wrap_content"
@@ -121,7 +122,7 @@
             android:paddingStart="@dimen/text_margin"
             android:paddingEnd="@dimen/text_margin"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_rewind_10" />
+            android:src="@drawable/ic_rewind_30" />
 
 
         <ImageButton

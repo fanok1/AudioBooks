@@ -28,6 +28,16 @@
             app:showAsAction="never" />
 
         <item
+            android:id="@+id/sleep_timer"
+            android:title="@string/sleep_timer"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/equalizer"
+            android:title="@string/equalizer"
+            app:showAsAction="never" />
+
+        <item
             android:id="@+id/openSite"
             android:title="@string/open_site"
             app:showAsAction="never" />

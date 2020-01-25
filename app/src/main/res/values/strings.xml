@@ -187,12 +187,12 @@
     <string name="how_is">Что это?</string>
     <string name="version">Версия</string>
     <string name="privacy_message">Все аудиокниги в приложении проигрываются с открытых ресурсов. Приложение осуществляет только поиск на таких ресурсах. Разработчики приложения не несут ответственность за данные аудио. Если вы обнаружили аудио, которое нарушает Ваши права интеллектуальной собственности, просим перейти по ссылке на сайт источник и обратиться к администрации данного сайта.</string>
-    <string name="MonobanckUAH" translatable="false">Monobanck UAH</string>
-    <string name="Monobanck" translatable="false">Monobanck</string>
+    <string name="MonobanckUAH" translatable="false">Monobank UAH</string>
+    <string name="Monobanck" translatable="false">Monobank</string>
     <string name="MonobanckNumberUAH" translatable="false">5375 4114 0050 6411</string>
     <string name="MonobanckUSD" translatable="false">Monobank USD</string>
     <string name="MonobanckNumberUSD" translatable="false">5375 4188 0202 2079</string>
-    <string name="MonobanckEUR" translatable="false">Monobanck EUR</string>
+    <string name="MonobanckEUR" translatable="false">Monobank EUR</string>
     <string name="MonobanckNumberEUR" translatable="false">5375 4199 0104 6886</string>
     <string name="privat">ПриватБанк</string>
     <string name="privatNumber" translatable="false">5168 7573 6995 1399</string>
@@ -201,7 +201,7 @@
     <string name="paypal" translatable="false">PayPal</string>
     <string name="paypalEmail" translatable="false">fanok.inc@gmail.com</string>
     <string name="qiwi" translatable="false">QIWI</string>
-    <string name="qiwiNumber" translatable="false">https://is.gd/YgDGST</string>
+    <string name="qiwiNumber" translatable="false">ONAMA629</string>
     <string name="webmoney" translatable="false">WebMoney</string>
     <string name="wmu" translatable="false">WMU</string>
     <string name="wmuNumber" translatable="false">U194698990241</string>
@@ -264,5 +264,25 @@
     <string name="excellent">Отлично</string>
     <string name="tech_support_plus">Улучшенная техподдержка</string>
     <string name="rewardedad_not_loaded">Реклама еще не загружена</string>
+    <string name="sleep_timer">Таймер сна</string>
+    <string name="delete">Удалить</string>
+    <string name="numb_1" translatable="false">1</string>
+    <string name="numb_2" translatable="false">2</string>
+    <string name="numb_3" translatable="false">3</string>
+    <string name="numb_5" translatable="false">5</string>
+    <string name="numb_4" translatable="false">4</string>
+    <string name="numb_6" translatable="false">6</string>
+    <string name="numb_7" translatable="false">7</string>
+    <string name="numb_8" translatable="false">8</string>
+    <string name="numb_9" translatable="false">9</string>
+    <string name="numb_0" translatable="false">0</string>
+    <string name="hours">ч.</string>
+    <string name="minutes">м.</string>
+    <string name="seconds">с.</string>
+    <string name="zero_time" translatable="false">00</string>
+    <string name="equalizer">Эквалайзер</string>
+    <string name="yd">Яндекс Деньги</string>
+    <string name="ydNumb" translatable="false">410014301337309</string>
+    <string name="yandex_form">Яндекс форма</string>
 
 </resources>

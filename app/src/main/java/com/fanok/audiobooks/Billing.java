@@ -49,11 +49,13 @@ public class Billing {
 
                     //если товар уже куплен, предоставить его пользователю
                     boolean temp = false;
-                    for (int i = 0; i < purchasesList.size(); i++) {
-                        String purchaseId = purchasesList.get(i).getSku();
-                        if (TextUtils.equals(mSkuId, purchaseId)) {
-                            temp = true;
-                            break;
+                    if (purchasesList != null) {
+                        for (int i = 0; i < purchasesList.size(); i++) {
+                            String purchaseId = purchasesList.get(i).getSku();
+                            if (TextUtils.equals(mSkuId, purchaseId)) {
+                                temp = true;
+                                break;
+                            }
                         }
                     }
                     payComplete(context, temp);
