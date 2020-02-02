@@ -90,6 +90,16 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     }
 
     @Override
+    public int getHistoryCount() {
+        return getCount("history");
+    }
+
+    @Override
+    public int getFavoriteCount() {
+        return getCount("favorite");
+    }
+
+    @Override
     public ArrayList<BookPOJO> getAllFavorite() {
         return getAll("favorite");
     }
@@ -97,6 +107,16 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     @Override
     public ArrayList<BookPOJO> getAllHistory() {
         return getAll("history");
+    }
+
+    @Override
+    public BookPOJO getHistory() {
+        return getLast("history");
+    }
+
+    @Override
+    public BookPOJO getFavorite() {
+        return getLast("favorite");
     }
 
     @Override
@@ -175,6 +195,7 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
                 book.setTime(cursor.getString(12));
                 book.setReting(cursor.getString(13));
                 book.setComents(cursor.getString(14));
+                book.setDesc(cursor.getString(15));
                 contactList.add(book);
             } while (cursor.moveToPrevious());
         }
@@ -199,6 +220,7 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
         contentValues.put("time", book.getTime());
         contentValues.put("reting", book.getReting());
         contentValues.put("coments", book.getComents());
+        contentValues.put("description", book.getDesc());
         return contentValues;
     }
 
@@ -206,6 +228,50 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
         SQLiteDatabase db = getDBHelper().getWritableDatabase();
         db.delete(table, null, null);
         db.close();
+    }
+
+    private BookPOJO getLast(String table) {
+        SQLiteDatabase db = getDBHelper().getWritableDatabase();
+
+        String selectQuery = "SELECT * FROM " + table + " ORDER BY id DESC LIMIT 1";
+
+        BookPOJO book = null;
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        if (cursor.moveToLast()) {
+            book = new BookPOJO();
+            book.setName(cursor.getString(1));
+            book.setUrl(cursor.getString(2));
+            book.setPhoto(cursor.getString(3));
+            book.setGenre(cursor.getString(4));
+            book.setUrlGenre(cursor.getString(5));
+            book.setAutor(cursor.getString(6));
+            book.setUrlAutor(cursor.getString(7));
+            book.setArtist(cursor.getString(8));
+            book.setUrlArtist(cursor.getString(9));
+            book.setSeries(cursor.getString(10));
+            book.setUrlSeries(cursor.getString(11));
+            book.setTime(cursor.getString(12));
+            book.setReting(cursor.getString(13));
+            book.setComents(cursor.getString(14));
+            book.setDesc(cursor.getString(15));
+        }
+        cursor.close();
+        db.close();
+        return book;
+    }
+
+    private int getCount(String table) {
+        String countQuery = "SELECT  * FROM " + table;
+        SQLiteDatabase db = getDBHelper().getWritableDatabase();
+        Cursor cursor = db.rawQuery(countQuery, null);
+
+        int result = 0;
+        if (cursor != null) {
+            result = cursor.getCount();
+            cursor.close();
+        }
+        db.close();
+        return result;
     }
 
 

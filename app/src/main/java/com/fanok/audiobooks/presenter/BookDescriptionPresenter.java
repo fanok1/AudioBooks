@@ -29,9 +29,11 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
     private boolean isLoading = false;
     private DescriptionModel mModelDescription;
     private DescriptionPOJO mDescriptionPOJO;
+    private BookPOJO mBookPOJO;
 
-    public BookDescriptionPresenter(@NonNull String url) {
-        mModelDescription = new BookDescriptionModel(url);
+    public BookDescriptionPresenter(@NonNull BookPOJO bookPOJO) {
+        mModelDescription = new BookDescriptionModel(bookPOJO.getUrl());
+        mBookPOJO = bookPOJO;
     }
 
     @Override
@@ -71,6 +73,7 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
                         if (e.getMessage() != null) {
                             Log.d(TAG, e.getMessage());
                         }
+                        getViewState().showOtherBooksLine(false);
                     }
 
                     @Override
@@ -99,7 +102,8 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
 
                         @Override
                         public void onError(Throwable e) {
-                            getViewState().showRefreshDialog();
+                            mDescriptionPOJO = mBookPOJO.getDescriptionPOJO();
+                            onComplete();
                         }
 
                         @Override
@@ -113,5 +117,6 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
 
         }
     }
+
 
 }

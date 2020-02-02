@@ -120,6 +120,17 @@ public class StorageUtil {
         return preferences.getBoolean("battaryOptimizeDisenbled", false);
     }
 
+    public void storeSpeed(float speed) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putFloat("speed", speed);
+        editor.apply();
+    }
+
+    public float loadSpeed() {
+        preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
+        return preferences.getFloat("speed", 1);
+    }
+
     public void saveEqualizerSettings() {
         if (Settings.equalizerModel != null) {
             EqualizerSettings settings = new EqualizerSettings();

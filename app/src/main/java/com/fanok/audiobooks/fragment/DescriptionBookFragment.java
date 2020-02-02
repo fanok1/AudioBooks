@@ -18,7 +18,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -36,6 +35,7 @@ import com.fanok.audiobooks.interface_pacatge.book_content.Description;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.DescriptionPOJO;
 import com.fanok.audiobooks.presenter.BookDescriptionPresenter;
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ import butterknife.Unbinder;
 public class DescriptionBookFragment extends MvpAppCompatFragment implements Description {
 
     private static final String TAG = "DescriptionBookFragment";
-    private static final String ARG_URL = "arg_url";
+    private static final String ARG_BOOK_POJO = "arg_book_pojo";
     private static final int MAX_LINES = 4;
 
     @BindView(R.id.title)
@@ -94,22 +94,27 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     TextView mLike;
     @BindView(R.id.disLike)
     TextView mDisLike;
+    @BindView(R.id.descLine)
+    View mDescLine;
+    @BindView(R.id.otherBookLine)
+    View mOtherBookLine;
     private BooksOtherAdapter mAdapterBooksRecomended;
     private boolean showMore;
 
-    @ProvidePresenter
-    BookDescriptionPresenter provide() {
-        String url = Objects.requireNonNull(getArguments()).getString(ARG_URL);
-        if (url == null || url.isEmpty()) throw new NullPointerException();
-        return new BookDescriptionPresenter(url);
-    }
-
-    public static DescriptionBookFragment newInstance(@NonNull String url) {
+    public static DescriptionBookFragment newInstance(@NonNull BookPOJO pojo) {
         Bundle args = new Bundle();
-        args.putString(ARG_URL, url);
+        args.putString(ARG_BOOK_POJO, new Gson().toJson(pojo));
         DescriptionBookFragment fragment = new DescriptionBookFragment();
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @ProvidePresenter
+    BookDescriptionPresenter provide() {
+        BookPOJO pojo = new Gson().fromJson(
+                Objects.requireNonNull(getArguments()).getString(ARG_BOOK_POJO), BookPOJO.class);
+        if (pojo == null) throw new NullPointerException();
+        return new BookDescriptionPresenter(pojo);
     }
 
     @Nullable
@@ -169,136 +174,170 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
 
     @Override
     public void showDescription(@NonNull DescriptionPOJO description) {
-        mTitle.setText(description.getTitle());
-        Picasso.get()
-                .load(description.getPoster())
-                .placeholder(android.R.drawable.ic_menu_gallery)
-                .error(android.R.drawable.ic_menu_gallery)
-                .into(mImageView);
-
-        BookActivity activity = (BookActivity) getActivity();
-
-        if (activity != null) {
-            mImageView.setOnClickListener(view ->
-                    ImageFullScreenActivity.start(activity,
-                            description.getPoster(), description.getTitle(),
-                            mImageView));
-        }
-
-        if (mGenre != null) {
-            if (!description.getGenre().isEmpty()) {
-                mGenre.setText(description.getGenre());
-            } else if (mGenre.getVisibility() != View.GONE) {
-                mGenre.setVisibility(View.GONE);
+        try {
+            if (mTitle != null && description.getTitle() != null
+                    && !description.getTitle().isEmpty()) {
+                mTitle.setText(description.getTitle());
             }
-        }
 
-        String reting = String.valueOf(description.getReiting());
-        mReting.setText(reting);
-
-        if (mTime != null) {
-            if (!description.getTime().isEmpty()) {
-                mTime.setText(description.getTime());
-            } else if (mTime.getVisibility() != View.GONE) {
-                mTime.setVisibility(View.GONE);
+            if (mImageView != null) {
+                Picasso.get()
+                        .load(description.getPoster())
+                        .placeholder(android.R.drawable.ic_menu_gallery)
+                        .error(android.R.drawable.ic_menu_gallery)
+                        .into(mImageView);
             }
-        }
 
+            BookActivity activity = (BookActivity) getActivity();
 
-        mAuthor.setText(description.getAutor());
-        mArtist.setText(description.getArtist());
-        if (!description.getSeries().isEmpty()) {
-            mSeries.setText(description.getSeries());
-            if (activity != null) {
-                activity.showSiries();
+            if (activity != null && mImageView != null) {
+                mImageView.setOnClickListener(view ->
+                        ImageFullScreenActivity.start(activity,
+                                description.getPoster(), description.getTitle(),
+                                mImageView));
             }
-        } else {
-            if (mSeriesConteiner != null && mSeriesConteiner.getVisibility() != View.GONE) {
+
+            if (mGenre != null) {
+                if (description.getGenre() != null && !description.getGenre().isEmpty()) {
+                    mGenre.setText(description.getGenre());
+                } else if (mGenre.getVisibility() != View.GONE) {
+                    mGenre.setVisibility(View.GONE);
+                }
+            }
+
+            if (mReting != null) {
+                String reting = String.valueOf(description.getReiting());
+                mReting.setText(reting);
+            }
+
+            if (mTime != null) {
+                if (!description.getTime().isEmpty()) {
+                    mTime.setText(description.getTime());
+                } else if (mTime.getVisibility() != View.GONE) {
+                    mTime.setVisibility(View.GONE);
+                }
+            }
+
+
+            if (mAuthor != null && description.getAutor() != null) {
+                mAuthor.setText(description.getAutor());
+            }
+            if (mArtist != null && description.getArtist() != null) {
+                mArtist.setText(description.getArtist());
+            }
+
+            if (mSeries != null) {
+                if (!description.getSeries().isEmpty()) {
+                    mSeries.setText(description.getSeries());
+                    if (activity != null) {
+                        activity.showSiries();
+                    }
+                } else {
+                    if (mSeriesConteiner != null && mSeriesConteiner.getVisibility() != View.GONE) {
+                        mSeriesConteiner.setVisibility(View.GONE);
+                    }
+                }
+            } else if (mSeriesConteiner != null && mSeriesConteiner.getVisibility() != View.GONE) {
                 mSeriesConteiner.setVisibility(View.GONE);
             }
-        }
 
-        if (description.isOtherReader()) {
-            if (activity != null) {
-                activity.showOtherArtist();
-            }
-        }
-
-
-        if (mDesc != null) {
-            mDesc.setMaxLines(MAX_VALUE);
-            if (description.getDescription() != null) {
-                mDesc.setText(description.getDescription());
-            } else {
-                mDesc.setText("");
-            }
-            mDesc.post(() -> {
-                if (mShowMore != null) {
-                    if (mDesc == null || mDesc.getLineCount() <= MAX_LINES) {
-                        mShowMore.setVisibility(View.GONE);
-                    } else {
-                        mShowMore.setVisibility(View.VISIBLE);
-                    }
-                    mShowMore.setOnClickListener(view1 -> {
-                        if (!showMore) {
-                            mDesc.setMaxLines(MAX_VALUE);
-                            mShowMore.setText(R.string.show_less);
-                        } else {
-                            mDesc.setMaxLines(MAX_LINES);
-                            mShowMore.setText(R.string.show_more);
-                        }
-                        showMore = !showMore;
-                    });
+            if (description.isOtherReader()) {
+                if (activity != null) {
+                    activity.showOtherArtist();
                 }
-                mDesc.setMaxLines(MAX_LINES);
-                showMore = false;
+            }
 
-            });
-        } else {
-            if (mShowMore != null && mShowMore.getVisibility() != View.GONE) {
-                mShowMore.setVisibility(View.GONE);
+
+            if (mDesc != null) {
+                mDesc.setMaxLines(MAX_VALUE);
+                if (description.getDescription() != null) {
+                    mDesc.setText(description.getDescription());
+                } else {
+                    mDesc.setText("");
+                }
+                mDesc.post(() -> {
+                    if (mShowMore != null) {
+                        if (mDesc == null || mDesc.getLineCount() <= MAX_LINES) {
+                            mShowMore.setVisibility(View.GONE);
+                        } else {
+                            mShowMore.setVisibility(View.VISIBLE);
+                        }
+                        mShowMore.setOnClickListener(view1 -> {
+                            if (!showMore) {
+                                mDesc.setMaxLines(MAX_VALUE);
+                                mShowMore.setText(R.string.show_less);
+                            } else {
+                                mDesc.setMaxLines(MAX_LINES);
+                                mShowMore.setText(R.string.show_more);
+                            }
+                            showMore = !showMore;
+                        });
+                    }
+                    mDesc.setMaxLines(MAX_LINES);
+                    showMore = false;
+
+                });
+
+                if (description.getDescription() == null
+                        || description.getDescription().isEmpty()) {
+                    mDescLine.setVisibility(View.GONE);
+                }
+            } else {
+                if (mShowMore != null && mShowMore.getVisibility() != View.GONE) {
+                    mShowMore.setVisibility(View.GONE);
+                }
+            }
+
+
+            if (mFavorite != null) {
+                mFavorite.setText(String.valueOf(description.getFavorite()));
+            }
+            if (mLike != null) {
+                mLike.setText(String.valueOf(description.getLike()));
+            }
+            if (mDisLike != null) {
+                mDisLike.setText(String.valueOf(description.getDisLike()));
+            }
+
+
+            if (mGenre != null) {
+                mGenre.setOnClickListener(
+                        view -> MainActivity.startMainActivity(Objects.requireNonNull(getContext()),
+                                Consts.FRAGMENT_AUDIOBOOK, description.getGenreUrl()));
+            }
+
+            if (mAuthor != null) {
+                mAuthor.setOnClickListener(
+                        view -> MainActivity.startMainActivity(Objects.requireNonNull(getContext()),
+                                Consts.FRAGMENT_AUDIOBOOK, description.getAutorUrl()));
+            }
+
+            if (mArtist != null) {
+                mArtist.setOnClickListener(
+                        view -> MainActivity.startMainActivity(Objects.requireNonNull(getContext()),
+                                Consts.FRAGMENT_AUDIOBOOK, description.getArtistUrl()));
+            }
+
+            if (mSeries != null) {
+                mSeries.setOnClickListener(view -> {
+                    if (activity != null) {
+                        activity.setTabPostion(getResources().getString(R.string.tab_text_3));
+                    }
+                });
+            }
+        } catch (Exception e) {
+            if (getActivity() != null) {
+                getActivity().recreate();
             }
         }
-
-
-        mFavorite.setText(String.valueOf(description.getFavorite()));
-        mLike.setText(String.valueOf(description.getLike()));
-        mDisLike.setText(String.valueOf(description.getDisLike()));
-
-
-        mGenre.setOnClickListener(
-                view -> MainActivity.startMainActivity(Objects.requireNonNull(getContext()),
-                        Consts.FRAGMENT_AUDIOBOOK, description.getGenreUrl()));
-
-        mAuthor.setOnClickListener(
-                view -> MainActivity.startMainActivity(Objects.requireNonNull(getContext()),
-                        Consts.FRAGMENT_AUDIOBOOK, description.getAutorUrl()));
-
-        mArtist.setOnClickListener(
-                view -> MainActivity.startMainActivity(Objects.requireNonNull(getContext()),
-                        Consts.FRAGMENT_AUDIOBOOK, description.getArtistUrl()));
-
-        mSeries.setOnClickListener(view -> {
-            if (activity != null) {
-                activity.setTabPostion(getResources().getString(R.string.tab_text_3));
-            }
-        });
     }
 
-
     @Override
-    public void showRefreshDialog() {
-        mProgressBar.setVisibility(View.GONE);
-        AlertDialog.Builder builder = new AlertDialog.Builder(Objects.requireNonNull(getContext()));
-        builder.setTitle(getResources().getString(R.string.error_load_data))
-                .setIcon(R.drawable.ic_launcher_foreground)
-                .setCancelable(true)
-                .setNegativeButton(getResources().getString(R.string.try_again),
-                        (dialog, id) -> {
-                            mPresenter.loadDescription();
-                            dialog.cancel();
-                        });
-        AlertDialog alert = builder.create();
-        alert.show();
+    public void showOtherBooksLine(boolean b) {
+        if (b) {
+            mOtherBookLine.setVisibility(View.VISIBLE);
+        } else {
+            mOtherBookLine.setVisibility(View.GONE);
+        }
     }
 }

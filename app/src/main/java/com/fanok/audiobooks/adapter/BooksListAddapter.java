@@ -148,24 +148,31 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
 
 
         void bind(BookPOJO book) {
-            if (book.getName() == null || book.getGenre() == null || book.getAutor() == null ||
-                    book.getArtist() == null || book.getUrl() == null || book.getUrlArtist() == null
-                    || book.getUrlGenre() == null) {
+            if (book.getName() == null || book.getUrl() == null) {
                 throw new NullPointerException();
             }
 
-            if (mPreferences.getBoolean(PARENTAL_CONTROL_ENABLED, false) &&
-                    !mPreferences.getBoolean(book.getGenre(), false)) {
+            if (mPreferences.getBoolean(PARENTAL_CONTROL_ENABLED, false) && (book.getGenre() == null
+                    || book.getGenre().isEmpty() ||
+                    !mPreferences.getBoolean(book.getGenre(), false))) {
                 Glide.with(mImageView).load(R.drawable.ic_parental_control).into(mImageView);
 
-            } else {
+            } else if (book.getPhoto() != null && !book.getPhoto().isEmpty()) {
                 Glide.with(mImageView).load(book.getPhoto())
                         .thumbnail(0.1f)
-                        .override(mImageView.getWidth(), mImageView.getHeight()).into(mImageView);
+                        .override(mImageView.getWidth(), mImageView.getHeight()).into(
+                        mImageView);
             }
 
+
             mTitle.setText(book.getName());
-            mGenre.setText(book.getGenre());
+
+            if (book.getGenre() != null && !book.getGenre().isEmpty()) {
+                mGenre.setVisibility(View.VISIBLE);
+                mGenre.setText(book.getGenre());
+            } else {
+                mGenre.setVisibility(View.GONE);
+            }
             if (!book.getReting().equals("0")) {
                 mReting.setText(book.getReting());
                 mReting.setVisibility(View.VISIBLE);

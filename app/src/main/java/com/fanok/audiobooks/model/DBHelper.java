@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(@NonNull Context context) {
-        super(context, DBName, null, 8);
+        super(context, DBName, null, 11);
     }
 
     @Override
@@ -31,7 +31,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 + "url_series text,"
                 + "time text,"
                 + "reting text,"
-                + "coments integer" + ");");
+                + "coments integer,"
+                + "description text" + ");");
 
         sqLiteDatabase.execSQL("create table history ("
                 + "id integer primary key autoincrement,"
@@ -48,20 +49,38 @@ public class DBHelper extends SQLiteOpenHelper {
                 + "url_series text,"
                 + "time text,"
                 + "reting text,"
-                + "coments integer" + ");");
+                + "coments integer,"
+                + "description text" + ");");
 
         sqLiteDatabase.execSQL("create table audio ("
                 + "id integer primary key autoincrement,"
                 + "url_book text not null UNIQUE,"
                 + "name text not null,"
                 + "time integer DEFAULT 0" + ");");
+
+        sqLiteDatabase.execSQL("create table books_audio ("
+                + "id integer primary key autoincrement,"
+                + "url_book text not null,"
+                + "books_name text not null,"
+                + "name_audio text,"
+                + "url_audio text" + ");");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS favorite");
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS history");
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS audio");
-        onCreate(sqLiteDatabase);
+        if (i == 8) {
+            sqLiteDatabase.execSQL("ALTER TABLE history ADD description text");
+            sqLiteDatabase.execSQL("ALTER TABLE favorite ADD description text");
+            sqLiteDatabase.execSQL("create table books_audio ("
+                    + "id integer primary key autoincrement,"
+                    + "url_book text not null,"
+                    + "books_name text not null,"
+                    + "name_audio text,"
+                    + "url_audio text,"
+                    + "time integer DEFAULT 0" + ");");
+        }
+
+
+
     }
 }

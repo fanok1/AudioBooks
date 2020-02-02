@@ -18,8 +18,8 @@ android {
         applicationId "com.fanok.audiobooks"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 23
-        versionName "1.1.15"
+        versionCode 25
+        versionName "1.17"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.release
@@ -110,6 +110,8 @@ dependencies {
     implementation ('com.google.firebase:firebase-analytics:17.2.2'){
         exclude group: 'androidx'
     }
+
+    implementation 'com.google.android.exoplayer:exoplayer:2.10.4'
 
 
 

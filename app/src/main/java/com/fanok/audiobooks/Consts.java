@@ -27,10 +27,10 @@ public class Consts {
     public static final Pattern REGEXP_URL = Pattern.compile(
             "^https?://.+\\..+$");
     public static final Pattern REGEXP_URL_PHOTO = Pattern.compile(
-            "^https?://.+\\.((jpg)|(png)|(jpeg))$");
+            "^https?://.+\\.((jpg)|(png)|(jpeg))$", Pattern.CASE_INSENSITIVE);
 
     public static final Pattern REGEXP_URL_MP3 = Pattern.compile(
-            "^https?://.+\\.mp3.*$");
+            "^https?://.+\\.mp3.*$", Pattern.CASE_INSENSITIVE);
 
     public static final Pattern REGEXP_EMAIL = Pattern.compile(
             "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
@@ -59,6 +59,7 @@ public class Consts {
     public static final int FRAGMENT_ARTIST = 3;
     public static final int FRAGMENT_FAVORITE = 4;
     public static final int FRAGMENT_HISTORY = 5;
+    public static final int LAST_BOOK = 6;
 
     public static final int IMPORT_SITE_KNIGA_V_UHE = 0;
 

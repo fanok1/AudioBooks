@@ -34,6 +34,7 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.ActivityImport;
 import com.fanok.audiobooks.activity.ParentalControlActivity;
 import com.fanok.audiobooks.model.AudioDBModel;
+import com.fanok.audiobooks.model.AudioListDBModel;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BackupPOJO;
 import com.google.gson.Gson;
@@ -42,6 +43,7 @@ import com.google.gson.GsonBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -120,8 +122,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         Bundle args = new Bundle();
         args.putString("rootKey", preferenceScreen.getKey());
         settingsFragment.setArguments(args);
-        if (getFragmentManager() != null) {
-            getFragmentManager()
+        if (getActivity() != null) {
+            getActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(getId(), settingsFragment)
                     .addToBackStack(null)
@@ -151,6 +153,24 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             }
             getActivity().recreate();
+            return true;
+        });
+
+        preferenceChangeListner("pref_downland_path", (preference, newValue) -> {
+
+            if (newValue.equals(getString(R.string.dir_value_sdcrd))) {
+                File[] folders = Objects.requireNonNull(getContext()).getExternalFilesDirs(null);
+                if (folders.length == 1) {
+                    Toast.makeText(getContext(), R.string.no_sdcard, Toast.LENGTH_SHORT).show();
+                    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(
+                            getContext());
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putString("pref_downland_path",
+                            getContext().getString(R.string.dir_value_emulated));
+                    editor.apply();
+                    return false;
+                }
+            }
             return true;
         });
 
@@ -350,9 +370,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         BackupPOJO backup = new BackupPOJO();
         BooksDBModel booksDBModel = new BooksDBModel(getContext());
         AudioDBModel audioDBModel = new AudioDBModel(getContext());
+        AudioListDBModel audioListDBModel = new AudioListDBModel(getContext());
         backup.setBooksFavorite(booksDBModel.getAllFavorite());
         backup.setBooksHistory(booksDBModel.getAllHistory());
         backup.setAudio(audioDBModel.getAll());
+        backup.setAudioList(audioListDBModel.getAll());
         GsonBuilder builder = new GsonBuilder();
         Gson gson = builder.create();
         FileWriter writer;
@@ -380,6 +402,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     private boolean restore(@NotNull String file) {
         BooksDBModel booksDBModel = new BooksDBModel(getContext());
         AudioDBModel audioDBModel = new AudioDBModel(getContext());
+        AudioListDBModel audioListDBModel = new AudioListDBModel(getContext());
         boolean returnValue = true;
         try {
             Gson gson = new Gson();
@@ -406,6 +429,16 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                     audioDBModel.add(backup.getAudio().get(backup.getAudio().size() - 1 - i));
                 }
             }
+
+            audioListDBModel.clearAll();
+            if (backup.getAudioList() != null) {
+                for (int i = 0; i < backup.getAudioList().size(); i++) {
+                    audioListDBModel.add(backup.getAudioList().get(i));
+                }
+            }
+
+
+
         } catch (Exception e) {
             returnValue = false;
         }

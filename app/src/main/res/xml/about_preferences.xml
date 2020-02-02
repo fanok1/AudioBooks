@@ -116,5 +116,9 @@
         android:key="write_autor"
         android:title="@string/write_autor" />
 
+    <Preference
+        android:key="open_4pda"
+        android:title="@string/open_4pda" />
+
 
 </PreferenceScreen>

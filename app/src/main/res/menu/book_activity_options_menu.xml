@@ -22,9 +22,15 @@
             android:title="@string/share"
             app:showAsAction="ifRoom" />
 
+
         <item
             android:id="@+id/refresh"
             android:title="@string/refresh"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/download_delete"
+            android:title="@string/dowland_delete"
             app:showAsAction="never" />
 
         <item

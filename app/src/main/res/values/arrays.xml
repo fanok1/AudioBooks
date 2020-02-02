@@ -31,6 +31,7 @@
         <item>@string/menu_artist</item>
         <item>@string/menu_favorite</item>
         <item>@string/menu_history</item>
+        <item>@string/last_book</item>
     </string-array>
 
     <string-array name="settings_start_screen_values">
@@ -40,6 +41,7 @@
         <item>3</item>
         <item>4</item>
         <item>5</item>
+        <item>6</item>
     </string-array>
 
     <string-array name="settings_sort_titles">
@@ -58,6 +60,19 @@
         <item>@string/sort_value_autor</item>
         <item>@string/sort_value_artist</item>
         <item>@string/sort_value_series</item>
+    </string-array>
+
+
+    <string-array name="settings_dir_titles">
+        <item>@string/dir_title_emulated</item>
+        <item>@string/dir_title_sdcrd</item>
+        <item>@string/dir_title_download</item>
+    </string-array>
+
+    <string-array name="settings_dir_values">
+        <item>@string/dir_value_emulated</item>
+        <item>@string/dir_value_sdcrd</item>
+        <item>@string/dir_value_download</item>
     </string-array>
 
     <string-array name="email_catigory">
@@ -94,4 +109,11 @@
         <item>#2c9633</item> <!-- fab multiselect color -->
         <item>#151515</item> <!-- address bar bg -->
     </array>
+    <string name="dir_title_emulated">Внутреннее</string>
+    <string name="dir_title_sdcrd">SD карта</string>
+    <string name="dir_value_emulated" translatable="false">emulated</string>
+    <string name="dir_value_sdcrd" translatable="false">sdcrd</string>
+    <string name="dir_value_download" translatable="false">download</string>
+    <string name="dir_title_download">Загрузки (для сторонних плееров)</string>
+    <string name="last_book">Последняя открытая книга</string>
 </resources>

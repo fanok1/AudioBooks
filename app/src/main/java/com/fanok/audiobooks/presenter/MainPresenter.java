@@ -3,6 +3,7 @@ package com.fanok.audiobooks.presenter;
 import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS;
 
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
@@ -20,6 +21,8 @@ import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.fragment.FavoriteFragment;
 import com.fanok.audiobooks.fragment.SettingsFragment;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
+import com.fanok.audiobooks.model.BooksDBModel;
+import com.fanok.audiobooks.pojo.BookPOJO;
 
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> implements
@@ -27,6 +30,11 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
     private static final String TAG = "MainPresenter";
 
+    private Context mContext;
+
+    public MainPresenter(@NonNull Context context) {
+        mContext = context;
+    }
 
     @Override
     public void onItemSelected(int id) {
@@ -77,7 +85,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements
     @Override
     public void startFragment(int fragmentID, String url) {
         if (url == null || url.isEmpty()) {
-            startFragment(fragmentID);
+            startFragment(fragmentID, false);
             return;
         }
 
@@ -106,13 +114,13 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                 break;
             case Consts.FRAGMENT_FAVORITE:
             case Consts.FRAGMENT_HISTORY:
-                startFragment(fragmentID);
+                startFragment(fragmentID, false);
                 break;
         }
     }
 
     @Override
-    public void startFragment(int fragmentID) {
+    public void startFragment(int fragmentID, boolean b) {
         System.out.println(getViewState());
         if (fragmentID == Consts.FRAGMENT_AUDIOBOOK) {
             Fragment fragment = BooksFragment.newInstance(Url.INDEX,
@@ -142,6 +150,15 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             Fragment fragment = FavoriteFragment.newInstance(R.string.menu_history,
                     Consts.TABLE_HISTORY);
             getViewState().showFragment(fragment, "history");
+        } else if (fragmentID == Consts.LAST_BOOK) {
+            Fragment fragment = BooksFragment.newInstance(Url.INDEX,
+                    R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            getViewState().showFragment(fragment, "audioBook");
+            if (!b) {
+                BooksDBModel booksDBModel = new BooksDBModel(mContext);
+                BookPOJO bookPOJO = booksDBModel.getHistory();
+                getViewState().showBooksActivity(bookPOJO);
+            }
         }
     }
 

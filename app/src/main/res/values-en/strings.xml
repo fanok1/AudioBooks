@@ -269,5 +269,28 @@
     <string name="sleep_timer">Sleep timer</string>
     <string name="yd">Yandex Money</string>
     <string name="yandex_form">Yandex Form</string>
+    <string name="autoplay">Auto play</string>
+    <string name="autoplay_desc">Run books immediately after opening</string>
+    <string name="delete_complite">Uninstall Complete</string>
+    <string name="dir_title_download">Downloads (for third-party players)</string>
+    <string name="dir_title_emulated">Internal</string>
+    <string name="dir_title_sdcrd">SD card</string>
+    <string name="dowland_delete">Download/Delete</string>
+    <string name="exit">Exit</string>
+    <string name="exit_confirm">Save change?</string>
+    <string name="last_book">Last open book</string>
+    <string name="no">No</string>
+    <string name="no_sdcard">SD card not installed</string>
+    <string name="not_can_writing">Insufficient write permissions to this folder.</string>
+    <string name="open_4pda">Open topic on 4pda</string>
+    <string name="reproduction">Play</string>
+    <string name="reproduction_desc">When you open a new book, continue to play the old</string>
+    <string name="scrollToSelected">Go to the active file</string>
+    <string name="scrollToSelectedDesc">The first in the list will be the active audio file</string>
+    <string name="seekTo">Rewind</string>
+    <string name="seekToPauseDesc">Shoot player with pause rewind time</string>
+    <string name="go_offline">Going to offline mode</string>
+    <string name="offline">Offline</string>
+    <string name="ofline_desc">Hide unloaded chapters from the list offline</string>
 
 </resources>

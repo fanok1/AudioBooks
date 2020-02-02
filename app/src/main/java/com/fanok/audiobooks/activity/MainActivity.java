@@ -24,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
@@ -36,10 +37,12 @@ import androidx.preference.PreferenceManager;
 
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
+import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.FragmentTagSteck;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
+import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.MainPresenter;
@@ -80,6 +83,11 @@ public class MainActivity extends MvpAppCompatActivity
 
     @InjectPresenter
     MainPresenter mPresenter;
+
+    @ProvidePresenter
+    MainPresenter provideBookPresenter() {
+        return new MainPresenter(getApplicationContext());
+    }
 
     private ArrayList<FragmentTagSteck> fragmentsTag;
     private NavigationView navigationView;
@@ -148,7 +156,6 @@ public class MainActivity extends MvpAppCompatActivity
             if (firstStart) {
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
                     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
                     if (pm != null) {
                         if (!pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks")) {
@@ -211,7 +218,8 @@ public class MainActivity extends MvpAppCompatActivity
                     SharedPreferences pref = PreferenceManager
                             .getDefaultSharedPreferences(this);
                     fragment = Integer.parseInt(pref.getString("pref_start_screen", "0"));
-                    mPresenter.startFragment(fragment);
+                    mPresenter.startFragment(fragment,
+                            intent.getBooleanExtra("notificationClick", false));
                 }
                 firstStart = false;
             }
@@ -446,5 +454,11 @@ public class MainActivity extends MvpAppCompatActivity
             }
         }
         return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public void showBooksActivity(@Nullable BookPOJO bookPOJO) {
+        if (bookPOJO == null) return;
+        BookActivity.startNewActivity(this, bookPOJO);
     }
 }

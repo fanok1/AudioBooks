@@ -1,5 +1,7 @@
 package com.fanok.audiobooks.service;
 
+import static com.fanok.audiobooks.activity.BookActivity.Broadcast_UPDATE_ADAPTER;
+
 import android.app.DownloadManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -7,6 +9,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Environment;
@@ -16,6 +19,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.preference.PreferenceManager;
 
 import com.downloader.Error;
 import com.downloader.OnDownloadListener;
@@ -26,6 +30,7 @@ import com.fanok.audiobooks.broadcasts.OnNotificationButtonClick;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class Download extends Service {
@@ -44,21 +49,36 @@ public class Download extends Service {
     private int downloadId;
     private PendingIntent notificationClickIntent;
     private boolean pause;
+    private String val;
 
     @Override
     public void onCreate() {
         super.onCreate();
         mList = new ArrayList<>();
         dirName = new ArrayList<>();
-        path = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS).getPath();
-        /*SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-        path = pref.getString("pref_dowland_path", "");
-        if (path.isEmpty()) {
-            path = new ContextWrapper(this).getFilesDir().toString();
-        }*/
 
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        File[] folders = getExternalFilesDirs(null);
+        val = pref.getString("pref_downland_path", getString(R.string.dir_value_emulated));
+        if (val.equals(getString(R.string.dir_value_emulated))) {
+            path = folders[0].getAbsolutePath();
+        } else if (val.equals(getString(R.string.dir_value_sdcrd))) {
+            if (folders.length == 1) {
+                Toast.makeText(this, R.string.no_sdcard, Toast.LENGTH_SHORT).show();
+                path = folders[0].getAbsolutePath();
+            } else {
+                path = folders[1].getAbsolutePath();
+            }
+        } else if (val.equals(getString(R.string.dir_value_download))) {
+            path = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS).getPath();
+        }
+
+        if (path.charAt(path.length() - 1) != '/') {
+            path += "/";
+        }
 
         Intent resultIntent = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
         notificationClickIntent = PendingIntent.getActivity(this, 0, resultIntent,
@@ -172,6 +192,7 @@ public class Download extends Service {
     }
 
     private void downloadNext(int positionNext) {
+        sendBroadcast(new Intent(Broadcast_UPDATE_ADAPTER));
         if (positionNext == mList.size()) {
             stopForeground(false);
             showNotification(positionNext, 0);
@@ -190,8 +211,10 @@ public class Download extends Service {
                 new NotificationCompat.Builder(getApplicationContext(), chanalId)
                         .setSmallIcon(R.drawable.ic_launcher_foreground)
                         .setGroup("GroupDownload")
-                        .setContentTitle(getString(R.string.loading))
-                        .setContentIntent(notificationClickIntent);
+                        .setContentTitle(getString(R.string.loading));
+        if (val.equals(getString(R.string.dir_value_download))) {
+            builder.setContentIntent(notificationClickIntent);
+        }
         if (postion < mList.size()) {
             builder.setContentText(postion + " " + getString(R.string.of) + " " + mList.size())
                     .setProgress(100, progress, false);

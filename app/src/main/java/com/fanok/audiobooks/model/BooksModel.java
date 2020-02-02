@@ -140,6 +140,11 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     }
                 }
 
+                Elements about = book.getElementsByClass("bookitem_about");
+                if (about != null && about.size() != 0) {
+                    bookPOJO.setDesc(about.first().text());
+                }
+
                 if (bookPOJO.isNull()) continue;
                 result.add(bookPOJO);
             }

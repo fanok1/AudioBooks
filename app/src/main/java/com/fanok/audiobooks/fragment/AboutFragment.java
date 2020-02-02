@@ -114,6 +114,13 @@ public class AboutFragment extends PreferenceFragmentCompat {
             return true;
         });
 
+        preferenceClickListner("open_4pda", preference -> {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://4pda.ru/forum/index.php?showtopic=978445"));
+            startActivity(browserIntent);
+            return true;
+        });
+
         preferenceClickListner("monoUAH", clickToCopy);
         preferenceClickListner("monoUSD", clickToCopy);
         preferenceClickListner("monoEUR", clickToCopy);

@@ -26,6 +26,41 @@
         android:key="pref_start_screen"
         android:title="@string/setting_start_menu" />
 
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:icon="@drawable/ic_web"
+        android:key="offline"
+        android:summary="@string/ofline_desc"
+        android:title="@string/offline" />
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:icon="@drawable/ic_album"
+        android:key="reproductionPref"
+        android:summary="@string/reproduction_desc"
+        android:title="@string/reproduction" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:icon="@drawable/ic_auto_play"
+        android:key="autoPlayPref"
+        android:summary="@string/autoplay_desc"
+        android:title="@string/autoplay" />
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:icon="@drawable/ic_fast_forward_pref"
+        android:key="seekToPausePref"
+        android:summary="@string/seekToPauseDesc"
+        android:title="@string/seekTo" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:icon="@drawable/ic_scroll_to"
+        android:key="scrollToSelectedPref"
+        android:summary="@string/scrollToSelectedDesc"
+        android:title="@string/scrollToSelected" />
+
     <Preference
         android:icon="@drawable/ic_lock"
         android:key="parentalControl"
@@ -52,13 +87,16 @@
             android:title="@string/kniga_v_uhe"/>
     </PreferenceScreen>
 
-    <!--<Preference
-        android:key="pref_dowland_path"
-        android:summary="@string/select_folder_description"
+    <ListPreference
+        android:defaultValue="@string/dir_value_emulated"
+        android:dialogTitle="@string/pref_dowland_path"
+        android:entries="@array/settings_dir_titles"
+        android:entryValues="@array/settings_dir_values"
+        android:key="pref_downland_path"
         android:title="@string/pref_dowland_path"
         android:icon="@drawable/ic_folder">
-        <intent android:action="com.fanok.audiobooks.activity.SelectDirectoryActivity"/>
-    </Preference>-->
+
+    </ListPreference>
 
     <Preference
         android:icon="@drawable/ic_backup"

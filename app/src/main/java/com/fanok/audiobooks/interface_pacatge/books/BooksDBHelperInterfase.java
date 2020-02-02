@@ -25,9 +25,17 @@ public interface BooksDBHelperInterfase {
 
     void clearHistory();
 
+    int getHistoryCount();
+
+    int getFavoriteCount();
+
     ArrayList<BookPOJO> getAllFavorite();
 
     ArrayList<BookPOJO> getAllHistory();
+
+    BookPOJO getHistory();
+
+    BookPOJO getFavorite();
 
     ArrayList<String> getGenre();
 

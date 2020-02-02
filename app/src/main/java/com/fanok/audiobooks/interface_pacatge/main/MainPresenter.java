@@ -9,7 +9,7 @@ public interface MainPresenter {
 
     void startFragment(int fragment, String url);
 
-    void startFragment(int fragment);
+    void startFragment(int fragment, boolean b);
 
     void openSettingsOptimizeBattery(DialogInterface dialogInterface);
 }

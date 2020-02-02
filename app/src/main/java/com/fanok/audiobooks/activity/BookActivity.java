@@ -123,6 +123,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     public static final String Broadcast_SHOW_GET_PLUS = "ShowGetPlus";
     public static final String Broadcast_SHOW_RATING = "ShowRating";
     public static final String Broadcast_SHOW_EQUALIZER = "ShowEqualizer";
+    public static final String Broadcast_UPDATE_ADAPTER = "UpdateAdapter";
     private static final int REQUEST_WRITE_STORAGE = 145;
 
     private static String showingView;
@@ -138,6 +139,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     RadioButton mRadioAll;
     @BindView(R.id.dowland)
     ImageButton mDowland;
+    @BindView(R.id.delete)
+    ImageButton mDelete;
 
     public static String getShowingView() {
         return showingView;
@@ -187,6 +190,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     private BottomSheetBehavior bottomSheetBehavior;
     private RewardedAd rewardedAd;
     private boolean showedAd = false;
+    private LinearLayoutManager mLinearLayoutManager;
+    private SharedPreferences pref;
 
     private MenuItem mAddFavorite;
     private MenuItem mRemoveFavorite;
@@ -264,6 +269,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                 } catch (IllegalStateException ignored) {
                 }
             }
+        }
+    };
+
+    private BroadcastReceiver updateAdapter = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateAdapter();
         }
     };
 
@@ -415,7 +427,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
         mNotificationClick = intent.getBooleanExtra("notificationClick", false);
 
-        SharedPreferences pref = PreferenceManager
+        pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
         String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
@@ -429,7 +441,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             setTitle(mBookPOJO.getName().trim());
         }
         sectionsPagerAdapter = new SectionsPagerAdapter(this,
-                getSupportFragmentManager(), mBookPOJO.getUrl());
+                getSupportFragmentManager(), mBookPOJO);
         ViewPager viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(sectionsPagerAdapter);
         tabs = findViewById(R.id.tabs);
@@ -461,6 +473,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         registerReceiver(showGetPlus, new IntentFilter(Broadcast_SHOW_GET_PLUS));
         registerReceiver(showRating, new IntentFilter(Broadcast_SHOW_RATING));
         registerReceiver(showEqualizer, new IntentFilter(Broadcast_SHOW_EQUALIZER));
+        registerReceiver(updateAdapter, new IntentFilter(Broadcast_UPDATE_ADAPTER));
+
         int isTablet = getResources().getInteger(R.integer.isTablet);
         if (isTablet == 0 && (uiModeManager == null
                 || uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION)) {
@@ -525,7 +539,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                                 if (mDowland != null && mDowland.getVisibility() != View.VISIBLE &&
                                         mAudioAdapter.getSelectedItemsSize() > 0) {
                                     mDowland.setVisibility(View.VISIBLE);
+                                    mDelete.setVisibility(View.VISIBLE);
                                 }
+
 
                                 double alphaCollapse = (slideOffset - Consts.COLLAPS_BUTTON_VISIBLE)
                                         / Consts.COLLAPS_BUTTON_VISIBLE_STEP;
@@ -543,6 +559,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
                                 if (mDowland != null) {
                                     mDowland.animate().alpha(
+                                            (float) alphaCollapse).setDuration(
+                                            0);
+                                    mDelete.animate().alpha(
                                             (float) alphaCollapse).setDuration(
                                             0);
                                 }
@@ -574,6 +593,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
                                 if (mDowland != null && mDowland.getVisibility() != View.GONE) {
                                     mDowland.setVisibility(View.GONE);
+                                    mDelete.setVisibility(View.GONE);
                                 }
 
                                 if (mNameCurent.getText().toString().equals(
@@ -627,10 +647,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             }
         });
 
+        mDelete.setOnClickListener(view -> mPresenter.delete(mAudioAdapter.getSelectedItems()));
+
         mAudioAdapter = new AudioAdapter();
         mAudioAdapter.setListener((view, position) -> mPresenter.onItemSelected(view, position));
         mList.setAdapter(mAudioAdapter);
-        mList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        mLinearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        mList.setLayoutManager(mLinearLayoutManager);
         mAudioAdapter.setSelectedListner(() -> {
             if (mAudioAdapter.getSelectedItemsSize() == 0) {
                 if (mRadioAll != null && mRadioAll.getVisibility() != View.GONE) {
@@ -639,6 +662,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
                 if (mDowland != null && mDowland.getVisibility() != View.GONE) {
                     mDowland.setVisibility(View.GONE);
+                    mDelete.setVisibility(View.GONE);
                 }
                 if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.VISIBLE) {
                     mButtonCollapse.setVisibility(View.VISIBLE);
@@ -664,6 +688,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                 if (mDowland != null) {
                     if (mDowland.getVisibility() != View.VISIBLE) {
                         mDowland.setVisibility(View.VISIBLE);
+                        mDelete.setVisibility(View.VISIBLE);
                     }
                 }
                 if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.GONE) {
@@ -760,6 +785,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
         if (mDowland != null && mDowland.getVisibility() != View.GONE) {
             mDowland.setVisibility(View.GONE);
+            mDelete.setVisibility(View.GONE);
         }
 
         Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
@@ -791,6 +817,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         if (mDowland != null && mDowland.getVisibility() != View.VISIBLE
                 && mAudioAdapter.getSelectedItemsSize() > 0) {
             mDowland.setVisibility(View.VISIBLE);
+            mDelete.setVisibility(View.VISIBLE);
         }
 
         if (mAudioAdapter.getSelectedItemsSize() > 0) {
@@ -799,6 +826,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
             broadcastSend(broadcastIntent);
         }
+
+        int selected = mAudioAdapter.getIndexSelected();
+        boolean b = pref.getBoolean("scrollToSelectedPref", false);
+        if (selected != -1 && b) {
+            mLinearLayoutManager.scrollToPositionWithOffset(selected, 0);
+        }
+
     }
 
     @Override
@@ -856,7 +890,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             } else {
                 finish();
             }
+        } else if (menuItem.getItemId() == R.id.download_delete) {
+            if (bottomSheetBehavior != null &&
+                    bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+            mAudioAdapter.selectedItemsAddAll();
         }
+
         mPresenter.onOptionsMenuItemSelected(menuItem);
         return (super.onOptionsItemSelected(menuItem));
     }
@@ -876,6 +917,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         unregisterReceiver(showGetPlus);
         unregisterReceiver(showRating);
         unregisterReceiver(showEqualizer);
+        unregisterReceiver(updateAdapter);
         showingView = "";
         mPresenter.onDestroy();
         super.onDestroy();
@@ -1027,6 +1069,21 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     }
 
     @Override
+    public void showToast(int id) {
+        Toast.makeText(this, id, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void showToast(String s) {
+        Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void updateAdapter() {
+        if (mAudioAdapter != null) mAudioAdapter.notifyDataSetChanged();
+    }
+
+    @Override
     public void showRatingDialog() {
         AppRatingDialog builder = new AppRatingDialog.Builder()
                 .setPositiveButtonText(R.string.submit)
@@ -1071,6 +1128,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             if (mNotificationClick) {
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                intent.putExtra("notificationClick", true);
                 startActivity(intent);
             } else {
                 super.onBackPressed();

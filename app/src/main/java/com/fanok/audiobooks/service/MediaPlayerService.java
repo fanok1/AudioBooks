@@ -20,15 +20,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.media.audiofx.BassBoost;
 import android.media.audiofx.Equalizer;
 import android.media.audiofx.PresetReverb;
 import android.media.session.MediaSessionManager;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.CountDownTimer;
@@ -45,8 +46,10 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.media.session.MediaButtonReceiver;
+import androidx.preference.PreferenceManager;
 
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.PlaybackStatus;
@@ -62,20 +65,33 @@ import com.fanok.audiobooks.presenter.BookPresenter;
 import com.fanok.audiobooks.presenter.SleepTimerPresenter;
 import com.fanok.audiobooks.аndroid_equalizer.EqualizerModel;
 import com.fanok.audiobooks.аndroid_equalizer.Settings;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.audio.AudioAttributes;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.ProgressiveMediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelection;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.util.Util;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
 
-public class MediaPlayerService extends Service implements MediaPlayer.OnCompletionListener,
-        MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
-        MediaPlayer.OnSeekCompleteListener,
-        MediaPlayer.OnInfoListener, MediaPlayer.OnBufferingUpdateListener,
-
-        AudioManager.OnAudioFocusChangeListener {
+public class MediaPlayerService extends Service implements AudioManager.OnAudioFocusChangeListener {
 
 
     public static final String ACTION_PLAY = "audioBook.ACTION_PLAY";
@@ -105,7 +121,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private final IBinder mBinder = new LocalBinder();
     private final Handler handler1 = new Handler();
     private final Handler handler2 = new Handler();
-    private MediaPlayer mediaPlayer;
+    //private MediaPlayer mediaPlayer;
+    private SimpleExoPlayer mediaPlayer;
     //MediaSession
     private MediaSessionManager mediaSessionManager;
     private MediaSessionCompat mediaSession;
@@ -125,13 +142,14 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private String urlBook;
     private AudioDBModel mAudioDBModel;
     private boolean pause;
-    private boolean prepared = false;
+    //private boolean prepared = false;
     private String imageUrl = "";
     private Bitmap image = null;
     private int timeStart = 0;
     private StorageUtil storage;
     private CountDownTimer mCountDownTimer;
     private boolean mEqualizerEnabled = true;
+    private SharedPreferences mPreferences;
 
     private Equalizer mEqualizer;
     private BassBoost bassBoost;
@@ -159,6 +177,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         @Override
         public void onReceive(Context context, Intent intent) {
             buttonClick = true;
+            BookPresenter.resume = false;
             //Get the new media index form SharedPreferences
             audioIndex = storage.loadAudioIndex();
             if (audioIndex != -1 && audioIndex < audioList.size()) {
@@ -171,8 +190,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
             //A PLAY_NEW_AUDIO action received
             //reset mediaPlayer to play the new Audio
-            stopMedia();
-            mediaPlayer.reset();
+            stopMediaNotSave();
             initMediaPlayer();
             updateMetaData();
             buildNotification(PlaybackStatus.PLAYING);
@@ -199,17 +217,25 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         public void onReceive(Context context, Intent intent) {
             if (isPlaying()) {
                 pauseMedia();
-            } else if (prepared) {
-                resumeMedia();
+            } else if (mediaPlayer != null) {
+                if (isPrepared()) {
+                    resumeMedia();
+                } else {
+                    Toast.makeText(context, getString(R.string.worning_loading_not_finish),
+                            Toast.LENGTH_SHORT).show();
+                }
             } else {
-                Toast.makeText(context, getString(R.string.worning_loading_not_finish),
-                        Toast.LENGTH_SHORT).show();
+                initMediaPlayer();
             }
         }
     };
     private BroadcastReceiver seekTo = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            boolean b = mPreferences.getBoolean("seekToPausePref", true);
+            if (b) {
+                resumeMedia();
+            }
             seekTo(intent.getIntExtra("postion", 0));
         }
     };
@@ -241,8 +267,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mediaPlayer != null) {
                 resumeMedia();
                 try {
-                    mediaPlayer.setPlaybackParams(
-                            mediaPlayer.getPlaybackParams().setSpeed(BookPresenter.getSpeed()));
+                    PlaybackParameters param = new PlaybackParameters(BookPresenter.getSpeed());
+                    mediaPlayer.setPlaybackParameters(param);
                 } catch (IllegalArgumentException ignored) {
                 }
             }
@@ -270,8 +296,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive: closeNotPrerepred");
-            if (!prepared) {
-                stopMedia();
+            if (!isPrepared()) {
+                stopMediaNotSave();
                 stopForeground(true);
                 stopSelf();
             }
@@ -334,14 +360,16 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     private void rewind(int ms) {
         seekTo(mediaPlayer.getCurrentPosition() - ms);
-        if (!isPlaying()) {
+        boolean b = mPreferences.getBoolean("seekToPausePref", true);
+        if (!isPlaying() && b) {
             resumeMedia();
         }
     }
 
     private void fastForward(int ms) {
         seekTo(mediaPlayer.getCurrentPosition() + ms);
-        if (!isPlaying()) {
+        boolean b = mPreferences.getBoolean("seekToPausePref", true);
+        if (!isPlaying() && b) {
             resumeMedia();
         }
     }
@@ -506,13 +534,15 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         //Handle Intent action from MediaSession.TransportControls
         handleIncomingActions(intent);
         MediaButtonReceiver.handleIntent(mediaSession, intent);
+        mPreferences = PreferenceManager
+                .getDefaultSharedPreferences(this);
         return START_NOT_STICKY;
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
         if (!isPlaying()) {
-            mediaSession.release();
+            stopMedia();
         }
         return super.onUnbind(intent);
     }
@@ -520,13 +550,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mediaPlayer != null) {
-            int time = mediaPlayer.getCurrentPosition() / 1000;
-            mAudioDBModel.setTime(urlBook, time);
-            stopMedia();
-            mediaPlayer.release();
-        }
-
+        stopMedia();
         removeNotification();
         removeAudioFocus();
         //Disable the PhoneStateListener
@@ -556,89 +580,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         SleepTimerPresenter.setTimerStarted(false);
     }
 
-    /**
-     * MediaPlayer @+id/ methods
-     */
-    @Override
-    public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        //Invoked indicating buffering status of
-        //a media resource being streamed over the network.
-    }
-
-    @Override
-    public void onCompletion(MediaPlayer mp) {
-        //Invoked when playback of a media source has completed.
-
-        if (!buttonClick) {
-            skipToNext();
-            updateMetaData();
-        } else {
-            stopMedia();
-            stopSelf();
-        }
-        buttonClick = false;
-    }
-
-    @Override
-    public boolean onError(MediaPlayer mp, int what, int extra) {
-        //Invoked when there has been an error during an asynchronous operation
-        switch (what) {
-            case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
-                Log.d("MediaPlayer Error",
-                        "MEDIA ERROR NOT VALID FOR PROGRESSIVE PLAYBACK " + extra);
-                break;
-            case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
-                Log.d("MediaPlayer Error", "MEDIA ERROR SERVER DIED " + extra);
-                break;
-            case MediaPlayer.MEDIA_ERROR_UNKNOWN:
-                Log.d("MediaPlayer Error", "MEDIA ERROR UNKNOWN " + extra);
-                break;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean onInfo(MediaPlayer mp, int what, int extra) {
-        //Invoked to communicate some info
-        return false;
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        //Invoked when the media source is ready for playback.
-        prepared = true;
-        timeDuration = mp.getDuration();
-        playMedia();
-
-        if (BookPresenter.start && !StorageAds.idDisableAds()) {
-            long carentTime = new Date().getTime();
-            if ((carentTime - timeStarting) / 60000 >= 30) {
-                timeStarting = carentTime;
-                MyInterstitialAd.showRequire();
-            }
-        }
-
-        if (!BookPresenter.start) {
-            if (timeStart != 0) seekTo(timeStart * 1000);
-            pauseMedia();
-            BookPresenter.start = true;
-        } else if (BookPresenter.resume) {
-            if (timeStart != 0) seekTo(timeStart * 1000);
-            BookPresenter.resume = false;
-        }
-
-        if (mEqualizerEnabled) {
-            storage.loadEqualizerSettings();
-            if (Settings.isEqualizerEnabled) {
-                startEqualizer();
-            }
-        }
-
-    }
-
-    @Override
-    public void onSeekComplete(MediaPlayer mp) {
-        //Invoked indicating the completion of a seek operation.
+    private boolean isPrepared() {
+        return mediaPlayer != null && mediaPlayer.getPlaybackState() == Player.STATE_READY;
     }
 
     @Override
@@ -648,22 +591,22 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         switch (focusState) {
             case AudioManager.AUDIOFOCUS_GAIN:
                 // resume playback
-                if (mediaPlayer == null) {
-                    initMediaPlayer();
-                } else {
-                    if (!isPlaying() && !pause) {
-                        mediaPlayer.start();
-                        buildNotification(PlaybackStatus.PLAYING);
-                    } else {
-                        mediaPlayer.pause();
-                        buildNotification(PlaybackStatus.PAUSED);
+                if (mediaPlayer != null) {
+                    mediaPlayer.setVolume(1.0f);
+                    if (!isPlaying()) {
+                        if (!pause) {
+                            mediaPlayer.setPlayWhenReady(true);
+                            buildNotification(PlaybackStatus.PLAYING);
+                        } else {
+                            mediaPlayer.setPlayWhenReady(false);
+                            buildNotification(PlaybackStatus.PAUSED);
+                        }
                     }
                 }
-                mediaPlayer.setVolume(1.0f, 1.0f);
                 break;
             case AudioManager.AUDIOFOCUS_LOSS:
                 pauseMedia();
-                pause = false;
+                pause = true;
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 if (isPlaying()) {
@@ -676,8 +619,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 // Lost focus for a short time, but it's ok to keep playing
                 // at an attenuated level
-                pause = false;
-                if (isPlaying()) mediaPlayer.setVolume(0.1f, 0.1f);
+                pause = true;
+                if (isPlaying()) mediaPlayer.setVolume(0.1f);
                 break;
         }
     }
@@ -706,7 +649,8 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     public boolean isPlaying() {
         try {
-            return mediaPlayer != null && mediaPlayer.isPlaying();
+            return mediaPlayer != null && mediaPlayer.getPlaybackState() == Player.STATE_READY
+                    && mediaPlayer.getPlayWhenReady();
         } catch (Exception e) {
             return false;
         }
@@ -715,41 +659,177 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     /**
      * MediaPlayer actions
      */
-    private void initMediaPlayer() {
-        prepared = false;
-        if (mediaPlayer == null) {
-            mediaPlayer = new MediaPlayer();//new MediaPlayer instance
+
+    @Nullable
+    private File getSaveFile() {
+        File[] folders = getExternalFilesDirs(null);
+        for (File folder : folders) {
+            String url = activeAudio.getUrl();
+            if (url != null && !url.isEmpty()) {
+                File file = new File(folder.getAbsolutePath() + "/"
+                        + activeAudio.getBookName() + "/"
+                        + url.substring(url.lastIndexOf("/") + 1));
+                if (file.exists()) return file;
+            } else {
+                File file = new File(
+                        folder.getAbsolutePath() + "/" + activeAudio.getBookName() + "/"
+                                + activeAudio.getName() + ".mp3");
+                if (file.exists()) return file;
+            }
+
         }
+        return null;
+    }
+
+    private void initMediaPlayer() {
+
+        File file = getSaveFile();
+        TrackSelection.Factory trackSelectionFactory = new AdaptiveTrackSelection.Factory();
+        DataSource.Factory dateSourceFactory = new DefaultDataSourceFactory(this,
+                Util.getUserAgent(this, getPackageName()));
+
+        Uri uri;
+        if (file == null) {
+            uri = Uri.parse(activeAudio.getUrl());
+        } else {
+            uri = Uri.fromFile(file);
+        }
+
+        MediaSource mediaSource = new ProgressiveMediaSource.Factory(
+                dateSourceFactory).createMediaSource(uri);
+
+        buttonClick = false;
+
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+        mediaPlayer = ExoPlayerFactory.newSimpleInstance(this,
+                new DefaultTrackSelector(trackSelectionFactory));
 
         //Set up MediaPlayer event listeners
-        mediaPlayer.setOnCompletionListener(this);
-        mediaPlayer.setOnErrorListener(this);
-        mediaPlayer.setOnPreparedListener(this);
-        mediaPlayer.setOnBufferingUpdateListener(this);
-        mediaPlayer.setOnSeekCompleteListener(this);
-        mediaPlayer.setOnInfoListener(this);
-        //Reset so that the MediaPlayer is not pointing to another data source
-        mediaPlayer.reset();
 
 
-        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        try {
-            // Set the data source to the mediaFile location
-            mediaPlayer.setDataSource(activeAudio.getUrl());
-        } catch (IOException e) {
-            e.printStackTrace();
-            stopSelf();
-        }
+        mediaPlayer.addListener(new Player.EventListener() {
+            @Override
+            public void onTimelineChanged(Timeline timeline, @Nullable Object manifest,
+                    int reason) {
+
+            }
+
+            @Override
+            public void onTracksChanged(TrackGroupArray trackGroups,
+                    TrackSelectionArray trackSelections) {
+
+            }
+
+            @Override
+            public void onLoadingChanged(boolean isLoading) {
+
+            }
+
+            @Override
+            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                if (playbackState == Player.STATE_READY
+                        && timeDuration != (int) mediaPlayer.getDuration()) {
+                    timeDuration = (int) mediaPlayer.getDuration();
+                }
+                if (playbackState == Player.STATE_ENDED) {
+                    if (!buttonClick) {
+                        skipToNext();
+                        updateMetaData();
+                    } else {
+                        stopMedia();
+                        stopSelf();
+                    }
+                    buttonClick = false;
+                }
+                if (playWhenReady && playbackState == Player.STATE_READY) {
+                    if (!BookPresenter.start) {
+                        if (timeStart != 0) seekTo(timeStart * 1000);
+                    } else if (BookPresenter.resume) {
+                        if (timeStart != 0) seekTo(timeStart * 1000);
+                        BookPresenter.resume = false;
+                    }
+                    isPlay = true;
+                    mediaSession.setActive(true);
+                    startPlayProgressUpdater();
+                    startTimeProgressUpdater();
+                    buildNotification(PlaybackStatus.PLAYING);
+
+                    if (!BookPresenter.start) {
+                        BookPresenter.start = true;
+                        pauseMedia();
+                    }
+
+                    if (mEqualizerEnabled) {
+                        storage.loadEqualizerSettings();
+                        if (Settings.isEqualizerEnabled) {
+                            startEqualizer();
+                        }
+                    }
+                } else if (!playWhenReady && playbackState == Player.STATE_READY) {
+                    buildNotification(PlaybackStatus.PAUSED);
+                    isPlay = false;
+                    mediaSession.setActive(false);
+                    resumePosition = (int) mediaPlayer.getCurrentPosition();
+                    int time = resumePosition / 1000;
+                    mAudioDBModel.setTime(urlBook, time);
+                }
+
+            }
+
+            @Override
+            public void onPlayerError(ExoPlaybackException error) {
+                Log.d(TAG, "onPlayerError: " + error);
+            }
+
+            @Override
+            public void onPositionDiscontinuity(int reason) {
+
+            }
+
+            @Override
+            public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+
+            }
+
+            @Override
+            public void onSeekProcessed() {
+
+            }
+        });
+
+
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.CONTENT_TYPE_SPEECH)
+                .build();
+        mediaPlayer.setAudioAttributes(audioAttributes);
+
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
-                mediaPlayer.setPlaybackParams(
-                        mediaPlayer.getPlaybackParams().setSpeed(BookPresenter.getSpeed()));
+                PlaybackParameters param = new PlaybackParameters(BookPresenter.getSpeed());
+                mediaPlayer.setPlaybackParameters(param);
             } catch (IllegalArgumentException ignored) {
             }
         }
 
-        mediaPlayer.prepareAsync();
+
+        if (BookPresenter.start && !StorageAds.idDisableAds()) {
+            long carentTime = new Date().getTime();
+            if ((carentTime - timeStarting) / 60000 >= 30) {
+                timeStarting = carentTime;
+                MyInterstitialAd.showRequire();
+            }
+        }
+
+        mediaPlayer.setPlayWhenReady(true);
+
+
+        mediaPlayer.prepare(mediaSource);
 
         if (!StorageAds.idDisableAds()) {
 
@@ -777,52 +857,44 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         Log.d(TAG, "initMediaPlayer: calld");
     }
 
-    private void playMedia() {
-        if (prepared) {
-            if (!requestAudioFocus()) {
-                stopSelf();
-            }
-            isPlay = true;
-            mediaPlayer.start();
-            mediaSession.setActive(true);
-            startPlayProgressUpdater();
-            startTimeProgressUpdater();
-        }
+    private void stopMedia() {
+        if (mediaPlayer == null) return;
+        resumePosition = (int) mediaPlayer.getCurrentPosition();
+        int time = resumePosition / 1000;
+        timeStart = time;
+        mAudioDBModel.setTime(urlBook, time);
+        stopMediaNotSave();
+        BookPresenter.resume = true;
+        BookPresenter.start = true;
     }
 
-    private void stopMedia() {
+    private void stopMediaNotSave() {
+        removeAudioFocus();
         if (mediaPlayer == null) return;
         isPlay = false;
         mediaPlayer.stop();
+        mediaPlayer.release();
+        mediaPlayer = null;
         mediaSession.setActive(false);
-
+        BookPresenter.resume = false;
+        buildNotification(PlaybackStatus.PAUSED);
     }
 
     private void pauseMedia() {
-        if (isPlaying() && prepared) {
-            buildNotification(PlaybackStatus.PAUSED);
-            isPlay = false;
-            mediaPlayer.pause();
-            mediaSession.setActive(false);
-            resumePosition = mediaPlayer.getCurrentPosition();
-            int time = resumePosition / 1000;
-            mAudioDBModel.setTime(urlBook, time);
+        if (isPlaying()) {
+            mediaPlayer.setPlayWhenReady(false);
         }
     }
 
     private void resumeMedia() {
         try {
-            if (!isPlaying() && prepared) {
+            if (!isPlaying() && isPrepared()) {
                 if (!requestAudioFocus()) {
                     stopSelf();
                 }
                 isPlay = true;
                 mediaPlayer.seekTo(resumePosition);
-                mediaPlayer.start();
-                mediaSession.setActive(true);
-                startPlayProgressUpdater();
-                startTimeProgressUpdater();
-                buildNotification(PlaybackStatus.PLAYING);
+                mediaPlayer.setPlayWhenReady(true);
             }
         } catch (Exception ignored) {
 
@@ -830,21 +902,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private void skipToNext() {
-        if (!prepared) return;
+        if (mediaPlayer == null) return;
         if (audioIndex == audioList.size() - 1) {
             if (!buttonClick) {
                 stopMedia();
-                mediaSession.setActive(false);
             }
         } else {
             //get next in playlist
             activeAudio = audioList.get(++audioIndex);
             storage.storeAudioIndex(audioIndex);
 
-            stopMedia();
-            mediaSession.setActive(false);
-            //reset mediaPlayer
-            mediaPlayer.reset();
+            stopMediaNotSave();
             initMediaPlayer();
             sendBroadcastItemSelected(audioIndex);
             addLastBookToDB(audioList.get(audioIndex).getName());
@@ -858,14 +926,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
     private void skipToPrevious() {
-        if (!prepared) return;
+        if (mediaPlayer == null) return;
         if (audioIndex != 0) {
             activeAudio = audioList.get(--audioIndex);
             storage.storeAudioIndex(audioIndex);
-            stopMedia();
-            mediaSession.setActive(false);
-            //reset mediaPlayer
-            mediaPlayer.reset();
+            stopMediaNotSave();
             initMediaPlayer();
             sendBroadcastItemSelected(audioIndex);
             addLastBookToDB(audioList.get(audioIndex).getName());
@@ -951,7 +1016,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                                 PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
                                 | PlaybackStateCompat.ACTION_PAUSE |
                                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                                | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                                | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                                PlaybackStateCompat.ACTION_FAST_FORWARD |
+                                PlaybackStateCompat.ACTION_REWIND)
                 .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1, SystemClock.elapsedRealtime())
                 .build();
 
@@ -1080,10 +1147,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this,
                 CHANNEL_ID)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setShowWhen(false)
                 .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                         .setMediaSession(mediaSession.getSessionToken())
-                        .setShowActionsInCompactView(0, 1, 2))
+                        .setShowActionsInCompactView(0, 2, 4))
                 .setSmallIcon(android.R.drawable.stat_sys_headset)
                 .setContentText("")
                 .setContentTitle(activeAudio.getName())
@@ -1227,13 +1295,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     private void startPlayProgressUpdater() {
         try {
-            if (prepared) {
+            if (isPrepared()) {
                 Intent broadcastIntent = new Intent(Broadcast_SET_PROGRESS);
-                broadcastIntent.putExtra("timeCurrent", mediaPlayer.getCurrentPosition());
+                broadcastIntent.putExtra("timeCurrent", (int) mediaPlayer.getCurrentPosition());
                 broadcastIntent.putExtra("timeEnd", timeDuration);
                 this.sendBroadcast(broadcastIntent);
                 if (mediaPlayer.getCurrentPosition() >= mediaPlayer.getDuration()) {
-                    buttonClick = true;
+                    buttonClick = false;
                     skipToNext();
                 }
 
@@ -1249,9 +1317,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     private void startTimeProgressUpdater() {
         try {
-            if (prepared) {
+            if (isPrepared()) {
                 if (isPlaying()) {
-                    int time = mediaPlayer.getCurrentPosition() / 1000;
+                    int time = (int) (mediaPlayer.getCurrentPosition() / 1000);
                     mAudioDBModel.setTime(urlBook, time);
                     Runnable notification = this::startTimeProgressUpdater;
                     handler2.postDelayed(notification, 10000);
@@ -1264,9 +1332,15 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     private void seekTo(long postion) {
         try {
-            if (prepared && postion >= 0 && timeDuration > postion) {
-                mediaPlayer.seekTo((int) postion);
+            if (mediaPlayer != null && postion >= 0 && timeDuration > postion) {
+                mediaPlayer.seekTo(postion);
                 resumePosition = (int) postion;
+                if (!mediaPlayer.getPlayWhenReady()) {
+                    Intent broadcastIntent = new Intent(Broadcast_SET_PROGRESS);
+                    broadcastIntent.putExtra("timeCurrent", (int) mediaPlayer.getCurrentPosition());
+                    broadcastIntent.putExtra("timeEnd", timeDuration);
+                    this.sendBroadcast(broadcastIntent);
+                }
             }
         } catch (Exception e) {
             Toast.makeText(this, getString(R.string.worning_loading_not_finish),

@@ -52,5 +52,7 @@ public interface ActivityPresenter {
 
     void dowland(HashSet<String> data);
 
+    void delete(HashSet<String> data);
+
 
 }

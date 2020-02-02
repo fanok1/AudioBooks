@@ -32,6 +32,11 @@ public class AudioModel implements
                 .referrer("http://www.google.com")
                 .get();
 
+        Elements titleElement = doc.getElementsByClass("book_title_elem book_title_name");
+        String bookName = "";
+        if (titleElement.size() != 0) {
+            bookName = titleElement.first().text().trim();
+        }
         Elements sriptElements = doc.getElementsByTag("script");
         for (Element script : sriptElements) {
             String value = script.toString();
@@ -50,6 +55,7 @@ public class AudioModel implements
                             audioPOJO.setName(jsonObject.get("title").getAsString());
                             audioPOJO.setUrl(jsonObject.get("url").getAsString());
                             audioPOJO.setTime(jsonObject.get("duration").getAsInt());
+                            audioPOJO.setBookName(bookName);
                             result.add(audioPOJO);
                         }
                     }

@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -30,6 +31,7 @@ import com.r0adkll.slidr.Slidr;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.Objects;
 
 import butterknife.BindView;
@@ -43,9 +45,12 @@ public class SelectDirectoryActivity extends AppCompatActivity {
     Button mButton;
 
 
+    private static final String TAG = "SelectDirectoryActivity";
     private static final int REQUEST_DIRECTORY = 165;
+    private String oldPath;
 
     private StorageChooser chooser;
+
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -67,17 +72,13 @@ public class SelectDirectoryActivity extends AppCompatActivity {
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
-        String path = pref.getString("pref_dowland_path", "");
+        oldPath = pref.getString("pref_downland_path",
+                Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS).getPath());
 
-        if (!path.isEmpty()) {
-            mTextInputEditText.setText(path);
-        } else {
-            mTextInputEditText.setText(new ContextWrapper(this).getFilesDir().toString());
-        }
-
+        mTextInputEditText.setText(oldPath);
         mButton.setOnClickListener(view -> mTextInputEditText.setText(new ContextWrapper(
                 view.getContext()).getFilesDir().toString()));
-
 
         Content content = new Content();
         content.setCancelLabel(getString(R.string.cancel));
@@ -108,6 +109,8 @@ public class SelectDirectoryActivity extends AppCompatActivity {
             builder.setTheme(theme);
         }
         chooser = builder.build();
+
+
     }
 
     private void click(@NotNull View view) {
@@ -125,25 +128,80 @@ public class SelectDirectoryActivity extends AppCompatActivity {
     }
 
     private void showDirPiker() {
-        chooser.setOnSelectListener(path -> mTextInputEditText.setText(path));
+        chooser.setOnSelectListener(path -> {
+            String s = path.substring(indexOf('/', path, 2) + 1, indexOf('/', path, 3));
+            if (s.equals("emulated")) {
+                mTextInputEditText.setText(path);
+            } else {
+                //String newPath = path.replace(s, "emulated/1");
+                File file = new File(path);
+                if (file.isDirectory() && file.canWrite()) {
+                    mTextInputEditText.setText(path);
+                } else {
+                    Toast.makeText(this, R.string.not_can_writing, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
         chooser.show();
+    }
+
+    private int indexOf(char c, String path, int pos) {
+        int temp = 0;
+        for (int i = 0; i < path.length(); i++) {
+            if (path.charAt(i) == c) {
+                temp++;
+                if (temp == pos) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            finish();
+            onBackPressed();
         } else if (item.getItemId() == R.id.confirm) {
-            SharedPreferences pref = PreferenceManager
-                    .getDefaultSharedPreferences(this);
-            SharedPreferences.Editor editor = pref.edit();
-            editor.putString("pref_dowland_path",
-                    Objects.requireNonNull(
-                            Objects.requireNonNull(mTextInputEditText.getText()).toString()));
-            editor.apply();
+            save();
             finish();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void save() {
+        if (mTextInputEditText.getText() != null) {
+            SharedPreferences pref = PreferenceManager
+                    .getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = pref.edit();
+            editor.putString("pref_downland_path", mTextInputEditText.getText().toString());
+            editor.apply();
+            oldPath = mTextInputEditText.getText().toString();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        if (mTextInputEditText.getText() != null && oldPath.equals(
+                mTextInputEditText.getText().toString())) {
+            super.onBackPressed();
+        } else {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.exit);
+            builder.setMessage(R.string.exit_confirm);
+            builder.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
+                if (mTextInputEditText.getText() != null) {
+                    save();
+                    finish();
+                }
+            });
+            builder.setNegativeButton(R.string.no, (dialogInterface, i) -> finish());
+            builder.setNeutralButton(R.string.cancel,
+                    (dialogInterface, i) -> dialogInterface.cancel());
+            builder.setCancelable(false);
+            builder.show();
+        }
     }
 
     @Override

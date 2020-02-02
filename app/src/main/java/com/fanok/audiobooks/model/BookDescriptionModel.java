@@ -80,13 +80,17 @@ public class BookDescriptionModel implements DescriptionModel {
             }
         }
 
-        Elements artistElements = document.getElementsByClass("page_title_gray");
-        if (artistElements.size() > 1) {
-            Element parent = artistElements.get(1).parent();
-            Elements aTag = parent.getElementsByTag("a");
-            if (aTag.size() != 0) {
-                descriptionPOJO.setArtist(aTag.first().text());
-                descriptionPOJO.setArtistUrl(Url.SERVER + aTag.first().attr("href"));
+
+        Elements artistElements = document.getElementsByClass("book_title_elem");
+
+        for (int i = 0; i < artistElements.size(); i++) {
+            Element element = artistElements.get(i);
+            if (element.text().contains("читает") || element.text().contains("читают")) {
+                Elements aTag = element.getElementsByTag("a");
+                if (aTag.size() != 0) {
+                    descriptionPOJO.setArtist(aTag.first().text());
+                    descriptionPOJO.setArtistUrl(Url.SERVER + aTag.first().attr("href"));
+                }
             }
         }
 

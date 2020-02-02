@@ -269,5 +269,28 @@
     <string name="sleep_timer">Таймер сну</string>
     <string name="yd">Яндекс Гроші</string>
     <string name="yandex_form">Яндекс Форма</string>
+    <string name="autoplay">Автовідтворення</string>
+    <string name="autoplay_desc">Запускати книги відразу після відкриття</string>
+    <string name="dir_title_download">Завантаження (для сторонніх плеєрів)</string>
+    <string name="delete_complite">Видалити завершено</string>
+    <string name="dir_title_emulated">Внутрішнє</string>
+    <string name="dir_title_sdcrd">SD карта</string>
+    <string name="dowland_delete">Завантажити/Видалити</string>
+    <string name="exit">Вихід</string>
+    <string name="exit_confirm">Зберегти зміни?</string>
+    <string name="last_book">Остання відкрита книга</string>
+    <string name="no">Ні</string>
+    <string name="no_sdcard">SD карта не встановлена</string>
+    <string name="not_can_writing">Недостатньо прав на запис в цю папку.</string>
+    <string name="open_4pda">Відкрити тему на 4pda</string>
+    <string name="reproduction">Програвання</string>
+    <string name="reproduction_desc">При відкритті нової книги продовжувати відтворювати стару</string>
+    <string name="scrollToSelected">Перехід до активного файлу</string>
+    <string name="scrollToSelectedDesc">Першим в списку буде стояти активний аудіофайл</string>
+    <string name="seekTo">Перемотка</string>
+    <string name="seekToPauseDesc">Знімати плеєр з паузи під час перемотування</string>
+    <string name="go_offline">Перехід в офлайн режим</string>
+    <string name="offline">Офлайн</string>
+    <string name="ofline_desc">Приховувати незавантажені глави зі списку в офлайн режимі</string>
 
 </resources>

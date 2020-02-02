@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/player"
-    android:layout_width="300dp"
+    android:layout_width="320dp"
     android:layout_height="match_parent"
     android:layout_gravity="end"
     android:background="?attr/backgraundColor"
@@ -56,6 +56,18 @@
             android:contentDescription="@string/dowland"
             android:src="@drawable/ic_download"
             android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginEnd="@dimen/text_margin"
+            android:background="?selectableItemBackgroundBorderless"
+            android:contentDescription="@string/delete"
+            android:src="@drawable/ic_delete"
+            android:visibility="gone" />
+
     </LinearLayout>
 
 

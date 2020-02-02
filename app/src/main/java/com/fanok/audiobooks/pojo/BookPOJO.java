@@ -24,9 +24,9 @@ public class BookPOJO {
     private String autor;
     private String artist;
     private String urlArtist;
-    private String urlAutor = "";
-    private String time = "";
-    private String series = "";
+    private String urlAutor;
+    private String time;
+    private String series;
     private String urlSeries;
     private String genre;
     private String urlGenre;
@@ -34,6 +34,7 @@ public class BookPOJO {
     private int coments = 0;
     private String name;
     private String url;
+    private String desc;
 
     public String getName() {
         return name;
@@ -69,112 +70,6 @@ public class BookPOJO {
 
     public String getPhoto() {
         return photo;
-    }
-
-    public void setPhoto(@NonNull String photo) {
-        if (!Consts.REGEXP_URL_PHOTO.matcher(photo).matches()) {
-            throw new IllegalArgumentException(
-                    "Value must be url");
-        }
-        this.photo = photo;
-    }
-
-    public String getAutor() {
-        return autor;
-    }
-
-    public void setAutor(@NonNull String autor) {
-        if (autor.isEmpty()) throw new IllegalArgumentException("Value must be not empty");
-        this.autor = autor;
-    }
-
-    public String getArtist() {
-        return artist;
-    }
-
-    public void setArtist(@NonNull String artist) {
-        if (artist.isEmpty()) throw new IllegalArgumentException("Value must be not empty");
-        this.artist = artist;
-    }
-
-    public String getUrlArtist() {
-        return urlArtist;
-    }
-
-    public void setUrlArtist(@NonNull String urlArtist) {
-        if (!Consts.REGEXP_URL.matcher(urlArtist).matches()) {
-            throw new IllegalArgumentException(
-                    "Value must be url");
-        }
-        this.urlArtist = urlArtist;
-    }
-
-    public String getUrlAutor() {
-        return urlAutor;
-    }
-
-    public void setUrlAutor(@NonNull String urlAutor) {
-        if (!Consts.REGEXP_URL.matcher(urlAutor).matches()) {
-            throw new IllegalArgumentException(
-                    "Value must be url");
-        }
-        this.urlAutor = urlAutor;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public void setTime(@NonNull String time) {
-        if (time.isEmpty()) throw new IllegalArgumentException("Value must be not empty");
-        this.time = time;
-    }
-
-    public String getSeries() {
-        return series;
-    }
-
-    public void setSeries(String series) {
-        if (series == null || series.isEmpty()) return;
-        this.series = series;
-    }
-
-    public String getUrlSeries() {
-        return urlSeries;
-    }
-
-    public void setUrlSeries(String urlSeries) {
-        if (urlSeries == null || urlSeries.isEmpty()) return;
-        if (!Consts.REGEXP_URL.matcher(urlSeries).matches()) {
-            throw new IllegalArgumentException(
-                    "Value must be url");
-        }
-        this.urlSeries = urlSeries;
-    }
-
-    public String getGenre() {
-        return genre;
-    }
-
-    public void setGenre(@NonNull String genre) {
-        if (genre.isEmpty()) throw new IllegalArgumentException("Value must be not empty");
-        this.genre = genre;
-    }
-
-    public String getUrlGenre() {
-        return urlGenre;
-    }
-
-    public void setUrlGenre(@NonNull String urlGenre) {
-        if (!Consts.REGEXP_URL.matcher(urlGenre).matches()) {
-            throw new IllegalArgumentException(
-                    "Value must be url");
-        }
-        this.urlGenre = urlGenre;
-    }
-
-    public String getReting() {
-        return reting;
     }
 
     public static BookPOJO getBookByUrl(String url) throws IOException {
@@ -276,7 +171,116 @@ public class BookPOJO {
             bookPOJO.setComents(comentsTitle.text());
         }
 
+        Elements desc = document.getElementsByClass("book_description");
+        if (desc != null && desc.size() != 0) {
+            bookPOJO.setDesc(desc.first().text());
+        }
+
         return bookPOJO;
+    }
+
+    public String getAutor() {
+        return autor;
+    }
+
+    public void setAutor(String autor) {
+        if (autor == null || autor.isEmpty()) return;
+        this.autor = autor;
+    }
+
+    public void setPhoto(String photo) {
+        if (photo == null || !Consts.REGEXP_URL_PHOTO.matcher(photo).matches()) {
+            return;
+        }
+        this.photo = photo;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public void setArtist(String artist) {
+        if (artist == null || artist.isEmpty()) return;
+        this.artist = artist;
+    }
+
+    public String getUrlArtist() {
+        return urlArtist;
+    }
+
+    public void setUrlArtist(String urlArtist) {
+        if (urlArtist == null || !Consts.REGEXP_URL.matcher(urlArtist).matches()) {
+            return;
+        }
+        this.urlArtist = urlArtist;
+    }
+
+    public String getUrlAutor() {
+        return urlAutor;
+    }
+
+    public void setUrlAutor(String urlAutor) {
+        if (urlAutor == null || !Consts.REGEXP_URL.matcher(urlAutor).matches()) {
+            return;
+        }
+        this.urlAutor = urlAutor;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        if (time == null || time.isEmpty()) time = "";
+        this.time = time;
+    }
+
+    public String getSeries() {
+        return series;
+    }
+
+    public void setSeries(String series) {
+        if (series == null || series.isEmpty()) return;
+        this.series = series;
+    }
+
+    public String getUrlSeries() {
+        return urlSeries;
+    }
+
+    public void setUrlSeries(String urlSeries) {
+        if (urlSeries == null || urlSeries.isEmpty()) return;
+        if (!Consts.REGEXP_URL.matcher(urlSeries).matches()) {
+            throw new IllegalArgumentException(
+                    "Value must be url");
+        }
+        this.urlSeries = urlSeries;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        if (genre == null || genre.isEmpty()) {
+            return;
+        }
+        this.genre = genre;
+    }
+
+    public String getUrlGenre() {
+        return urlGenre;
+    }
+
+    public void setUrlGenre(String urlGenre) {
+        if (urlGenre == null || !Consts.REGEXP_URL.matcher(urlGenre).matches()) {
+            return;
+        }
+        this.urlGenre = urlGenre;
+    }
+
+    public String getReting() {
+        return reting;
     }
 
     public static BookPOJO parceJsonToBookPojo(String json) {
@@ -301,21 +305,48 @@ public class BookPOJO {
 
     public void setReting(@NonNull String reting) {
         if (reting.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Incorect value");
+            this.reting = "0";
         }
         this.reting = reting;
     }
 
     public boolean isNull() {
-        return photo == null || autor == null || artist == null || urlArtist == null
-                || genre == null || urlGenre == null
-                || name == null || url == null;
+        return name == null || url == null;
     }
 
     public void setName(@NonNull String name) {
         if (name.isEmpty()) throw new IllegalArgumentException("Value must be not empty");
         this.name = name;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        if (desc == null || desc.isEmpty()) {
+            this.desc = "";
+        } else {
+            this.desc = desc;
+        }
+    }
+
+    public DescriptionPOJO getDescriptionPOJO() {
+        DescriptionPOJO descriptionPOJO = new DescriptionPOJO();
+        descriptionPOJO.setTitle(this.name);
+        descriptionPOJO.setPoster(this.photo);
+        descriptionPOJO.setReiting(Integer.parseInt(this.reting.replaceAll(" ", "")));
+        descriptionPOJO.setTime(this.time);
+        descriptionPOJO.setAutor(this.autor);
+        descriptionPOJO.setArtist(this.artist);
+        descriptionPOJO.setArtistUrl(this.urlArtist);
+        descriptionPOJO.setAutorUrl(this.urlAutor);
+        descriptionPOJO.setGenre(this.genre);
+        descriptionPOJO.setGenreUrl(this.urlGenre);
+        descriptionPOJO.setDescription(this.desc);
+
+
+        return descriptionPOJO;
     }
 
     @NonNull

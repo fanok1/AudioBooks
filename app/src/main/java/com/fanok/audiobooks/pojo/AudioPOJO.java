@@ -5,9 +5,21 @@ import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
 
 public class AudioPOJO {
+
+    private String bookName = "";
     private String name = "";
     String url = "";
     private int time = 0;
+
+    public String getBookName() {
+        return bookName;
+    }
+
+    public void setBookName(String bookName) {
+        if (bookName != null) {
+            this.bookName = bookName;
+        }
+    }
 
     public String getName() {
         return name;

@@ -227,6 +227,7 @@
             </LinearLayout>
 
             <View
+                android:id="@+id/descLine"
                 android:layout_width="match_parent"
                 android:layout_height="1px"
                 android:layout_marginTop="@dimen/text_margin_book_description"
@@ -254,6 +255,7 @@
                 android:textSize="@dimen/textSizeBookDescription" />
 
             <View
+                android:id="@+id/otherBookLine"
                 android:layout_width="match_parent"
                 android:layout_height="1px"
                 android:layout_marginTop="@dimen/text_margin_book_description"

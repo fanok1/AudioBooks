@@ -13,6 +13,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
@@ -23,6 +24,7 @@ import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;
@@ -62,6 +64,10 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
     public void setIndexSelected(int indexSelected) {
         this.indexSelected = indexSelected;
         notifyDataSetChanged();
+    }
+
+    public int getIndexSelected() {
+        return indexSelected;
     }
 
     public AudioPOJO getData(int index) {
@@ -121,6 +127,25 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
             }
             return false;
         });
+
+        File[] folders = viewHolder.mImageView.getContext().getExternalFilesDirs(null);
+        boolean b = false;
+        for (File folder : folders) {
+            File dir = new File(folder.getAbsolutePath() + "/" + mData.get(i).getBookName());
+            if (dir.exists() && dir.isDirectory()) {
+                String url = mData.get(i).getUrl();
+                File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
+                if (file.exists()) {
+                    b = true;
+                    break;
+                }
+            }
+        }
+        if (b) {
+            viewHolder.mImageView.setVisibility(View.VISIBLE);
+        } else {
+            viewHolder.mImageView.setVisibility(View.INVISIBLE);
+        }
 
 
 
@@ -224,6 +249,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         private TextView mTitle;
         private TextView mTime;
         private RadioButton mRadioButton;
+        private ImageView mImageView;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -231,6 +257,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
             mTitle = itemView.findViewById(R.id.title);
             mTime = itemView.findViewById(R.id.time);
             mRadioButton = itemView.findViewById(R.id.radio);
+            mImageView = itemView.findViewById(R.id.is_download);
         }
     }
 }

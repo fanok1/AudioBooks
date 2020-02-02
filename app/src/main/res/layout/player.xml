@@ -70,9 +70,19 @@
                 android:id="@+id/dowland"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/text_margin"
                 android:background="?selectableItemBackgroundBorderless"
                 android:contentDescription="@string/dowland"
                 android:src="@drawable/ic_download"
+                android:visibility="gone" />
+
+            <ImageButton
+                android:id="@+id/delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?selectableItemBackgroundBorderless"
+                android:contentDescription="@string/delete"
+                android:src="@drawable/ic_delete"
                 android:visibility="gone" />
 
             <LinearLayout

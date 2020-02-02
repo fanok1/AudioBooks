@@ -1,7 +1,5 @@
 package com.fanok.audiobooks.pojo;
 
-import androidx.annotation.NonNull;
-
 import com.fanok.audiobooks.Consts;
 
 public class DescriptionPOJO {
@@ -61,8 +59,11 @@ public class DescriptionPOJO {
     }
 
     public void setTitle(String title) {
-        if (title == null || title.isEmpty()) throw new NullPointerException();
-        this.title = title;
+        if (title == null || title.isEmpty()) {
+            this.title = "";
+        } else {
+            this.title = title;
+        }
     }
 
     public String getPoster() {
@@ -101,18 +102,24 @@ public class DescriptionPOJO {
         return autor;
     }
 
-    public void setAutor(@NonNull String autor) {
-        if (autor.isEmpty()) throw new NullPointerException();
-        this.autor = autor;
+    public void setAutor(String autor) {
+        if (autor == null || autor.isEmpty()) {
+            this.autor = "";
+        } else {
+            this.autor = autor;
+        }
     }
 
     public String getArtist() {
         return artist;
     }
 
-    public void setArtist(@NonNull String artist) {
-        if (artist.isEmpty()) throw new NullPointerException();
-        this.artist = artist;
+    public void setArtist(String artist) {
+        if (artist == null || artist.isEmpty()) {
+            this.artist = "";
+        } else {
+            this.artist = artist;
+        }
     }
 
     public String getSeries() {
@@ -143,8 +150,8 @@ public class DescriptionPOJO {
         return autorUrl;
     }
 
-    public void setAutorUrl(@NonNull String autorUrl) {
-        if (!Consts.REGEXP_URL.matcher(autorUrl).matches()) {
+    public void setAutorUrl(String autorUrl) {
+        if (autorUrl == null || !Consts.REGEXP_URL.matcher(autorUrl).matches()) {
             this.autorUrl = "";
         } else {
             this.autorUrl = autorUrl;
@@ -155,8 +162,8 @@ public class DescriptionPOJO {
         return artistUrl;
     }
 
-    public void setArtistUrl(@NonNull String artistUrl) {
-        if (!Consts.REGEXP_URL.matcher(artistUrl).matches()) {
+    public void setArtistUrl(String artistUrl) {
+        if (artistUrl == null || !Consts.REGEXP_URL.matcher(artistUrl).matches()) {
             this.artistUrl = "";
         } else {
             this.artistUrl = artistUrl;
@@ -167,16 +174,20 @@ public class DescriptionPOJO {
         return genre;
     }
 
-    public void setGenre(@NonNull String genre) {
-        this.genre = genre;
+    public void setGenre(String genre) {
+        if (genre == null || genre.isEmpty()) {
+            this.genre = "";
+        } else {
+            this.genre = genre;
+        }
     }
 
     public String getGenreUrl() {
         return genreUrl;
     }
 
-    public void setGenreUrl(@NonNull String genreUrl) {
-        if (!Consts.REGEXP_URL.matcher(genreUrl).matches()) {
+    public void setGenreUrl(String genreUrl) {
+        if (genreUrl == null || !Consts.REGEXP_URL.matcher(genreUrl).matches()) {
             this.genreUrl = "";
         } else {
             this.genreUrl = genreUrl;

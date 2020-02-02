@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.IBinder;
 import android.util.Log;
@@ -20,6 +21,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.preference.PreferenceManager;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
@@ -31,14 +33,17 @@ import com.fanok.audiobooks.interface_pacatge.book_content.Activity;
 import com.fanok.audiobooks.interface_pacatge.book_content.ActivityPresenter;
 import com.fanok.audiobooks.interface_pacatge.book_content.AudioModelInterfece;
 import com.fanok.audiobooks.model.AudioDBModel;
+import com.fanok.audiobooks.model.AudioListDBModel;
 import com.fanok.audiobooks.model.AudioModel;
 import com.fanok.audiobooks.model.BooksDBModel;
+import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.service.MediaPlayerService;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
@@ -70,21 +75,26 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private BookPOJO mBookPOJO;
     private BooksDBModel mBooksDBModel;
     private AudioDBModel mAudioDBModel;
+    private AudioListDBModel mAudioListDBModel;
     private ArrayList<AudioPOJO> mAudioPOJO;
     private String last = "";
     private Context mContext;
     private boolean serviceBound = false;
     private static float speed = 1;
     private ServiceConnection serviceConnection;
-
+    private SharedPreferences pref;
+    private boolean error = false;
     private AudioModelInterfece mAudioModel;
+
     public BookPresenter(@NonNull BookPOJO bookPOJO, @NonNull Context context) {
         mContext = context;
         mBookPOJO = bookPOJO;
         mBooksDBModel = new BooksDBModel(context);
+        mAudioListDBModel = new AudioListDBModel(context);
         mBooksDBModel.addHistory(mBookPOJO);
         mAudioModel = new AudioModel();
         mAudioDBModel = new AudioDBModel(context);
+        pref = PreferenceManager.getDefaultSharedPreferences(context);
         serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
@@ -101,12 +111,17 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     }
 
+    public static void setSpeedWithoutBroadcast(float value) {
+        speed = value;
+    }
+
     public static float getSpeed() {
         return speed;
     }
 
     private void setSpeed(float value) {
         speed = value;
+        new StorageUtil(mContext).storeSpeed(value);
         Intent intent = new Intent(Broadcast_SET_SPEED);
         intent.putExtra("speed", value);
         getViewState().broadcastSend(intent);
@@ -264,6 +279,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void getAudio() {
+        error = false;
         getViewState().showProgres(true);
         mAudioModel.getAudio(mBookPOJO.getUrl())
                 .subscribeOn(Schedulers.io())
@@ -277,44 +293,106 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                     public void onNext(ArrayList<AudioPOJO> bookPOJOS) {
                         mAudioPOJO = bookPOJOS;
                         getViewState().showData(mAudioPOJO);
+                        error = false;
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         Log.d(TAG, Objects.requireNonNull(e.getMessage()));
+                        boolean b = pref.getBoolean("offline", false);
+                        ArrayList<AudioListPOJO> list = mAudioListDBModel.get(mBookPOJO.getUrl());
+                        ArrayList<AudioPOJO> audioPOJOS = new ArrayList<>();
+                        File[] folders = mContext.getExternalFilesDirs(null);
+                        for (int i = 0; i < list.size(); i++) {
+                            AudioListPOJO audioListPOJO = list.get(i);
+                            for (File folder : folders) {
+                                File file = new File(
+                                        folder.getAbsolutePath() + "/" + audioListPOJO.getBookName()
+                                                + "/" + audioListPOJO.getAudioUrl().substring(
+                                                audioListPOJO.getAudioUrl().lastIndexOf("/") + 1));
+                                if (file.exists() || !b) {
+                                    AudioPOJO audioPOJO = new AudioPOJO();
+                                    audioPOJO.setName(audioListPOJO.getAudioName());
+                                    audioPOJO.setBookName(audioListPOJO.getBookName());
+                                    audioPOJO.setUrl(audioListPOJO.getAudioUrl());
+                                    audioPOJO.setTime(audioListPOJO.getTime());
+                                    audioPOJOS.add(audioPOJO);
+                                    break;
+                                }
+                            }
+                        }
+                        mAudioPOJO = audioPOJOS;
+                        getViewState().showData(mAudioPOJO);
+                        getViewState().showToast(mContext.getString(R.string.error_load_data)
+                                + "\n" + mContext.getString(R.string.go_offline));
+                        error = true;
+                        onComplete();
                     }
 
                     @Override
                     public void onComplete() {
-                        Log.d(TAG, "onComplete");
-                        int curentTrack = 0;
-                        AudioPOJO pojo = null;
-                        for (int i = 0; i < mAudioPOJO.size(); i++) {
-                            if (mAudioPOJO.get(i).getName().equals(last)) {
-                                pojo = mAudioPOJO.get(i);
-                                curentTrack = i;
+                        if (mAudioPOJO.size() > 0) {
+                            Log.d(TAG, "onComplete");
+                            int curentTrack = 0;
+                            AudioPOJO pojo = null;
+                            for (int i = 0; i < mAudioPOJO.size(); i++) {
+                                if (mAudioPOJO.get(i).getName().equals(last)) {
+                                    pojo = mAudioPOJO.get(i);
+                                    curentTrack = i;
+                                }
                             }
-                        }
-                        if (pojo == null) {
-                            pojo = mAudioPOJO.get(0);
-                            curentTrack = 0;
-                            if (!MediaPlayerService.isPlay()) {
-                                getViewState().showTitle(pojo.getName());
+                            if (pojo == null) {
+                                pojo = mAudioPOJO.get(0);
+                                curentTrack = 0;
+                                if (!MediaPlayerService.isPlay()) {
+                                    getViewState().showTitle(pojo.getName());
+                                }
+                                mAudioDBModel.add(mBookPOJO.getUrl(), pojo.getName());
                             }
-                            mAudioDBModel.add(mBookPOJO.getUrl(), pojo.getName());
+
+                            if (!error) {
+                                if (mAudioListDBModel.isset(mBookPOJO.getUrl())) {
+                                    mAudioListDBModel.remove(mBookPOJO.getUrl());
+                                }
+                                for (int i = 0; i < mAudioPOJO.size(); i++) {
+                                    AudioListPOJO audioListPOJO = new AudioListPOJO();
+                                    audioListPOJO.setBookUrl(mBookPOJO.getUrl());
+                                    audioListPOJO.setBookName(mBookPOJO.getName());
+                                    audioListPOJO.setAudioName(mAudioPOJO.get(i).getName());
+                                    audioListPOJO.setAudioUrl(mAudioPOJO.get(i).getUrl());
+                                    audioListPOJO.setTime(mAudioPOJO.get(i).getTime());
+                                    mAudioListDBModel.add(audioListPOJO);
+                                }
+                            }
+
+                            boolean b = pref.getBoolean("reproductionPref", true);
+                            boolean autoStart = pref.getBoolean("autoPlayPref", false);
+
+                            if (autoStart) {
+                                if (!MediaPlayerService.isPlay()) {
+                                    start = true;
+                                    resume = true;
+                                    playAudio(curentTrack,
+                                            mAudioDBModel.getTime(mBookPOJO.getUrl()));
+                                } else if (!b) {
+                                    start = true;
+                                    resume = true;
+                                    playAudio(curentTrack,
+                                            mAudioDBModel.getTime(mBookPOJO.getUrl()));
+                                }
+
+                            } else if (!MediaPlayerService.isPlay() || !b) {
+                                start = false;
+                                playAudio(curentTrack, mAudioDBModel.getTime(mBookPOJO.getUrl()));
+                            } else {
+                                start = true;
+                            }
+                            getViewState().setSelected(curentTrack,
+                                    mAudioPOJO.get(curentTrack).getName());
+
+
+                            getViewState().showProgres(false);
                         }
-
-                        if (!MediaPlayerService.isPlay()) {
-                            start = false;
-                            playAudio(curentTrack, mAudioDBModel.getTime(mBookPOJO.getUrl()));
-                        } else {
-                            start = true;
-                        }
-                        getViewState().setSelected(curentTrack,
-                                mAudioPOJO.get(curentTrack).getName());
-
-
-                        getViewState().showProgres(false);
                     }
                 });
     }
@@ -419,6 +497,36 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         } else {
             loadBooks(data);
         }
+    }
+
+    @Override
+    public void delete(HashSet<String> data) {
+        File[] folders = mContext.getExternalFilesDirs(null);
+        for (File folder : folders) {
+            File dir = new File(folder.getAbsolutePath() + "/" + mBookPOJO.getName());
+            if (dir.exists() && dir.isDirectory()) {
+                for (String url : data) {
+                    File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
+                    if (file.exists()) {
+                        if (!file.delete()) {
+                            Log.d(TAG, file + " delete: false");
+                        } else {
+                            Log.d(TAG, file + " delete: true");
+                        }
+                    }
+                }
+                if (Objects.requireNonNull(dir.list()).length == 0) {
+                    if (!dir.delete()) {
+                        Log.d(TAG, dir + " delete: false");
+                    } else {
+                        Log.d(TAG, dir + " delete: true");
+                    }
+                }
+
+            }
+        }
+        getViewState().updateAdapter();
+        getViewState().showToast(R.string.delete_complite);
     }
 
     public void loadBooks(HashSet<String> data) {

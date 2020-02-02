@@ -6,6 +6,15 @@ public class BackupPOJO {
     private ArrayList<BookPOJO> mBooksFavorite;
     private ArrayList<BookPOJO> mBooksHistory;
     private ArrayList<TimeStartPOJO> mAudio;
+    private ArrayList<AudioListPOJO> mAudioList;
+
+    public ArrayList<AudioListPOJO> getAudioList() {
+        return mAudioList;
+    }
+
+    public void setAudioList(ArrayList<AudioListPOJO> audioList) {
+        mAudioList = audioList;
+    }
 
     public ArrayList<BookPOJO> getBooksFavorite() {
         return mBooksFavorite;

@@ -284,5 +284,24 @@
     <string name="yd">Яндекс Деньги</string>
     <string name="ydNumb" translatable="false">410014301337309</string>
     <string name="yandex_form">Яндекс форма</string>
+    <string name="exit">Выход</string>
+    <string name="exit_confirm">Сохранить изменение?</string>
+    <string name="no">Нет</string>
+    <string name="not_can_writing">Недостаточно прав на запись в данную папку.</string>
+    <string name="no_sdcard">SD карта не установлена</string>
+    <string name="reproduction">Воспроизведение</string>
+    <string name="reproduction_desc">При открытии новой книги продолжать воспроизводить старую</string>
+    <string name="autoplay">Автовоспроизведение</string>
+    <string name="autoplay_desc">Запускать книги сразу после открытия</string>
+    <string name="open_4pda">Открыть тему на 4pda</string>
+    <string name="dowland_delete">Скачать/Удалить</string>
+    <string name="delete_complite">Удаление завершено</string>
+    <string name="seekTo">Перемотка</string>
+    <string name="seekToPauseDesc">Снимать плеер с паузы во время перемотки</string>
+    <string name="scrollToSelected">Переход к активному файлу</string>
+    <string name="scrollToSelectedDesc">Первым в списке будет стоять активный аудиофайл</string>
+    <string name="offline">Офлайн</string>
+    <string name="ofline_desc">Скрывать незагруженные главы из списка в офлайн режиме</string>
+    <string name="go_offline">Переход в офлайн режим</string>
 
 </resources>

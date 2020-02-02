@@ -329,18 +329,25 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         TextView artist = layout.findViewById(R.id.artist);
         TextView series = layout.findViewById(R.id.series);
 
-        ImageView imageView = layout.findViewById(R.id.imageView);
-        Picasso.get()
-                .load(books.get(position).getPhoto())
-                .error(android.R.drawable.ic_menu_camera)
-                .placeholder(android.R.drawable.ic_menu_camera)
-                .into(imageView);
+        if (books.get(position).getPhoto() != null) {
+            ImageView imageView = layout.findViewById(R.id.imageView);
+            Picasso.get()
+                    .load(books.get(position).getPhoto())
+                    .error(android.R.drawable.ic_menu_camera)
+                    .placeholder(android.R.drawable.ic_menu_camera)
+                    .into(imageView);
+        }
 
         TextView title = layout.findViewById(R.id.title);
         title.setText(books.get(position).getName());
 
         TextView authorName = layout.findViewById(R.id.authorName);
-        authorName.setText(books.get(position).getAutor());
+        if (books.get(position).getAutor() != null) {
+            authorName.setText(books.get(position).getAutor());
+            authorName.setVisibility(View.VISIBLE);
+        } else {
+            authorName.setVisibility(View.GONE);
+        }
 
 
         if (books.get(position).getSeries() == null || books.get(position).getUrlSeries() == null) {
@@ -373,34 +380,49 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             mBooksDBModel.removeFavorite(books.get(position));
         });
 
-        genre.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            getViewState().showFragment(BooksFragment.newInstance(
-                    books.get(position).getUrlGenre(),
-                    R.string.menu_audiobooks,
-                    books.get(position).getGenre(), Consts.MODEL_BOOKS),
-                    "genreBooks");
-        });
-
-        author.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            if (!books.get(position).getUrlAutor().isEmpty()) {
+        if (books.get(position).getUrlGenre() != null) {
+            genre.setVisibility(View.VISIBLE);
+            genre.setOnClickListener(view1 -> {
+                dialog.dismiss();
                 getViewState().showFragment(BooksFragment.newInstance(
-                        books.get(position).getUrlAutor(),
+                        books.get(position).getUrlGenre(),
                         R.string.menu_audiobooks,
-                        books.get(position).getAutor(), Consts.MODEL_BOOKS),
-                        "autorBooks");
-            }
-        });
+                        books.get(position).getGenre(), Consts.MODEL_BOOKS),
+                        "genreBooks");
+            });
+        } else {
+            genre.setVisibility(View.GONE);
+        }
 
-        artist.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            getViewState().showFragment(BooksFragment.newInstance(
-                    books.get(position).getUrlArtist(),
-                    R.string.menu_audiobooks,
-                    books.get(position).getArtist(), Consts.MODEL_BOOKS),
-                    "artistBooks");
-        });
+        if (books.get(position).getUrlAutor() != null) {
+            author.setVisibility(View.VISIBLE);
+            author.setOnClickListener(view1 -> {
+                dialog.dismiss();
+                if (!books.get(position).getUrlAutor().isEmpty()) {
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            books.get(position).getUrlAutor(),
+                            R.string.menu_audiobooks,
+                            books.get(position).getAutor(), Consts.MODEL_BOOKS),
+                            "autorBooks");
+                }
+            });
+        } else {
+            author.setVisibility(View.GONE);
+        }
+
+        if (books.get(position).getUrlArtist() != null) {
+            artist.setVisibility(View.VISIBLE);
+            artist.setOnClickListener(view1 -> {
+                dialog.dismiss();
+                getViewState().showFragment(BooksFragment.newInstance(
+                        books.get(position).getUrlArtist(),
+                        R.string.menu_audiobooks,
+                        books.get(position).getArtist(), Consts.MODEL_BOOKS),
+                        "artistBooks");
+            });
+        } else {
+            artist.setVisibility(View.GONE);
+        }
 
         series.setOnClickListener(view12 -> {
             dialog.dismiss();
