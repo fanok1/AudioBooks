@@ -24,6 +24,8 @@ import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
 
+import java.util.Objects;
+
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> implements
         com.fanok.audiobooks.interface_pacatge.main.MainPresenter {
@@ -40,23 +42,50 @@ public class MainPresenter extends MvpPresenter<MainView> implements
     public void onItemSelected(int id) {
 
         if (id == R.id.nav_audiobooks || id == R.id.layout_nav_audiobooks) {
-            Fragment fragment = BooksFragment.newInstance(Url.INDEX,
-                    R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            getViewState().showFragment(fragment, "audioBook");
+            Fragment fragment = null;
+            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
+                fragment = BooksFragment.newInstance(Url.INDEX,
+                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
+                fragment = BooksFragment.newInstance(Url.INDEX_IZIBUK,
+                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            }
+            getViewState().showFragment(Objects.requireNonNull(fragment), "audioBook");
         } else if (id == R.id.nav_genre || id == R.id.layout_nav_genre) {
-            Fragment fragment = BooksFragment.newInstance(Url.SECTIONS,
-                    R.string.menu_genre, Consts.MODEL_GENRE);
-            getViewState().showFragment(fragment, "genre");
+
+            Fragment fragment = null;
+            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
+                fragment = BooksFragment.newInstance(Url.SECTIONS,
+                        R.string.menu_genre, Consts.MODEL_GENRE);
+            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
+                fragment = BooksFragment.newInstance(Url.SECTIONS_IZIBUK,
+                        R.string.menu_genre, Consts.MODEL_GENRE);
+            }
+            getViewState().showFragment(Objects.requireNonNull(fragment), "genre");
 
         } else if (id == R.id.nav_autor || id == R.id.layout_nav_autor) {
-            Fragment fragment = BooksFragment.newInstance(Url.AUTHORS,
-                    R.string.menu_autor, Consts.MODEL_AUTOR);
-            getViewState().showFragment(fragment, "autor");
+
+            Fragment fragment = null;
+            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
+                fragment = BooksFragment.newInstance(Url.AUTHORS,
+                        R.string.menu_autor, Consts.MODEL_AUTOR);
+            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
+                fragment = BooksFragment.newInstance(Url.AUTHORS_IZIBUK,
+                        R.string.menu_autor, Consts.MODEL_AUTOR);
+            }
+            getViewState().showFragment(Objects.requireNonNull(fragment), "autor");
 
         } else if (id == R.id.nav_artist || id == R.id.layout_nav_artist) {
-            Fragment fragment = BooksFragment.newInstance(
-                    Url.PERFORMERS, R.string.menu_artist, Consts.MODEL_ARTIST);
-            getViewState().showFragment(fragment, "artist");
+
+            Fragment fragment = null;
+            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
+                fragment = BooksFragment.newInstance(
+                        Url.PERFORMERS, R.string.menu_artist, Consts.MODEL_ARTIST);
+            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
+                fragment = BooksFragment.newInstance(
+                        Url.PERFORMERS_IZIBUK, R.string.menu_artist, Consts.MODEL_ARTIST);
+            }
+            getViewState().showFragment(Objects.requireNonNull(fragment), "artist");
 
         } else if (id == R.id.nav_favorite || id == R.id.layout_nav_favorite) {
             Fragment fragment = FavoriteFragment.newInstance(R.string.menu_favorite,
@@ -74,6 +103,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
         } else if (id == R.id.nav_about || id == R.id.layout_nav_about) {
             getViewState().showFragment(new AboutFragment(), "about");
+        } else if (id == R.id.nav_saved || id == R.id.layout_nav_saved) {
+
         }
     }
 
@@ -114,6 +145,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                 break;
             case Consts.FRAGMENT_FAVORITE:
             case Consts.FRAGMENT_HISTORY:
+            case Consts.FRAGMENT_SETTINGS:
                 startFragment(fragmentID, false);
                 break;
         }
@@ -122,43 +154,71 @@ public class MainPresenter extends MvpPresenter<MainView> implements
     @Override
     public void startFragment(int fragmentID, boolean b) {
         System.out.println(getViewState());
+        Fragment fragment = null;
         if (fragmentID == Consts.FRAGMENT_AUDIOBOOK) {
-            Fragment fragment = BooksFragment.newInstance(Url.INDEX,
-                    R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            getViewState().showFragment(fragment, "audioBook");
+            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
+                fragment = BooksFragment.newInstance(Url.INDEX,
+                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
+                fragment = BooksFragment.newInstance(Url.INDEX_IZIBUK,
+                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            }
+            getViewState().showFragment(Objects.requireNonNull(fragment), "audioBook");
         } else if (fragmentID == Consts.FRAGMENT_GENRE) {
-            Fragment fragment = BooksFragment.newInstance(Url.SECTIONS,
-                    R.string.menu_genre, Consts.MODEL_GENRE);
-            getViewState().showFragment(fragment, "genre");
+            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
+                fragment = BooksFragment.newInstance(Url.SECTIONS,
+                        R.string.menu_genre, Consts.MODEL_GENRE);
+            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
+                fragment = BooksFragment.newInstance(Url.SECTIONS_IZIBUK,
+                        R.string.menu_genre, Consts.MODEL_GENRE);
+            }
+            getViewState().showFragment(Objects.requireNonNull(fragment), "genre");
 
         } else if (fragmentID == Consts.FRAGMENT_AUTOR) {
-            Fragment fragment = BooksFragment.newInstance(Url.AUTHORS,
-                    R.string.menu_autor, Consts.MODEL_AUTOR);
-            getViewState().showFragment(fragment, "autor");
+            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
+                fragment = BooksFragment.newInstance(Url.AUTHORS,
+                        R.string.menu_autor, Consts.MODEL_AUTOR);
+            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
+                fragment = BooksFragment.newInstance(Url.AUTHORS_IZIBUK,
+                        R.string.menu_autor, Consts.MODEL_AUTOR);
+            }
+            getViewState().showFragment(Objects.requireNonNull(fragment), "autor");
 
         } else if (fragmentID == Consts.FRAGMENT_ARTIST) {
-            Fragment fragment = BooksFragment.newInstance(
-                    Url.PERFORMERS, R.string.menu_artist, Consts.MODEL_ARTIST);
-            getViewState().showFragment(fragment, "artist");
+            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
+                fragment = BooksFragment.newInstance(
+                        Url.PERFORMERS, R.string.menu_artist, Consts.MODEL_ARTIST);
+            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
+                fragment = BooksFragment.newInstance(
+                        Url.PERFORMERS_IZIBUK, R.string.menu_artist, Consts.MODEL_ARTIST);
+            }
+            getViewState().showFragment(Objects.requireNonNull(fragment), "artist");
 
         } else if (fragmentID == Consts.FRAGMENT_FAVORITE) {
-            Fragment fragment = FavoriteFragment.newInstance(R.string.menu_favorite,
+            fragment = FavoriteFragment.newInstance(R.string.menu_favorite,
                     Consts.TABLE_FAVORITE);
             getViewState().showFragment(fragment, "favorite");
 
         } else if (fragmentID == Consts.FRAGMENT_HISTORY) {
-            Fragment fragment = FavoriteFragment.newInstance(R.string.menu_history,
+            fragment = FavoriteFragment.newInstance(R.string.menu_history,
                     Consts.TABLE_HISTORY);
             getViewState().showFragment(fragment, "history");
         } else if (fragmentID == Consts.LAST_BOOK) {
-            Fragment fragment = BooksFragment.newInstance(Url.INDEX,
-                    R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            getViewState().showFragment(fragment, "audioBook");
+            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
+                fragment = BooksFragment.newInstance(Url.INDEX,
+                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
+                fragment = BooksFragment.newInstance(Url.INDEX_IZIBUK,
+                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            }
+            getViewState().showFragment(Objects.requireNonNull(fragment), "audioBook");
             if (!b) {
                 BooksDBModel booksDBModel = new BooksDBModel(mContext);
                 BookPOJO bookPOJO = booksDBModel.getHistory();
                 getViewState().showBooksActivity(bookPOJO);
             }
+        } else if (fragmentID == Consts.FRAGMENT_SETTINGS) {
+            getViewState().showFragment(new SettingsFragment(), "settings");
         }
     }
 

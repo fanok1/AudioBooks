@@ -8,13 +8,6 @@
     android:fitsSystemWindows="true"
     tools:context=".activity.BookActivity">
 
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/view_pager"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginBottom="@dimen/player_row_height"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
-
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -37,9 +30,23 @@
             app:tabMode="scrollable" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <include
-        android:id="@+id/player"
-        layout="@layout/player" />
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/view_pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/player_row_height"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="4dp"
+        android:fitsSystemWindows="false">
+
+        <include
+            android:id="@+id/player"
+            layout="@layout/player" />
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

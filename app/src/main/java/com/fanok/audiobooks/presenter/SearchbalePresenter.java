@@ -26,6 +26,7 @@ import com.fanok.audiobooks.model.SearchebleModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.fanok.audiobooks.pojo.SearcheblPOJO;
+import com.fanok.audiobooks.pojo.SearchebleArrayPOJO;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.squareup.picasso.Picasso;
 
@@ -46,34 +47,43 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
     private int page = 0;
     private int mModelId;
     private ArrayList<BookPOJO> books;
+    private ArrayList<BookPOJO> books_filter;
     private ArrayList<GenrePOJO> genre;
     private com.fanok.audiobooks.interface_pacatge.books.BooksModel mModelBook;
     private BooksDBModel mBooksDBModel;
     private com.fanok.audiobooks.interface_pacatge.books.GenreModel mModelGenre;
     private SearchableModel mSearchableModel;
     private boolean isEnd;
+    private int filter = -1;
+    private SearcheblPOJO mSearcheblPOJOFilter;
 
     private SearcheblPOJO mSearcheblPOJO;
+    private ArrayList<String> mUrls;
     private String query;
 
 
     private String mUrl;
-
-    public void setQuery(@NonNull String query) {
-        this.query = query;
-    }
-
     public SearchbalePresenter(int modelId, @NonNull Context context) {
         mModelId = modelId;
         switch (modelId) {
             case Consts.MODEL_BOOKS:
-                mUrl = "https://knigavuhe.org/search/?q=<qery>&page=<page>";
+                mUrls = new ArrayList<>();
+                mUrls.add("https://knigavuhe.org/search/?q=<qery>&page=<page>");
+                mUrls.add("https://izibuk.ru/search?q=<qery>&p=<page>");
                 break;
             case Consts.MODEL_AUTOR:
-                mUrl = "https://knigavuhe.org/search/authors/?q=<qery>&page=<page>";
+                if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
+                    mUrl = "https://knigavuhe.org/search/authors/?q=<qery>&page=<page>";
+                } else {
+                    mUrl = "https://izibuk.ru/authors?p=<page>&q=<qery>";
+                }
                 break;
             case Consts.MODEL_ARTIST:
-                mUrl = "https://knigavuhe.org/search/readers/?q=<qery>&page=<page>";
+                if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
+                    mUrl = "https://knigavuhe.org/search/readers/?q=<qery>&page=<page>";
+                } else {
+                    mUrl = "https://izibuk.ru/readers?p=<page>&q=<qery>";
+                }
                 break;
         }
         isEnd = false;
@@ -94,6 +104,14 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         }
     }
 
+    public void setQuery(@NonNull String query) {
+        this.query = query;
+    }
+
+    public void setFilter(int filter) {
+        this.filter = filter;
+    }
+
     @Override
     public void onDestroy() {
         mBooksDBModel.closeDB();
@@ -106,17 +124,24 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 books.clear();
                 getViewState().showData(books);
             }
+            if (books_filter != null) {
+                books_filter = null;
+            }
             if (genre != null) {
                 genre.clear();
                 getViewState().showData(genre);
             }
 
             mSearcheblPOJO = new SearcheblPOJO();
+            if (mSearcheblPOJOFilter != null) {
+                mSearcheblPOJOFilter = null;
+            }
             getViewState().showSeriesAndAutors(mSearcheblPOJO);
 
             if (mModelId == Consts.MODEL_BOOKS) {
                 getViewState().showProgresTop(true);
-                getDataSeriesAndAutors(mUrl.replace("<qery>", query).replace("<page>", "1"));
+                getDataSeriesAndAutors(mUrls.get(0).replace("<qery>", query).replace("<page>",
+                        "1"));
             }
 
             isEnd = false;
@@ -132,7 +157,16 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             if (!isEnd && !isLoading) {
                 getViewState().showProgres(true);
                 page++;
-                getData(mUrl.replace("<qery>", query).replace("<page>", String.valueOf(page)));
+                if (mUrls != null && mUrls.size() != 0) {
+                    ArrayList<String> temp = new ArrayList<>();
+                    for (String url : mUrls) {
+                        temp.add(url.replace("<qery>", query).replace("<page>",
+                                String.valueOf(page)));
+                    }
+                    getData(temp);
+                } else if (mUrl != null) {
+                    getData(mUrl.replace("<qery>", query).replace("<page>", String.valueOf(page)));
+                }
             }
         }
     }
@@ -160,7 +194,11 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
     @Override
     public void onBookItemClick(View view, int position) {
-        getViewState().startBookActivity(books.get(position));
+        if (books_filter == null) {
+            getViewState().startBookActivity(books.get(position));
+        } else {
+            getViewState().startBookActivity(books_filter.get(position));
+        }
     }
 
     @Override
@@ -179,27 +217,34 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         TextView artist = layout.findViewById(R.id.artist);
         TextView series = layout.findViewById(R.id.series);
 
+        BookPOJO bookPOJO;
+        if (books_filter == null) {
+            bookPOJO = books.get(position);
+        } else {
+            bookPOJO = books_filter.get(position);
+        }
+
         ImageView imageView = layout.findViewById(R.id.imageView);
         Picasso.get()
-                .load(books.get(position).getPhoto())
+                .load(bookPOJO.getPhoto())
                 .error(android.R.drawable.ic_menu_camera)
                 .placeholder(android.R.drawable.ic_menu_camera)
                 .into(imageView);
 
         TextView title = layout.findViewById(R.id.title);
-        title.setText(books.get(position).getName());
+        title.setText(bookPOJO.getName());
 
         TextView authorName = layout.findViewById(R.id.authorName);
-        authorName.setText(books.get(position).getAutor());
+        authorName.setText(bookPOJO.getAutor());
 
 
-        if (books.get(position).getSeries() == null || books.get(position).getUrlSeries() == null) {
+        if (bookPOJO.getSeries() == null || bookPOJO.getUrlSeries() == null) {
             series.setVisibility(View.GONE);
         } else {
             series.setVisibility(View.VISIBLE);
         }
 
-        if (mBooksDBModel.inFavorite(books.get(position))) {
+        if (mBooksDBModel.inFavorite(bookPOJO)) {
             add.setVisibility(View.GONE);
             remove.setVisibility(View.VISIBLE);
         } else {
@@ -210,144 +255,220 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         open.setOnClickListener(view1 -> {
             dialog.dismiss();
             MyInterstitialAd.increase();
-            getViewState().startBookActivity(books.get(position));
+            getViewState().startBookActivity(bookPOJO);
         });
 
         add.setOnClickListener(view1 -> {
             dialog.dismiss();
-            mBooksDBModel.addFavorite(books.get(position));
+            mBooksDBModel.addFavorite(bookPOJO);
         });
 
         remove.setOnClickListener(view1 -> {
             dialog.dismiss();
-            mBooksDBModel.removeFavorite(books.get(position));
+            mBooksDBModel.removeFavorite(bookPOJO);
         });
 
         genre.setOnClickListener(view1 -> {
             dialog.dismiss();
-            getViewState().returnResult(books.get(position).getUrlGenre(),
-                    books.get(position).getGenre(), Consts.MODEL_BOOKS, "searchebleBooks");
+            getViewState().returnResult(bookPOJO.getUrlGenre(),
+                    bookPOJO.getGenre(), Consts.MODEL_BOOKS, "searchebleBooks");
         });
 
         author.setOnClickListener(view1 -> {
             dialog.dismiss();
-            getViewState().returnResult(books.get(position).getUrlAutor(),
-                    books.get(position).getAutor(), Consts.MODEL_BOOKS, "searchebleBooks");
+            getViewState().returnResult(bookPOJO.getUrlAutor(),
+                    bookPOJO.getAutor(), Consts.MODEL_BOOKS, "searchebleBooks");
         });
 
         artist.setOnClickListener(view1 -> {
             dialog.dismiss();
-            getViewState().returnResult(books.get(position).getUrlArtist(),
-                    books.get(position).getArtist(), Consts.MODEL_BOOKS, "searchebleBooks");
+            getViewState().returnResult(bookPOJO.getUrlArtist(),
+                    bookPOJO.getArtist(), Consts.MODEL_BOOKS, "searchebleBooks");
         });
 
         series.setOnClickListener(view12 -> {
             dialog.dismiss();
-            getViewState().returnResult(books.get(position).getUrlSeries() + "?page=",
-                    books.get(position).getSeries(), Consts.MODEL_BOOKS, "searchebleBooks");
+            getViewState().returnResult(bookPOJO.getUrlSeries(),
+                    bookPOJO.getSeries(), Consts.MODEL_BOOKS, "searchebleBooks");
         });
         dialog.show();
     }
 
     @Override
     public void onAutorsListItemClick(View view, int position) {
-        getViewState().returnResult(mSearcheblPOJO.getAutorsList().get(position).getUrl(),
-                mSearcheblPOJO.getAutorsList().get(position).getName(), Consts.MODEL_BOOKS,
+        SearchebleArrayPOJO arrayPOJO;
+        if (mSearcheblPOJOFilter == null) {
+            arrayPOJO = mSearcheblPOJO.getAutorsList().get(position);
+        } else {
+            arrayPOJO = mSearcheblPOJOFilter.getAutorsList().get(position);
+        }
+
+        getViewState().returnResult(arrayPOJO.getUrl(),
+                arrayPOJO.getName(), Consts.MODEL_BOOKS,
                 "searchebleBooks");
     }
 
     @Override
     public void onSeriesListItemClick(View view, int position) {
+        SearchebleArrayPOJO arrayPOJO;
+        if (mSearcheblPOJOFilter == null) {
+            arrayPOJO = mSearcheblPOJO.getSeriesList().get(position);
+        } else {
+            arrayPOJO = mSearcheblPOJOFilter.getSeriesList().get(position);
+        }
+
         getViewState().returnResult(
-                mSearcheblPOJO.getSeriesList().get(position).getUrl() + "?page=",
-                mSearcheblPOJO.getSeriesList().get(position).getName(), Consts.MODEL_BOOKS,
+                arrayPOJO.getUrl(),
+                arrayPOJO.getName(), Consts.MODEL_BOOKS,
                 "searchebleBooks");
+    }
+
+    private void setBooksFilter(String src) {
+        books_filter = new ArrayList<>();
+        for (BookPOJO bookPOJO : books) {
+            if (bookPOJO.getUrl().contains(src)) {
+                books_filter.add(bookPOJO);
+            }
+        }
+    }
+
+    @Override
+    public void filterBooks() {
+        if (filter == -1) {
+            books_filter = null;
+            getViewState().showData(books);
+        } else if (filter == Consts.SOURCE_KNIGA_V_UHE) {
+            setBooksFilter("knigavuhe.org");
+            getViewState().showData(books_filter);
+        } else if (filter == Consts.SOURCE_IZI_BUK) {
+            setBooksFilter("izibuk.ru");
+            getViewState().showData(books_filter);
+        }
+
+    }
+
+    private void setAutorsAndSeriesFilter(String src) {
+        mSearcheblPOJOFilter = new SearcheblPOJO();
+        ArrayList<SearchebleArrayPOJO> autorsList = new ArrayList<>();
+        ArrayList<SearchebleArrayPOJO> seriesList = new ArrayList<>();
+        for (SearchebleArrayPOJO arrayPOJO : mSearcheblPOJO.getAutorsList()) {
+            if (arrayPOJO.getUrl().contains(src)) {
+                autorsList.add(arrayPOJO);
+            }
+        }
+        mSearcheblPOJOFilter.setAutorsList(autorsList);
+        mSearcheblPOJOFilter.setAutorsCount(mSearcheblPOJO.getAutorsCount());
+        for (SearchebleArrayPOJO arrayPOJO : mSearcheblPOJO.getSeriesList()) {
+            if (arrayPOJO.getUrl().contains(src)) {
+                seriesList.add(arrayPOJO);
+            }
+        }
+        mSearcheblPOJOFilter.setSeriesList(seriesList);
+        mSearcheblPOJOFilter.setSeriesCount(mSearcheblPOJO.getSeriesCount());
+    }
+
+    @Override
+    public void filterAutorsAndSeries() {
+        if (filter == -1) {
+            mSearcheblPOJOFilter = null;
+            getViewState().showSeriesAndAutors(mSearcheblPOJO);
+        } else if (filter == Consts.SOURCE_KNIGA_V_UHE) {
+            setAutorsAndSeriesFilter("knigavuhe.org");
+            getViewState().showSeriesAndAutors(mSearcheblPOJOFilter);
+        } else if (filter == Consts.SOURCE_IZI_BUK) {
+            mSearcheblPOJOFilter = new SearcheblPOJO();
+            getViewState().showSeriesAndAutors(mSearcheblPOJOFilter);
+        }
+    }
+
+    private void getData(ArrayList<String> url) {
+        if (!isLoading) {
+            isLoading = true;
+            mModelBook.getBooks(url, page)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<ArrayList<BookPOJO>>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+                        }
+
+                        @Override
+                        public void onNext(ArrayList<BookPOJO> bookPOJOS) {
+                            books.addAll(bookPOJOS);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            if (e.getClass() == NullPointerException.class) {
+                                isEnd = true;
+                            } else {
+                                page--;
+                            }
+                            onComplete();
+
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            Log.d(TAG, "onComplete");
+                            filterBooks();
+                            getViewState().showProgres(false);
+                            isLoading = false;
+                            if (isLoadAutors && mSearcheblPOJO.getAutorsList().isEmpty() &&
+                                    mSearcheblPOJO.getSeriesList().isEmpty() &&
+                                    books.isEmpty()) {
+                                getViewState().setNotFoundVisibile(true);
+                            } else {
+                                getViewState().setNotFoundVisibile(false);
+                            }
+                        }
+                    });
+
+        }
     }
 
 
     private void getData(String url) {
         if (!isLoading) {
             isLoading = true;
-            if (mModelId == Consts.MODEL_BOOKS) {
-                mModelBook.getBooks(url, page)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Observer<ArrayList<BookPOJO>>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                            }
+            mModelGenre.getBooks(url, page)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<ArrayList<GenrePOJO>>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+                        }
 
-                            @Override
-                            public void onNext(ArrayList<BookPOJO> bookPOJOS) {
-                                books.addAll(bookPOJOS);
-                            }
+                        @Override
+                        public void onNext(ArrayList<GenrePOJO> bookPOJOS) {
+                            genre.addAll(bookPOJOS);
+                        }
 
-                            @Override
-                            public void onError(Throwable e) {
-                                if (e.getClass() == NullPointerException.class) {
-                                    isEnd = true;
-                                } else {
-                                    page--;
-                                }
-                                onComplete();
-
+                        @Override
+                        public void onError(Throwable e) {
+                            if (e.getClass() == NullPointerException.class) {
+                                isEnd = true;
+                            } else {
+                                getViewState().showToast(R.string.error_load_data);
+                                page--;
                             }
+                            onComplete();
 
-                            @Override
-                            public void onComplete() {
-                                Log.d(TAG, "onComplete");
-                                getViewState().showData(books);
-                                getViewState().showProgres(false);
-                                isLoading = false;
-                                if (isLoadAutors && mSearcheblPOJO.getAutorsList().isEmpty() &&
-                                        mSearcheblPOJO.getSeriesList().isEmpty() &&
-                                        books.isEmpty()) {
-                                    getViewState().setNotFoundVisibile(true);
-                                } else {
-                                    getViewState().setNotFoundVisibile(false);
-                                }
-                            }
-                        });
-            } else {
-                mModelGenre.getBooks(url, page)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Observer<ArrayList<GenrePOJO>>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                            }
+                        }
 
-                            @Override
-                            public void onNext(ArrayList<GenrePOJO> bookPOJOS) {
-                                genre.addAll(bookPOJOS);
+                        @Override
+                        public void onComplete() {
+                            Log.d(TAG, "onComplete");
+                            getViewState().showData(genre);
+                            getViewState().showProgres(false);
+                            isLoading = false;
+                            if (genre.isEmpty()) {
+                                getViewState().setNotFoundVisibile(true);
+                            } else {
+                                getViewState().setNotFoundVisibile(false);
                             }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                if (e.getClass() == NullPointerException.class) {
-                                    isEnd = true;
-                                } else {
-                                    getViewState().showToast(R.string.error_load_data);
-                                    page--;
-                                }
-                                onComplete();
-
-                            }
-
-                            @Override
-                            public void onComplete() {
-                                Log.d(TAG, "onComplete");
-                                getViewState().showData(genre);
-                                getViewState().showProgres(false);
-                                isLoading = false;
-                                if (genre.isEmpty()) {
-                                    getViewState().setNotFoundVisibile(true);
-                                } else {
-                                    getViewState().setNotFoundVisibile(false);
-                                }
-                            }
-                        });
-            }
+                        }
+                    });
         }
     }
 
@@ -374,7 +495,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                     @Override
                     public void onComplete() {
                         Log.d(TAG, "onComplete");
-                        getViewState().showSeriesAndAutors(mSearcheblPOJO);
+                        filterAutorsAndSeries();
                         getViewState().showProgresTop(false);
                         isLoadAutors = true;
                         if (!isLoading && ((books != null && books.isEmpty()) || (genre != null

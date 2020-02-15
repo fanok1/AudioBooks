@@ -154,14 +154,14 @@ public class MainActivity extends MvpAppCompatActivity
         super.onStart();
         if (!isSavedInstanceState) {
             if (firstStart) {
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
                     if (pm != null) {
                         if (!pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks")) {
                             UiModeManager uiModeManager = (UiModeManager) getSystemService(
                                     UI_MODE_SERVICE);
-                            boolean b = new StorageUtil(this).loadBattaryOptimizeDisenbled();
+                            StorageUtil storageUtil = new StorageUtil(this);
+                            boolean b = storageUtil.loadBattaryOptimizeDisenbled();
                             if (uiModeManager != null && uiModeManager.getCurrentModeType()
                                     != Configuration.UI_MODE_TYPE_TELEVISION && !b) {
                                 alert.show();
@@ -342,14 +342,8 @@ public class MainActivity extends MvpAppCompatActivity
         alert.setMessage(R.string.setIgnoredBatteryOptimyze);
         alert.setNegativeButton(R.string.cancel, null);
         alert.setCancelable(true);
-        alert.setNeutralButton(R.string.help, (dialogInterface, i) -> {
-            Intent intent = new Intent(alert.getContext(), ActivitySendEmail.class);
-            intent.putExtra("enebled", false);
-            intent.putExtra("message",
-                    getString(R.string.message_help_disable_battery_optimisetion));
-            intent.putExtra("subject", 0);
-            startActivity(intent);
-        });
+        alert.setNeutralButton(R.string.do_not_how,
+                (dialogInterface, i) -> setBattaryOptimizeDisenbled(true));
         alert.setPositiveButton("OK",
                 (dialogInterface, i) -> mPresenter.openSettingsOptimizeBattery(dialogInterface));
 

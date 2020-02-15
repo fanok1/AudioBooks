@@ -175,7 +175,7 @@
     <string name="bunerID" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
     <string name="interstitiaID" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
     <string name="rewardedID" translatable="false">ca-app-pub-3940256099942544/5224354917</string>
-    <string name="setIgnoredBatteryOptimyze">Для корректной работы приложения необходимо добавить приложение в список игнорирования экономии зараяда батареи (Battery optimizetion).</string>
+    <string name="setIgnoredBatteryOptimyze">Для корректной работы приложения необходимо добавить его в список игнорирования экономии зараяда батареи (Battery optimizetion).</string>
 
 
     <!--About -->
@@ -303,5 +303,37 @@
     <string name="offline">Офлайн</string>
     <string name="ofline_desc">Скрывать незагруженные главы из списка в офлайн режиме</string>
     <string name="go_offline">Переход в офлайн режим</string>
+    <string name="clear_saving">Очистить сохраненное</string>
+    <string name="saved_file_not_found">Сохраненные файлы не найдены</string>
+    <string name="no_selecetd">Нет выбранных элементов</string>
+    <string name="android_auto" translatable="false">Andoid Auto</string>
+    <string name="android_auto_desc">Оптимизировать под Android Auto</string>
+    <string name="books_adapter_layout">Режим отображения списка</string>
+    <string name="search_desc">Выполнять глобальный поиск книг из истории и избранного</string>
+    <string name="battary_optimize" translatable="false">Battery Optimization</string>
+    <string name="battary_optimize_desc">Проверить включен ли режим экономии заряда батареи</string>
+    <string name="enabled">Включен</string>
+    <string name="disenabled">Выключен</string>
+    <string name="reqest_battary_optimisation">Отключить режим экономии заряда батареи</string>
+    <string name="do_not_how">Не показывать</string>
+    <string name="sorce_books">Источник</string>
+
+    <string name="dir_title_emulated">Внутренняя</string>
+    <string name="dir_title_sdcrd">SD карта</string>
+    <string name="dir_value_emulated" translatable="false">emulated</string>
+    <string name="dir_value_sdcrd" translatable="false">sdcrd</string>
+    <string name="dir_value_download" translatable="false">download</string>
+    <string name="dir_title_download">Загрузки (для сторонних плееров)</string>
+    <string name="last_book">Последняя открытая книга</string>
+    <string name="books_adapter_layout_list_title">Список</string>
+    <string name="books_adapter_layout_big_list_title">Большой список</string>
+    <string name="books_adapter_layout_list_value" translatable="false">list</string>
+    <string name="books_adapter_layout_big_list_value" translatable="false">big_list</string>
+    <string name="kniga_v_uhe_value" translatable="false">kniga_v_uhe</string>
+    <string name="izibuc_value" translatable="false">izibuc</string>
+    <string name="izibuc">ИзиБук</string>
+    <string name="menu_saved">Скачанные</string>
+    <string name="clear_audio_list">Очистить список аудио файлов</string>
+    <string name="confirm_clear_audio_list">Вы уверены что хотите очистить список аудио файлов</string>
 
 </resources>

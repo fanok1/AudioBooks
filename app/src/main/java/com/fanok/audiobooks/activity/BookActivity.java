@@ -124,6 +124,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     public static final String Broadcast_SHOW_RATING = "ShowRating";
     public static final String Broadcast_SHOW_EQUALIZER = "ShowEqualizer";
     public static final String Broadcast_UPDATE_ADAPTER = "UpdateAdapter";
+    public static final String Broadcast_CLEAR_DOWNLOADING = "clearDownloading";
+
     private static final int REQUEST_WRITE_STORAGE = 145;
 
     private static String showingView;
@@ -275,7 +277,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     private BroadcastReceiver updateAdapter = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            updateAdapter();
+            updateAdapter(intent.getStringExtra("url"));
+        }
+    };
+
+    private BroadcastReceiver clearDownloading = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            clearDownloading();
         }
     };
 
@@ -410,8 +419,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         if (json == null) throw new NullPointerException();
         mBookPOJO = BookPOJO.parceJsonToBookPojo(json);
 
+        pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        int isTablet = getResources().getInteger(R.integer.isTablet);
         UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
-        if (uiModeManager != null
+        if (pref.getBoolean("androidAutoPref", false) && isTablet != 0) {
+            setContentView(R.layout.activity_book_android_auto);
+        } else if (uiModeManager != null
                 && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
             setContentView(R.layout.activity_book_television);
         } else {
@@ -426,9 +441,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         }
 
         mNotificationClick = intent.getBooleanExtra("notificationClick", false);
-
-        pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
 
         String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
         if (themeName.equals(getString(R.string.theme_dark_value))) {
@@ -474,14 +486,15 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         registerReceiver(showRating, new IntentFilter(Broadcast_SHOW_RATING));
         registerReceiver(showEqualizer, new IntentFilter(Broadcast_SHOW_EQUALIZER));
         registerReceiver(updateAdapter, new IntentFilter(Broadcast_UPDATE_ADAPTER));
+        registerReceiver(clearDownloading, new IntentFilter(Broadcast_CLEAR_DOWNLOADING));
 
-        int isTablet = getResources().getInteger(R.integer.isTablet);
+
         if (isTablet == 0 && (uiModeManager == null
                 || uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION)) {
             bottomSheetBehavior = BottomSheetBehavior.from(mPlayer);
 
 
-            bottomSheetBehavior.setBottomSheetCallback(
+            bottomSheetBehavior.addBottomSheetCallback(
                     new BottomSheetBehavior.BottomSheetCallback() {
                         @Override
                         public void onStateChanged(@NonNull View bottomSheet, int newState) {
@@ -918,6 +931,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         unregisterReceiver(showRating);
         unregisterReceiver(showEqualizer);
         unregisterReceiver(updateAdapter);
+        unregisterReceiver(clearDownloading);
         showingView = "";
         mPresenter.onDestroy();
         super.onDestroy();
@@ -1079,8 +1093,22 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     }
 
     @Override
-    public void updateAdapter() {
-        if (mAudioAdapter != null) mAudioAdapter.notifyDataSetChanged();
+    public void updateAdapter(String url) {
+        if (url != null) {
+            mAudioAdapter.removeDownloadingItem(url);
+        } else {
+            if (mAudioAdapter != null) mAudioAdapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void clearDownloading() {
+        mAudioAdapter.clearDownloadingItem();
+    }
+
+    @Override
+    public void startMainActivity(int fragmentId) {
+        MainActivity.startMainActivity(this, fragmentId, "settings");
     }
 
     @Override
@@ -1253,33 +1281,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         decorView.setSystemUiVisibility(uiOptions);
 
         if (bottomSheetBehavior != null) {
-            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-                if (mTopButtonsControls != null
-                        && mTopButtonsControls.getVisibility() != View.GONE) {
-                    mTopButtonsControls.setVisibility(View.GONE);
-                }
-                if (mProgressBar != null && mProgressBar.getVisibility() != View.GONE) {
-                    mProgressBar.setVisibility(View.GONE);
-                }
-
-
-                if (mAudioAdapter.getSelectedItemsSize() > 0) {
-                    if (mRadioAll.getVisibility() != View.VISIBLE) {
-                        mRadioAll.setVisibility(View.VISIBLE);
-                    }
-                    if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.GONE) {
-                        mButtonCollapse.setVisibility(View.GONE);
-                    }
-                } else {
-                    if (mRadioAll.getVisibility() != View.GONE) {
-                        mRadioAll.setVisibility(View.GONE);
-                    }
-                    if (mButtonCollapse != null
-                            && mButtonCollapse.getVisibility() != View.VISIBLE) {
-                        mButtonCollapse.setVisibility(View.VISIBLE);
-                    }
-                }
-            }
+            bottomSheetBehavior.setState(mPresenter.getState());
         } else {
             if (mAudioAdapter.getSelectedItemsSize() > 0) {
                 if (mRadioAll.getVisibility() != View.VISIBLE) {
@@ -1295,6 +1297,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
     @Override
     public void downloadFile(String url, String fileName) {
+        mAudioAdapter.addDownloadingItem(url);
         Intent intent = new Intent(this, Download.class);
         intent.putExtra("url", url);
         intent.putExtra("fileName", fileName);

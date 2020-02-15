@@ -75,6 +75,26 @@
         <item>@string/dir_value_download</item>
     </string-array>
 
+    <string-array name="books_adapter_layout_titles">
+        <item>@string/books_adapter_layout_list_title</item>
+        <item>@string/books_adapter_layout_big_list_title</item>
+    </string-array>
+
+    <string-array name="books_adapter_layout_values">
+        <item>@string/books_adapter_layout_list_value</item>
+        <item>@string/books_adapter_layout_big_list_value</item>
+    </string-array>
+
+    <string-array name="sorce_books_titles">
+        <item>@string/kniga_v_uhe</item>
+        <item>@string/izibuc</item>
+    </string-array>
+
+    <string-array name="sorce_books_values">
+        <item>@string/kniga_v_uhe_value</item>
+        <item>@string/izibuc_value</item>
+    </string-array>
+
     <string-array name="email_catigory">
         <item>@string/help</item>
         <item>@string/error</item>
@@ -109,11 +129,4 @@
         <item>#2c9633</item> <!-- fab multiselect color -->
         <item>#151515</item> <!-- address bar bg -->
     </array>
-    <string name="dir_title_emulated">Внутреннее</string>
-    <string name="dir_title_sdcrd">SD карта</string>
-    <string name="dir_value_emulated" translatable="false">emulated</string>
-    <string name="dir_value_sdcrd" translatable="false">sdcrd</string>
-    <string name="dir_value_download" translatable="false">download</string>
-    <string name="dir_title_download">Загрузки (для сторонних плееров)</string>
-    <string name="last_book">Последняя открытая книга</string>
 </resources>

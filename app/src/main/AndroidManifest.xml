@@ -17,6 +17,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="com.android.vending.BILLING" />
 
     <uses-feature
@@ -157,12 +158,38 @@
                     android:host="knigavuhe.org"
                     android:scheme="https" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="izibuk.ru"
+                    android:scheme="https" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="pda.izibuk.ru"
+                    android:scheme="https" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".activity.PopupGetPlus"
             android:configChanges="locale|uiMode"
             android:launchMode="singleTop"
             android:theme="@style/LightAppTheme.Popup" />
+
+        <activity
+            android:name=".activity.PopupClearSaved"
+            android:configChanges="locale|uiMode"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Popup2" />
 
         <provider
             android:name=".MySuggestionProvider"

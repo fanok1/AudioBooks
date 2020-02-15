@@ -61,14 +61,9 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
 
     @Override
-    protected void onFirstViewAttach() {
-        super.onFirstViewAttach();
-        loadBooks();
-    }
-
-    @Override
     public void loadBooks() {
         if (!isLoading) {
+            filterSearch.clear();
             isLoading = true;
             mFavoriteModel.getBooks(table)
                     .subscribeOn(Schedulers.io())
@@ -93,6 +88,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                         public void onComplete() {
                             getViewState().showData(books);
                             getViewState().showProgres(false);
+                            getViewState().updateFilter();
                             isLoading = false;
                         }
                     });

@@ -29,13 +29,11 @@ public interface Activity extends MvpView {
     @StateStrategyType(SkipStrategy.class)
     void addToMainScreen(BookPOJO bookPOJO);
 
-    @StateStrategyType(AddToEndSingleStrategy.class)
+
     void showProgres(boolean b);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
     void showData(ArrayList<AudioPOJO> data);
-
-    @StateStrategyType(AddToEndSingleStrategy.class)
     void showTitle(@NonNull String name);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
@@ -90,5 +88,11 @@ public interface Activity extends MvpView {
     void showToast(String s);
 
     @StateStrategyType(SkipStrategy.class)
-    void updateAdapter();
+    void updateAdapter(String url);
+
+    @StateStrategyType(SkipStrategy.class)
+    void clearDownloading();
+
+    @StateStrategyType(SkipStrategy.class)
+    void startMainActivity(int fragmentId);
 }

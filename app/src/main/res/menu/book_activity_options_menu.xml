@@ -52,5 +52,10 @@
             android:id="@+id/addMainScreen"
             android:title="@string/add_to_main_screen"
             app:showAsAction="never" />
+
+        <item
+            android:id="@+id/settings"
+            android:title="@string/menu_settings"
+            app:showAsAction="never" />
     </group>
 </menu>

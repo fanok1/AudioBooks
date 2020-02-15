@@ -29,8 +29,10 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
     }
 
     public void clearItem() {
-        mModel.clear();
-        notifyDataSetChanged();
+        if (mModel != null) {
+            mModel = new ArrayList<>();
+            notifyDataSetChanged();
+        }
     }
 
     @NonNull

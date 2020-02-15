@@ -292,5 +292,23 @@
     <string name="go_offline">Going to offline mode</string>
     <string name="offline">Offline</string>
     <string name="ofline_desc">Hide unloaded chapters from the list offline</string>
+    <string name="clear_saving">Clear saved</string>
+    <string name="no_selecetd">No items selected</string>
+    <string name="saved_file_not_found">No saved files found</string>
+    <string name="android_auto_desc">Optimize for Android Auto</string>
+    <string name="battary_optimize_desc">Check if battery saver is on</string>
+    <string name="books_adapter_layout">List display mode</string>
+    <string name="books_adapter_layout_big_list_title">Big list</string>
+    <string name="books_adapter_layout_list_title">List</string>
+    <string name="clear_audio_list">Clear list of audio files</string>
+    <string name="confirm_clear_audio_list">Are you sure you want to clear the list of audio files</string>
+    <string name="disenabled">Switched off</string>
+    <string name="do_not_how">Do not show</string>
+    <string name="enabled">Switched on</string>
+    <string name="izibuc">IziBuk</string>
+    <string name="menu_saved">Downloaded</string>
+    <string name="reqest_battary_optimisation">Disable Battery Optimization</string>
+    <string name="search_desc">Perform a global search for books from history and favorites</string>
+    <string name="sorce_books">A source</string>
 
 </resources>

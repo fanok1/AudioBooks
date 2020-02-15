@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
@@ -37,16 +38,36 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
     private AudioAdapter.OnListItemSelectedInterface mListener;
     private AudioAdapter.OnSelectedListner mSelectedListner;
     private HashSet<String> mSelectedItems;
+    private HashSet<String> mDownloadingItems;
 
     public AudioAdapter() {
         mData = new ArrayList<>();
         mSelectedItems = new HashSet<>();
+        mDownloadingItems = new HashSet<>();
     }
 
     public void setSelectedListner(
             OnSelectedListner selectedListner) {
         mSelectedListner = selectedListner;
     }
+
+    public void addDownloadingItem(@NonNull String url) {
+        mDownloadingItems.add(url);
+        notifyDataSetChanged();
+    }
+
+    public void removeDownloadingItem(@NonNull String url) {
+        mDownloadingItems.remove(url);
+        notifyDataSetChanged();
+    }
+
+    public void clearDownloadingItem() {
+        mDownloadingItems.clear();
+        notifyDataSetChanged();
+    }
+
+
+
 
     public HashSet<String> getSelectedItems() {
         return mSelectedItems;
@@ -131,20 +152,28 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         File[] folders = viewHolder.mImageView.getContext().getExternalFilesDirs(null);
         boolean b = false;
         for (File folder : folders) {
-            File dir = new File(folder.getAbsolutePath() + "/" + mData.get(i).getBookName());
-            if (dir.exists() && dir.isDirectory()) {
-                String url = mData.get(i).getUrl();
-                File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
-                if (file.exists()) {
-                    b = true;
-                    break;
+            if (folder != null) {
+                File dir = new File(folder.getAbsolutePath() + "/" + mData.get(i).getBookName());
+                if (dir.exists() && dir.isDirectory()) {
+                    String url = mData.get(i).getUrl();
+                    File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
+                    if (file.exists()) {
+                        b = true;
+                        break;
+                    }
                 }
             }
         }
         if (b) {
             viewHolder.mImageView.setVisibility(View.VISIBLE);
+            viewHolder.mProgressBar.setVisibility(View.GONE);
         } else {
             viewHolder.mImageView.setVisibility(View.INVISIBLE);
+            if (mDownloadingItems.contains(mData.get(i).getUrl())) {
+                viewHolder.mProgressBar.setVisibility(View.VISIBLE);
+            } else {
+                viewHolder.mProgressBar.setVisibility(View.GONE);
+            }
         }
 
 
@@ -250,6 +279,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         private TextView mTime;
         private RadioButton mRadioButton;
         private ImageView mImageView;
+        private ProgressBar mProgressBar;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -258,6 +288,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
             mTime = itemView.findViewById(R.id.time);
             mRadioButton = itemView.findViewById(R.id.radio);
             mImageView = itemView.findViewById(R.id.is_download);
+            mProgressBar = itemView.findViewById(R.id.progressBar);
         }
     }
 }

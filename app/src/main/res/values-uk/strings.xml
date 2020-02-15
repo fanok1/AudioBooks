@@ -292,5 +292,23 @@
     <string name="go_offline">Перехід в офлайн режим</string>
     <string name="offline">Офлайн</string>
     <string name="ofline_desc">Приховувати незавантажені глави зі списку в офлайн режимі</string>
+    <string name="clear_saving">Очистити збережене</string>
+    <string name="no_selecetd">Немає обраних елементів</string>
+    <string name="saved_file_not_found">Збережені файли не знайдені</string>
+    <string name="android_auto_desc">Оптимізувати під Android Auto</string>
+    <string name="battary_optimize_desc">Перевірити чи включений режим економії заряду батареї</string>
+    <string name="books_adapter_layout">Режим відображення списку</string>
+    <string name="books_adapter_layout_big_list_title">Великий список</string>
+    <string name="books_adapter_layout_list_title">Список</string>
+    <string name="clear_audio_list">Очистити список аудіо файлів</string>
+    <string name="confirm_clear_audio_list">Ви впевнені що хочете очистити список аудіо файлів</string>
+    <string name="disenabled">Вимкнений</string>
+    <string name="do_not_how">Не показувати</string>
+    <string name="enabled">Включений</string>
+    <string name="izibuc">ІзІБук</string>
+    <string name="menu_saved">Завантажені</string>
+    <string name="reqest_battary_optimisation">Вийти з режиму економії заряду батареї</string>
+    <string name="search_desc">Виконувати глобальний пошук книг з історії та обраного</string>
+    <string name="sorce_books">Джерело</string>
 
 </resources>

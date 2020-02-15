@@ -2,6 +2,7 @@ package com.fanok.audiobooks.model;
 
 import androidx.annotation.NonNull;
 
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchableModel;
 import com.fanok.audiobooks.pojo.SearcheblPOJO;
@@ -23,9 +24,7 @@ public class SearchebleModel implements SearchableModel {
     public SearcheblPOJO getSearcheblPOJO(@NonNull String url) throws IOException {
         SearcheblPOJO searcheblPOJO = new SearcheblPOJO();
         Document doc = Jsoup.connect(url)
-                .userAgent(
-                        "Mozilla / 5.0 (Windows NT 10.0; Win64; x64) AppleWebKit / 537.36 (KHTML,"
-                                + " как Gecko) Chrome / 60.0.3112.78 Safari / 537.36")
+                .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .get();
 
@@ -57,11 +56,7 @@ public class SearchebleModel implements SearchableModel {
                     } else {
                         String link = Url.SERVER + allResults.first().attr("href");
                         Document searchDoc = Jsoup.connect(link)
-                                .userAgent(
-                                        "Mozilla / 5.0 (Windows NT 10.0; Win64; x64) AppleWebKit "
-                                                + "/ 537.36 (KHTML,"
-                                                + " как Gecko) Chrome / 60.0.3112.78 Safari / 537"
-                                                + ".36")
+                                .userAgent(Consts.USER_AGENT)
                                 .referrer("http://www.google.com")
                                 .get();
                         Elements itemsConteiner = searchDoc.getElementsByClass("common_list");

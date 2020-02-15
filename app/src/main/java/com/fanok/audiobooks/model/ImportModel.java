@@ -45,9 +45,7 @@ public class ImportModel {
     private void setCookes() throws IOException {
         Connection.Response res = Jsoup.connect("https://knigavuhe.org/login/")
                 .method(Connection.Method.GET)
-                .userAgent(
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
-                                + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
+                .userAgent(Consts.USER_AGENT)
                 .referrer("https://knigavuhe.org")
                 .execute();
         Document doc = res.parse();
@@ -84,9 +82,7 @@ public class ImportModel {
                 .data("token", getToken())
                 .method(Connection.Method.POST)
                 .ignoreContentType(true)
-                .userAgent(
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
-                                + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
+                .userAgent(Consts.USER_AGENT)
                 .referrer("https://knigavuhe.org/login/")
                 .execute();
         if (res.url().toString().contains("error")) {
@@ -113,9 +109,7 @@ public class ImportModel {
     private boolean importBooks() throws IOException {
         Document document = Jsoup.connect(getUserUrl() + "fav/")
                 .cookies(getCookiesAuth())
-                .userAgent(
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
-                                + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
+                .userAgent(Consts.USER_AGENT)
                 .referrer(getUserUrl())
                 .get();
         Element booksListParent = document.getElementById("books_list");

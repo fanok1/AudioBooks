@@ -22,6 +22,8 @@
                 android:id="@+id/name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:layout_marginStart="@dimen/text_margin"
                 android:layout_marginTop="@dimen/item_genre_title_top_margin"
                 android:textColor="?attr/colorPrimaryText"

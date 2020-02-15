@@ -21,4 +21,8 @@ public interface SearchablePresenter {
 
     void onSeriesListItemClick(View view, int position);
 
+    void filterBooks();
+
+    void filterAutorsAndSeries();
+
 }

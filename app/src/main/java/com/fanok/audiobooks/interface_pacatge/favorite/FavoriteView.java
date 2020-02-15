@@ -24,6 +24,9 @@ public interface FavoriteView extends MvpView {
     void showData(ArrayList<BookPOJO> bookPOJOS);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
+    void updateFilter();
+
+    @StateStrategyType(AddToEndSingleStrategy.class)
     void clearData();
 
     @StateStrategyType(SkipStrategy.class)

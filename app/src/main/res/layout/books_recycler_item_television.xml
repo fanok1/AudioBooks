@@ -34,10 +34,19 @@
                 tools:ignore="UselessParent">
 
                 <TextView
+                    android:id="@+id/source"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/subTextSize"
+                    tools:text="Книга в ухе" />
+
+                <TextView
                     android:id="@+id/title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/recycler_item_textmargin"
+                    android:ellipsize="end"
                     android:layout_marginEnd="@dimen/recycler_item_textmargin"
                     android:maxLines="2"
                     android:textColor="?attr/colorPrimaryText"

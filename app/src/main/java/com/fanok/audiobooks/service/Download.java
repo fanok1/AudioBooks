@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.service;
 
+import static com.fanok.audiobooks.activity.BookActivity.Broadcast_CLEAR_DOWNLOADING;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_UPDATE_ADAPTER;
 
 import android.app.DownloadManager;
@@ -162,6 +163,7 @@ public class Download extends Service {
                     showNotification(postion, mProgress);
                 })
                 .setOnCancelListener(() -> {
+                    sendBroadcast(new Intent(Broadcast_CLEAR_DOWNLOADING));
                     stopForeground(true);
                     stopSelf();
                 })

@@ -3,6 +3,7 @@ package com.fanok.audiobooks.model;
 
 import androidx.annotation.NonNull;
 
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -26,9 +27,7 @@ public class AudioModel implements
     private ArrayList<AudioPOJO> loadSeriesList(String url) throws IOException {
         ArrayList<AudioPOJO> result = new ArrayList<>();
         Document doc = Jsoup.connect(url)
-                .userAgent(
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
-                                + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
+                .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .get();
 
@@ -68,13 +67,65 @@ public class AudioModel implements
     }
 
 
+    private ArrayList<AudioPOJO> loadSeriesListIzibuk(String url) throws IOException {
+        ArrayList<AudioPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .get();
+
+        Elements titleElement = doc.getElementsByAttributeValue("itemprop", "name");
+        String bookName = "";
+        if (titleElement.size() != 0) {
+            bookName = titleElement.first().text().trim();
+        }
+        Elements sriptElements = doc.getElementsByTag("script");
+        for (Element script : sriptElements) {
+            String value = script.toString();
+            if (value.contains("domReady")) {
+                value = deleteComnets(value);
+                value = value.substring(value.indexOf("var player = new XSPlayer("));
+                value = value.substring(0, value.indexOf("\n"));
+                String json = value.substring(value.indexOf("(") + 1, value.indexOf(");"));
+                JsonElement jsonTree = new JsonParser().parse(json);
+                if (jsonTree.isJsonObject()) {
+                    JsonObject jsonObject = jsonTree.getAsJsonObject();
+                    JsonElement url_pref_element = jsonObject.get("mp3_url_prefix");
+                    if (url_pref_element.isJsonPrimitive()) {
+                        String url_pref = "https://" + url_pref_element.getAsString();
+                        JsonArray array = jsonObject.getAsJsonArray("tracks");
+                        for (int i = 0; i < array.size(); i++) {
+                            AudioPOJO audioPOJO = new AudioPOJO();
+                            JsonArray elements = array.get(i).getAsJsonArray();
+                            audioPOJO.setName(elements.get(1).getAsString());
+                            audioPOJO.setTime(elements.get(2).getAsInt());
+                            audioPOJO.setUrl(url_pref + "/" + elements.get(4).getAsString());
+                            audioPOJO.setBookName(bookName);
+                            result.add(audioPOJO);
+                        }
+                    }
+                }
+
+            }
+        }
+
+        return result;
+    }
+
+
     @Override
     public Observable<ArrayList<AudioPOJO>> getAudio(@NonNull String url) {
 
         return Observable.create(observableEmitter -> {
             ArrayList<AudioPOJO> articlesModels;
             try {
-                articlesModels = loadSeriesList(url);
+                if (url.contains("knigavuhe.org")) {
+                    articlesModels = loadSeriesList(url);
+                } else if (url.contains("izibuk.ru")) {
+                    articlesModels = loadSeriesListIzibuk(url);
+                } else {
+                    articlesModels = new ArrayList<>();
+                }
                 observableEmitter.onNext(articlesModels);
             } catch (Exception e) {
                 observableEmitter.onError(e);

@@ -20,6 +20,7 @@ import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.adapter.SeriesListAddapter;
 import com.fanok.audiobooks.interface_pacatge.book_content.Series;
@@ -93,6 +94,11 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
             SeriesPOJO seriesPOJO = mSeriesListAddapter.getItem(position);
             if (!seriesPOJO.getUrl().isEmpty()) {
                 showBook(seriesPOJO.getUrl());
+            } else {
+                BookActivity activity = (BookActivity) getActivity();
+                if (activity != null) {
+                    activity.setTabPostion(getResources().getString(R.string.tab_text_1));
+                }
             }
         });
 

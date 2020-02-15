@@ -372,10 +372,16 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
 
 
     @Override
-    public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.books_options_menu, menu);
+    public void onCreateOptionsMenu(@NotNull Menu menu, @NotNull MenuInflater inflater) {
+        if (mUrl.contains("izibuk.ru")) {
+            inflater.inflate(R.menu.books_izibuk_options_menu, menu);
+        } else {
+            inflater.inflate(R.menu.books_options_menu, menu);
+        }
+
         if (modelID == Consts.MODEL_BOOKS) {
-            if (mUrl.contains("reader") || mUrl.contains("author")) {
+            if (mUrl.contains("reader") || mUrl.contains("author") ||
+                    (mUrl.contains("izibuk.ru") && mUrl.contains("genre"))) {
                 menu.findItem(R.id.order).setVisible(false);
             } else {
                 setColorPrimeriTextInIconItemMenu(
@@ -384,9 +390,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         } else {
             menu.findItem(R.id.order).setVisible(false);
         }
-        if (modelID == MODEL_GENRE) {
-            menu.findItem(R.id.app_bar_search).setVisible(false);
-        } else setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search),
+        setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search),
                 Objects.requireNonNull(getContext()));
 
         super.onCreateOptionsMenu(menu, inflater);

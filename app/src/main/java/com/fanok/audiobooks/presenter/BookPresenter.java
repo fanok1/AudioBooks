@@ -26,6 +26,7 @@ import androidx.preference.PreferenceManager;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.crashlytics.android.Crashlytics;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.SleepTimerActivity;
@@ -42,6 +43,7 @@ import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.service.MediaPlayerService;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -85,6 +87,12 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private SharedPreferences pref;
     private boolean error = false;
     private AudioModelInterfece mAudioModel;
+
+    private int state = BottomSheetBehavior.STATE_COLLAPSED;
+
+    public int getState() {
+        return state;
+    }
 
     public BookPresenter(@NonNull BookPOJO bookPOJO, @NonNull Context context) {
         mContext = context;
@@ -240,6 +248,9 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                 Intent breadCast = new Intent(Broadcast_Equalizer);
                 getViewState().broadcastSend(breadCast);
                 break;
+            case R.id.settings:
+                getViewState().startMainActivity(Consts.FRAGMENT_SETTINGS);
+                break;
         }
     }
 
@@ -306,11 +317,16 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                         for (int i = 0; i < list.size(); i++) {
                             AudioListPOJO audioListPOJO = list.get(i);
                             for (File folder : folders) {
-                                File file = new File(
-                                        folder.getAbsolutePath() + "/" + audioListPOJO.getBookName()
-                                                + "/" + audioListPOJO.getAudioUrl().substring(
-                                                audioListPOJO.getAudioUrl().lastIndexOf("/") + 1));
-                                if (file.exists() || !b) {
+                                File file = null;
+                                if (folder != null) {
+                                    file = new File(
+                                            folder.getAbsolutePath() + "/"
+                                                    + audioListPOJO.getBookName()
+                                                    + "/" + audioListPOJO.getAudioUrl().substring(
+                                                    audioListPOJO.getAudioUrl().lastIndexOf("/")
+                                                            + 1));
+                                }
+                                if ((file != null && file.exists()) || !b) {
                                     AudioPOJO audioPOJO = new AudioPOJO();
                                     audioPOJO.setName(audioListPOJO.getAudioName());
                                     audioPOJO.setBookName(audioListPOJO.getBookName());
@@ -477,11 +493,13 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void stateCollapsed() {
+        state = BottomSheetBehavior.STATE_COLLAPSED;
         getViewState().stateCollapsed();
     }
 
     @Override
     public void stateExpanded() {
+        state = BottomSheetBehavior.STATE_EXPANDED;
         getViewState().stateExpanded();
     }
 
@@ -503,29 +521,31 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     public void delete(HashSet<String> data) {
         File[] folders = mContext.getExternalFilesDirs(null);
         for (File folder : folders) {
-            File dir = new File(folder.getAbsolutePath() + "/" + mBookPOJO.getName());
-            if (dir.exists() && dir.isDirectory()) {
-                for (String url : data) {
-                    File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
-                    if (file.exists()) {
-                        if (!file.delete()) {
-                            Log.d(TAG, file + " delete: false");
-                        } else {
-                            Log.d(TAG, file + " delete: true");
+            if (folder != null) {
+                File dir = new File(folder.getAbsolutePath() + "/" + mBookPOJO.getName());
+                if (dir.exists() && dir.isDirectory()) {
+                    for (String url : data) {
+                        File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
+                        if (file.exists()) {
+                            if (!file.delete()) {
+                                Log.d(TAG, file + " delete: false");
+                            } else {
+                                Log.d(TAG, file + " delete: true");
+                            }
                         }
                     }
-                }
-                if (Objects.requireNonNull(dir.list()).length == 0) {
-                    if (!dir.delete()) {
-                        Log.d(TAG, dir + " delete: false");
-                    } else {
-                        Log.d(TAG, dir + " delete: true");
+                    if (Objects.requireNonNull(dir.list()).length == 0) {
+                        if (!dir.delete()) {
+                            Log.d(TAG, dir + " delete: false");
+                        } else {
+                            Log.d(TAG, dir + " delete: true");
+                        }
                     }
-                }
 
+                }
             }
         }
-        getViewState().updateAdapter();
+        getViewState().updateAdapter(null);
         getViewState().showToast(R.string.delete_complite);
     }
 

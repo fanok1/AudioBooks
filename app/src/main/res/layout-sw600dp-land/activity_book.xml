@@ -43,7 +43,7 @@
 
         <include
             android:id="@+id/player"
-            layout="@layout/player_television" />
+            layout="@layout/player" />
     </LinearLayout>
 
 

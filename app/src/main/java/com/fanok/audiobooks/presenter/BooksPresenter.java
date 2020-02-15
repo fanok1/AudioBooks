@@ -102,7 +102,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showProgres(true);
             page++;
             if (mModelId != Consts.MODEL_GENRE) {
-                if (!mUrl.contains("genre")) {
+                if (!mUrl.contains("genre") || mUrl.contains("izibuk.ru")) {
                     getData(mUrl + page + "/");
                 } else {
                     getData(mUrl.replace("<page>", Integer.toString(page)));
@@ -122,7 +122,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showRefreshing(true);
             page = 1;
             if (mModelId != Consts.MODEL_GENRE) {
-                if (!mUrl.contains("genre")) {
+                if (!mUrl.contains("genre") || mUrl.contains("izibuk.ru")) {
                     getData(mUrl + page + "/");
                 } else {
                     getData(mUrl.replace("<page>", Integer.toString(page)));
@@ -143,66 +143,85 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         subTitle = subTitle.replace(" " + getStringById(R.string.order_reting), "");
         subTitle = subTitle.replace(" " + getStringById(R.string.order_popular), "");
         String url = "";
-        if (!mUrl.contains("genre")) {
-            switch (itemId) {
-                case R.id.new_data:
-                    url = Url.NEW_BOOK;
-                    break;
-                case R.id.reting_all_time:
-                    url = Url.RATING_ALL_TIME;
-                    break;
-                case R.id.reting_month:
-                    url = Url.RATING_MONTH;
-                    break;
-                case R.id.reting_week:
-                    url = Url.RATING_WEEK;
-                    break;
-                case R.id.reting_day:
-                    url = Url.RATING_TODATY;
-                    break;
-                case R.id.popular_all_time:
-                    url = Url.BEST_ALL_TIME;
-                    break;
-                case R.id.popular_month:
-                    url = Url.BEST_MONTH;
-                    break;
-                case R.id.popular_week:
-                    url = Url.BEST_WEEK;
-                    break;
-                case R.id.popular_day:
-                    url = Url.BEST_TODAY;
-                    break;
+        if (mUrl.contains("knigavuhe.org")) {
+            if (!mUrl.contains("genre")) {
+                switch (itemId) {
+                    case R.id.new_data:
+                        url = Url.NEW_BOOK;
+                        break;
+                    case R.id.reting_all_time:
+                        url = Url.RATING_ALL_TIME;
+                        break;
+                    case R.id.reting_month:
+                        url = Url.RATING_MONTH;
+                        break;
+                    case R.id.reting_week:
+                        url = Url.RATING_WEEK;
+                        break;
+                    case R.id.reting_day:
+                        url = Url.RATING_TODATY;
+                        break;
+                    case R.id.popular_all_time:
+                        url = Url.BEST_ALL_TIME;
+                        break;
+                    case R.id.popular_month:
+                        url = Url.BEST_MONTH;
+                        break;
+                    case R.id.popular_week:
+                        url = Url.BEST_WEEK;
+                        break;
+                    case R.id.popular_day:
+                        url = Url.BEST_TODAY;
+                        break;
+                }
+            } else {
+                url = mUrl.substring(0, Consts.indexOfByNumber(mUrl, '/', 5) + 1);
+                switch (itemId) {
+                    case R.id.new_data:
+                        url = url + "<page>/";
+                        break;
+                    case R.id.reting_all_time:
+                        url = url + "rating/<page>/?period=alltime";
+                        break;
+                    case R.id.reting_month:
+                        url = url + "rating/<page>/?period=month";
+                        break;
+                    case R.id.reting_week:
+                        url = url + "rating/<page>/?period=week";
+                        break;
+                    case R.id.reting_day:
+                        url = url + "rating/<page>/?period=today";
+                        break;
+                    case R.id.popular_all_time:
+                        url = url + "popular/<page>/?period=alltime";
+                        break;
+                    case R.id.popular_month:
+                        url = url + "popular/<page>/?period=month";
+                        break;
+                    case R.id.popular_week:
+                        url = url + "popular/<page>/?period=week";
+                        break;
+                    case R.id.popular_day:
+                        url = url + "popular/<page>/?period=today";
+                        break;
+                }
             }
-        } else {
-            url = mUrl.substring(0, Consts.indexOfByNumber(mUrl, '/', 5) + 1);
-            switch (itemId) {
-                case R.id.new_data:
-                    url = url + "<page>/";
-                    break;
-                case R.id.reting_all_time:
-                    url = url + "rating/<page>/?period=alltime";
-                    break;
-                case R.id.reting_month:
-                    url = url + "rating/<page>/?period=month";
-                    break;
-                case R.id.reting_week:
-                    url = url + "rating/<page>/?period=week";
-                    break;
-                case R.id.reting_day:
-                    url = url + "rating/<page>/?period=today";
-                    break;
-                case R.id.popular_all_time:
-                    url = url + "popular/<page>/?period=alltime";
-                    break;
-                case R.id.popular_month:
-                    url = url + "popular/<page>/?period=month";
-                    break;
-                case R.id.popular_week:
-                    url = url + "popular/<page>/?period=week";
-                    break;
-                case R.id.popular_day:
-                    url = url + "popular/<page>/?period=today";
-                    break;
+        } else if (mUrl.contains("izibuk.ru")) {
+            if (itemId == R.id.order) {
+                Consts.izibuk_reiting = !Consts.izibuk_reiting;
+                if (Consts.izibuk_reiting) {
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            Url.INDEX_IZIBUK,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_popular),
+                            Consts.MODEL_BOOKS),
+                            "audioBooksOrederDiscussedAllTime");
+                } else {
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            Url.INDEX_IZIBUK, R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_new), Consts.MODEL_BOOKS),
+                            "audioBooksOrederNew");
+                }
             }
         }
 
@@ -300,7 +319,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
         if (genre != null && genre.size() - 1 >= position) {
             String url = genre.get(position).getUrl();
-            if (url.contains("genre")) url += "<page>/";
+
+            if (url.contains("genre") && mUrl.contains("knigavuhe.org")) url += "<page>/";
             getViewState().showFragment(BooksFragment.newInstance(
                     url,
                     R.string.menu_audiobooks,
@@ -427,7 +447,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         series.setOnClickListener(view12 -> {
             dialog.dismiss();
             getViewState().showFragment(BooksFragment.newInstance(
-                    books.get(position).getUrlSeries() + "?page=",
+                    books.get(position).getUrlSeries(),
                     R.string.menu_audiobooks,
                     books.get(position).getSeries(), Consts.MODEL_BOOKS),
                     "seriesBooks");

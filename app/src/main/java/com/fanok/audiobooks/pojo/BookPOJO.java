@@ -45,7 +45,13 @@ public class BookPOJO {
             if (url != null) {
                 BookPOJO articlesModels;
                 try {
-                    articlesModels = getBookByUrl(url);
+                    if (url.contains("knigavuhe.org")) {
+                        articlesModels = getBookByUrl(url);
+                    } else if (url.contains("izibuk.ru")) {
+                        articlesModels = getBookByUrlIziBuk(url);
+                    } else {
+                        articlesModels = new BookPOJO();
+                    }
                     observableEmitter.onNext(articlesModels);
                 } catch (Exception e) {
                     observableEmitter.onError(e);
@@ -76,10 +82,8 @@ public class BookPOJO {
         BookPOJO bookPOJO = new BookPOJO();
 
         Document document = Jsoup.connect(url)
-                .userAgent(
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
-                                + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
-                .referrer("https://audioknigi.club/")
+                .userAgent(Consts.USER_AGENT)
+                .referrer("https://google.com/")
                 .get();
         Elements titleElement = document.getElementsByClass("book_title_elem book_title_name");
         if (titleElement.size() != 0) {
@@ -176,6 +180,118 @@ public class BookPOJO {
             bookPOJO.setDesc(desc.first().text());
         }
 
+        return bookPOJO;
+    }
+
+    public static BookPOJO getBookByUrlIziBuk(String url) throws IOException {
+        BookPOJO bookPOJO = new BookPOJO();
+
+        Document document = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("https://google.com/")
+                .get();
+
+        bookPOJO.setUrl(url);
+
+        Elements elements = document.getElementsByAttributeValue("itemprop", "name");
+        if (elements != null && elements.size() != 0) {
+            String name = elements.first().text();
+            if (name != null) {
+                bookPOJO.setName(name);
+            }
+        }
+
+        Elements imgParent = document.getElementsByClass("_5e0b77");
+        if (imgParent != null && imgParent.size() != 0) {
+            Element img = imgParent.first().child(0);
+            if (img != null) {
+                String src = img.attr("src");
+                if (src != null) {
+                    bookPOJO.setPhoto(src);
+                }
+            }
+        }
+
+        Elements infoParent = document.getElementsByClass("_b264b2");
+        if (infoParent != null && infoParent.size() != 0) {
+            Elements info = infoParent.first().children();
+            if (info != null) {
+                for (Element element : info) {
+                    String text = element.text();
+                    if (text != null) {
+                        if (text.contains("Автор")) {
+                            Elements aTag = element.getElementsByTag("a");
+                            if (aTag != null && aTag.size() != 0) {
+                                Element a = aTag.first();
+                                String href = a.attr("href");
+                                if (href != null) {
+                                    bookPOJO.setUrlAutor(Url.SERVER_IZIBUK + href + "?p=");
+                                }
+                                String name = a.text();
+                                if (name != null) {
+                                    bookPOJO.setAutor(name);
+                                }
+                            }
+                        } else if (text.contains("Читает")) {
+                            Elements aTag = element.getElementsByTag("a");
+                            if (aTag != null && aTag.size() != 0) {
+                                Element a = aTag.first();
+                                String href = a.attr("href");
+                                if (href != null) {
+                                    bookPOJO.setUrlArtist(Url.SERVER_IZIBUK + href + "?p=");
+                                }
+                                String name = a.text();
+                                if (name != null) {
+                                    bookPOJO.setArtist(name);
+                                }
+                            }
+                        } else if (text.contains("Время")) {
+                            String time = text.replace("Время:", "").trim();
+                            bookPOJO.setTime(time);
+                        }
+                    }
+                }
+            }
+        }
+
+        Elements seriesParent = document.getElementsByClass("_c337c7");
+        if (seriesParent != null && seriesParent.size() != 0) {
+            Elements aTag = seriesParent.first().getElementsByTag("a");
+            if (aTag != null && aTag.size() != 0) {
+                Element a = aTag.first();
+                String href = a.attr("href");
+                if (href != null) {
+                    bookPOJO.setUrlSeries(Url.SERVER_IZIBUK + href + "?p=");
+                }
+                String text = a.text();
+                if (text != null) {
+                    bookPOJO.setSeries(text);
+                }
+            }
+        }
+
+        Elements genreParent = document.getElementsByClass("_7e215f");
+        if (genreParent != null && genreParent.size() != 0) {
+            Element genreElement = genreParent.first().child(0);
+            if (genreElement != null) {
+                String href = genreElement.attr("href");
+                if (href != null) {
+                    bookPOJO.setUrlGenre(Url.SERVER_IZIBUK + href + "?p=");
+                }
+                String text = genreElement.text();
+                if (text != null) {
+                    bookPOJO.setGenre(text);
+                }
+            }
+        }
+
+        Elements descriptionList = document.getElementsByAttributeValue("itemprop", "description");
+        if (descriptionList != null && descriptionList.size() != 0) {
+            String text = descriptionList.first().text();
+            if (text != null) {
+                bookPOJO.setDesc(text);
+            }
+        }
         return bookPOJO;
     }
 

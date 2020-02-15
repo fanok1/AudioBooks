@@ -5,6 +5,7 @@ import static android.content.Context.UI_MODE_SERVICE;
 import static java.lang.Integer.MAX_VALUE;
 
 import android.app.UiModeManager;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -18,6 +19,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -125,7 +127,14 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         View view;
         UiModeManager uiModeManager = (UiModeManager) Objects.requireNonNull(
                 container).getContext().getSystemService(UI_MODE_SERVICE);
-        if (uiModeManager != null
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(Objects.requireNonNull(getContext()));
+
+        int isTablet = getResources().getInteger(R.integer.isTablet);
+        if (pref.getBoolean("androidAutoPref", false) && isTablet != 0) {
+            view = inflater.inflate(R.layout.fragment_book_description_auto, container, false);
+        } else if (uiModeManager != null
                 && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
             view = inflater.inflate(R.layout.fragment_book_description_television, container,
                     false);
@@ -165,9 +174,11 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         if (data.size() != 0) {
             mRecommendedBooks.setVisibility(View.VISIBLE);
             mRecommendedBooksTitle.setVisibility(View.VISIBLE);
+            showOtherBooksLine(true);
         } else {
             mRecommendedBooks.setVisibility(View.GONE);
             mRecommendedBooksTitle.setVisibility(View.GONE);
+            showOtherBooksLine(false);
         }
 
     }
@@ -206,13 +217,19 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
             }
 
             if (mReting != null) {
-                String reting = String.valueOf(description.getReiting());
-                mReting.setText(reting);
+                if (description.getReiting() != 0) {
+                    String reting = String.valueOf(description.getReiting());
+                    mReting.setText(reting);
+                    mReting.setVisibility(View.VISIBLE);
+                } else {
+                    mReting.setVisibility(View.GONE);
+                }
             }
 
             if (mTime != null) {
                 if (!description.getTime().isEmpty()) {
                     mTime.setText(description.getTime());
+                    mTime.setVisibility(View.VISIBLE);
                 } else if (mTime.getVisibility() != View.GONE) {
                     mTime.setVisibility(View.GONE);
                 }
@@ -290,13 +307,26 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
 
 
             if (mFavorite != null) {
-                mFavorite.setText(String.valueOf(description.getFavorite()));
+                if (description.getFavorite() != 0) {
+                    mFavorite.setText(String.valueOf(description.getFavorite()));
+                    mFavorite.setVisibility(View.VISIBLE);
+                } else {
+                    mFavorite.setVisibility(View.GONE);
+                }
             }
             if (mLike != null) {
                 mLike.setText(String.valueOf(description.getLike()));
             }
             if (mDisLike != null) {
                 mDisLike.setText(String.valueOf(description.getDisLike()));
+            }
+
+            if (description.getDisLike() == 0 && description.getLike() == 0) {
+                mDisLike.setVisibility(View.GONE);
+                mLike.setVisibility(View.GONE);
+            } else {
+                mDisLike.setVisibility(View.VISIBLE);
+                mLike.setVisibility(View.VISIBLE);
             }
 
 

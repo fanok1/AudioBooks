@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.model;
 
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.interface_pacatge.book_content.DescriptionModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
@@ -31,9 +32,7 @@ public class BookDescriptionModel implements DescriptionModel {
 
     private void setDocument() throws IOException {
         mDocument = Jsoup.connect(mUrl)
-                .userAgent(
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
-                                + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
+                .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .get();
     }
@@ -143,6 +142,114 @@ public class BookDescriptionModel implements DescriptionModel {
         return descriptionPOJO;
     }
 
+    private DescriptionPOJO loadDescriptionIzibuk() throws IOException {
+        DescriptionPOJO descriptionPOJO = new DescriptionPOJO();
+        if (getDocument() == null) setDocument();
+        Document document = getDocument();
+
+        Elements elements = document.getElementsByAttributeValue("itemprop", "name");
+        if (elements != null && elements.size() != 0) {
+            String name = elements.first().text();
+            if (name != null) {
+                descriptionPOJO.setTitle(name);
+            }
+        }
+
+        Elements imgParent = document.getElementsByClass("_5e0b77");
+        if (imgParent != null && imgParent.size() != 0) {
+            Element img = imgParent.first().child(0);
+            if (img != null) {
+                String src = img.attr("src");
+                if (src != null) {
+                    descriptionPOJO.setPoster(src);
+                }
+            }
+        }
+
+        Elements infoParent = document.getElementsByClass("_b264b2");
+        if (infoParent != null && infoParent.size() != 0) {
+            Elements info = infoParent.first().children();
+            if (info != null) {
+                for (Element element : info) {
+                    String text = element.text();
+                    if (text != null) {
+                        if (text.contains("Автор")) {
+                            Elements aTag = element.getElementsByTag("a");
+                            if (aTag != null && aTag.size() != 0) {
+                                Element a = aTag.first();
+                                String href = a.attr("href");
+                                if (href != null) {
+                                    descriptionPOJO.setAutorUrl(Url.SERVER_IZIBUK + href + "?p=");
+                                }
+                                String name = a.text();
+                                if (name != null) {
+                                    descriptionPOJO.setAutor(name);
+                                }
+                            }
+                        } else if (text.contains("Читает")) {
+                            Elements aTag = element.getElementsByTag("a");
+                            if (aTag != null && aTag.size() != 0) {
+                                Element a = aTag.first();
+                                String href = a.attr("href");
+                                if (href != null) {
+                                    descriptionPOJO.setArtistUrl(Url.SERVER_IZIBUK + href + "?p=");
+                                }
+                                String name = a.text();
+                                if (name != null) {
+                                    descriptionPOJO.setArtist(name);
+                                }
+                            }
+                        } else if (text.contains("Время")) {
+                            String time = text.replace("Время:", "").trim();
+                            descriptionPOJO.setTime(time);
+                        }
+                    }
+                }
+            }
+        }
+
+        Elements seriesParent = document.getElementsByClass("_c337c7");
+        if (seriesParent != null && seriesParent.size() != 0) {
+            Elements aTag = seriesParent.first().getElementsByTag("a");
+            if (aTag != null && aTag.size() != 0) {
+                Element a = aTag.first();
+                String href = a.attr("href");
+                if (href != null) {
+                    descriptionPOJO.setSeriesUrl(Url.SERVER_IZIBUK + href + "?p=");
+                }
+                String text = a.text();
+                if (text != null) {
+                    descriptionPOJO.setSeries(text);
+                }
+            }
+        }
+
+        Elements genreParent = document.getElementsByClass("_7e215f");
+        if (genreParent != null && genreParent.size() != 0) {
+            Element genreElement = genreParent.first().child(0);
+            if (genreElement != null) {
+                String href = genreElement.attr("href");
+                if (href != null) {
+                    descriptionPOJO.setGenreUrl(Url.SERVER_IZIBUK + href + "?p=");
+                }
+                String text = genreElement.text();
+                if (text != null) {
+                    descriptionPOJO.setGenre(text);
+                }
+            }
+        }
+
+        Elements descriptionList = document.getElementsByAttributeValue("itemprop", "description");
+        if (descriptionList != null && descriptionList.size() != 0) {
+            String text = descriptionList.first().text();
+            if (text != null) {
+                descriptionPOJO.setDescription(text);
+            }
+        }
+
+        return descriptionPOJO;
+    }
+
     private ArrayList<BookPOJO> loadBooks() throws IOException {
         ArrayList<BookPOJO> books = new ArrayList<>();
         if (getDocument() == null) setDocument();
@@ -182,7 +289,13 @@ public class BookDescriptionModel implements DescriptionModel {
         return Observable.create(observableEmitter -> {
             DescriptionPOJO articlesModels;
             try {
-                articlesModels = loadDescription();
+                if (mUrl.contains("knigavuhe.org")) {
+                    articlesModels = loadDescription();
+                } else if (mUrl.contains("izibuk.ru")) {
+                    articlesModels = loadDescriptionIzibuk();
+                } else {
+                    articlesModels = new DescriptionPOJO();
+                }
                 observableEmitter.onNext(articlesModels);
             } catch (Exception e) {
                 observableEmitter.onError(e);
@@ -197,7 +310,11 @@ public class BookDescriptionModel implements DescriptionModel {
         return Observable.create(observableEmitter -> {
             ArrayList<BookPOJO> bookPOJOArrayList;
             try {
-                bookPOJOArrayList = loadBooks();
+                if (mUrl.contains("knigavuhe.org")) {
+                    bookPOJOArrayList = loadBooks();
+                } else {
+                    bookPOJOArrayList = new ArrayList<>();
+                }
                 observableEmitter.onNext(bookPOJOArrayList);
             } catch (Exception e) {
                 observableEmitter.onError(e);

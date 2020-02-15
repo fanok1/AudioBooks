@@ -100,7 +100,7 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
                         Consts.getAttributeColor(mLinearLayout.getContext(),
                                 R.attr.mySelectableItemBackground));
             }
-            mLine.setText(String.valueOf(getAdapterPosition() + 1));
+            mLine.setText(book.getNumber());
             mText.setText(book.getName());
 
             /*//translation

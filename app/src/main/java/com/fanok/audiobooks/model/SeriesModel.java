@@ -2,6 +2,7 @@ package com.fanok.audiobooks.model;
 
 import androidx.annotation.NonNull;
 
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 
@@ -22,9 +23,7 @@ public class SeriesModel implements
     private ArrayList<SeriesPOJO> loadSeriesList(String url) throws IOException {
         ArrayList<SeriesPOJO> result = new ArrayList<>();
         Document doc = Jsoup.connect(url)
-                .userAgent(
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
-                                + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
+                .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .get();
 
@@ -61,6 +60,54 @@ public class SeriesModel implements
         return result;
     }
 
+    private ArrayList<SeriesPOJO> loadSeriesListIzibuk(String url) throws IOException {
+        ArrayList<SeriesPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .get();
+
+        Elements parents = doc.getElementsByClass("_b264b2 _49d1b4");
+        if (parents != null && parents.size() != 0) {
+            Elements series = parents.first().getElementsByClass("_f61db9");
+            if (series != null) {
+                for (Element serie : series) {
+                    SeriesPOJO seriesPOJO = new SeriesPOJO();
+                    Elements namberConteiner = serie.getElementsByClass("_bb8bca");
+                    if (namberConteiner != null && namberConteiner.size() != 0) {
+                        String number = namberConteiner.first().text();
+                        if (number != null) {
+                            seriesPOJO.setNumber(number);
+                        }
+                    }
+                    Elements aTag = serie.getElementsByTag("a");
+                    if (aTag != null && aTag.size() != 0) {
+                        Element a = aTag.first();
+                        String href = a.attr("href");
+                        if (href != null) {
+                            seriesPOJO.setUrl(Url.SERVER_IZIBUK + href);
+                        }
+                        String text = serie.text();
+                        if (text != null) {
+                            seriesPOJO.setName(text.replace(seriesPOJO.getNumber(), ""));
+                        }
+                    } else {
+                        Elements stringTag = serie.getElementsByTag("strong");
+                        if (stringTag != null && stringTag.size() != 0) {
+                            String text = stringTag.first().text();
+                            if (text != null) {
+                                seriesPOJO.setName(text);
+                            }
+                        }
+                    }
+                    result.add(seriesPOJO);
+                }
+            }
+        }
+
+        return result;
+    }
+
 
     @Override
     public Observable<ArrayList<SeriesPOJO>> getSeries(@NonNull String url) {
@@ -68,7 +115,13 @@ public class SeriesModel implements
         return Observable.create(observableEmitter -> {
             ArrayList<SeriesPOJO> articlesModels;
             try {
-                articlesModels = loadSeriesList(url);
+                if (url.contains("knigavuhe.org")) {
+                    articlesModels = loadSeriesList(url);
+                } else if (url.contains("izibuk.ru")) {
+                    articlesModels = loadSeriesListIzibuk(url);
+                } else {
+                    articlesModels = new ArrayList<>();
+                }
                 observableEmitter.onNext(articlesModels);
             } catch (Exception e) {
                 observableEmitter.onError(e);

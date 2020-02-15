@@ -35,6 +35,10 @@ public class Consts {
     public static final Pattern REGEXP_EMAIL = Pattern.compile(
             "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 
+    public static final String USER_AGENT =
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
+                    + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36";
+
     public static final int MODEL_BOOKS = 0;
     public static final int MODEL_GENRE = 1;
     public static final int MODEL_AUTOR = 2;
@@ -60,8 +64,25 @@ public class Consts {
     public static final int FRAGMENT_FAVORITE = 4;
     public static final int FRAGMENT_HISTORY = 5;
     public static final int LAST_BOOK = 6;
+    public static final int FRAGMENT_SETTINGS = 7;
 
     public static final int IMPORT_SITE_KNIGA_V_UHE = 0;
+    public static final int SOURCE_KNIGA_V_UHE = 0;
+    public static final int SOURCE_IZI_BUK = 1;
+    public static boolean izibuk_reiting = false;
+    private static int SOURCE;
+
+    public static int getSOURCE() {
+        return SOURCE;
+    }
+
+    public static void setSOURCE(@NonNull Context context, @NonNull String value) {
+        if (value.equals(context.getString(R.string.kniga_v_uhe_value))) {
+            Consts.SOURCE = Consts.SOURCE_KNIGA_V_UHE;
+        } else if (value.equals(context.getString(R.string.izibuc_value))) {
+            Consts.SOURCE = Consts.SOURCE_IZI_BUK;
+        }
+    }
 
     public static final String mSkuId = "android.test.purchased";
 //plus_version | android.test.purchased

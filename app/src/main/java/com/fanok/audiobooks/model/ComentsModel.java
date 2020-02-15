@@ -3,6 +3,7 @@ package com.fanok.audiobooks.model;
 
 import androidx.annotation.NonNull;
 
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.pojo.ComentsPOJO;
 import com.fanok.audiobooks.pojo.SubComentsPOJO;
 
@@ -23,9 +24,7 @@ public class ComentsModel implements
     private ArrayList<ComentsPOJO> loadComentsList(String url) throws IOException {
         ArrayList<ComentsPOJO> result = new ArrayList<>();
         Document doc = Jsoup.connect(url)
-                .userAgent(
-                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
-                                + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
+                .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .get();
 
@@ -126,7 +125,11 @@ public class ComentsModel implements
         return Observable.create(observableEmitter -> {
             ArrayList<ComentsPOJO> articlesModels;
             try {
-                articlesModels = loadComentsList(url);
+                if (url.contains("knigavuhe.org")) {
+                    articlesModels = loadComentsList(url);
+                } else {
+                    articlesModels = new ArrayList<>();
+                }
                 observableEmitter.onNext(articlesModels);
             } catch (Exception e) {
                 observableEmitter.onError(e);

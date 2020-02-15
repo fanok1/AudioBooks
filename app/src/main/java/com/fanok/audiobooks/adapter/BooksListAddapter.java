@@ -17,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -60,23 +61,44 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
     }
 
     public void clearItem() {
-        mModel.clear();
-        notifyDataSetChanged();
+        if (mModel != null) {
+            mModel = new ArrayList<>();
+            notifyDataSetChanged();
+        }
     }
 
     @NonNull
     @Override
     public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view;
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                R.layout.books_recycler_item, viewGroup, false);
         UiModeManager uiModeManager = (UiModeManager) viewGroup.getContext().getSystemService(
                 UI_MODE_SERVICE);
+        SharedPreferences preferences = PreferenceManager
+                .getDefaultSharedPreferences(viewGroup.getContext());
+        String listType = preferences.getString("books_adapter_layout_pref",
+                viewGroup.getContext().getString(R.string.books_adapter_layout_list_value));
         if (uiModeManager != null
                 && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                    R.layout.books_recycler_item_television, viewGroup, false);
+            if (listType.equals(
+                    viewGroup.getContext().getString(R.string.books_adapter_layout_list_value))) {
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                        R.layout.books_recycler_item_television, viewGroup, false);
+            } else if (listType.equals(viewGroup.getContext().getString(
+                    R.string.books_adapter_layout_big_list_value))) {
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                        R.layout.books_recycler_item_big_lelevision, viewGroup, false);
+            }
         } else {
-            view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                    R.layout.books_recycler_item, viewGroup, false);
+            if (listType.equals(
+                    viewGroup.getContext().getString(R.string.books_adapter_layout_list_value))) {
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                        R.layout.books_recycler_item, viewGroup, false);
+            } else if (listType.equals(viewGroup.getContext().getString(
+                    R.string.books_adapter_layout_big_list_value))) {
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                        R.layout.books_recycler_item_big, viewGroup, false);
+            }
         }
         return new MyHolder(view);
     }
@@ -108,6 +130,7 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
         private TextView mAutor;
         private TextView mArtist;
         private LinearLayout mLinearLayout;
+        private TextView mSource;
 
         private SharedPreferences mPreferences;
 
@@ -124,6 +147,7 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             mAutor = itemView.findViewById(R.id.autor);
             mArtist = itemView.findViewById(R.id.artist);
             mLinearLayout = itemView.findViewById(R.id.contentConteiner);
+            mSource = itemView.findViewById(R.id.source);
             mPreferences = mArtist.getContext().getSharedPreferences(PARENTAL_CONTROL_PREFERENCES,
                     MODE_PRIVATE);
 
@@ -164,6 +188,16 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                         mImageView);
             }
 
+            if (book.getUrl().contains("knigavuhe.org")) {
+                mSource.setText(R.string.kniga_v_uhe);
+                mSource.setVisibility(View.VISIBLE);
+            } else if (book.getUrl().contains("izibuk.ru")) {
+                mSource.setText(R.string.izibuc);
+                mSource.setVisibility(View.VISIBLE);
+            } else {
+                mSource.setVisibility(View.GONE);
+            }
+
 
             mTitle.setText(book.getName());
 
@@ -196,9 +230,9 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             mArtist.setText(book.getArtist());
             if (book.getTime() != null && !book.getTime().isEmpty()) {
                 mTime.setText(book.getTime());
-                mTitle.setVisibility(View.VISIBLE);
+                mTime.setVisibility(View.VISIBLE);
             } else {
-                mTitle.setVisibility(View.GONE);
+                mTime.setVisibility(View.GONE);
             }
             if (book.getSeries() != null && book.getUrlSeries() != null &&
                     !book.getSeries().isEmpty() && !book.getUrlSeries().isEmpty()) {

@@ -1,15 +1,25 @@
 package com.fanok.audiobooks.fragment;
 
+import static android.content.Context.UI_MODE_SERVICE;
+import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS;
+
 import android.Manifest;
+import android.app.UiModeManager;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.PowerManager;
 import android.provider.SearchRecentSuggestions;
+import android.util.TypedValue;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -32,11 +42,15 @@ import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.ActivityImport;
+import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.activity.ParentalControlActivity;
+import com.fanok.audiobooks.activity.PopupClearSaved;
 import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.AudioListDBModel;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BackupPOJO;
+import com.fanok.audiobooks.pojo.StorageUtil;
+import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -48,6 +62,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -174,6 +189,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             return true;
         });
 
+        preferenceChangeListner("sorce_books", (preference, newValue) -> {
+            Consts.setSOURCE(Objects.requireNonNull(getContext()), newValue.toString());
+            return true;
+        });
+
         preferenceClickListner("clear_history_search", preference -> {
             showAllert(preference.getContext(), R.string.confirm_clear_history_search,
                     (dialogInterface, i) -> {
@@ -209,6 +229,22 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             return true;
         });
 
+        preferenceClickListner("clear_audio_list", preference -> {
+            showAllert(preference.getContext(), R.string.confirm_clear_audio_list,
+                    (dialogInterface, i) -> {
+                        AudioListDBModel dbModel = new AudioListDBModel(
+                                preference.getContext());
+                        dbModel.clearAll();
+                        dbModel.closeDB();
+                    });
+            return true;
+        });
+
+        preferenceClickListner("clear_savind", preference -> {
+            startActivity(new Intent(getContext(), PopupClearSaved.class));
+            return true;
+        });
+
         preferenceClickListner("parentalControl", preference -> {
             startActivity(new Intent(getContext(), ParentalControlActivity.class));
             return true;
@@ -229,6 +265,50 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             }
             return true;
         });
+
+        boolean ignor;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PowerManager pm = (PowerManager) Objects.requireNonNull(getContext()).getSystemService(
+                    Context.POWER_SERVICE);
+            if (pm != null) {
+
+                UiModeManager uiModeManager = (UiModeManager) getContext().getSystemService(
+                        UI_MODE_SERVICE);
+
+                StorageUtil storageUtil = new StorageUtil(getContext());
+                if (uiModeManager == null || uiModeManager.getCurrentModeType()
+                        == Configuration.UI_MODE_TYPE_TELEVISION) {
+                    ignor = true;
+                } else {
+                    ignor = pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks");
+                }
+            } else {
+                ignor = true;
+            }
+        } else {
+            ignor = true;
+        }
+
+        if (ignor) {
+            Preference preference = findPreference("reqest_ignor_battery_optimizetion");
+            if (preference != null) {
+                preference.setVisible(false);
+            }
+        } else {
+            preferenceClickListner("reqest_ignor_battery_optimizetion",
+                    preference -> {
+                        try {
+                            startActivity(new Intent(ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+                        } catch (ActivityNotFoundException e) {
+                            new StorageUtil(Objects.requireNonNull(
+                                    getContext())).storeBattaryOptimizeDisenbled(true);
+                        }
+                        return true;
+                    });
+        }
+
+
 
         preferenceClickListner("restore", preference -> {
 
@@ -300,6 +380,20 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         // Set up a listener whenever a key changes
         getPreferenceScreen().getSharedPreferences()
                 .registerOnSharedPreferenceChangeListener(this);
+
+        MainActivity activity = (MainActivity) getActivity();
+        if (activity != null) {
+            NavigationView navigationView = activity.getNavigationView();
+            ArrayList<TextView> mTextViewArrayList = activity.getTextViewArrayList();
+            final TypedValue SelectedValue = new TypedValue();
+            activity.getTheme().resolveAttribute(R.attr.mySelectableItemBackground, SelectedValue,
+                    true);
+            if (navigationView != null) {
+                navigationView.setCheckedItem(R.id.nav_settings);
+            } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 7) {
+                mTextViewArrayList.get(7).setBackgroundResource(SelectedValue.resourceId);
+            }
+        }
     }
 
     @Override
@@ -512,4 +606,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                     Toast.LENGTH_SHORT).show();
         }
     }
+
+
 }

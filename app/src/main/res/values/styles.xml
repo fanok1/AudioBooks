@@ -58,6 +58,11 @@
         </item>
     </style>
 
+    <style name="AppTheme.Popup2" parent="AppTheme.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+    </style>
+
 
     <style name="MyDialogFadeAnimation">
         <item name="android:windowEnterAnimation">@anim/enter</item>
@@ -147,6 +152,11 @@
         </item>
 
 
+    </style>
+
+    <style name="LightAppTheme.Popup2" parent="LightAppTheme.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
     </style>
 
     <style name="CustomSwitch" parent="Theme.AppCompat.Light">

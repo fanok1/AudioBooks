@@ -72,6 +72,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
     private int titleId;
     private int table;
+    private SearchView searchView;
 
     @ProvidePresenter
     FavoritePresenter provide() {
@@ -176,6 +177,13 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         if (mAddapterBooks != null) mAddapterBooks.setItem(bookPOJOS);
     }
 
+    @Override
+    public void updateFilter() {
+        if (searchView != null) {
+            mPresenter.onSearch(searchView.getQuery().toString());
+        }
+    }
+
 
     @Override
     public void clearData() {
@@ -250,34 +258,46 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                     break;
             }
         }
+        mPresenter.loadBooks();
     }
 
     @Override
     public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.favorite_options_menu, menu);
         MenuItem item = menu.findItem(R.id.action_search);
-        Consts.setColorPrimeriTextInIconItemMenu(item, Objects.requireNonNull(getContext()));
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(Objects.requireNonNull(getContext()));
 
-        SearchView searchView = (SearchView) item.getActionView();
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String s) {
-                return false;
-            }
+        Consts.setColorPrimeriTextInIconItemMenu(item, getContext());
 
-            @Override
-            public boolean onQueryTextChange(String s) {
-                getPresenter().onSearch(s);
-                return false;
-            }
-        });
+
+        if (pref.getBoolean("search_pref", false)) {
+            item.setActionView(null);
+            item.setOnMenuItemClickListener(menuItem -> {
+                Intent intent = new Intent(getContext(), SearchableActivity.class);
+                intent.putExtra(Consts.ARG_MODEL, Consts.MODEL_BOOKS);
+                startActivityForResult(intent, REQEST_CODE_SEARCH);
+                return true;
+            });
+        } else {
+            searchView = (SearchView) item.getActionView();
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String s) {
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String s) {
+                    getPresenter().onSearch(s);
+                    return false;
+                }
+            });
+        }
 
         if (table == TABLE_FAVORITE) {
             menu.findItem(R.id.order).setVisible(true);
             menu.findItem(R.id.filter).setVisible(true);
-
-            SharedPreferences pref = PreferenceManager
-                    .getDefaultSharedPreferences(getContext());
 
             String sort = pref.getString("pref_sort_favorite", getString(R.string.sort_value_date));
             if (getString(R.string.sort_value_name).equals(sort)) {

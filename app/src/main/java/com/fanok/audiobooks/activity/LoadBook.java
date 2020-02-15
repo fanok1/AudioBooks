@@ -51,11 +51,23 @@ public class LoadBook extends AppCompatActivity {
         mUrl = intent.getStringExtra("url");
         if (mUrl == null && intent.getData() != null) {
             mUrl = intent.getData().toString();
-            if (!mUrl.contains("/book/")) {
-                startActivity(new Intent(this, MainActivity.class));
-                finish();
+            if (mUrl.contains("knigavuhe.org")) {
+                if (!mUrl.contains("/book/")) {
+                    startActivity(new Intent(this, MainActivity.class));
+                    finish();
+                } else {
+                    mUrl = mUrl.replace("https://m.", "https://");
+                }
+            } else if (mUrl.contains("izibuk.ru")) {
+                if (!mUrl.contains("/book")) {
+                    startActivity(new Intent(this, MainActivity.class));
+                    finish();
+                } else {
+                    mUrl = mUrl.replace("https://pda.", "https://");
+                }
+
             } else {
-                mUrl = mUrl.replace("https://m.", "https://");
+                finish();
             }
         }
         mNotificationClick = intent.getBooleanExtra("notificationClick", false);

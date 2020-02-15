@@ -37,6 +37,7 @@ import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
+import com.fanok.audiobooks.adapter.FilterAdapter;
 import com.fanok.audiobooks.adapter.GenreListAddapter;
 import com.fanok.audiobooks.adapter.SearchebleAdapter;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchableView;
@@ -79,6 +80,8 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     LinearLayout mTopList;
     @BindView(R.id.booksNotFound)
     TextView mBooksNotFound;
+    @BindView(R.id.filter)
+    RecyclerView mFilter;
     private int mModelId;
 
     private BooksListAddapter mAddapterBooks;
@@ -86,6 +89,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
 
     private SearchebleAdapter mAdapterAutors;
     private SearchebleAdapter mAdapterSeries;
+    private FilterAdapter mFilterAdapter;
 
 
     @ProvidePresenter
@@ -173,12 +177,25 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                         new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
                 mAuthorList.setAdapter(mAdapterAutors);
                 mSeriesList.setAdapter(mAdapterSeries);
+                mFilterAdapter = new FilterAdapter();
+                mFilterAdapter.setListener((view, position) -> {
+                    mPresenter.setFilter(mFilterAdapter.getItem(position));
+                    mPresenter.filterBooks();
+                    mPresenter.filterAutorsAndSeries();
+                });
+                mFilter.setLayoutManager(
+                        new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+                mFilter.setAdapter(mFilterAdapter);
+
+
                 break;
             case Consts.MODEL_GENRE:
             case Consts.MODEL_AUTOR:
             case Consts.MODEL_ARTIST:
                 mAddapterGenre = new GenreListAddapter();
                 mRecyclerView.setAdapter(mAddapterGenre);
+                mFilter.setVisibility(View.GONE);
+                mProgressBarTop.setVisibility(View.GONE);
                 break;
         }
 
@@ -228,7 +245,15 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 int y = recyclerView.computeVerticalScrollOffset();
-                if (y == 0 && mTopList.getVisibility() == View.GONE) {
+                boolean b = false;
+                if (mAdapterAutors != null && mAdapterAutors.getItemCount() != 0) {
+                    b = true;
+                }
+                if (mAdapterSeries != null && mAdapterSeries.getItemCount() != 0) {
+                    b = true;
+                }
+
+                if (y == 0 && mTopList.getVisibility() == View.GONE && b) {
                     mTopList.setVisibility(View.VISIBLE);
                 }
             }
@@ -308,11 +333,18 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     @Override
     public void showData(ArrayList arrayList) {
         try {
-            if (arrayList.size() != 0) {
-                if (arrayList.get(0) instanceof BookPOJO) {
+            if (arrayList != null && arrayList.size() != 0) {
+                if (arrayList.get(0) instanceof BookPOJO && mAddapterBooks != null) {
                     mAddapterBooks.setItem(arrayList);
-                } else if (arrayList.get(0) instanceof GenrePOJO) {
+                } else if (arrayList.get(0) instanceof GenrePOJO && mAddapterGenre != null) {
                     mAddapterGenre.setItem(arrayList);
+                }
+            } else {
+                if (mAddapterBooks != null) {
+                    mAddapterBooks.clearItem();
+                }
+                if (mAddapterGenre != null) {
+                    mAddapterGenre.clearItem();
                 }
             }
         } catch (NullPointerException e) {

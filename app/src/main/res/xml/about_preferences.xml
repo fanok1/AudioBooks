@@ -117,6 +117,12 @@
         android:title="@string/write_autor" />
 
     <Preference
+        android:icon="@drawable/ic_battery"
+        android:key="disable_battary_optimize"
+        android:summary="@string/battary_optimize_desc"
+        android:title="@string/battary_optimize" />
+
+    <Preference
         android:key="open_4pda"
         android:title="@string/open_4pda" />
 

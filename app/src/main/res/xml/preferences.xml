@@ -18,6 +18,25 @@
         android:title="@string/setting_lang" />-->
 
     <ListPreference
+        android:defaultValue="@string/kniga_v_uhe_value"
+        android:dialogTitle="@string/sorce_books"
+        android:entries="@array/sorce_books_titles"
+        android:entryValues="@array/sorce_books_values"
+        android:icon="@drawable/ic_inbox_arrow_up"
+        android:key="sorce_books"
+        android:title="@string/sorce_books" />
+
+    <ListPreference
+        android:defaultValue="@string/books_adapter_layout_list_value"
+        android:dialogTitle="@string/books_adapter_layout"
+        android:entries="@array/books_adapter_layout_titles"
+        android:entryValues="@array/books_adapter_layout_values"
+        android:icon="@drawable/ic_list"
+        android:key="books_adapter_layout_pref"
+        android:title="@string/books_adapter_layout" />
+
+
+    <ListPreference
         android:defaultValue="0"
         android:dialogTitle="@string/setting_start_menu"
         android:entries="@array/settings_start_screen_titles"
@@ -25,6 +44,13 @@
         android:icon="@drawable/ic_application"
         android:key="pref_start_screen"
         android:title="@string/setting_start_menu" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:icon="@drawable/ic_magnify"
+        android:key="search_pref"
+        android:summary="@string/search_desc"
+        android:title="@string/search" />
 
     <CheckBoxPreference
         android:defaultValue="false"
@@ -95,8 +121,14 @@
         android:key="pref_downland_path"
         android:title="@string/pref_dowland_path"
         android:icon="@drawable/ic_folder">
-
     </ListPreference>
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:icon="@drawable/ic_car"
+        android:key="androidAutoPref"
+        android:summary="@string/android_auto_desc"
+        android:title="@string/android_auto" />
 
     <Preference
         android:icon="@drawable/ic_backup"
@@ -127,7 +159,21 @@
         <Preference
             android:key="clear_favorite"
             android:title="@string/clear_favorite" />
+
+        <Preference
+            android:key="clear_audio_list"
+            android:title="@string/clear_audio_list" />
+
+        <Preference
+            android:key="clear_savind"
+            android:title="@string/clear_saving" />
     </PreferenceScreen>
+
+    <Preference
+        android:icon="@drawable/ic_battery"
+        android:key="reqest_ignor_battery_optimizetion"
+        android:summary="@string/reqest_battary_optimisation"
+        android:title="@string/battary_optimize" />
 
 
 </PreferenceScreen>

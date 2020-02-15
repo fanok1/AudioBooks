@@ -359,18 +359,22 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
     };
 
     private void rewind(int ms) {
-        seekTo(mediaPlayer.getCurrentPosition() - ms);
-        boolean b = mPreferences.getBoolean("seekToPausePref", true);
-        if (!isPlaying() && b) {
-            resumeMedia();
+        if (mediaPlayer != null) {
+            seekTo(mediaPlayer.getCurrentPosition() - ms);
+            boolean b = mPreferences.getBoolean("seekToPausePref", true);
+            if (!isPlaying() && b) {
+                resumeMedia();
+            }
         }
     }
 
     private void fastForward(int ms) {
-        seekTo(mediaPlayer.getCurrentPosition() + ms);
-        boolean b = mPreferences.getBoolean("seekToPausePref", true);
-        if (!isPlaying() && b) {
-            resumeMedia();
+        if (mediaPlayer != null) {
+            seekTo(mediaPlayer.getCurrentPosition() + ms);
+            boolean b = mPreferences.getBoolean("seekToPausePref", true);
+            if (!isPlaying() && b) {
+                resumeMedia();
+            }
         }
     }
 
@@ -664,17 +668,19 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
     private File getSaveFile() {
         File[] folders = getExternalFilesDirs(null);
         for (File folder : folders) {
-            String url = activeAudio.getUrl();
-            if (url != null && !url.isEmpty()) {
-                File file = new File(folder.getAbsolutePath() + "/"
-                        + activeAudio.getBookName() + "/"
-                        + url.substring(url.lastIndexOf("/") + 1));
-                if (file.exists()) return file;
-            } else {
-                File file = new File(
-                        folder.getAbsolutePath() + "/" + activeAudio.getBookName() + "/"
-                                + activeAudio.getName() + ".mp3");
-                if (file.exists()) return file;
+            if (folder != null) {
+                String url = activeAudio.getUrl();
+                if (url != null && !url.isEmpty()) {
+                    File file = new File(folder.getAbsolutePath() + "/"
+                            + activeAudio.getBookName() + "/"
+                            + url.substring(url.lastIndexOf("/") + 1));
+                    if (file.exists()) return file;
+                } else {
+                    File file = new File(
+                            folder.getAbsolutePath() + "/" + activeAudio.getBookName() + "/"
+                                    + activeAudio.getName() + ".mp3");
+                    if (file.exists()) return file;
+                }
             }
 
         }
@@ -1018,6 +1024,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT
                                 | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
                                 PlaybackStateCompat.ACTION_FAST_FORWARD |
+                                PlaybackStateCompat.ACTION_SEEK_TO |
                                 PlaybackStateCompat.ACTION_REWIND)
                 .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1, SystemClock.elapsedRealtime())
                 .build();
@@ -1032,6 +1039,12 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
 
         // Attach Callback to receive MediaSession updates
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
+
+            @Override
+            public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+                return super.onMediaButtonEvent(mediaButtonEvent);
+            }
+
             // Implement callbacks
             @Override
             public void onPlay() {
@@ -1244,7 +1257,9 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
         //stopForeground(true);
         NotificationManager notificationManager = (NotificationManager) getSystemService(
                 Context.NOTIFICATION_SERVICE);
-        Objects.requireNonNull(notificationManager).cancel(NOTIFICATION_ID);
+        if (notificationManager != null) {
+            notificationManager.cancel(NOTIFICATION_ID);
+        }
     }
 
     private void handleIncomingActions(Intent playbackAction) {

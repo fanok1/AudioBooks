@@ -1,13 +1,21 @@
 package com.fanok.audiobooks.fragment;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
+import static android.content.Context.UI_MODE_SERVICE;
 
 import android.app.ActivityOptions;
+import android.app.UiModeManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.util.TypedValue;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -19,11 +27,14 @@ import androidx.preference.PreferenceScreen;
 import com.fanok.audiobooks.BuildConfig;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.ActivitySendEmail;
+import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.activity.PopupGetPlus;
 import com.fanok.audiobooks.pojo.StorageAds;
+import com.google.android.material.navigation.NavigationView;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class AboutFragment extends PreferenceFragmentCompat {
@@ -87,6 +98,36 @@ public class AboutFragment extends PreferenceFragmentCompat {
             return true;
         });
 
+        preferenceClickListner("disable_battary_optimize", preference -> {
+            boolean enabled;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PowerManager pm = (PowerManager) Objects.requireNonNull(
+                        getContext()).getSystemService(Context.POWER_SERVICE);
+                UiModeManager uiModeManager = (UiModeManager) getContext().getSystemService(
+                        UI_MODE_SERVICE);
+                if (uiModeManager != null && uiModeManager.getCurrentModeType()
+                        == Configuration.UI_MODE_TYPE_TELEVISION) {
+                    enabled = false;
+
+                } else if (pm != null) {
+                    enabled = !pm.isIgnoringBatteryOptimizations(
+                            "com.fanok.audiobooks");
+                } else {
+                    enabled = false;
+                }
+            } else {
+                enabled = false;
+            }
+
+            if (enabled) {
+                Toast.makeText(getContext(), R.string.enabled, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), R.string.disenabled, Toast.LENGTH_SHORT).show();
+            }
+
+            return true;
+        });
+
         preferenceClickListner("version_plus", preference -> {
             ActivityOptions options = ActivityOptions
                     .makeSceneTransitionAnimation(getActivity(), getView(), "robot");
@@ -146,6 +187,20 @@ public class AboutFragment extends PreferenceFragmentCompat {
                 version.setTitle(getString(R.string.app_name) + " Plus");
             } else {
                 version.setTitle(getString(R.string.app_name));
+            }
+        }
+
+        MainActivity activity = (MainActivity) getActivity();
+        if (activity != null) {
+            NavigationView navigationView = activity.getNavigationView();
+            ArrayList<TextView> mTextViewArrayList = activity.getTextViewArrayList();
+            final TypedValue SelectedValue = new TypedValue();
+            activity.getTheme().resolveAttribute(R.attr.mySelectableItemBackground, SelectedValue,
+                    true);
+            if (navigationView != null) {
+                navigationView.setCheckedItem(R.id.nav_about);
+            } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 8) {
+                mTextViewArrayList.get(8).setBackgroundResource(SelectedValue.resourceId);
             }
         }
     }
