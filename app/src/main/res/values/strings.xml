@@ -43,6 +43,7 @@
     <string name="tab_text_1">Описание</string>
     <string name="tab_text_2">Коментарии</string>
     <string name="tab_text_3">Серия</string>
+    <string name="tab_text_5">Другие источники</string>
     <string name="time_zero" translatable="false">00:00</string>
     <string name="previous">Предыдущий</string>
     <string name="play">Воспроизвести</string>

@@ -10,6 +10,7 @@ import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.interface_pacatge.book_content.ComentsPresenter;
 import com.fanok.audiobooks.interface_pacatge.book_content.OtherArtist;
 import com.fanok.audiobooks.interface_pacatge.book_content.OtherArtistModel;
+import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 
 import java.util.ArrayList;
@@ -28,12 +29,12 @@ public class OtherArtistPresenter extends MvpPresenter<OtherArtist> implements
     private OtherArtistModel mComentsModel;
 
     private ArrayList<OtherArtistPOJO> mComentsPOJOS;
-    private String mUrl;
+    private BookPOJO mBookPOJO;
 
-    public OtherArtistPresenter(@NonNull String url) {
+    public OtherArtistPresenter(@NonNull BookPOJO bookPOJO) {
         mComentsPOJOS = new ArrayList<>();
         mComentsModel = new com.fanok.audiobooks.model.OtherArtistModel();
-        mUrl = url;
+        mBookPOJO = bookPOJO;
     }
 
     @Override
@@ -56,7 +57,7 @@ public class OtherArtistPresenter extends MvpPresenter<OtherArtist> implements
     private void getData() {
         if (!isLoading) {
             isLoading = true;
-            mComentsModel.getOtherArtist(mUrl)
+            mComentsModel.getOtherArtist(mBookPOJO)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<ArrayList<OtherArtistPOJO>>() {

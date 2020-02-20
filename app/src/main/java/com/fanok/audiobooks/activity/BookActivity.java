@@ -874,6 +874,12 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         showPage(getResources().getString(R.string.tab_text_3));
     }
 
+    @Override
+    public void showOtherSource() {
+        sectionsPagerAdapter.setArtistPOJO(mPresenter.getOtherArtistPOJOS());
+        showPage(getResources().getString(R.string.tab_text_5));
+    }
+
     public void showOtherArtist() {
         showPage(getResources().getString(R.string.tab_text_4));
     }

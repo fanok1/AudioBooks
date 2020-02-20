@@ -23,8 +23,10 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.adapter.OtherArtistListAddapter;
 import com.fanok.audiobooks.interface_pacatge.book_content.OtherArtist;
+import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import com.fanok.audiobooks.presenter.OtherArtistPresenter;
+import com.google.gson.Gson;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -53,19 +55,20 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
 
     private OtherArtistListAddapter mOtherArtistListAddapter;
 
-    @ProvidePresenter
-    OtherArtistPresenter provide() {
-        String url = Objects.requireNonNull(getArguments()).getString(ARG_URL);
-        if (url == null || url.isEmpty()) throw new NullPointerException();
-        return new OtherArtistPresenter(url);
-    }
-
-    public static OtherArtistFragment newInstance(@NonNull String url) {
+    public static OtherArtistFragment newInstance(@NonNull BookPOJO bookPOJO) {
         Bundle args = new Bundle();
-        args.putString(ARG_URL, url);
+        args.putString(ARG_URL, new Gson().toJson(bookPOJO));
         OtherArtistFragment fragment = new OtherArtistFragment();
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @ProvidePresenter
+    OtherArtistPresenter provide() {
+        BookPOJO bookPOJO = new Gson().fromJson(
+                Objects.requireNonNull(getArguments()).getString(ARG_URL), BookPOJO.class);
+        if (bookPOJO == null) throw new NullPointerException();
+        return new OtherArtistPresenter(bookPOJO);
     }
 
     @Override

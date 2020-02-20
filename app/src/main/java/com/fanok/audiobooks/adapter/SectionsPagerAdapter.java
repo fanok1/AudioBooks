@@ -12,8 +12,10 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.fragment.ComentsBookFragment;
 import com.fanok.audiobooks.fragment.DescriptionBookFragment;
 import com.fanok.audiobooks.fragment.OtherArtistFragment;
+import com.fanok.audiobooks.fragment.OtherSourceFragment;
 import com.fanok.audiobooks.fragment.SeriesBookFragment;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +26,13 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     private final ArrayList<String> tabItems;
     private final BookPOJO mBookPOJO;
+    private ArrayList<OtherArtistPOJO> mArtistPOJO;
     private Context mContext;
+
+    public void setArtistPOJO(ArrayList<OtherArtistPOJO> artistPOJO) {
+        mArtistPOJO = artistPOJO;
+        notifyDataSetChanged();
+    }
 
     public SectionsPagerAdapter(@NonNull Context context, @NonNull FragmentManager fm,
             @NonNull BookPOJO bookPOJO) {
@@ -54,7 +62,11 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         }
 
         if (tabItems.get(position).equals(mContext.getResources().getString(R.string.tab_text_4))) {
-            return OtherArtistFragment.newInstance(mBookPOJO.getUrl());
+            return OtherArtistFragment.newInstance(mBookPOJO);
+        }
+
+        if (tabItems.get(position).equals(mContext.getResources().getString(R.string.tab_text_5))) {
+            return OtherSourceFragment.newInstance(mArtistPOJO);
         }
 
         return DescriptionBookFragment.newInstance(mBookPOJO);

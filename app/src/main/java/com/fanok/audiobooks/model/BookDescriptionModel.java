@@ -247,6 +247,26 @@ public class BookDescriptionModel implements DescriptionModel {
             }
         }
 
+
+        try {
+            Document doc = Jsoup.connect(
+                    "https://izibuk.ru/search?q=" + descriptionPOJO.getTitle() + " "
+                            + descriptionPOJO.getAutor())
+                    .userAgent(Consts.USER_AGENT)
+                    .referrer("http://www.google.com")
+                    .get();
+
+            Element element = doc.getElementById("books_list");
+            if (element != null) {
+                Elements list = element.getElementsByClass("_ccb9b7");
+                if (list != null && list.size() > 1) {
+                    descriptionPOJO.setOtherReader(true);
+                }
+            }
+        } catch (Exception ignored) {
+            descriptionPOJO.setOtherReader(false);
+        }
+
         return descriptionPOJO;
     }
 

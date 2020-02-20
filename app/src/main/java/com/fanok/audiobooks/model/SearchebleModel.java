@@ -50,7 +50,7 @@ public class SearchebleModel implements SearchableModel {
                             if (aElements.size() != 0) {
                                 Element a = aElements.first();
                                 list.add(new SearchebleArrayPOJO(item.text(),
-                                        Url.SERVER + a.attr("href")));
+                                        Url.SERVER + a.attr("href") + "?page="));
                             }
                         }
                     } else {
@@ -73,7 +73,7 @@ public class SearchebleModel implements SearchableModel {
                                     if (subNameConteiner.size() != 0) {
                                         name += " " + subNameConteiner.first().text().trim();
                                     }
-                                    list.add(new SearchebleArrayPOJO(name, href));
+                                    list.add(new SearchebleArrayPOJO(name, href + "?page="));
                                 }
                             }
                         }

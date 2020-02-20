@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 
 import org.jsoup.Jsoup;
@@ -49,15 +50,63 @@ public class OtherArtistModel implements
         return result;
     }
 
+    private ArrayList<OtherArtistPOJO> loadOtherArtistIzibuk(BookPOJO bookPOJO) throws IOException {
+        ArrayList<OtherArtistPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(
+                "https://izibuk.ru/search?q=" + bookPOJO.getName() + " " + bookPOJO.getAutor())
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .get();
+
+        Element element = doc.getElementById("books_list");
+        if (element != null) {
+            Elements list = element.getElementsByClass("_ccb9b7");
+            if (list != null && list.size() > 1) {
+                for (Element book : list) {
+                    OtherArtistPOJO pojo = new OtherArtistPOJO();
+                    Elements nameCobteiners = book.getElementsByClass("_3dc935");
+                    if (nameCobteiners != null && nameCobteiners.size() > 1) {
+                        Element nameConteiner = nameCobteiners.get(1);
+                        String href = nameConteiner.attr("href");
+                        if (href != null) {
+                            pojo.setUrl(Url.SERVER_IZIBUK + href);
+                            Elements elements = book.getElementsByClass("_eeab32");
+                            if (elements != null) {
+                                for (Element conteiner : elements) {
+                                    Elements aTag = conteiner.getElementsByTag("a");
+                                    if (aTag != null && aTag.size() != 0) {
+                                        String name = aTag.first().text();
+                                        String urlArtist = aTag.first().attr("href");
+                                        if (urlArtist != null && urlArtist.contains("reader")) {
+                                            if (name != null && !name.equals(
+                                                    bookPOJO.getArtist())) {
+                                                pojo.setName("Исполнитель " + name);
+                                                result.add(pojo);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
 
     @Override
-    public Observable<ArrayList<OtherArtistPOJO>> getOtherArtist(@NonNull String url) {
+    public Observable<ArrayList<OtherArtistPOJO>> getOtherArtist(@NonNull BookPOJO bookPOJO) {
 
         return Observable.create(observableEmitter -> {
             ArrayList<OtherArtistPOJO> articlesModels;
             try {
-                if (url.contains("knigavuhe.org")) {
-                    articlesModels = loadSeriesList(url);
+                if (bookPOJO.getUrl().contains("knigavuhe.org")) {
+                    articlesModels = loadSeriesList(bookPOJO.getUrl());
+                } else if (bookPOJO.getUrl().contains("izibuk.ru")) {
+                    articlesModels = loadOtherArtistIzibuk(bookPOJO);
                 } else {
                     articlesModels = new ArrayList<>();
                 }

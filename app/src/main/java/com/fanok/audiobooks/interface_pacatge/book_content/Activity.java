@@ -64,6 +64,9 @@ public interface Activity extends MvpView {
     void stateExpanded();
 
     @StateStrategyType(AddToEndSingleStrategy.class)
+    void showOtherSource();
+
+    @StateStrategyType(AddToEndSingleStrategy.class)
     void stateElse();
 
     @StateStrategyType(SkipStrategy.class)

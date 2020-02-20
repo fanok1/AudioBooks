@@ -310,5 +310,6 @@
     <string name="reqest_battary_optimisation">Disable Battery Optimization</string>
     <string name="search_desc">Perform a global search for books from history and favorites</string>
     <string name="sorce_books">A source</string>
+    <string name="tab_text_5">Other sources</string>
 
 </resources>

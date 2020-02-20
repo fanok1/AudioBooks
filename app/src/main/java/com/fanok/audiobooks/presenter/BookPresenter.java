@@ -37,9 +37,11 @@ import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.AudioListDBModel;
 import com.fanok.audiobooks.model.AudioModel;
 import com.fanok.audiobooks.model.BooksDBModel;
+import com.fanok.audiobooks.model.OtherSourceModel;
 import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.service.MediaPlayerService;
@@ -77,6 +79,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private BookPOJO mBookPOJO;
     private BooksDBModel mBooksDBModel;
     private AudioDBModel mAudioDBModel;
+    private OtherSourceModel mOtherSourceModel;
     private AudioListDBModel mAudioListDBModel;
     private ArrayList<AudioPOJO> mAudioPOJO;
     private String last = "";
@@ -87,6 +90,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     private SharedPreferences pref;
     private boolean error = false;
     private AudioModelInterfece mAudioModel;
+    private ArrayList<OtherArtistPOJO> mOtherArtistPOJOS;
 
     private int state = BottomSheetBehavior.STATE_COLLAPSED;
 
@@ -101,6 +105,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         mAudioListDBModel = new AudioListDBModel(context);
         mBooksDBModel.addHistory(mBookPOJO);
         mAudioModel = new AudioModel();
+        mOtherSourceModel = new OtherSourceModel();
         mAudioDBModel = new AudioDBModel(context);
         pref = PreferenceManager.getDefaultSharedPreferences(context);
         serviceConnection = new ServiceConnection() {
@@ -117,6 +122,10 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         };
         Crashlytics.setString("urlBooks", bookPOJO.getUrl());
 
+    }
+
+    public ArrayList<OtherArtistPOJO> getOtherArtistPOJOS() {
+        return mOtherArtistPOJOS;
     }
 
     public static void setSpeedWithoutBroadcast(float value) {
@@ -408,6 +417,32 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
 
                             getViewState().showProgres(false);
+                        }
+                    }
+                });
+
+        mOtherSourceModel.getOtherArtist(mBookPOJO)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<ArrayList<OtherArtistPOJO>>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                    }
+
+                    @Override
+                    public void onNext(ArrayList<OtherArtistPOJO> bookPOJOS) {
+                        mOtherArtistPOJOS = bookPOJOS;
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, Objects.requireNonNull(e.getMessage()));
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        if (!mOtherArtistPOJOS.isEmpty()) {
+                            getViewState().showOtherSource();
                         }
                     }
                 });

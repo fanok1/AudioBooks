@@ -310,5 +310,6 @@
     <string name="reqest_battary_optimisation">Вийти з режиму економії заряду батареї</string>
     <string name="search_desc">Виконувати глобальний пошук книг з історії та обраного</string>
     <string name="sorce_books">Джерело</string>
+    <string name="tab_text_5">Інші джерела</string>
 
 </resources>

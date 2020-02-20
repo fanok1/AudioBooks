@@ -36,7 +36,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     Element a = aTag.first();
                     String urlGenre = a.attr("href");
                     if (urlGenre != null) {
-                        genreSrc = urlGenre;
+                        genreSrc = Url.SERVER_IZIBUK + urlGenre + "?p=";
                     }
                     String genre = a.text();
                     if (genre != null) {
@@ -47,12 +47,12 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
 
                 Elements autorConteiners = doc.getElementsByAttributeValue("itemprop", "author");
                 if (autorConteiners != null && autorConteiners.size() != 0) {
-                    Elements autor = elements.first().getElementsByTag("a");
+                    Elements autor = autorConteiners.first().getElementsByTag("a");
                     if (autor != null && autor.size() != 0) {
                         Element a = autor.first();
                         String urlAutor = a.attr("href");
                         if (urlAutor != null) {
-                            authorUrl = urlAutor;
+                            authorUrl = Url.SERVER_IZIBUK + urlAutor + "?p=";
                         }
                         String autorName = a.text();
                         if (autorName != null) {
@@ -422,6 +422,10 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
 
     @Override
     public Observable<ArrayList<BookPOJO>> getBooks(String url, int page) {
+        genreName = null;
+        genreSrc = null;
+        authorName = null;
+        authorUrl = null;
         int size = 4;
         return Observable.create(observableEmitter -> {
             ArrayList<BookPOJO> articlesModels;
@@ -450,6 +454,10 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
 
     @Override
     public Observable<ArrayList<BookPOJO>> getBooks(ArrayList<String> urls, int page) {
+        genreName = null;
+        genreSrc = null;
+        authorName = null;
+        authorUrl = null;
         return Observable.create(observableEmitter -> {
             int size = 4;
             int exit = 0;
@@ -476,7 +484,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     try {
                         if (!endIziBuk) {
                             articlesModels.addAll(loadBooksListIzibuk(
-                                    urls.get(1).replace("?p=" + page, "?p=" + temp), temp));
+                                    urls.get(1).replace("p=" + page, "p=" + temp), temp));
                         }
                     } catch (NullPointerException e) {
                         endIziBuk = true;
