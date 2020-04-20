@@ -142,7 +142,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
             view = inflater.inflate(R.layout.fragment_book_description, container, false);
         }
         unbinder = ButterKnife.bind(this, view);
-        mAdapterBooksRecomended = new BooksOtherAdapter(getContext().getApplicationContext());
+        mAdapterBooksRecomended = new BooksOtherAdapter();
         mRecommendedBooks.setAdapter(mAdapterBooksRecomended);
         mRecommendedBooks.setLayoutManager(
                 new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));

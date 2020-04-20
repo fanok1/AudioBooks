@@ -34,6 +34,7 @@ public class BookDescriptionModel implements DescriptionModel {
         mDocument = Jsoup.connect(mUrl)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
     }
 
@@ -254,6 +255,7 @@ public class BookDescriptionModel implements DescriptionModel {
                             + descriptionPOJO.getAutor())
                     .userAgent(Consts.USER_AGENT)
                     .referrer("http://www.google.com")
+                    .sslSocketFactory(Consts.socketFactory())
                     .get();
 
             Element element = doc.getElementById("books_list");

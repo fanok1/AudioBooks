@@ -273,6 +273,9 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     @Override
     public void onDestroyView() {
         getPresenter().onDestroy();
+        if (mAddapterBooks != null) {
+            mAddapterBooks.close();
+        }
         mAddapterBooks = null;
         mAddapterGenre = null;
         super.onDestroyView();

@@ -18,14 +18,15 @@ android {
         applicationId "com.fanok.audiobooks"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 39
-        versionName "2.0.3"
+        versionCode 43
+        versionName "2.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.release
     }
     buildTypes {
         release {
+            shrinkResources true
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -48,32 +49,32 @@ dependencies {
     implementation ('androidx.lifecycle:lifecycle-extensions:2.2.0'){
         exclude group: 'androidx'
     }
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation('com.squareup.picasso:picasso:2.71828') {
         exclude group: 'com.android.support'
         exclude module: ['exifinterface', 'support-annotations']
     }
-    implementation 'com.jakewharton:butterknife:10.2.0'
-    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.0'
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.9'
+    implementation 'com.jakewharton:butterknife:10.2.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation 'org.jsoup:jsoup:1.12.1'
+    implementation 'org.jsoup:jsoup:1.13.1'
     implementation 'com.r0adkll:slidableactivity:2.1.0'
-    implementation 'com.google.code.gson:gson:2.8.5'
-    implementation 'de.hdodenhof:circleimageview:3.0.1'
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
 
-    implementation 'com.squareup.okhttp3:okhttp:4.2.2'
+    implementation 'com.squareup.okhttp3:okhttp:4.4.1'
     implementation 'com.google.android.exoplayer:exoplayer:2.10.4'
     implementation 'com.google.android.exoplayer:extension-okhttp:2.10.4'
-    implementation ('com.google.firebase:firebase-analytics:17.2.2'){
+    implementation ('com.google.firebase:firebase-analytics:17.3.0'){
         exclude group: 'androidx'
     }
-    implementation ('com.google.firebase:firebase-core:17.2.2'){
+    implementation ('com.google.firebase:firebase-core:17.3.0'){
         exclude group: 'androidx'
     }
-    implementation('com.google.firebase:firebase-perf:19.0.3') {
+    implementation('com.google.firebase:firebase-perf:19.0.5') {
         exclude group: 'androidx'
     }
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
@@ -88,14 +89,14 @@ dependencies {
     implementation 'com.github.codekidX:storage-chooser:2.0.4.4'
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'
     implementation 'androidx.palette:palette:1.0.0'
-    implementation 'com.google.firebase:firebase-ads:18.3.0'
-    implementation('com.android.billingclient:billing:2.1.0') {
+    implementation 'com.google.firebase:firebase-ads:19.0.1'
+    implementation('com.android.billingclient:billing:2.2.0') {
         exclude group: 'androidx'
     }
 
-    implementation 'com.github.bumptech.glide:glide:4.10.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.10.0'
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0-beta-5'
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.2'
 
     implementation 'com.alimuzaffar.lib:pinentryedittext:2.0.6'
     implementation 'com.mindorks.android:prdownloader:0.6.0'
@@ -106,14 +107,15 @@ dependencies {
     implementation 'com.diogobernardino:williamchart:2.2'
     implementation 'com.h6ah4i.android.widget.verticalseekbar:verticalseekbar:0.7.0'
 
-    implementation ('com.google.firebase:firebase-inappmessaging-display:19.0.3'){
+    implementation ('com.google.firebase:firebase-inappmessaging-display:19.0.4'){
         exclude group: 'androidx'
     }
-    implementation ('com.google.firebase:firebase-analytics:17.2.2'){
+    implementation ('com.google.firebase:firebase-analytics:17.3.0'){
         exclude group: 'androidx'
     }
 
     implementation 'com.google.android.exoplayer:exoplayer:2.10.4'
+    implementation 'com.github.lzyzsd:circleprogress:1.2.1'
 
 
 

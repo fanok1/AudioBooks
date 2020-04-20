@@ -22,6 +22,7 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Elements items = doc.getElementsByClass("genre2_item");
@@ -52,6 +53,7 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
         Document doc = Jsoup.connect(url + page)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Elements items = doc.getElementsByClass("_e181af");

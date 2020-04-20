@@ -17,13 +17,19 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.model.AudioDBModel;
+import com.fanok.audiobooks.model.AudioListDBModel;
+import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.github.lzyzsd.circleprogress.DonutProgress;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.MyHolder> {
@@ -34,6 +40,27 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
 
     private OnListItemSelectedInterface mListener;
     private OnListItemLongSelectedInterface mLongListener;
+    private AudioListDBModel mAudioListDBModel;
+    private AudioDBModel mAudioDBModel;
+    private boolean procent;
+
+
+    public BooksListAddapter() {
+        procent = false;
+    }
+
+    public BooksListAddapter(boolean showProcent) {
+        this.procent = showProcent;
+    }
+
+    public void close() {
+        if (mAudioListDBModel != null) {
+            mAudioListDBModel.closeDB();
+        }
+        if (mAudioDBModel != null) {
+            mAudioDBModel.closeDB();
+        }
+    }
 
     public void setListener(
             OnListItemSelectedInterface listener) {
@@ -119,8 +146,8 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
     }
 
     class MyHolder extends RecyclerView.ViewHolder {
-
         private ImageView mImageView;
+        private ImageView mIsDownload;
         private TextView mTitle;
         private TextView mGenre;
         private TextView mReting;
@@ -129,14 +156,15 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
         private TextView mTime;
         private TextView mAutor;
         private TextView mArtist;
-        private LinearLayout mLinearLayout;
         private TextView mSource;
+        private DonutProgress mDonutProgress;
 
         private SharedPreferences mPreferences;
 
         MyHolder(@NonNull final View itemView) {
             super(itemView);
 
+            mIsDownload = itemView.findViewById(R.id.is_download);
             mImageView = itemView.findViewById(R.id.imageView);
             mTitle = itemView.findViewById(R.id.title);
             mGenre = itemView.findViewById(R.id.genre);
@@ -146,13 +174,14 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             mTime = itemView.findViewById(R.id.time);
             mAutor = itemView.findViewById(R.id.autor);
             mArtist = itemView.findViewById(R.id.artist);
-            mLinearLayout = itemView.findViewById(R.id.contentConteiner);
+            LinearLayout linearLayout = itemView.findViewById(R.id.contentConteiner);
             mSource = itemView.findViewById(R.id.source);
+            mDonutProgress = itemView.findViewById(R.id.donutProgress);
             mPreferences = mArtist.getContext().getSharedPreferences(PARENTAL_CONTROL_PREFERENCES,
                     MODE_PRIVATE);
 
 
-            mLinearLayout.setOnClickListener(view -> {
+            linearLayout.setOnClickListener(view -> {
                 if (mListener != null) {
                     mListener.onItemSelected(view,
                             getAdapterPosition());
@@ -160,13 +189,16 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             });
 
 
-            mLinearLayout.setOnLongClickListener(view -> {
+            linearLayout.setOnLongClickListener(view -> {
                 if (mLongListener != null) {
                     mLongListener.onItemLongSelected(view,
                             getAdapterPosition());
                 }
                 return true;
             });
+
+            mAudioDBModel = new AudioDBModel(itemView.getContext().getApplicationContext());
+            mAudioListDBModel = new AudioListDBModel(itemView.getContext().getApplicationContext());
 
         }
 
@@ -242,6 +274,94 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 mSiresle.setVisibility(View.GONE);
             }
 
+            if (procent) {
+                if (mAudioDBModel != null && mAudioListDBModel != null) {
+                    ArrayList<AudioListPOJO> audioListPOJOS;
+                    audioListPOJOS = mAudioListDBModel.get(book.getUrl());
+                    if (audioListPOJOS.isEmpty()) {
+                        setVisible(false);
+                    } else {
+                        String last = mAudioDBModel.getName(book.getUrl());
+                        if (last == null || last.isEmpty()) {
+                            mDonutProgress.setText("0%");
+                            mDonutProgress.setProgress(0);
+                        } else {
+                            int timeCurent = 0;
+                            int timeDuration = 0;
+                            boolean b = true;
+                            for (AudioListPOJO pojo : audioListPOJOS) {
+                                if (b) {
+                                    if (pojo.getAudioName().equals(last)) {
+                                        b = false;
+                                        timeCurent += mAudioDBModel.getTime(book.getUrl());
+                                    } else {
+                                        timeCurent += pojo.getTime();
+                                    }
+                                }
+                                timeDuration += pojo.getTime();
+
+                            }
+                            int procent = timeCurent * 100 / timeDuration;
+                            mDonutProgress.setProgress(procent);
+                            mDonutProgress.setText(procent + "%");
+                        }
+                        setVisible(true);
+                    }
+
+                } else {
+                    setVisible(false);
+                }
+            } else {
+                setVisible(false);
+            }
+
+            File[] folders = mIsDownload.getContext().getExternalFilesDirs(null);
+            int size = 0;
+            if (mAudioListDBModel != null) {
+                ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(book.getUrl());
+                for (File folder : folders) {
+                    if (folder != null) {
+                        File dir = new File(folder.getAbsolutePath() + "/" + book.getName());
+                        if (dir.exists() && dir.isDirectory()) {
+                            for (AudioListPOJO pojo : arrayList) {
+                                String url = pojo.getAudioUrl();
+                                File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
+                                if (file.exists()) {
+                                    size++;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (size == 0) {
+                    mIsDownload.setVisibility(View.GONE);
+                } else {
+                    if (size >= arrayList.size()) {
+                        mIsDownload.setImageDrawable(
+                                mIsDownload.getContext().getDrawable(R.drawable.ic_check_all));
+                    } else {
+                        mIsDownload.setImageDrawable(
+                                mIsDownload.getContext().getDrawable(R.drawable.ic_check_1));
+                    }
+                    mIsDownload.setVisibility(View.VISIBLE);
+                }
+            } else {
+                mIsDownload.setVisibility(View.GONE);
+            }
+
+
+        }
+
+        private void setVisible(boolean b) {
+            if (b) {
+                mImageView.setColorFilter(
+                        ContextCompat.getColor(mImageView.getContext(), R.color.imageTint));
+                mDonutProgress.setVisibility(View.VISIBLE);
+            } else {
+                mDonutProgress.setVisibility(View.GONE);
+                mImageView.setColorFilter(ContextCompat.getColor(mImageView.getContext(),
+                        android.R.color.transparent));
+            }
         }
     }
 }

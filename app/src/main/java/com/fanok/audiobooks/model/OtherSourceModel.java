@@ -31,6 +31,7 @@ public class OtherSourceModel implements
                 + " " + bookPOJO.getAutor())
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Element bookList = doc.getElementById("books_updates_list");
@@ -99,6 +100,7 @@ public class OtherSourceModel implements
                 + bookPOJO.getAutor() + " " + bookPOJO.getArtist())
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Element listParent = doc.getElementById("books_list");

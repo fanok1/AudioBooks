@@ -26,6 +26,7 @@ public class ComentsModel implements
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Element comentsElement = doc.getElementById("comments_list");

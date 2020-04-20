@@ -20,6 +20,7 @@ public class AutorsModel extends GenreModel {
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Elements pagesConteiner = doc.getElementsByClass("pn_page_buttons");
@@ -57,6 +58,7 @@ public class AutorsModel extends GenreModel {
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Element bootom = doc.getElementById("authors_list__pn");

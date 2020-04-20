@@ -84,6 +84,7 @@ public class BookPOJO {
         Document document = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("https://google.com/")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
         Elements titleElement = document.getElementsByClass("book_title_elem book_title_name");
         if (titleElement.size() != 0) {
@@ -188,6 +189,7 @@ public class BookPOJO {
 
         Document document = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
+                .sslSocketFactory(Consts.socketFactory())
                 .referrer("https://google.com/")
                 .get();
 

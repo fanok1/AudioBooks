@@ -311,5 +311,8 @@
     <string name="search_desc">Виконувати глобальний пошук книг з історії та обраного</string>
     <string name="sorce_books">Джерело</string>
     <string name="tab_text_5">Інші джерела</string>
+    <string name="sort_title_saved">За завантаженому</string>
+    <string name="history_procent">Відобразити відсоток прослуханого</string>
+    <string name="history_procent_desc">Відображати відсоток прослуханого в обраному і в історії</string>
 
 </resources>

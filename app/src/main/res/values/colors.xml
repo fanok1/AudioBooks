@@ -28,6 +28,7 @@
     <color name="primaryDarkColorEq">#101010</color>
     <color name="playingCardColor">#444caf50</color>
     <color name="textColor">#FAFAFA</color>
+    <color name="imageTint">#80000000</color>
 
 
 </resources>

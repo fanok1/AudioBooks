@@ -87,4 +87,9 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         tabItems.add(title);
         notifyDataSetChanged();
     }
+
+    public void addTabPage(String title, int postion) {
+        tabItems.add(postion, title);
+        notifyDataSetChanged();
+    }
 }

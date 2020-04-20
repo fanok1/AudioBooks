@@ -20,6 +20,7 @@ public class ParentalControlModel {
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Elements genreList = doc.getElementsByClass("genre2_item");

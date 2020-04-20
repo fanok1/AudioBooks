@@ -35,6 +35,13 @@
         android:key="books_adapter_layout_pref"
         android:title="@string/books_adapter_layout" />
 
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:icon="@drawable/ic_menu_history"
+        android:key="history_procent"
+        android:summary="@string/history_procent_desc"
+        android:title="@string/history_procent" />
+
 
     <ListPreference
         android:defaultValue="0"

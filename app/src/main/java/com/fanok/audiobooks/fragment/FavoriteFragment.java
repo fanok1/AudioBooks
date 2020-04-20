@@ -116,7 +116,10 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
             Objects.requireNonNull(getActivity()).setTitle(titleId);
         }
 
-        mAddapterBooks = new BooksListAddapter();
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(Objects.requireNonNull(getContext()));
+
+        mAddapterBooks = new BooksListAddapter(pref.getBoolean("history_procent", true));
         mRecyclerView.setAdapter(mAddapterBooks);
         setHasOptionsMenu(true);
         mAddapterBooks.setListener(this::onItemSelected);
@@ -149,6 +152,9 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     @Override
     public void onDestroyView() {
         getPresenter().onDestroy();
+        if (mAddapterBooks != null) {
+            mAddapterBooks.close();
+        }
         mAddapterBooks = null;
         super.onDestroyView();
         unbinder.unbind();

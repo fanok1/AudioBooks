@@ -715,7 +715,6 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
 
         //Set up MediaPlayer event listeners
 
-
         mediaPlayer.addListener(new Player.EventListener() {
             @Override
             public void onTimelineChanged(Timeline timeline, @Nullable Object manifest,

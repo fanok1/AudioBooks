@@ -29,6 +29,7 @@ public class AudioModel implements
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Elements titleElement = doc.getElementsByClass("book_title_elem book_title_name");
@@ -72,6 +73,7 @@ public class AudioModel implements
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Elements titleElement = doc.getElementsByAttributeValue("itemprop", "name");

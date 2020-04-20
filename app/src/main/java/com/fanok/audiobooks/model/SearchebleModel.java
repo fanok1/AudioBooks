@@ -26,6 +26,7 @@ public class SearchebleModel implements SearchableModel {
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
 
@@ -58,6 +59,7 @@ public class SearchebleModel implements SearchableModel {
                         Document searchDoc = Jsoup.connect(link)
                                 .userAgent(Consts.USER_AGENT)
                                 .referrer("http://www.google.com")
+                                .sslSocketFactory(Consts.socketFactory())
                                 .get();
                         Elements itemsConteiner = searchDoc.getElementsByClass("common_list");
                         if (itemsConteiner.size() != 0) {

@@ -311,5 +311,8 @@
     <string name="search_desc">Perform a global search for books from history and favorites</string>
     <string name="sorce_books">A source</string>
     <string name="tab_text_5">Other sources</string>
+    <string name="history_procent">Show Percentage Listened</string>
+    <string name="sort_title_saved">By loaded</string>
+    <string name="history_procent_desc">Show percentage of favorites and stories</string>
 
 </resources>

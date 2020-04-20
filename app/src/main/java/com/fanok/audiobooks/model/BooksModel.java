@@ -26,6 +26,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         if (genreName == null || genreSrc == null || authorName == null || authorUrl == null) {
             Document doc = Jsoup.connect(url)
                     .userAgent(Consts.USER_AGENT)
+                    .sslSocketFactory(Consts.socketFactory())
                     .referrer("http://www.google.com")
                     .get();
 
@@ -72,6 +73,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
 
@@ -188,6 +190,25 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     }
                 }
 
+                if (url.contains("/serie/")) {
+                    if (bookPOJO.getSeries() == null || bookPOJO.getUrlSeries() == null
+                            || bookPOJO.getSeries().isEmpty()
+                            || bookPOJO.getUrlSeries().isEmpty()) {
+                        bookPOJO.setUrlSeries(url);
+                        Elements elements = doc.getElementsByClass("page_title");
+                        if (elements != null && elements.size() != 0) {
+                            Elements b = elements.first().getElementsByTag("b");
+                            if (b != null && b.size() != 0) {
+                                String text = b.first().text();
+                                if (text != null && !text.isEmpty()) {
+                                    bookPOJO.setSeries(text);
+                                }
+                            }
+                        }
+                    }
+                }
+
+
                 Elements about = book.getElementsByClass("bookkitem_about");
                 if (about != null && about.size() != 0) {
                     bookPOJO.setDesc(about.first().text());
@@ -200,7 +221,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         return result;
     }
 
-    private ArrayList<BookPOJO> loadBooksListIzibuk(String url, int page) throws IOException {
+    ArrayList<BookPOJO> loadBooksListIzibuk(String url, int page) throws IOException {
         ArrayList<BookPOJO> result = new ArrayList<>();
         int cookie;
         if (Consts.izibuk_reiting) {
@@ -208,7 +229,8 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         } else {
             cookie = 0;
         }
-        Document document = Jsoup.connect(url).userAgent(Consts.USER_AGENT).referrer(
+        Document document = Jsoup.connect(url).userAgent(Consts.USER_AGENT).sslSocketFactory(
+                Consts.socketFactory()).referrer(
                 Url.INDEX_IZIBUK + "1").cookie("sort_pop", String.valueOf(cookie)).get();
 
 
@@ -329,28 +351,30 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                                 Elements elements = child.children();
                                 if (elements != null) {
                                     for (Element element : elements) {
-                                        Element conteinter = element.child(1);
-                                        if (conteinter != null) {
-                                            String href = conteinter.attr("href");
-                                            if (href != null) {
-                                                String name = conteinter.text();
-                                                if (href.contains("author")) {
-                                                    bookPOJO.setUrlAutor(
-                                                            Url.SERVER_IZIBUK + href + "?p=");
-                                                    if (name != null) {
-                                                        bookPOJO.setAutor(name);
-                                                    }
-                                                } else if (href.contains("reader")) {
-                                                    bookPOJO.setUrlArtist(
-                                                            Url.SERVER_IZIBUK + href + "?p=");
-                                                    if (name != null) {
-                                                        bookPOJO.setArtist(name);
-                                                    }
-                                                } else if (href.contains("serie")) {
-                                                    bookPOJO.setUrlSeries(
-                                                            Url.SERVER_IZIBUK + href + "?p=");
-                                                    if (name != null) {
-                                                        bookPOJO.setSeries(name);
+                                        if (element.childrenSize() > 1) {
+                                            Element conteinter = element.child(1);
+                                            if (conteinter != null) {
+                                                String href = conteinter.attr("href");
+                                                if (href != null) {
+                                                    String name = conteinter.text();
+                                                    if (href.contains("author")) {
+                                                        bookPOJO.setUrlAutor(
+                                                                Url.SERVER_IZIBUK + href + "?p=");
+                                                        if (name != null) {
+                                                            bookPOJO.setAutor(name);
+                                                        }
+                                                    } else if (href.contains("reader")) {
+                                                        bookPOJO.setUrlArtist(
+                                                                Url.SERVER_IZIBUK + href + "?p=");
+                                                        if (name != null) {
+                                                            bookPOJO.setArtist(name);
+                                                        }
+                                                    } else if (href.contains("serie")) {
+                                                        bookPOJO.setUrlSeries(
+                                                                Url.SERVER_IZIBUK + href + "?p=");
+                                                        if (name != null) {
+                                                            bookPOJO.setSeries(name);
+                                                        }
                                                     }
                                                 }
                                             }

@@ -133,6 +133,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
                 minutes, seconds);
 
         viewHolder.mTime.setText(timeString);
+
         viewHolder.mTitle.setText(mData.get(i).getName());
 
         viewHolder.mView.setOnClickListener(view -> click(view, i));

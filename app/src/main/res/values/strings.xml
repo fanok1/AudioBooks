@@ -100,6 +100,7 @@
     <string name="sort_title_autor">По автору</string>
     <string name="sort_title_artist">По исполнителю</string>
     <string name="sort_title_series">По серии</string>
+    <string name="sort_title_saved">По загруженному</string>
 
     <string name="sort_value_date" translatable="false">date</string>
     <string name="sort_value_name" translatable="false">name</string>
@@ -107,6 +108,7 @@
     <string name="sort_value_autor" translatable="false">autor</string>
     <string name="sort_value_artist" translatable="false">artist</string>
     <string name="sort_value_series" translatable="false">series</string>
+    <string name="sort_value_saved" translatable="false">saved</string>
     <string name="filter">Фильтр</string>
     <string name="filter_series">Серии</string>
     <string name="pref_dowland_path">Папка для загрузок</string>
@@ -336,5 +338,7 @@
     <string name="menu_saved">Скачанные</string>
     <string name="clear_audio_list">Очистить список аудио файлов</string>
     <string name="confirm_clear_audio_list">Вы уверены что хотите очистить список аудио файлов</string>
+    <string name="history_procent">Отобразить процент прослушанного</string>
+    <string name="history_procent_desc">Отображать процент прослушанного в избранном и в истории</string>
 
 </resources>

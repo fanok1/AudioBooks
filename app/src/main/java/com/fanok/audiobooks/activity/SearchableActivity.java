@@ -282,6 +282,9 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     @Override
     protected void onDestroy() {
         mPresenter.onDestroy();
+        if (mAddapterBooks != null) {
+            mAddapterBooks.close();
+        }
         mAddapterBooks = null;
         mAddapterGenre = null;
         mAdapterAutors = null;

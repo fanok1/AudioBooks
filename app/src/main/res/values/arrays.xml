@@ -51,6 +51,7 @@
         <item>@string/sort_title_autor</item>
         <item>@string/sort_title_artist</item>
         <item>@string/sort_title_series</item>
+        <item>@string/sort_title_saved</item>
     </string-array>
 
     <string-array name="settings_sort_values">
@@ -60,6 +61,7 @@
         <item>@string/sort_value_autor</item>
         <item>@string/sort_value_artist</item>
         <item>@string/sort_value_series</item>
+        <item>@string/sort_value_saved</item>
     </string-array>
 
 

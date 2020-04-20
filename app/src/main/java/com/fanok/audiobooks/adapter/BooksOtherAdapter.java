@@ -31,11 +31,9 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
     private static final String TAG = "BooksOtherAdapter";
 
     private ArrayList<BookPOJO> mData;
-    private Context mContext;
 
-    public BooksOtherAdapter(Context context) {
+    public BooksOtherAdapter() {
         mData = new ArrayList<>();
-        mContext = context;
     }
 
     public void setData(@NonNull ArrayList<BookPOJO> data) {
@@ -70,13 +68,14 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
         Picasso.get().load(mData.get(i).getPhoto()).into(viewHolder.mImageView);
         viewHolder.mTitle.setText(mData.get(i).getName());
         viewHolder.mImageView.setOnClickListener(
-                view -> myOnClick(viewHolder.getAdapterPosition()));
-        viewHolder.mTitle.setOnClickListener(view -> myOnClick(viewHolder.getAdapterPosition()));
+                view -> myOnClick(view.getContext(), viewHolder.getAdapterPosition()));
+        viewHolder.mTitle.setOnClickListener(
+                view -> myOnClick(view.getContext(), viewHolder.getAdapterPosition()));
         viewHolder.mTitle.setOnKeyListener((view, i12, event) -> {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 if (event.getKeyCode() == KEYCODE_DPAD_CENTER || event.getKeyCode() == KEYCODE_ENTER
                         || event.getKeyCode() == KEYCODE_NUMPAD_ENTER) {
-                    myOnClick(viewHolder.getAdapterPosition());
+                    myOnClick(view.getContext(), viewHolder.getAdapterPosition());
                     return true;
                 }
             }
@@ -86,39 +85,12 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 if (event.getKeyCode() == KEYCODE_DPAD_CENTER || event.getKeyCode() == KEYCODE_ENTER
                         || event.getKeyCode() == KEYCODE_NUMPAD_ENTER) {
-                    myOnClick(viewHolder.getAdapterPosition());
+                    myOnClick(view.getContext(), viewHolder.getAdapterPosition());
                     return true;
                 }
             }
             return false;
         });
-
-        /*//translation
-        String lang = Locale.getDefault().toLanguageTag();
-        if(!lang.equals("ru")) {
-            FirebaseTranslatorOptions options =
-                    new FirebaseTranslatorOptions.Builder()
-                            .setSourceLanguage(FirebaseTranslateLanguage.RU)
-                            .setTargetLanguage(FirebaseTranslateLanguage.languageForLanguageCode
-                            (lang))
-                            .build();
-            final FirebaseTranslator translator =
-                    FirebaseNaturalLanguage.getInstance().getTranslator(options);
-
-            FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
-            .Builder()
-                    .requireWifi()
-                    .build();
-            translator.downloadModelIfNeeded(conditions)
-                    .addOnSuccessListener(
-                            v -> {
-                                translator.translate(mData.get(i).getName())
-                                        .addOnSuccessListener(
-                                                translatedText -> viewHolder.mTitle.setText
-                                                (translatedText));
-                            });
-        }*/
-
     }
 
     @Override
@@ -126,10 +98,10 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
         return mData.size();
     }
 
-    private void myOnClick(int i) {
-        Intent intent = new Intent(mContext, LoadBook.class);
+    private void myOnClick(@NonNull Context context, int i) {
+        Intent intent = new Intent(context, LoadBook.class);
         intent.putExtra("url", mData.get(i).getUrl());
-        mContext.startActivity(intent);
+        context.startActivity(intent);
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {

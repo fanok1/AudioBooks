@@ -119,7 +119,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="85dp"
+        android:layout_height="90dp"
         android:gravity="center_vertical|center_horizontal"
         android:orientation="horizontal"
         android:padding="@dimen/text_margin">
@@ -130,10 +130,10 @@
             android:layout_height="match_parent"
             android:background="?selectableItemBackgroundBorderless"
             android:contentDescription="@string/previous"
-            android:paddingStart="@dimen/text_margin"
-            android:paddingEnd="@dimen/text_margin"
+            android:paddingStart="@dimen/android_uto_player_margin"
+            android:paddingEnd="@dimen/android_uto_player_margin"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_skip_previous" />
+            android:src="@drawable/ic_skip_previous_auto" />
 
         <ImageButton
             android:id="@+id/rewind"
@@ -141,10 +141,10 @@
             android:layout_height="match_parent"
             android:background="?selectableItemBackgroundBorderless"
             android:contentDescription="@string/rewind_10"
-            android:paddingStart="@dimen/text_margin"
-            android:paddingEnd="@dimen/text_margin"
+            android:paddingStart="@dimen/android_uto_player_margin"
+            android:paddingEnd="@dimen/android_uto_player_margin"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_rewind_30" />
+            android:src="@drawable/ic_rewind_30_auto" />
 
         <ImageButton
             android:id="@+id/playBottom"
@@ -152,8 +152,8 @@
             android:layout_height="match_parent"
             android:background="?selectableItemBackgroundBorderless"
             android:contentDescription="@string/play"
-            android:paddingStart="@dimen/text_margin"
-            android:paddingEnd="@dimen/text_margin"
+            android:paddingStart="@dimen/android_uto_player_margin"
+            android:paddingEnd="@dimen/android_uto_player_margin"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_play" />
 
@@ -163,10 +163,10 @@
             android:layout_height="match_parent"
             android:background="?selectableItemBackgroundBorderless"
             android:contentDescription="@string/forward_30"
-            android:paddingStart="@dimen/text_margin"
-            android:paddingEnd="@dimen/text_margin"
+            android:paddingStart="@dimen/android_uto_player_margin"
+            android:paddingEnd="@dimen/android_uto_player_margin"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_fast_forward_30" />
+            android:src="@drawable/ic_fast_forward_30_auto" />
 
         <ImageButton
             android:id="@+id/nextBottom"
@@ -174,10 +174,10 @@
             android:layout_height="match_parent"
             android:background="?selectableItemBackgroundBorderless"
             android:contentDescription="@string/next"
-            android:paddingStart="@dimen/text_margin"
-            android:paddingEnd="@dimen/text_margin"
+            android:paddingStart="@dimen/android_uto_player_margin"
+            android:paddingEnd="@dimen/android_uto_player_margin"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_skip_next" />
+            android:src="@drawable/ic_skip_next_auto" />
 
 
     </LinearLayout>

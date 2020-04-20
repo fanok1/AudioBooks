@@ -47,6 +47,7 @@ public class ImportModel {
                 .method(Connection.Method.GET)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("https://knigavuhe.org")
+                .sslSocketFactory(Consts.socketFactory())
                 .execute();
         Document doc = res.parse();
         cookies = res.cookies();
@@ -81,6 +82,7 @@ public class ImportModel {
                 .data("password", password)
                 .data("token", getToken())
                 .method(Connection.Method.POST)
+                .sslSocketFactory(Consts.socketFactory())
                 .ignoreContentType(true)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("https://knigavuhe.org/login/")
@@ -110,6 +112,7 @@ public class ImportModel {
         Document document = Jsoup.connect(getUserUrl() + "fav/")
                 .cookies(getCookiesAuth())
                 .userAgent(Consts.USER_AGENT)
+                .sslSocketFactory(Consts.socketFactory())
                 .referrer(getUserUrl())
                 .get();
         Element booksListParent = document.getElementById("books_list");

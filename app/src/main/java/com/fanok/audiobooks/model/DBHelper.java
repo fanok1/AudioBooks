@@ -4,6 +4,7 @@ import static com.fanok.audiobooks.Consts.DBName;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import androidx.annotation.NonNull;
@@ -11,7 +12,7 @@ import androidx.annotation.NonNull;
 public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(@NonNull Context context) {
-        super(context, DBName, null, 11);
+        super(context, DBName, null, 12);
     }
 
     @Override
@@ -63,7 +64,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 + "url_book text not null,"
                 + "books_name text not null,"
                 + "name_audio text,"
-                + "url_audio text" + ");");
+                + "url_audio text,"
+                + "time integer DEFAULT 0" + ");");
     }
 
     @Override
@@ -78,6 +80,13 @@ public class DBHelper extends SQLiteOpenHelper {
                     + "name_audio text,"
                     + "url_audio text,"
                     + "time integer DEFAULT 0" + ");");
+        }
+
+        if (i == 11) {
+            try {
+                sqLiteDatabase.execSQL("ALTER TABLE books_audio ADD time integer DEFAULT 0");
+            } catch (SQLiteException ignored) {
+            }
         }
 
 

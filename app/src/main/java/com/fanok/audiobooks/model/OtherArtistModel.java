@@ -27,6 +27,7 @@ public class OtherArtistModel implements
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Elements elements = doc.getElementsByClass("book_serie_block");
@@ -56,6 +57,7 @@ public class OtherArtistModel implements
                 "https://izibuk.ru/search?q=" + bookPOJO.getName() + " " + bookPOJO.getAutor())
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Element element = doc.getElementById("books_list");

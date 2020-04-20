@@ -886,16 +886,26 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
     private void showPage(String name) {
         boolean temp = false;
+        boolean sours = false;
+        String otherSours = getString(R.string.tab_text_5);
         for (int i = 0; i < tabs.getTabCount(); i++) {
             String title = Objects.requireNonNull(
                     Objects.requireNonNull(tabs.getTabAt(i)).getText()).toString();
             if (title.equals(name)) {
                 temp = true;
             }
+            if (title.equals(otherSours) && !otherSours.equals(name)) {
+                sours = true;
+            }
         }
         if (!temp) {
-            tabs.addTab(tabs.newTab().setText(name));
-            sectionsPagerAdapter.addTabPage(name);
+            if (!sours) {
+                tabs.addTab(tabs.newTab().setText(name));
+                sectionsPagerAdapter.addTabPage(name);
+            } else {
+                tabs.addTab(tabs.newTab().setText(name), sectionsPagerAdapter.getCount() - 1);
+                sectionsPagerAdapter.addTabPage(name, sectionsPagerAdapter.getCount() - 1);
+            }
         }
     }
 

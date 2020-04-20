@@ -40,6 +40,10 @@
                 <item
                     android:id="@+id/series"
                     android:title="@string/sort_title_series" />
+
+                <item
+                    android:id="@+id/saved"
+                    android:title="@string/sort_title_saved" />
             </group>
         </menu>
     </item>
@@ -66,6 +70,10 @@
             <item
                 android:id="@+id/series_filter"
                 android:title="@string/filter_series" />
+
+            <item
+                android:id="@+id/saved_filter"
+                android:title="@string/menu_saved" />
         </menu>
     </item>
 

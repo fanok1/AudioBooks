@@ -25,6 +25,7 @@ public class SeriesModel implements
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Elements seriesConteiner = doc.getElementsByClass("book_blue_block book_serie_block");
@@ -65,6 +66,7 @@ public class SeriesModel implements
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
                 .get();
 
         Elements parents = doc.getElementsByClass("_b264b2 _49d1b4");

@@ -86,8 +86,10 @@ public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterf
 
         String result = "";
         if (cursor != null) {
-            cursor.moveToFirst();
-            result = cursor.getString(0);
+            if (cursor.getCount() > 0) {
+                cursor.moveToFirst();
+                result = cursor.getString(0);
+            }
             cursor.close();
 
         }
