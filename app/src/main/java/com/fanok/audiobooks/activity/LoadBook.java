@@ -58,7 +58,7 @@ public class LoadBook extends AppCompatActivity {
                 } else {
                     mUrl = mUrl.replace("https://m.", "https://");
                 }
-            } else if (mUrl.contains("izibuk.ru")) {
+            } else if (mUrl.contains("izib.uk")) {
                 if (!mUrl.contains("/book")) {
                     startActivity(new Intent(this, MainActivity.class));
                     finish();

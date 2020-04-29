@@ -376,7 +376,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
 
     @Override
     public void onCreateOptionsMenu(@NotNull Menu menu, @NotNull MenuInflater inflater) {
-        if (mUrl.contains("izibuk.ru")) {
+        if (mUrl.contains("izib.uk")) {
             inflater.inflate(R.menu.books_izibuk_options_menu, menu);
         } else {
             inflater.inflate(R.menu.books_options_menu, menu);
@@ -384,7 +384,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
 
         if (modelID == Consts.MODEL_BOOKS) {
             if (mUrl.contains("reader") || mUrl.contains("author") ||
-                    (mUrl.contains("izibuk.ru") && mUrl.contains("genre"))) {
+                    (mUrl.contains("izib.uk") && mUrl.contains("genre"))) {
                 menu.findItem(R.id.order).setVisible(false);
             } else {
                 setColorPrimeriTextInIconItemMenu(

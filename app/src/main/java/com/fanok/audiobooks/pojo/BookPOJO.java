@@ -47,7 +47,7 @@ public class BookPOJO {
                 try {
                     if (url.contains("knigavuhe.org")) {
                         articlesModels = getBookByUrl(url);
-                    } else if (url.contains("izibuk.ru")) {
+                    } else if (url.contains("izib.uk")) {
                         articlesModels = getBookByUrlIziBuk(url);
                     } else {
                         articlesModels = new BookPOJO();

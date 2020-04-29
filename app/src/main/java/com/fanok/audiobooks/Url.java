@@ -16,7 +16,7 @@ public class Url {
     public static final String RATING_MONTH = SERVER + "/rating/?w=month&page=";
     public static final String RATING_ALL_TIME = SERVER + "/rating/?w=alltime&page=";
 
-    public static final String SERVER_IZIBUK = "https://izibuk.ru";
+    public static final String SERVER_IZIBUK = "https://izib.uk";
     public static final String INDEX_IZIBUK = SERVER_IZIBUK + "/?p=";
     public static final String SECTIONS_IZIBUK = SERVER_IZIBUK + "/genres?p=";
     public static final String AUTHORS_IZIBUK = SERVER_IZIBUK + "/authors?p=";

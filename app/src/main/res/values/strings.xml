@@ -41,7 +41,7 @@
     <string name="remove">Удалить</string>
     <string name="title_activity_book" translatable="false">BookActivity</string>
     <string name="tab_text_1">Описание</string>
-    <string name="tab_text_2">Коментарии</string>
+    <string name="tab_text_2">Комментарии</string>
     <string name="tab_text_3">Серия</string>
     <string name="tab_text_5">Другие источники</string>
     <string name="time_zero" translatable="false">00:00</string>

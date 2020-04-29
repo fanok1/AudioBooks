@@ -123,7 +123,7 @@ public class AudioModel implements
             try {
                 if (url.contains("knigavuhe.org")) {
                     articlesModels = loadSeriesList(url);
-                } else if (url.contains("izibuk.ru")) {
+                } else if (url.contains("izib.uk")) {
                     articlesModels = loadSeriesListIzibuk(url);
                 } else {
                     articlesModels = new ArrayList<>();

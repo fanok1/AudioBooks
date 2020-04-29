@@ -54,7 +54,7 @@ public class OtherArtistModel implements
     private ArrayList<OtherArtistPOJO> loadOtherArtistIzibuk(BookPOJO bookPOJO) throws IOException {
         ArrayList<OtherArtistPOJO> result = new ArrayList<>();
         Document doc = Jsoup.connect(
-                "https://izibuk.ru/search?q=" + bookPOJO.getName() + " " + bookPOJO.getAutor())
+                "https://izib.uk/search?q=" + bookPOJO.getName() + " " + bookPOJO.getAutor())
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
@@ -107,7 +107,7 @@ public class OtherArtistModel implements
             try {
                 if (bookPOJO.getUrl().contains("knigavuhe.org")) {
                     articlesModels = loadSeriesList(bookPOJO.getUrl());
-                } else if (bookPOJO.getUrl().contains("izibuk.ru")) {
+                } else if (bookPOJO.getUrl().contains("izib.uk")) {
                     articlesModels = loadOtherArtistIzibuk(bookPOJO);
                 } else {
                     articlesModels = new ArrayList<>();

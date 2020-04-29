@@ -102,7 +102,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showProgres(true);
             page++;
             if (mModelId != Consts.MODEL_GENRE) {
-                if (!mUrl.contains("genre") || mUrl.contains("izibuk.ru")) {
+                if (!mUrl.contains("genre") || mUrl.contains("izib.uk")) {
                     getData(mUrl + page + "/");
                 } else {
                     getData(mUrl.replace("<page>", Integer.toString(page)));
@@ -122,7 +122,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showRefreshing(true);
             page = 1;
             if (mModelId != Consts.MODEL_GENRE) {
-                if (!mUrl.contains("genre") || mUrl.contains("izibuk.ru")) {
+                if (!mUrl.contains("genre") || mUrl.contains("izib.uk")) {
                     getData(mUrl + page + "/");
                 } else {
                     getData(mUrl.replace("<page>", Integer.toString(page)));
@@ -206,7 +206,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         break;
                 }
             }
-        } else if (mUrl.contains("izibuk.ru")) {
+        } else if (mUrl.contains("izib.uk")) {
             if (itemId == R.id.order) {
                 Consts.izibuk_reiting = !Consts.izibuk_reiting;
                 if (Consts.izibuk_reiting) {

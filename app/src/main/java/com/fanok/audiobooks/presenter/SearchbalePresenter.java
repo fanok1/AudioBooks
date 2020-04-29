@@ -69,20 +69,20 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             case Consts.MODEL_BOOKS:
                 mUrls = new ArrayList<>();
                 mUrls.add("https://knigavuhe.org/search/?q=<qery>&page=<page>");
-                mUrls.add("https://izibuk.ru/search?q=<qery>&p=<page>");
+                mUrls.add("https://izib.uk/search?q=<qery>&p=<page>");
                 break;
             case Consts.MODEL_AUTOR:
                 if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
                     mUrl = "https://knigavuhe.org/search/authors/?q=<qery>&page=<page>";
                 } else {
-                    mUrl = "https://izibuk.ru/authors?p=<page>&q=<qery>";
+                    mUrl = "https://izib.uk/authors?p=<page>&q=<qery>";
                 }
                 break;
             case Consts.MODEL_ARTIST:
                 if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
                     mUrl = "https://knigavuhe.org/search/readers/?q=<qery>&page=<page>";
                 } else {
-                    mUrl = "https://izibuk.ru/readers?p=<page>&q=<qery>";
+                    mUrl = "https://izib.uk/readers?p=<page>&q=<qery>";
                 }
                 break;
         }
@@ -341,7 +341,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             setBooksFilter("knigavuhe.org");
             getViewState().showData(books_filter);
         } else if (filter == Consts.SOURCE_IZI_BUK) {
-            setBooksFilter("izibuk.ru");
+            setBooksFilter("izib.uk");
             getViewState().showData(books_filter);
         }
 

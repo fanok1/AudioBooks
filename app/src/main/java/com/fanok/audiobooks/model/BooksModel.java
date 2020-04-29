@@ -460,7 +460,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     if (url.contains("knigavuhe.org")) {
                         articlesModels = loadBooksList(
                                 url.replace(String.valueOf(page), String.valueOf(temp)), temp);
-                    } else if (url.contains("izibuk.ru/")) {
+                    } else if (url.contains("izib.uk/")) {
                         articlesModels = loadBooksListIzibuk(
                                 url.replace("?p=" + page, "?p=" + temp), temp);
                     } else {

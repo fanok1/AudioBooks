@@ -223,7 +223,7 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             if (book.getUrl().contains("knigavuhe.org")) {
                 mSource.setText(R.string.kniga_v_uhe);
                 mSource.setVisibility(View.VISIBLE);
-            } else if (book.getUrl().contains("izibuk.ru")) {
+            } else if (book.getUrl().contains("izib.uk")) {
                 mSource.setText(R.string.izibuc);
                 mSource.setVisibility(View.VISIBLE);
             } else {

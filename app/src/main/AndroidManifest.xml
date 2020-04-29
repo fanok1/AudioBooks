@@ -165,7 +165,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="izibuk.ru"
+                    android:host="izib.uk"
                     android:scheme="https" />
             </intent-filter>
             <intent-filter>
@@ -175,7 +175,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="pda.izibuk.ru"
+                    android:host="pda.izib.uk"
                     android:scheme="https" />
             </intent-filter>
         </activity>

@@ -251,7 +251,7 @@ public class BookDescriptionModel implements DescriptionModel {
 
         try {
             Document doc = Jsoup.connect(
-                    "https://izibuk.ru/search?q=" + descriptionPOJO.getTitle() + " "
+                    "https://izib.uk/search?q=" + descriptionPOJO.getTitle() + " "
                             + descriptionPOJO.getAutor())
                     .userAgent(Consts.USER_AGENT)
                     .referrer("http://www.google.com")
@@ -313,7 +313,7 @@ public class BookDescriptionModel implements DescriptionModel {
             try {
                 if (mUrl.contains("knigavuhe.org")) {
                     articlesModels = loadDescription();
-                } else if (mUrl.contains("izibuk.ru")) {
+                } else if (mUrl.contains("izib.uk")) {
                     articlesModels = loadDescriptionIzibuk();
                 } else {
                     articlesModels = new DescriptionPOJO();

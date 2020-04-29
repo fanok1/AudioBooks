@@ -96,7 +96,7 @@ public class OtherSourceModel implements
     @Nullable
     private OtherArtistPOJO getIzibuk(BookPOJO bookPOJO) throws IOException {
 
-        Document doc = Jsoup.connect("https://izibuk.ru/search?q=" + bookPOJO.getName() + " "
+        Document doc = Jsoup.connect("https://izib.uk/search?q=" + bookPOJO.getName() + " "
                 + bookPOJO.getAutor() + " " + bookPOJO.getArtist())
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
@@ -168,7 +168,7 @@ public class OtherSourceModel implements
                             reader.toLowerCase().equals(bookPOJO.getArtist().toLowerCase())) {
 
                         OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
-                        otherArtistPOJO.setName("izibuk.ru");
+                        otherArtistPOJO.setName("izib.uk");
                         otherArtistPOJO.setUrl(url);
                         return otherArtistPOJO;
                     }
@@ -191,7 +191,7 @@ public class OtherSourceModel implements
                 if (!bookPOJO.getUrl().contains("knigavuhe.org")) {
                     OtherArtistPOJO artistPOJO = getKnigaVuhe(bookPOJO);
                     if (artistPOJO != null) articlesModels.add(artistPOJO);
-                } else if (!bookPOJO.getUrl().contains("izibuk.ru")) {
+                } else if (!bookPOJO.getUrl().contains("izib.uk")) {
                     OtherArtistPOJO artistPOJO = getIzibuk(bookPOJO);
                     if (artistPOJO != null) articlesModels.add(artistPOJO);
                 }
