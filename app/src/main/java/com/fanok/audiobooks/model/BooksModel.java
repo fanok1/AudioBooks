@@ -326,6 +326,8 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                         if (content != null) {
                             Element titleParent = content.child(1);
                             if (titleParent != null) {
+                                Elements fragments = titleParent.getElementsByClass("_09ddb7");
+                                if (fragments != null && fragments.size() > 0) continue;
                                 Element title = titleParent.child(0);
                                 if (title != null) {
                                     String bookUrl = title.attr("href");

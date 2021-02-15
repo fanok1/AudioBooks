@@ -15,6 +15,8 @@ public interface FavoritePresenter {
 
     void onBookItemLongClick(View view, int position, LayoutInflater layoutInflater);
 
+    void onRemove(int position);
+
     void onSearch(String qery);
 
     void cealrData();

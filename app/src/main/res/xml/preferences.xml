@@ -67,6 +67,13 @@
         android:title="@string/offline" />
 
     <CheckBoxPreference
+        android:defaultValue="false"
+        android:icon="@drawable/ic_rewind"
+        android:key="rewind"
+        android:summary="@string/rewind_desc"
+        android:title="@string/rewind" />
+
+    <CheckBoxPreference
         android:defaultValue="true"
         android:icon="@drawable/ic_album"
         android:key="reproductionPref"
@@ -117,7 +124,7 @@
         <Preference
             android:key="import_kniga_v_uhe"
             android:summary="@string/kniga_v_uhe_description"
-            android:title="@string/kniga_v_uhe"/>
+            android:title="@string/kniga_v_uhe" />
     </PreferenceScreen>
 
     <ListPreference
@@ -127,8 +134,37 @@
         android:entryValues="@array/settings_dir_values"
         android:key="pref_downland_path"
         android:title="@string/pref_dowland_path"
-        android:icon="@drawable/ic_folder">
-    </ListPreference>
+        android:icon="@drawable/ic_folder"></ListPreference>
+
+    <!--
+    <PreferenceScreen
+        android:icon="@drawable/ic_proxy"
+        android:key="proxy"
+        android:persistent="true"
+        android:summary="@string/proxy_desc"
+        android:title="@string/proxy">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="proxy_enabled"
+            android:title="@string/proxy_enabled" />
+
+        <EditTextPreference
+            android:dialogTitle="@string/proxy"
+            android:key="pref_proxy"
+            android:title="@string/proxy_server"
+            android:enabled="false">
+        </EditTextPreference>
+
+        <EditTextPreference
+            android:dialogTitle="@string/port"
+            android:key="pref_proxy_prot"
+            android:title="@string/port"
+            android:enabled="false">
+        </EditTextPreference>
+
+    </PreferenceScreen>
+    -->
+
 
     <CheckBoxPreference
         android:defaultValue="false"

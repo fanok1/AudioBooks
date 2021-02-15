@@ -12,5 +12,6 @@
         <attr name="mySelectableItemBackground" format="color" />
         <attr name="colorItemMenu" format="color" />
         <attr name="prefIconColor" format="color" />
+        <attr name="deleteColor" format="color" />
     </declare-styleable>
 </resources>

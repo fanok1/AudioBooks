@@ -314,5 +314,15 @@
     <string name="history_procent">Show Percentage Listened</string>
     <string name="sort_title_saved">By loaded</string>
     <string name="history_procent_desc">Show percentage of favorites and stories</string>
+    <string name="proxy_desc">Configure proxy</string>
+    <string name="proxy">Proxy</string>
+    <string name="proxy_enabled">Activate proxy</string>
+    <string name="port">Port (Not required)</string>
+    <string name="proxy_server">Server</string>
+    <string name="incorect_fomat_port">Invalid port</string>
+    <string name="incorect_fomat_proxy_server">Invalid IP address format</string>
+    <string name="rewind">Rewind</string>
+    <string name="rewind_desc">Rewind during a long pause</string>
+    <string name="source">Source</string>
 
 </resources>

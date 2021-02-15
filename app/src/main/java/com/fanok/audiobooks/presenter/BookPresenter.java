@@ -25,7 +25,6 @@ import androidx.preference.PreferenceManager;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
-import com.crashlytics.android.Crashlytics;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
@@ -46,6 +45,7 @@ import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.service.MediaPlayerService;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -76,20 +76,20 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     public static boolean start = false;
     public static boolean resume = false;
 
-    private BookPOJO mBookPOJO;
-    private BooksDBModel mBooksDBModel;
-    private AudioDBModel mAudioDBModel;
-    private OtherSourceModel mOtherSourceModel;
-    private AudioListDBModel mAudioListDBModel;
+    private final BookPOJO mBookPOJO;
+    private final BooksDBModel mBooksDBModel;
+    private final AudioDBModel mAudioDBModel;
+    private final OtherSourceModel mOtherSourceModel;
+    private final AudioListDBModel mAudioListDBModel;
     private ArrayList<AudioPOJO> mAudioPOJO;
     private String last = "";
-    private Context mContext;
+    private final Context mContext;
     private boolean serviceBound = false;
     private static float speed = 1;
     private ServiceConnection serviceConnection;
-    private SharedPreferences pref;
+    private final SharedPreferences pref;
     private boolean error = false;
-    private AudioModelInterfece mAudioModel;
+    private final AudioModelInterfece mAudioModel;
     private ArrayList<OtherArtistPOJO> mOtherArtistPOJOS;
 
     private int state = BottomSheetBehavior.STATE_COLLAPSED;
@@ -120,7 +120,10 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                 serviceBound = false;
             }
         };
-        Crashlytics.setString("urlBooks", bookPOJO.getUrl());
+
+        FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
+
+        crashlytics.setCustomKey("urlBooks", bookPOJO.getUrl());
 
     }
 
@@ -172,11 +175,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     @Override
     public void onCreateOptionsMenu(Menu menu) {
         if (mBookPOJO != null && mBooksDBModel != null) {
-            if (mBooksDBModel.inFavorite(mBookPOJO)) {
-                getViewState().setIsFavorite(true);
-            } else {
-                getViewState().setIsFavorite(false);
-            }
+            getViewState().setIsFavorite(mBooksDBModel.inFavorite(mBookPOJO));
         }
     }
 

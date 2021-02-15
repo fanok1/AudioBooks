@@ -155,103 +155,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
     private BassBoost bassBoost;
     private PresetReverb presetReverb;
 
-    public static int getNotificationId() {
-        return NOTIFICATION_ID;
-    }
-
-
-    /**
-     * ACTION_AUDIO_BECOMING_NOISY -- change in audio outputs
-     */
-    private BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //pause audio on ACTION_AUDIO_BECOMING_NOISY
-            pauseMedia();
-        }
-    };
-    /**
-     * Play new Audio
-     */
-    private BroadcastReceiver playNewAudio = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            buttonClick = true;
-            BookPresenter.resume = false;
-            //Get the new media index form SharedPreferences
-            audioIndex = storage.loadAudioIndex();
-            if (audioIndex != -1 && audioIndex < audioList.size()) {
-                //index is in a valid range
-                activeAudio = audioList.get(audioIndex);
-                sendBroadcastItemSelected(audioIndex);
-            } else {
-                stopSelf();
-            }
-
-            //A PLAY_NEW_AUDIO action received
-            //reset mediaPlayer to play the new Audio
-            stopMediaNotSave();
-            initMediaPlayer();
-            updateMetaData();
-            buildNotification(PlaybackStatus.PLAYING);
-        }
-    };
-    private BroadcastReceiver playPriveos = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            buttonClick = true;
-            skipToPrevious();
-            updateMetaData();
-        }
-    };
-    private BroadcastReceiver playNext = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            buttonClick = true;
-            skipToNext();
-            updateMetaData();
-        }
-    };
-    private BroadcastReceiver play = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (isPlaying()) {
-                pauseMedia();
-            } else if (mediaPlayer != null) {
-                if (isPrepared()) {
-                    resumeMedia();
-                } else {
-                    Toast.makeText(context, getString(R.string.worning_loading_not_finish),
-                            Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                initMediaPlayer();
-            }
-        }
-    };
-    private BroadcastReceiver seekTo = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            boolean b = mPreferences.getBoolean("seekToPausePref", true);
-            if (b) {
-                resumeMedia();
-            }
-            seekTo(intent.getIntExtra("postion", 0));
-        }
-    };
-    private BroadcastReceiver seekToNext30Sec = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            fastForward(FAST_FORWARD);
-        }
-    };
-    private BroadcastReceiver seekToPrevious10Sec = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            rewind(REWIND);
-        }
-    };
-    private BroadcastReceiver equalizer = new BroadcastReceiver() {
+    private final BroadcastReceiver equalizer = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Intent broadcastIntent = new Intent(Broadcast_SHOW_EQUALIZER);
@@ -261,21 +165,12 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
             sendBroadcast(broadcastIntent);
         }
     };
-    private BroadcastReceiver setSpeed = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mediaPlayer != null) {
-                resumeMedia();
-                try {
-                    PlaybackParameters param = new PlaybackParameters(BookPresenter.getSpeed());
-                    mediaPlayer.setPlaybackParameters(param);
-                } catch (IllegalArgumentException ignored) {
-                }
-            }
-        }
-    };
 
-    private BroadcastReceiver showTitle = new BroadcastReceiver() {
+    public static int getNotificationId() {
+        return NOTIFICATION_ID;
+    }
+
+    private final BroadcastReceiver showTitle = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Intent broadcastIntent = new Intent(Broadcast_SET_TITLE);
@@ -283,7 +178,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
             sendBroadcast(broadcastIntent);
         }
     };
-    private BroadcastReceiver getPosition = new BroadcastReceiver() {
+    private final BroadcastReceiver getPosition = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Intent broadcastIntent = new Intent(Broadcast_SET_PROGRESS);
@@ -292,7 +187,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
             sendBroadcast(broadcastIntent);
         }
     };
-    private BroadcastReceiver closeNotPrerepred = new BroadcastReceiver() {
+    private final BroadcastReceiver closeNotPrerepred = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive: closeNotPrerepred");
@@ -303,7 +198,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
             }
         }
     };
-    private BroadcastReceiver closeIfPause = new BroadcastReceiver() {
+    private final BroadcastReceiver closeIfPause = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (!isPlaying()) {
@@ -313,7 +208,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
             }
         }
     };
-    private BroadcastReceiver equalizerEnabled = new BroadcastReceiver() {
+    private final BroadcastReceiver equalizerEnabled = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             mEqualizerEnabled = intent.getBooleanExtra("enabled", false);
@@ -325,7 +220,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
             }
         }
     };
-    private BroadcastReceiver sleepTimer = new BroadcastReceiver() {
+    private final BroadcastReceiver sleepTimer = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (SleepTimerPresenter.isTimerStarted()) {
@@ -353,6 +248,111 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                 //stopTimer
                 if (mCountDownTimer != null) {
                     mCountDownTimer.cancel();
+                }
+            }
+        }
+    };
+    private long pauseTime = 0;
+    /**
+     * ACTION_AUDIO_BECOMING_NOISY -- change in audio outputs
+     */
+    private final BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //pause audio on ACTION_AUDIO_BECOMING_NOISY
+            pauseMedia();
+        }
+    };
+    /**
+     * Play new Audio
+     */
+    private final BroadcastReceiver playNewAudio = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            buttonClick = true;
+            BookPresenter.resume = false;
+            //Get the new media index form SharedPreferences
+            audioIndex = storage.loadAudioIndex();
+            if (audioIndex != -1 && audioIndex < audioList.size()) {
+                //index is in a valid range
+                activeAudio = audioList.get(audioIndex);
+                sendBroadcastItemSelected(audioIndex);
+            } else {
+                stopSelf();
+            }
+
+            //A PLAY_NEW_AUDIO action received
+            //reset mediaPlayer to play the new Audio
+            stopMediaNotSave();
+            initMediaPlayer();
+            updateMetaData();
+            buildNotification(PlaybackStatus.PLAYING);
+        }
+    };
+    private final BroadcastReceiver playPriveos = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            buttonClick = true;
+            skipToPrevious();
+            updateMetaData();
+        }
+    };
+    private final BroadcastReceiver playNext = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            buttonClick = true;
+            skipToNext();
+            updateMetaData();
+        }
+    };
+    private final BroadcastReceiver play = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (isPlaying()) {
+                pauseMedia();
+            } else if (mediaPlayer != null) {
+                if (isPrepared()) {
+                    resumeMedia();
+                } else {
+                    Toast.makeText(context, getString(R.string.worning_loading_not_finish),
+                            Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                initMediaPlayer();
+            }
+        }
+    };
+    private final BroadcastReceiver seekTo = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean b = mPreferences.getBoolean("seekToPausePref", true);
+            if (b) {
+                resumeMedia();
+            }
+            seekTo(intent.getIntExtra("postion", 0));
+        }
+    };
+    private final BroadcastReceiver seekToNext30Sec = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            fastForward(FAST_FORWARD);
+        }
+    };
+    private final BroadcastReceiver seekToPrevious10Sec = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            rewind(REWIND);
+        }
+    };
+    private final BroadcastReceiver setSpeed = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mediaPlayer != null) {
+                resumeMedia();
+                try {
+                    PlaybackParameters param = new PlaybackParameters(BookPresenter.getSpeed());
+                    mediaPlayer.setPlaybackParameters(param);
+                } catch (IllegalArgumentException ignored) {
                 }
             }
         }
@@ -750,10 +750,16 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                     buttonClick = false;
                 }
                 if (playWhenReady && playbackState == Player.STATE_READY) {
-                    if (!BookPresenter.start) {
-                        if (timeStart != 0) seekTo(timeStart * 1000);
-                    } else if (BookPresenter.resume) {
-                        if (timeStart != 0) seekTo(timeStart * 1000);
+                    if (!BookPresenter.start || BookPresenter.resume) {
+                        if (!mPreferences.getBoolean("rewind", false)) {
+                            if (timeStart != 0) seekTo(timeStart * 1000);
+                        } else {
+                            if (timeStart > 30) seekTo((timeStart - 30) * 1000);
+                        }
+
+
+                    }
+                    if (BookPresenter.resume) {
                         BookPresenter.resume = false;
                     }
                     isPlay = true;
@@ -888,6 +894,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
     private void pauseMedia() {
         if (isPlaying()) {
             mediaPlayer.setPlayWhenReady(false);
+            pauseTime = System.currentTimeMillis();
         }
     }
 
@@ -898,7 +905,20 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                     stopSelf();
                 }
                 isPlay = true;
-                mediaPlayer.seekTo(resumePosition);
+                if (!mPreferences.getBoolean("rewind", false)) {
+                    mediaPlayer.seekTo(resumePosition);
+                } else {
+                    int time = (int) ((System.currentTimeMillis() - pauseTime) / 1000);
+                    if (time < 10) {
+                        mediaPlayer.seekTo(resumePosition);
+                    } else if (resumePosition - 10000 <= 0) {
+                        mediaPlayer.seekTo(0);
+                    } else if (time < 30) {
+                        mediaPlayer.seekTo(resumePosition - 10000);
+                    } else {
+                        mediaPlayer.seekTo(resumePosition - 30000);
+                    }
+                }
                 mediaPlayer.setPlayWhenReady(true);
             }
         } catch (Exception ignored) {

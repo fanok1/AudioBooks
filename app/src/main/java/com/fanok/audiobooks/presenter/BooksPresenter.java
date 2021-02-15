@@ -1,9 +1,12 @@
 package com.fanok.audiobooks.presenter;
 
 
+import static androidx.preference.PreferenceManager.getDefaultSharedPreferences;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,6 +34,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -45,17 +49,17 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
     private boolean isLoading = false;
     private boolean isRefreshing = false;
     private int page = 0;
-    private int mModelId;
-    private String mSubTitle;
+    private final int mModelId;
+    private final String mSubTitle;
     private ArrayList<BookPOJO> books;
     private ArrayList<GenrePOJO> genre;
     private com.fanok.audiobooks.interface_pacatge.books.BooksModel mModelBook;
     private com.fanok.audiobooks.interface_pacatge.books.GenreModel mModelGenre;
-    private BooksDBModel mBooksDBModel;
-    private Context mContext;
+    private final BooksDBModel mBooksDBModel;
+    private final Context mContext;
 
 
-    private String mUrl;
+    private final String mUrl;
     private boolean isEnd;
 
     public BooksPresenter(@NonNull String url, int modelId, @NonNull String subTitle,
@@ -143,6 +147,19 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         subTitle = subTitle.replace(" " + getStringById(R.string.order_reting), "");
         subTitle = subTitle.replace(" " + getStringById(R.string.order_popular), "");
         String url = "";
+
+        if (itemId == R.id.source_izi_book || itemId == R.id.source_kniga_v_uhe) {
+            SharedPreferences pref = getDefaultSharedPreferences(Objects.requireNonNull(mContext));
+            SharedPreferences.Editor editor = pref.edit();
+            if (itemId == R.id.source_kniga_v_uhe) {
+                editor.putString("sorce_books", getStringById(R.string.kniga_v_uhe_value));
+            } else if (itemId == R.id.source_izi_book) {
+                editor.putString("sorce_books", getStringById(R.string.izibuc_value));
+            }
+            editor.commit();
+            getViewState().recreate();
+        }
+
         if (mUrl.contains("knigavuhe.org")) {
             if (!mUrl.contains("genre")) {
                 switch (itemId) {

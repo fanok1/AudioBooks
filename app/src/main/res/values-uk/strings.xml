@@ -314,5 +314,15 @@
     <string name="sort_title_saved">За завантаженому</string>
     <string name="history_procent">Відобразити відсоток прослуханого</string>
     <string name="history_procent_desc">Відображати відсоток прослуханого в обраному і в історії</string>
+    <string name="proxy_desc">Налаштувати проксі</string>
+    <string name="proxy">Проксі</string>
+    <string name="proxy_enabled">Активувати проксі</string>
+    <string name="port">Порт (Не обов\'язково)</string>
+    <string name="proxy_server">Сервер</string>
+    <string name="incorect_fomat_port">Невірний порт</string>
+    <string name="incorect_fomat_proxy_server">Невірний формат IP адреси</string>
+    <string name="rewind">Перемотування</string>
+    <string name="rewind_desc">Перемотати назад під час тривалої паузи</string>
+    <string name="source">Джерело</string>
 
 </resources>

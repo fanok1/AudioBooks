@@ -16,6 +16,7 @@
         <item name="mySelectableItemBackground">@color/selectableItemBackground</item>
         <item name="colorItemMenu">@color/primaryTextColor</item>
         <item name="prefIconColor">@color/primaryTextColor</item>
+        <item name="deleteColor">@color/colorDelete</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -92,6 +93,14 @@
         <item name="mySelectableItemBackground">@color/selectableItemBackgroundLight</item>
         <item name="colorItemMenu">@color/primaryTextColor</item>
         <item name="prefIconColor">@color/colorNavigayionItemLight</item>
+        <item name="deleteColor">@color/colorDeleteLight</item>
+        <item name="android:itemBackground">@drawable/custom_ripple</item>
+        <item name="android:itemTextAppearance">@style/myCustomMenuTextAppearanceLight</item>
+
+    </style>
+
+    <style name="myCustomMenuTextAppearanceLight" parent="@android:style/TextAppearance.Widget.IconMenu.Item">
+        <item name="android:textColor">@color/colorNavigayionItemLight</item>
     </style>
 
     <style name="LightAppTheme.NoActionBar">

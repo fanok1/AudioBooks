@@ -10,6 +10,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -23,14 +24,17 @@ import io.reactivex.Observable;
 public class AudioModel implements
         com.fanok.audiobooks.interface_pacatge.book_content.AudioModelInterfece {
 
+    private static final String TAG = "AudioModel";
 
     private ArrayList<AudioPOJO> loadSeriesList(String url) throws IOException {
         ArrayList<AudioPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
+        Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .get();
+                .sslSocketFactory(Consts.socketFactory());
+
+        Document doc = connection.get();
+
 
         Elements titleElement = doc.getElementsByClass("book_title_elem book_title_name");
         String bookName = "";
@@ -70,11 +74,13 @@ public class AudioModel implements
 
     private ArrayList<AudioPOJO> loadSeriesListIzibuk(String url) throws IOException {
         ArrayList<AudioPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
+
+        Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .get();
+                .sslSocketFactory(Consts.socketFactory());
+
+        Document doc = connection.get();
 
         Elements titleElement = doc.getElementsByAttributeValue("itemprop", "name");
         String bookName = "";
@@ -120,6 +126,7 @@ public class AudioModel implements
 
         return Observable.create(observableEmitter -> {
             ArrayList<AudioPOJO> articlesModels;
+
             try {
                 if (url.contains("knigavuhe.org")) {
                     articlesModels = loadSeriesList(url);

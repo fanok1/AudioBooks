@@ -8,6 +8,9 @@ import static com.fanok.audiobooks.Consts.REQEST_CODE_SEARCH;
 import static com.fanok.audiobooks.Consts.setColorPrimeriTextInIconItemMenu;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -383,7 +386,17 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         }
 
         if (modelID == Consts.MODEL_BOOKS) {
+
+            if (mUrl.contains("reader") || mUrl.contains("author") || mUrl.contains("genre")
+                    || mUrl.contains("serie")) {
+                menu.findItem(R.id.source).setVisible(false);
+            } else {
+                setColorPrimeriTextInIconItemMenu(
+                        menu.findItem(R.id.source), Objects.requireNonNull(getContext()));
+            }
+
             if (mUrl.contains("reader") || mUrl.contains("author") ||
+                    mUrl.contains("serie") ||
                     (mUrl.contains("izib.uk") && mUrl.contains("genre"))) {
                 menu.findItem(R.id.order).setVisible(false);
             } else {
@@ -392,6 +405,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
             }
         } else {
             menu.findItem(R.id.order).setVisible(false);
+            menu.findItem(R.id.source).setVisible(false);
         }
         setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search),
                 Objects.requireNonNull(getContext()));
@@ -465,6 +479,17 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     @Override
     public void showBooksActivity(@NotNull @NonNull BookPOJO bookPOJO) {
         BookActivity.startNewActivity(Objects.requireNonNull(getContext()), bookPOJO);
+    }
+
+    @Override
+    public void recreate() {
+        Intent mStartActivity = new Intent(getContext(), MainActivity.class);
+        int mPendingIntentId = 123456;
+        PendingIntent mPendingIntent = PendingIntent.getActivity(getContext(), mPendingIntentId,
+                mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+        AlarmManager mgr = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+        System.exit(0);
     }
 
     private void onItemSelected(View view12, int position) {

@@ -9,6 +9,8 @@
     <color name="subTextColor">#e0e0e0</color>
     <color name="colorBackgraund">#303030</color>
     <color name="selectableItemBackground">#444444</color>
+    <color name="colorDelete">#B70000</color>
+    <color name="colorDeleteLight">#E50000</color>
 
     <color name="primaryColorLight">#009688</color>
     <color name="primaryDarkColorLight">#00675b</color>

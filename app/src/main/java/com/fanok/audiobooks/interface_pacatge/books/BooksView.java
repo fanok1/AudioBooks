@@ -49,4 +49,7 @@ public interface BooksView extends MvpView {
     @StateStrategyType(SkipStrategy.class)
     void showBooksActivity(@NonNull BookPOJO bookPOJO);
 
+    @StateStrategyType(SkipStrategy.class)
+    void recreate();
+
 }

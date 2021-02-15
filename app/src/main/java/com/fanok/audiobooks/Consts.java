@@ -43,6 +43,12 @@ public class Consts {
     public static final Pattern REGEXP_EMAIL = Pattern.compile(
             "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 
+    public static final Pattern REGEXP_PORT = Pattern.compile("\\d{1,5}");
+    private static final String zeroTo255
+            = "([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])";
+    public static final Pattern REGEXP_IP = Pattern.compile(zeroTo255 + "\\." + zeroTo255 + "\\."
+            + zeroTo255 + "\\." + zeroTo255);
+
     public static final String USER_AGENT =
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
                     + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36";
@@ -78,7 +84,9 @@ public class Consts {
     public static final int SOURCE_KNIGA_V_UHE = 0;
     public static final int SOURCE_IZI_BUK = 1;
     public static boolean izibuk_reiting = false;
+
     private static int SOURCE;
+
 
     public static int getSOURCE() {
         return SOURCE;

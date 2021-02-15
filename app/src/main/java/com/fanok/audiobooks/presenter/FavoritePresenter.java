@@ -53,11 +53,11 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
     private ArrayList<BookPOJO> books;
     private ArrayList<BookPOJO> flter = null;
-    private BooksDBModel mBooksDBModel;
-    private AudioDBModel mAudioDBModel;
-    private FavoriteModel mFavoriteModel;
-    private ArrayList<BookPOJO> filterSearch;
-    private int table;
+    private final BooksDBModel mBooksDBModel;
+    private final AudioDBModel mAudioDBModel;
+    private final FavoriteModel mFavoriteModel;
+    private final ArrayList<BookPOJO> filterSearch;
+    private final int table;
     private boolean isLoading = false;
     private String mQuery = "";
     private Context mContext;
@@ -208,14 +208,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
         remove.setOnClickListener(view1 -> {
             dialog.dismiss();
-            if (table == Consts.TABLE_FAVORITE) {
-                mBooksDBModel.removeFavorite(books.get(position));
-            } else if (table == Consts.TABLE_HISTORY) {
-                mBooksDBModel.removeHistory(books.get(position));
-                mAudioDBModel.remove(books.get(position).getUrl());
-            }
-            books.remove(position);
-            getViewState().showData(books);
+            onRemove(position);
         });
 
         genre.setOnClickListener(view1 -> {
@@ -256,6 +249,18 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                     "seriesBooks");
         });
         dialog.show();
+    }
+
+    @Override
+    public void onRemove(int position) {
+        if (table == Consts.TABLE_FAVORITE) {
+            mBooksDBModel.removeFavorite(books.get(position));
+        } else if (table == Consts.TABLE_HISTORY) {
+            mBooksDBModel.removeHistory(books.get(position));
+            mAudioDBModel.remove(books.get(position).getUrl());
+        }
+        books.remove(position);
+        getViewState().showData(books);
     }
 
     @Override

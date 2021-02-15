@@ -3,10 +3,13 @@ package com.fanok.audiobooks.fragment;
 import static com.fanok.audiobooks.Consts.REQEST_CODE_SEARCH;
 import static com.fanok.audiobooks.Consts.TABLE_FAVORITE;
 import static com.fanok.audiobooks.Consts.TABLE_HISTORY;
+import static com.fanok.audiobooks.Consts.getAttributeColor;
+import static com.fanok.audiobooks.Consts.setColorPrimeriTextInIconItemMenu;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
@@ -25,6 +28,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -51,6 +55,7 @@ import java.util.Objects;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteView {
     private static final String TAG = "FavoriteFragment";
@@ -127,6 +132,44 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         mAddapterBooks.setLongListener(
                 (view13, position) -> mPresenter.onBookItemLongClick(view13, position,
                         getLayoutInflater()));
+
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(
+                0, ItemTouchHelper.LEFT) {
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                    @NonNull RecyclerView.ViewHolder viewHolder,
+                    @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                mPresenter.onRemove(position);
+                Toast.makeText(getContext(), R.string.delete_complite, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+                    @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
+                    int actionState, boolean isCurrentlyActive) {
+                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY,
+                        actionState, isCurrentlyActive)
+                        .addBackgroundColor(getAttributeColor(getContext(), R.attr.deleteColor))
+                        .addActionIcon(R.drawable.ic_delete_swipe)
+                        .setIconHorizontalMargin(TypedValue.COMPLEX_UNIT_DIP, 24)
+                        .create()
+                        .decorate();
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState,
+                        isCurrentlyActive);
+            }
+        };
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(mRecyclerView);
+
+
         int orientation = this.getResources().getConfiguration().orientation;
 
         int isTablet = getResources().getInteger(R.integer.isTablet);
@@ -304,6 +347,12 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         if (table == TABLE_FAVORITE) {
             menu.findItem(R.id.order).setVisible(true);
             menu.findItem(R.id.filter).setVisible(true);
+
+            setColorPrimeriTextInIconItemMenu(
+                    menu.findItem(R.id.filter), Objects.requireNonNull(getContext()));
+
+            setColorPrimeriTextInIconItemMenu(
+                    menu.findItem(R.id.order), Objects.requireNonNull(getContext()));
 
             String sort = pref.getString("pref_sort_favorite", getString(R.string.sort_value_date));
             if (getString(R.string.sort_value_name).equals(sort)) {
