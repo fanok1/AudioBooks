@@ -95,7 +95,7 @@ public class MainActivity extends MvpAppCompatActivity
     private boolean firstStart = true;
 
     private SharedPreferences preferences;
-    private BroadcastReceiver disebledAds = new BroadcastReceiver() {
+    private final BroadcastReceiver disebledAds = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             showAds(context);

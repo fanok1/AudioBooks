@@ -201,6 +201,12 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             return true;
         });
 
+        preferenceChangeListner("bufferSize", (preference, newValue) -> {
+            String value = (String) newValue;
+            if (value.equals("0")) return false;
+            return value.matches("\\d{1,3}");
+        });
+
         preferenceChangeListner("pref_downland_path", (preference, newValue) -> {
 
             if (newValue.equals(getString(R.string.dir_value_sdcrd))) {

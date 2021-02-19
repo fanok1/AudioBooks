@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.presenter;
 
+import static com.fanok.audiobooks.Consts.getAttributeColor;
 import static com.fanok.audiobooks.Consts.isServiceRunning;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_PLAY_NEW_AUDIO;
 
@@ -511,8 +512,8 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     }
 
     @Override
-    public void updateTime(int timeCurrent, int timeEnd) {
-        getViewState().updateTime(timeCurrent, timeEnd);
+    public void updateTime(int timeCurrent, int timeEnd, int buffered) {
+        getViewState().updateTime(timeCurrent, timeEnd, buffered);
     }
 
     @Override
@@ -600,17 +601,18 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         final TextView textView = new TextView(view.getContext());
         textView.setGravity(Gravity.CENTER_HORIZONTAL);
         textView.setText(String.valueOf(speed));
+        textView.setTextColor(getAttributeColor(textView.getContext(), R.attr.colorPrimaryText));
         linearLayout.addView(textView);
         final SeekBar seek = new SeekBar(view.getContext());
-        seek.setMax(200);
+        seek.setMax(300);
         seek.incrementProgressBy(step);
-        seek.setProgress((int) (speed * 100 - 100));
+        seek.setProgress((int) (speed * 100));
         seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 progress = progress / step;
                 progress = progress * step;
-                String s = progress / 100 + 1 + "." + progress % 100;
+                String s = progress / 100 + "." + progress % 100;
                 textView.setText(s);
             }
 

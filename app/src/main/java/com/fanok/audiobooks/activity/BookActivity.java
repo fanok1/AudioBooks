@@ -201,14 +201,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     private boolean mNotificationClick;
 
     private AudioAdapter mAudioAdapter;
-    private BroadcastReceiver setImage = new BroadcastReceiver() {
+    private final BroadcastReceiver setImage = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int id = intent.getIntExtra("id", R.drawable.ic_play);
             mPresenter.setImageDrawable(id);
         }
     };
-    private BroadcastReceiver showGetPlus = new BroadcastReceiver() {
+    private final BroadcastReceiver showGetPlus = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Intent start = new Intent(context, PopupGetPlus.class);
@@ -217,22 +217,23 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         }
     };
 
-    private BroadcastReceiver showRating = new BroadcastReceiver() {
+    private final BroadcastReceiver showRating = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             showRatingDialog();
         }
     };
 
-    private BroadcastReceiver setProgress = new BroadcastReceiver() {
+    private final BroadcastReceiver setProgress = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int timeCurrent = intent.getIntExtra("timeCurrent", 0);
             int timeEnd = intent.getIntExtra("timeEnd", 0);
-            mPresenter.updateTime(timeCurrent, timeEnd);
+            int buffered = intent.getIntExtra("buffered", 0);
+            mPresenter.updateTime(timeCurrent, timeEnd, buffered);
         }
     };
-    private BroadcastReceiver setSelectionBroadcast = new BroadcastReceiver() {
+    private final BroadcastReceiver setSelectionBroadcast = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int pos = intent.getIntExtra("postion", -1);
@@ -242,7 +243,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             }
         }
     };
-    private BroadcastReceiver setTitleBroadcast = new BroadcastReceiver() {
+    private final BroadcastReceiver setTitleBroadcast = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String title = intent.getStringExtra("title");
@@ -252,7 +253,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         }
     };
 
-    private BroadcastReceiver showEqualizer = new BroadcastReceiver() {
+    private final BroadcastReceiver showEqualizer = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int sessionId = intent.getIntExtra("id", 0);
@@ -274,14 +275,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         }
     };
 
-    private BroadcastReceiver updateAdapter = new BroadcastReceiver() {
+    private final BroadcastReceiver updateAdapter = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             updateAdapter(intent.getStringExtra("url"));
         }
     };
 
-    private BroadcastReceiver clearDownloading = new BroadcastReceiver() {
+    private final BroadcastReceiver clearDownloading = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             clearDownloading();
@@ -356,11 +357,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                 @Override
                 public void afterTextChanged(Editable editable) {
                     int size = Objects.requireNonNull(editText.getText()).toString().length();
-                    if (size == 4) {
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-                    } else {
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-                    }
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(size == 4);
                 }
             });
 
@@ -691,11 +688,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                     if (mRadioAll.getVisibility() != View.VISIBLE) {
                         mRadioAll.setVisibility(View.VISIBLE);
                     }
-                    if (mAudioAdapter.getItemCount() == mAudioAdapter.getSelectedItemsSize()) {
-                        mRadioAll.setChecked(true);
-                    } else {
-                        mRadioAll.setChecked(false);
-                    }
+                    mRadioAll.setChecked(
+                            mAudioAdapter.getItemCount() == mAudioAdapter.getSelectedItemsSize());
                 }
 
                 if (mDowland != null) {
@@ -1191,13 +1185,15 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     }
 
     @Override
-    public void updateTime(int timeCurent, int timeEnd) {
+    public void updateTime(int timeCurent, int timeEnd, int buffered) {
         if (mProgressBar != null) {
             mProgressBar.setMax(timeEnd);
             mProgressBar.setProgress(timeCurent);
+            mProgressBar.setSecondaryProgress(buffered);
         }
         mSeekBar.setMax(timeEnd);
         mSeekBar.setProgress(timeCurent);
+        mSeekBar.setSecondaryProgress(buffered);
 
         timeCurent /= 1000;
         timeEnd /= 1000;

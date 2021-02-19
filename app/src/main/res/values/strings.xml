@@ -350,5 +350,7 @@
     <string name="rewind">Перемотка</string>
     <string name="rewind_desc">Перемотка назад во время долгой паузы</string>
     <string name="source">Источник</string>
+    <string name="buffer_size">Размер буфера в секундах (макс 999с)</string>
+    <string name="rewind_back">Перемотка назад</string>
 
 </resources>

@@ -324,5 +324,7 @@
     <string name="rewind">Перемотування</string>
     <string name="rewind_desc">Перемотати назад під час тривалої паузи</string>
     <string name="source">Джерело</string>
+    <string name="buffer_size">Розмір буфера в секундах (макс 999с)</string>
+    <string name="rewind_back">Перемотування назад</string>
 
 </resources>

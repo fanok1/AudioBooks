@@ -38,7 +38,7 @@ public interface ActivityPresenter {
 
     void setImageDrawable(int id);
 
-    void updateTime(int timeCurrent, int timeEnd);
+    void updateTime(int timeCurrent, int timeEnd, int buffered);
 
     void setSelected(int pos, @NonNull String name);
 

@@ -324,5 +324,7 @@
     <string name="rewind">Rewind</string>
     <string name="rewind_desc">Rewind during a long pause</string>
     <string name="source">Source</string>
+    <string name="buffer_size">Buffer size in seconds (max 999s)</string>
+    <string name="rewind_back">Rewind</string>
 
 </resources>

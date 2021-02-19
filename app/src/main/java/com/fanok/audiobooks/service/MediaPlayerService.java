@@ -11,6 +11,8 @@ import static com.fanok.audiobooks.activity.SleepTimerActivity.bradcast_FinishTi
 import static com.fanok.audiobooks.activity.SleepTimerActivity.bradcast_UpdateTimer;
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_Equalizer;
 import static com.fanok.audiobooks.аndroid_equalizer.EqualizerFragment.Broadcast_EqualizerEnabled;
+import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
+import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -66,6 +68,7 @@ import com.fanok.audiobooks.presenter.SleepTimerPresenter;
 import com.fanok.audiobooks.аndroid_equalizer.EqualizerModel;
 import com.fanok.audiobooks.аndroid_equalizer.Settings;
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -518,6 +521,9 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
             stopSelf();
         }
 
+        mPreferences = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
 
         if (mediaSessionManager == null || (intent.getAction() != null && intent.getAction().equals(
                 "start"))) {
@@ -538,8 +544,6 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
         //Handle Intent action from MediaSession.TransportControls
         handleIncomingActions(intent);
         MediaButtonReceiver.handleIntent(mediaSession, intent);
-        mPreferences = PreferenceManager
-                .getDefaultSharedPreferences(this);
         return START_NOT_STICKY;
     }
 
@@ -710,8 +714,19 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
             mediaPlayer.release();
             mediaPlayer = null;
         }
+
+        DefaultLoadControl.Builder builder = new
+                DefaultLoadControl.Builder();
+        int loadControlBufferMs = Integer.parseInt(mPreferences.getString("bufferSize", "60"));
+        loadControlBufferMs *= 1000;
+        builder.setBufferDurationsMs(loadControlBufferMs, loadControlBufferMs,
+                DEFAULT_BUFFER_FOR_PLAYBACK_MS, DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS);
+
+
         mediaPlayer = ExoPlayerFactory.newSimpleInstance(this,
-                new DefaultTrackSelector(trackSelectionFactory));
+                new DefaultTrackSelector(trackSelectionFactory),
+                builder.createDefaultLoadControl());
+
 
         //Set up MediaPlayer event listeners
 
@@ -751,7 +766,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                 }
                 if (playWhenReady && playbackState == Player.STATE_READY) {
                     if (!BookPresenter.start || BookPresenter.resume) {
-                        if (!mPreferences.getBoolean("rewind", false)) {
+                        if (!mPreferences.getBoolean("rewind_back", false)) {
                             if (timeStart != 0) seekTo(timeStart * 1000);
                         } else {
                             if (timeStart > 30) seekTo((timeStart - 30) * 1000);
@@ -905,7 +920,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                     stopSelf();
                 }
                 isPlay = true;
-                if (!mPreferences.getBoolean("rewind", false)) {
+                if (!mPreferences.getBoolean("rewind_back", false)) {
                     mediaPlayer.seekTo(resumePosition);
                 } else {
                     int time = (int) ((System.currentTimeMillis() - pauseTime) / 1000);
@@ -1333,6 +1348,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                 Intent broadcastIntent = new Intent(Broadcast_SET_PROGRESS);
                 broadcastIntent.putExtra("timeCurrent", (int) mediaPlayer.getCurrentPosition());
                 broadcastIntent.putExtra("timeEnd", timeDuration);
+                broadcastIntent.putExtra("buffered", (int) mediaPlayer.getBufferedPosition());
                 this.sendBroadcast(broadcastIntent);
                 if (mediaPlayer.getCurrentPosition() >= mediaPlayer.getDuration()) {
                     buttonClick = false;

@@ -69,9 +69,9 @@
     <CheckBoxPreference
         android:defaultValue="false"
         android:icon="@drawable/ic_rewind"
-        android:key="rewind"
+        android:key="rewind_back"
         android:summary="@string/rewind_desc"
-        android:title="@string/rewind" />
+        android:title="@string/rewind_back" />
 
     <CheckBoxPreference
         android:defaultValue="true"
@@ -100,6 +100,12 @@
         android:key="scrollToSelectedPref"
         android:summary="@string/scrollToSelectedDesc"
         android:title="@string/scrollToSelected" />
+
+    <EditTextPreference
+        android:defaultValue="60"
+        android:icon="@drawable/ic_buffer"
+        android:key="bufferSize"
+        android:title="@string/buffer_size" />
 
     <Preference
         android:icon="@drawable/ic_lock"
@@ -134,7 +140,7 @@
         android:entryValues="@array/settings_dir_values"
         android:key="pref_downland_path"
         android:title="@string/pref_dowland_path"
-        android:icon="@drawable/ic_folder"></ListPreference>
+        android:icon="@drawable/ic_folder" />
 
     <!--
     <PreferenceScreen

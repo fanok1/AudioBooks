@@ -37,7 +37,7 @@ public interface Activity extends MvpView {
     void showTitle(@NonNull String name);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
-    void updateTime(int timeCurent, int timeEnd);
+    void updateTime(int timeCurent, int timeEnd, int buffered);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
     void setTimeEnd(int timeEnd);
