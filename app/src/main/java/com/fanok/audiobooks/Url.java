@@ -25,7 +25,9 @@ public class Url {
     public static final String SERVER_ABMP3 = "https://audiobook-mp3.com";
     public static final String INDEX_ABMP3 = SERVER_ABMP3 + "/?page=";
     public static final String SECTIONS_ABMP3 = SERVER_ABMP3 + "/genres";
-    public static final String AUTHORS_ABMP3 = SERVER_ABMP3 + "/authors";
+
+    public static final String AUTHORS_ABMP3 = SERVER_ABMP3 + "/authors?page=";
+
     public static final String PERFORMERS_ABMP3 = SERVER_ABMP3 + "/performers?page=";
 
 

@@ -2,7 +2,6 @@ package com.fanok.audiobooks.adapter;
 
 import static android.content.Context.MODE_PRIVATE;
 import static android.content.Context.UI_MODE_SERVICE;
-
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_ENABLED;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
 
@@ -15,12 +14,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.model.AudioDBModel;
@@ -28,7 +25,6 @@ import com.fanok.audiobooks.model.AudioListDBModel;
 import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.github.lzyzsd.circleprogress.DonutProgress;
-
 import java.io.File;
 import java.util.ArrayList;
 
@@ -42,124 +38,33 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
     private OnListItemLongSelectedInterface mLongListener;
     private AudioListDBModel mAudioListDBModel;
     private AudioDBModel mAudioDBModel;
-    private boolean procent;
-
-
-    public BooksListAddapter() {
-        procent = false;
-    }
-
-    public BooksListAddapter(boolean showProcent) {
-        this.procent = showProcent;
-    }
-
-    public void close() {
-        if (mAudioListDBModel != null) {
-            mAudioListDBModel.closeDB();
-        }
-        if (mAudioDBModel != null) {
-            mAudioDBModel.closeDB();
-        }
-    }
-
-    public void setListener(
-            OnListItemSelectedInterface listener) {
-        mListener = listener;
-    }
-
-    public void setLongListener(
-            OnListItemLongSelectedInterface longListener) {
-        mLongListener = longListener;
-    }
-
-    public interface OnListItemLongSelectedInterface {
-        void onItemLongSelected(View view, int position);
-    }
-
-    public interface OnListItemSelectedInterface {
-        void onItemSelected(View view, int position);
-    }
-
-    public void setItem(ArrayList<BookPOJO> model) {
-        if (mModel != model) {
-            mModel = model;
-        }
-        notifyDataSetChanged();
-    }
-
-    public void clearItem() {
-        if (mModel != null) {
-            mModel = new ArrayList<>();
-            notifyDataSetChanged();
-        }
-    }
-
-    @NonNull
-    @Override
-    public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                R.layout.books_recycler_item, viewGroup, false);
-        UiModeManager uiModeManager = (UiModeManager) viewGroup.getContext().getSystemService(
-                UI_MODE_SERVICE);
-        SharedPreferences preferences = PreferenceManager
-                .getDefaultSharedPreferences(viewGroup.getContext());
-        String listType = preferences.getString("books_adapter_layout_pref",
-                viewGroup.getContext().getString(R.string.books_adapter_layout_list_value));
-        if (uiModeManager != null
-                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            if (listType.equals(
-                    viewGroup.getContext().getString(R.string.books_adapter_layout_list_value))) {
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                        R.layout.books_recycler_item_television, viewGroup, false);
-            } else if (listType.equals(viewGroup.getContext().getString(
-                    R.string.books_adapter_layout_big_list_value))) {
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                        R.layout.books_recycler_item_big_lelevision, viewGroup, false);
-            }
-        } else {
-            if (listType.equals(
-                    viewGroup.getContext().getString(R.string.books_adapter_layout_list_value))) {
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                        R.layout.books_recycler_item, viewGroup, false);
-            } else if (listType.equals(viewGroup.getContext().getString(
-                    R.string.books_adapter_layout_big_list_value))) {
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                        R.layout.books_recycler_item_big, viewGroup, false);
-            }
-        }
-        return new MyHolder(view);
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
-        myHolder.bind(mModel.get(i));
-    }
-
-
-    @Override
-    public int getItemCount() {
-        if (mModel == null) {
-            return 0;
-        } else {
-            return mModel.size();
-        }
-    }
-
     class MyHolder extends RecyclerView.ViewHolder {
-        private ImageView mImageView;
-        private ImageView mIsDownload;
-        private TextView mTitle;
-        private TextView mGenre;
-        private TextView mReting;
-        private TextView mComents;
-        private TextView mSiresle;
-        private TextView mTime;
-        private TextView mAutor;
-        private TextView mArtist;
-        private TextView mSource;
-        private DonutProgress mDonutProgress;
 
-        private SharedPreferences mPreferences;
+        private final TextView mArtist;
+
+        private final TextView mAutor;
+
+        private final TextView mComents;
+
+        private final DonutProgress mDonutProgress;
+
+        private final TextView mGenre;
+
+        private final ImageView mImageView;
+
+        private final ImageView mIsDownload;
+
+        private final SharedPreferences mPreferences;
+
+        private final TextView mReting;
+
+        private final TextView mSiresle;
+
+        private final TextView mSource;
+
+        private final TextView mTime;
+
+        private final TextView mTitle;
 
         MyHolder(@NonNull final View itemView) {
             super(itemView);
@@ -202,7 +107,6 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
 
         }
 
-
         void bind(BookPOJO book) {
             if (book.getName() == null || book.getUrl() == null) {
                 throw new NullPointerException();
@@ -213,11 +117,16 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                     !mPreferences.getBoolean(book.getGenre(), false))) {
                 Glide.with(mImageView).load(R.drawable.ic_parental_control).into(mImageView);
 
-            } else if (book.getPhoto() != null && !book.getPhoto().isEmpty()) {
-                Glide.with(mImageView).load(book.getPhoto())
-                        .thumbnail(0.1f)
-                        .override(mImageView.getWidth(), mImageView.getHeight()).into(
-                        mImageView);
+            } else {
+                if (book.getPhoto() != null && !book.getPhoto().isEmpty()) {
+                    Glide.with(mImageView).load(book.getPhoto())
+                            .thumbnail(0.1f)
+                            .override(mImageView.getWidth(), mImageView.getHeight()).into(
+                            mImageView);
+                } else {
+                    mImageView.setImageDrawable(
+                            ContextCompat.getDrawable(mImageView.getContext(), R.drawable.image_placeholder));
+                }
             }
 
             if (book.getUrl().contains("knigavuhe.org")) {
@@ -225,6 +134,9 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 mSource.setVisibility(View.VISIBLE);
             } else if (book.getUrl().contains("izib.uk")) {
                 mSource.setText(R.string.izibuc);
+                mSource.setVisibility(View.VISIBLE);
+            } else if (book.getUrl().contains("audiobook-mp3.com")) {
+                mSource.setText(R.string.audionook_mp3);
                 mSource.setVisibility(View.VISIBLE);
             } else {
                 mSource.setVisibility(View.GONE);
@@ -285,6 +197,7 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                         if (last == null || last.isEmpty()) {
                             mDonutProgress.setText("0%");
                             mDonutProgress.setProgress(0);
+                            setVisible(true);
                         } else {
                             int timeCurent = 0;
                             int timeDuration = 0;
@@ -301,11 +214,15 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                                 timeDuration += pojo.getTime();
 
                             }
-                            int procent = timeCurent * 100 / timeDuration;
-                            mDonutProgress.setProgress(procent);
-                            mDonutProgress.setText(procent + "%");
+                            if (timeDuration != 0) {
+                                int procent = timeCurent * 100 / timeDuration;
+                                mDonutProgress.setProgress(procent);
+                                mDonutProgress.setText(procent + "%");
+                                setVisible(true);
+                            } else {
+                                setVisible(false);
+                            }
                         }
-                        setVisible(true);
                     }
 
                 } else {
@@ -338,10 +255,10 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 } else {
                     if (size >= arrayList.size()) {
                         mIsDownload.setImageDrawable(
-                                mIsDownload.getContext().getDrawable(R.drawable.ic_check_all));
+                                ContextCompat.getDrawable(mIsDownload.getContext(), R.drawable.ic_check_all));
                     } else {
                         mIsDownload.setImageDrawable(
-                                mIsDownload.getContext().getDrawable(R.drawable.ic_check_1));
+                                ContextCompat.getDrawable(mIsDownload.getContext(), R.drawable.ic_check_1));
                     }
                     mIsDownload.setVisibility(View.VISIBLE);
                 }
@@ -363,5 +280,109 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                         android.R.color.transparent));
             }
         }
+    }
+
+
+    public interface OnListItemLongSelectedInterface {
+
+        void onItemLongSelected(View view, int position);
+    }
+
+    public interface OnListItemSelectedInterface {
+
+        void onItemSelected(View view, int position);
+    }
+
+    private final boolean procent;
+
+    public BooksListAddapter() {
+        procent = false;
+    }
+
+    public BooksListAddapter(boolean showProcent) {
+        this.procent = showProcent;
+    }
+
+    public void clearItem() {
+        if (mModel != null) {
+            mModel = new ArrayList<>();
+            notifyDataSetChanged();
+        }
+    }
+
+    public void close() {
+        if (mAudioListDBModel != null) {
+            mAudioListDBModel.closeDB();
+        }
+        if (mAudioDBModel != null) {
+            mAudioDBModel.closeDB();
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        if (mModel == null) {
+            return 0;
+        } else {
+            return mModel.size();
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
+        myHolder.bind(mModel.get(i));
+    }
+
+    @NonNull
+    @Override
+    public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                R.layout.books_recycler_item, viewGroup, false);
+        UiModeManager uiModeManager = (UiModeManager) viewGroup.getContext().getSystemService(
+                UI_MODE_SERVICE);
+        SharedPreferences preferences = PreferenceManager
+                .getDefaultSharedPreferences(viewGroup.getContext());
+        String listType = preferences.getString("books_adapter_layout_pref",
+                viewGroup.getContext().getString(R.string.books_adapter_layout_list_value));
+        if (uiModeManager != null
+                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            if (listType.equals(
+                    viewGroup.getContext().getString(R.string.books_adapter_layout_list_value))) {
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                        R.layout.books_recycler_item_television, viewGroup, false);
+            } else if (listType.equals(viewGroup.getContext().getString(
+                    R.string.books_adapter_layout_big_list_value))) {
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                        R.layout.books_recycler_item_big_lelevision, viewGroup, false);
+            }
+        } else {
+            if (listType.equals(
+                    viewGroup.getContext().getString(R.string.books_adapter_layout_list_value))) {
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                        R.layout.books_recycler_item, viewGroup, false);
+            } else if (listType.equals(viewGroup.getContext().getString(
+                    R.string.books_adapter_layout_big_list_value))) {
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                        R.layout.books_recycler_item_big, viewGroup, false);
+            }
+        }
+        return new MyHolder(view);
+    }
+
+    public void setItem(ArrayList<BookPOJO> model) {
+        if (mModel != model) {
+            mModel = model;
+        }
+        notifyDataSetChanged();
+    }
+
+    public void setListener(
+            OnListItemSelectedInterface listener) {
+        mListener = listener;
+    }
+
+    public void setLongListener(
+            OnListItemLongSelectedInterface longListener) {
+        mLongListener = longListener;
     }
 }

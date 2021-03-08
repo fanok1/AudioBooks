@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/backgraundColor"
-    tools:context=".activity.SleepTimerActivity">
+    tools:context=".activity.SleepTimerActivity"
+    tools:viewBindingIgnore="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"

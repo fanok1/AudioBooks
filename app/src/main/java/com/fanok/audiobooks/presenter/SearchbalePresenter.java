@@ -3,14 +3,14 @@ package com.fanok.audiobooks.presenter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
-
+import androidx.preference.PreferenceManager;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
@@ -29,51 +29,75 @@ import com.fanok.audiobooks.pojo.SearcheblPOJO;
 import com.fanok.audiobooks.pojo.SearchebleArrayPOJO;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
-
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
 
 @InjectViewState
 public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         SearchablePresenter {
 
     private static final String TAG = "SearchablePresenter";
+
     private boolean isLoading = false;
+
     private boolean isLoadAutors = false;
+
     private int page = 0;
-    private int mModelId;
+
+    private final BooksDBModel mBooksDBModel;
+
     private ArrayList<BookPOJO> books;
+
     private ArrayList<BookPOJO> books_filter;
+
     private ArrayList<GenrePOJO> genre;
+
     private com.fanok.audiobooks.interface_pacatge.books.BooksModel mModelBook;
-    private BooksDBModel mBooksDBModel;
+
+    private final int mModelId;
+
     private com.fanok.audiobooks.interface_pacatge.books.GenreModel mModelGenre;
+
     private SearchableModel mSearchableModel;
+
     private boolean isEnd;
+
     private int filter = -1;
+
     private SearcheblPOJO mSearcheblPOJOFilter;
 
     private SearcheblPOJO mSearcheblPOJO;
+
     private ArrayList<String> mUrls;
+
     private String query;
+
+    private final SharedPreferences mPreferences;
 
 
     private String mUrl;
+
     public SearchbalePresenter(int modelId, @NonNull Context context) {
+
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+
         mModelId = modelId;
         switch (modelId) {
             case Consts.MODEL_BOOKS:
                 mUrls = new ArrayList<>();
                 mUrls.add("https://knigavuhe.org/search/?q=<qery>&page=<page>");
                 mUrls.add("https://izib.uk/search?q=<qery>&p=<page>");
+                mUrls.add("https://audiobook-mp3.com/search?text=<qery>");
                 break;
             case Consts.MODEL_AUTOR:
                 if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
                     mUrl = "https://knigavuhe.org/search/authors/?q=<qery>&page=<page>";
+                } else if (Consts.SOURCE_AUDIO_BOOK_MP3 == Consts.getSOURCE()) {
+                    mUrl = "https://audiobook-mp3.com/search?text=<qery>";
                 } else {
                     mUrl = "https://izib.uk/authors?p=<page>&q=<qery>";
                 }
@@ -118,35 +142,19 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
     }
 
     @Override
-    public void loadBoks() {
-        if (query != null) {
-            if (books != null) {
-                books.clear();
-                getViewState().showData(books);
-            }
-            if (books_filter != null) {
-                books_filter = null;
-            }
-            if (genre != null) {
-                genre.clear();
-                getViewState().showData(genre);
-            }
-
-            mSearcheblPOJO = new SearcheblPOJO();
-            if (mSearcheblPOJOFilter != null) {
-                mSearcheblPOJOFilter = null;
-            }
+    public void filterAutorsAndSeries() {
+        if (filter == -1) {
+            mSearcheblPOJOFilter = null;
             getViewState().showSeriesAndAutors(mSearcheblPOJO);
-
-            if (mModelId == Consts.MODEL_BOOKS) {
-                getViewState().showProgresTop(true);
-                getDataSeriesAndAutors(mUrls.get(0).replace("<qery>", query).replace("<page>",
-                        "1"));
+        } else {
+            if (filter == Consts.SOURCE_KNIGA_V_UHE) {
+                setAutorsAndSeriesFilter("knigavuhe.org");
+            } else if (filter == Consts.SOURCE_IZI_BUK) {
+                mSearcheblPOJOFilter = new SearcheblPOJO();
+            } else if (filter == Consts.SOURCE_AUDIO_BOOK_MP3) {
+                setAutorsAndSeriesFilter("audiobook-mp3.com");
             }
-
-            isEnd = false;
-            page = 0;
-            loadNext();
+            getViewState().showSeriesAndAutors(mSearcheblPOJOFilter);
         }
     }
 
@@ -202,6 +210,70 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
     }
 
     @Override
+    public void filterBooks() {
+        if (filter == -1) {
+            books_filter = null;
+            getViewState().showData(books);
+        } else if (filter == Consts.SOURCE_KNIGA_V_UHE) {
+            setBooksFilter("knigavuhe.org");
+            getViewState().showData(books_filter);
+        } else if (filter == Consts.SOURCE_IZI_BUK) {
+            setBooksFilter("izib.uk");
+            getViewState().showData(books_filter);
+        } else if (filter == Consts.SOURCE_AUDIO_BOOK_MP3) {
+            setBooksFilter("audiobook-mp3.com");
+            getViewState().showData(books_filter);
+        }
+
+    }
+
+    @Override
+    public void loadBoks() {
+        if (query != null) {
+            if (books != null) {
+                books.clear();
+                getViewState().showData(books);
+            }
+            if (books_filter != null) {
+                books_filter = null;
+            }
+            if (genre != null) {
+                genre.clear();
+                getViewState().showData(genre);
+            }
+
+            mSearcheblPOJO = new SearcheblPOJO();
+            if (mSearcheblPOJOFilter != null) {
+                mSearcheblPOJOFilter = null;
+            }
+            getViewState().showSeriesAndAutors(mSearcheblPOJO);
+
+            if (mModelId == Consts.MODEL_BOOKS) {
+                getViewState().showProgresTop(true);
+                getDataSeriesAndAutors(mUrls, query);
+            }
+
+            isEnd = false;
+            page = 0;
+            loadNext();
+        }
+    }
+
+    @Override
+    public void onAutorsListItemClick(View view, int position) {
+        SearchebleArrayPOJO arrayPOJO;
+        if (mSearcheblPOJOFilter == null) {
+            arrayPOJO = mSearcheblPOJO.getAutorsList().get(position);
+        } else {
+            arrayPOJO = mSearcheblPOJOFilter.getAutorsList().get(position);
+        }
+
+        getViewState().returnResult(arrayPOJO.getUrl(),
+                arrayPOJO.getName(), Consts.MODEL_BOOKS,
+                "searchebleBooks");
+    }
+
+    @Override
     public void onBookItemLongClick(View view, int position, LayoutInflater layoutInflater) {
 
         @SuppressLint("InflateParams") View layout = layoutInflater.inflate(
@@ -227,16 +299,20 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         ImageView imageView = layout.findViewById(R.id.imageView);
         Picasso.get()
                 .load(bookPOJO.getPhoto())
-                .error(android.R.drawable.ic_menu_camera)
-                .placeholder(android.R.drawable.ic_menu_camera)
+                .error(R.drawable.image_placeholder)
+                .placeholder(R.drawable.image_placeholder)
                 .into(imageView);
 
         TextView title = layout.findViewById(R.id.title);
         title.setText(bookPOJO.getName());
 
         TextView authorName = layout.findViewById(R.id.authorName);
-        authorName.setText(bookPOJO.getAutor());
-
+        if (bookPOJO.getAutor() != null) {
+            authorName.setText(bookPOJO.getAutor());
+            authorName.setVisibility(View.VISIBLE);
+        } else {
+            authorName.setVisibility(View.GONE);
+        }
 
         if (bookPOJO.getSeries() == null || bookPOJO.getUrlSeries() == null) {
             series.setVisibility(View.GONE);
@@ -268,23 +344,38 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             mBooksDBModel.removeFavorite(bookPOJO);
         });
 
-        genre.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            getViewState().returnResult(bookPOJO.getUrlGenre(),
-                    bookPOJO.getGenre(), Consts.MODEL_BOOKS, "searchebleBooks");
-        });
+        if (bookPOJO.getUrlGenre() != null) {
+            genre.setVisibility(View.VISIBLE);
+            genre.setOnClickListener(view1 -> {
+                dialog.dismiss();
+                getViewState().returnResult(bookPOJO.getUrlGenre(),
+                        bookPOJO.getGenre(), Consts.MODEL_BOOKS, "searchebleBooks");
+            });
+        } else {
+            genre.setVisibility(View.GONE);
+        }
 
-        author.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            getViewState().returnResult(bookPOJO.getUrlAutor(),
-                    bookPOJO.getAutor(), Consts.MODEL_BOOKS, "searchebleBooks");
-        });
+        if (bookPOJO.getUrlAutor() != null) {
+            author.setVisibility(View.VISIBLE);
+            author.setOnClickListener(view1 -> {
+                dialog.dismiss();
+                getViewState().returnResult(bookPOJO.getUrlAutor(),
+                        bookPOJO.getAutor(), Consts.MODEL_BOOKS, "searchebleBooks");
+            });
+        } else {
+            author.setVisibility(View.GONE);
+        }
 
-        artist.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            getViewState().returnResult(bookPOJO.getUrlArtist(),
-                    bookPOJO.getArtist(), Consts.MODEL_BOOKS, "searchebleBooks");
-        });
+        if (bookPOJO.getUrlArtist() != null) {
+            artist.setVisibility(View.VISIBLE);
+            artist.setOnClickListener(view1 -> {
+                dialog.dismiss();
+                getViewState().returnResult(bookPOJO.getUrlArtist(),
+                        bookPOJO.getArtist(), Consts.MODEL_BOOKS, "searchebleBooks");
+            });
+        } else {
+            artist.setVisibility(View.GONE);
+        }
 
         series.setOnClickListener(view12 -> {
             dialog.dismiss();
@@ -292,20 +383,6 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                     bookPOJO.getSeries(), Consts.MODEL_BOOKS, "searchebleBooks");
         });
         dialog.show();
-    }
-
-    @Override
-    public void onAutorsListItemClick(View view, int position) {
-        SearchebleArrayPOJO arrayPOJO;
-        if (mSearcheblPOJOFilter == null) {
-            arrayPOJO = mSearcheblPOJO.getAutorsList().get(position);
-        } else {
-            arrayPOJO = mSearcheblPOJOFilter.getAutorsList().get(position);
-        }
-
-        getViewState().returnResult(arrayPOJO.getUrl(),
-                arrayPOJO.getName(), Consts.MODEL_BOOKS,
-                "searchebleBooks");
     }
 
     @Override
@@ -323,68 +400,10 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 "searchebleBooks");
     }
 
-    private void setBooksFilter(String src) {
-        books_filter = new ArrayList<>();
-        for (BookPOJO bookPOJO : books) {
-            if (bookPOJO.getUrl().contains(src)) {
-                books_filter.add(bookPOJO);
-            }
-        }
-    }
-
-    @Override
-    public void filterBooks() {
-        if (filter == -1) {
-            books_filter = null;
-            getViewState().showData(books);
-        } else if (filter == Consts.SOURCE_KNIGA_V_UHE) {
-            setBooksFilter("knigavuhe.org");
-            getViewState().showData(books_filter);
-        } else if (filter == Consts.SOURCE_IZI_BUK) {
-            setBooksFilter("izib.uk");
-            getViewState().showData(books_filter);
-        }
-
-    }
-
-    private void setAutorsAndSeriesFilter(String src) {
-        mSearcheblPOJOFilter = new SearcheblPOJO();
-        ArrayList<SearchebleArrayPOJO> autorsList = new ArrayList<>();
-        ArrayList<SearchebleArrayPOJO> seriesList = new ArrayList<>();
-        for (SearchebleArrayPOJO arrayPOJO : mSearcheblPOJO.getAutorsList()) {
-            if (arrayPOJO.getUrl().contains(src)) {
-                autorsList.add(arrayPOJO);
-            }
-        }
-        mSearcheblPOJOFilter.setAutorsList(autorsList);
-        mSearcheblPOJOFilter.setAutorsCount(mSearcheblPOJO.getAutorsCount());
-        for (SearchebleArrayPOJO arrayPOJO : mSearcheblPOJO.getSeriesList()) {
-            if (arrayPOJO.getUrl().contains(src)) {
-                seriesList.add(arrayPOJO);
-            }
-        }
-        mSearcheblPOJOFilter.setSeriesList(seriesList);
-        mSearcheblPOJOFilter.setSeriesCount(mSearcheblPOJO.getSeriesCount());
-    }
-
-    @Override
-    public void filterAutorsAndSeries() {
-        if (filter == -1) {
-            mSearcheblPOJOFilter = null;
-            getViewState().showSeriesAndAutors(mSearcheblPOJO);
-        } else if (filter == Consts.SOURCE_KNIGA_V_UHE) {
-            setAutorsAndSeriesFilter("knigavuhe.org");
-            getViewState().showSeriesAndAutors(mSearcheblPOJOFilter);
-        } else if (filter == Consts.SOURCE_IZI_BUK) {
-            mSearcheblPOJOFilter = new SearcheblPOJO();
-            getViewState().showSeriesAndAutors(mSearcheblPOJOFilter);
-        }
-    }
-
     private void getData(ArrayList<String> url) {
         if (!isLoading) {
             isLoading = true;
-            mModelBook.getBooks(url, page)
+            mModelBook.getBooks(url, page, mPreferences)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<ArrayList<BookPOJO>>() {
@@ -414,19 +433,15 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                             filterBooks();
                             getViewState().showProgres(false);
                             isLoading = false;
-                            if (isLoadAutors && mSearcheblPOJO.getAutorsList().isEmpty() &&
-                                    mSearcheblPOJO.getSeriesList().isEmpty() &&
-                                    books.isEmpty()) {
-                                getViewState().setNotFoundVisibile(true);
-                            } else {
-                                getViewState().setNotFoundVisibile(false);
-                            }
+                            getViewState().setNotFoundVisibile(
+                                    isLoadAutors && mSearcheblPOJO.getAutorsList().isEmpty() &&
+                                            mSearcheblPOJO.getSeriesList().isEmpty() &&
+                                            books.isEmpty());
                         }
                     });
 
         }
     }
-
 
     private void getData(String url) {
         if (!isLoading) {
@@ -462,28 +477,28 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                             getViewState().showData(genre);
                             getViewState().showProgres(false);
                             isLoading = false;
-                            if (genre.isEmpty()) {
-                                getViewState().setNotFoundVisibile(true);
-                            } else {
-                                getViewState().setNotFoundVisibile(false);
-                            }
+                            getViewState().setNotFoundVisibile(genre.isEmpty());
                         }
                     });
         }
     }
 
-    private void getDataSeriesAndAutors(String url) {
-        mSearchableModel.dowland(url)
+    private void getDataSeriesAndAutors(ArrayList<String> urls, String query) {
+        mSearchableModel.dowland(mPreferences, urls, query)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<SearcheblPOJO>() {
                     @Override
-                    public void onSubscribe(Disposable d) {
-                    }
-
-                    @Override
-                    public void onNext(SearcheblPOJO searcheblPOJO) {
-                        mSearcheblPOJO = searcheblPOJO;
+                    public void onComplete() {
+                        Log.d(TAG, "onComplete");
+                        filterAutorsAndSeries();
+                        getViewState().showProgresTop(false);
+                        isLoadAutors = true;
+                        getViewState().setNotFoundVisibile(
+                                !isLoading && ((books != null && books.isEmpty()) || (genre != null
+                                        && genre.isEmpty())) &&
+                                        mSearcheblPOJO.getAutorsList().isEmpty()
+                                        && mSearcheblPOJO.getSeriesList().isEmpty());
                     }
 
                     @Override
@@ -493,23 +508,42 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                     }
 
                     @Override
-                    public void onComplete() {
-                        Log.d(TAG, "onComplete");
-                        filterAutorsAndSeries();
-                        getViewState().showProgresTop(false);
-                        isLoadAutors = true;
-                        if (!isLoading && ((books != null && books.isEmpty()) || (genre != null
-                                && genre.isEmpty())) &&
-                                mSearcheblPOJO.getAutorsList().isEmpty()
-                                && mSearcheblPOJO.getSeriesList().isEmpty()) {
-                            getViewState().setNotFoundVisibile(true);
-                        } else {
-                            getViewState().setNotFoundVisibile(false);
-                        }
+                    public void onNext(@NotNull SearcheblPOJO searcheblPOJO) {
+                        mSearcheblPOJO = searcheblPOJO;
+                    }
+
+                    @Override
+                    public void onSubscribe(@NotNull Disposable d) {
                     }
                 });
     }
 
+    private void setAutorsAndSeriesFilter(String src) {
+        mSearcheblPOJOFilter = new SearcheblPOJO();
+        ArrayList<SearchebleArrayPOJO> autorsList = new ArrayList<>();
+        ArrayList<SearchebleArrayPOJO> seriesList = new ArrayList<>();
+        for (SearchebleArrayPOJO arrayPOJO : mSearcheblPOJO.getAutorsList()) {
+            if (arrayPOJO.getUrl().contains(src)) {
+                autorsList.add(arrayPOJO);
+            }
+        }
+        mSearcheblPOJOFilter.setAutorsList(autorsList);
+        for (SearchebleArrayPOJO arrayPOJO : mSearcheblPOJO.getSeriesList()) {
+            if (arrayPOJO.getUrl().contains(src)) {
+                seriesList.add(arrayPOJO);
+            }
+        }
+        mSearcheblPOJOFilter.setSeriesList(seriesList);
+    }
+
+    private void setBooksFilter(String src) {
+        books_filter = new ArrayList<>();
+        for (BookPOJO bookPOJO : books) {
+            if (bookPOJO.getUrl().contains(src)) {
+                books_filter.add(bookPOJO);
+            }
+        }
+    }
 
 
 }

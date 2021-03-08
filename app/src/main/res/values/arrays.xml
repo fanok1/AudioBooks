@@ -3,11 +3,13 @@
     <string-array name="settings_them_titles">
         <item>@string/theme_dark</item>
         <item>@string/theme_light</item>
+        <item>@string/theme_black</item>
     </string-array>
 
     <string-array name="settings_them_values">
         <item>@string/theme_dark_value</item>
         <item>@string/theme_light_value</item>
+        <item>@string/theme_black_value</item>
     </string-array>
 
 
@@ -90,11 +92,13 @@
     <string-array name="sorce_books_titles">
         <item>@string/kniga_v_uhe</item>
         <item>@string/izibuc</item>
+        <item>@string/audionook_mp3</item>
     </string-array>
 
     <string-array name="sorce_books_values">
         <item>@string/kniga_v_uhe_value</item>
         <item>@string/izibuc_value</item>
+        <item>@string/audiobook_mp3_value</item>
     </string-array>
 
     <string-array name="email_catigory">

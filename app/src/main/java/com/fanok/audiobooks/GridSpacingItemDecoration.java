@@ -2,14 +2,16 @@ package com.fanok.audiobooks;
 
 import android.graphics.Rect;
 import android.view.View;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
-    private int spanCount;
-    private int spacing;
-    private boolean includeEdge;
+
+    private final boolean includeEdge;
+
+    private final int spacing;
+
+    private final int spanCount;
 
     public GridSpacingItemDecoration(int spanCount, int spacing, boolean includeEdge) {
         this.spanCount = spanCount;

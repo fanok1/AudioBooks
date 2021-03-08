@@ -47,12 +47,10 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
-
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.media.session.MediaButtonReceiver;
 import androidx.preference.PreferenceManager;
-
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.PlaybackStatus;
 import com.fanok.audiobooks.R;
@@ -85,10 +83,10 @@ import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -695,14 +693,38 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
 
         File file = getSaveFile();
         TrackSelection.Factory trackSelectionFactory = new AdaptiveTrackSelection.Factory();
-        DataSource.Factory dateSourceFactory = new DefaultDataSourceFactory(this,
-                Util.getUserAgent(this, getPackageName()));
+        DataSource.Factory dateSourceFactory;
 
         Uri uri;
         if (file == null) {
             uri = Uri.parse(activeAudio.getUrl());
         } else {
             uri = Uri.fromFile(file);
+        }
+
+        if (urlBook.contains("audiobook-mp3.com") && file == null) {
+
+            DefaultHttpDataSourceFactory source = new DefaultHttpDataSourceFactory(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
+                    null);
+            source.setDefaultRequestProperty("accept", "*/*");
+            source.setDefaultRequestProperty("accept-encoding", "identity;q=1, *;q=0");
+            source.setDefaultRequestProperty("accept-language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,uk;q=0.6");
+            //source.setDefaultRequestProperty("range", "bytes=0-");
+            source.setDefaultRequestProperty("referer", "https://audiobook-mp3.com/");
+            source.setDefaultRequestProperty("sec-ch-ua",
+                    "Google Chrome\";v=\"89\", \"Chromium\";v=\"89\", \";Not A Brand\";v=\"99");
+            source.setDefaultRequestProperty("sec-ch-ua-mobile", "?0");
+            source.setDefaultRequestProperty("sec-fetch-dest", "video");
+            source.setDefaultRequestProperty("sec-fetch-mode", "no-cors");
+            source.setDefaultRequestProperty("sec-fetch-site", "cross-site");
+
+            dateSourceFactory = new DefaultDataSourceFactory(this, null, source);
+
+
+        } else {
+            dateSourceFactory = new DefaultDataSourceFactory(this,
+                    Util.getUserAgent(this, getPackageName()));
         }
 
         MediaSource mediaSource = new ProgressiveMediaSource.Factory(

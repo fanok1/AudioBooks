@@ -3,14 +3,12 @@ package com.fanok.audiobooks.model;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.GenrePOJO;
-
+import java.io.IOException;
+import java.util.ArrayList;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import java.io.IOException;
-import java.util.ArrayList;
 
 public class AutorsModel extends GenreModel {
 
@@ -133,11 +131,143 @@ public class AutorsModel extends GenreModel {
                         }
                     }
 
-
-                    if (!genrePOJO.isNull()) result.add(genrePOJO);
+                    if (!genrePOJO.isNull()) {
+                        result.add(genrePOJO);
+                    }
                 }
             }
         }
         return result;
     }
+
+    @Override
+    protected ArrayList<GenrePOJO> loadBooksListABMP3(String url, int page) throws IOException {
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Elements autors = doc.getElementsByClass("authors_list");
+        if (autors == null || autors.size() == 0) {
+
+            Elements parent = doc.getElementsByClass("b-posts");
+
+            if (parent != null && parent.size() != 0) {
+
+                Elements pagesConteiner = doc.getElementsByClass("pagination");
+                if (pagesConteiner.size() != 0) {
+                    Elements pagesElements = pagesConteiner.first().children();
+                    if (pagesElements.size() != 0) {
+                        Element lastPageElement = pagesElements.get(pagesElements.size() - 2);
+                        Element aLastPage = lastPageElement.child(0);
+                        if (aLastPage != null) {
+                            int lastPage = Integer.parseInt(aLastPage.text());
+                            if (lastPage < page) {
+                                throw new NullPointerException();
+                            }
+                        } else {
+                            throw new NullPointerException();
+                        }
+                    } else {
+                        throw new NullPointerException();
+                    }
+                } else if (page > 1) {
+                    throw new NullPointerException();
+                }
+
+                Elements list = parent.first().children();
+                if (list != null && list.size() > 0) {
+                    for (Element item : list) {
+                        GenrePOJO genrePOJO = new GenrePOJO();
+                        Elements titles = item.getElementsByClass("title");
+                        if (titles != null && titles.size() != 0) {
+                            Elements aGenre = titles.first().getElementsByTag("a");
+                            if (aGenre != null && aGenre.size() != 0) {
+                                genrePOJO.setUrl(
+                                        Url.SERVER_ABMP3 + aGenre.first().attr("href") + "?page=");
+                                String text = aGenre.first().text();
+                                if (!text.isEmpty()) {
+                                    genrePOJO.setName(text);
+                                }
+                            }
+                        }
+                        Elements ratings = item.getElementsByClass("rating");
+                        if (ratings != null && ratings.size() != 0) {
+                            genrePOJO.setDescription(
+                                    ratings.first().text().trim().replace("кни", " кни"));
+                        }
+
+                        if (!genrePOJO.isNull()) {
+                            result.add(genrePOJO);
+                        }
+                    }
+
+                }
+            }
+        } else {
+            Elements chars = doc.getElementsByClass("alphabet");
+            if (chars != null && chars.size() != 0) {
+                Elements rus = chars.first().child(chars.first().childrenSize() - 1).children();
+                if (rus != null && rus.size() != 0) {
+                    if (rus.size() >= page) {
+                        String text = Url.SERVER_ABMP3 + rus.get(page - 1).attr("href");
+                        result.addAll(getGenre(text));
+                    } else {
+                        int sizeRus = rus.size();
+                        Elements eng = chars.first().child(0).children();
+                        if (eng.size() >= page - sizeRus) {
+                            String text = Url.SERVER_ABMP3 + eng.get(page - sizeRus - 1).attr("href");
+                            result.addAll(getGenre(text));
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private ArrayList<GenrePOJO> getGenre(String url) throws IOException {
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+        Elements parent = doc.getElementsByClass("authors_list");
+        if (parent != null && parent.size() != 0) {
+            Elements list = parent.first().children();
+            if (list != null && list.size() > 0) {
+                for (Element item : list) {
+                    GenrePOJO genrePOJO = new GenrePOJO();
+                    Elements titles = item.getElementsByClass("title");
+                    if (titles != null && titles.size() != 0) {
+                        Elements aGenre = titles.first().getElementsByTag("a");
+                        if (aGenre != null && aGenre.size() != 0) {
+                            genrePOJO.setUrl(
+                                    Url.SERVER_ABMP3 + aGenre.first().attr("href") + "?page=");
+                            String text = aGenre.first().text();
+                            if (!text.isEmpty()) {
+                                genrePOJO.setName(text);
+                            }
+                        }
+                    }
+                    Elements ratings = item.getElementsByClass("rating");
+                    if (ratings != null && ratings.size() != 0) {
+                        genrePOJO.setDescription(
+                                ratings.first().text().trim().replace("кни", " кни"));
+                    }
+
+                    if (genrePOJO != null && !genrePOJO.isNull()) {
+                        result.add(genrePOJO);
+                    }
+                }
+
+            }
+        }
+        return result;
+    }
+
 }

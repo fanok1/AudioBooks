@@ -1,18 +1,16 @@
 package com.fanok.audiobooks.model;
 
+import com.fanok.audiobooks.AutorsSearchABMP3;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.GenrePOJO;
-
+import io.reactivex.Observable;
+import java.io.IOException;
+import java.util.ArrayList;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import java.io.IOException;
-import java.util.ArrayList;
-
-import io.reactivex.Observable;
 
 public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.GenreModel {
 
@@ -106,6 +104,9 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
                         } else if (url.contains("izib.uk/")) {
                             articlesModels = loadBooksListIzibuk(
                                     url.replace(String.valueOf(page), String.valueOf(temp)), temp);
+                        } else if (url.contains("audiobook-mp3.com")) {
+                            articlesModels = loadBooksListABMP3(
+                                    url.replace("?page=" + page + "/", "?page=" + temp), temp);
                         } else {
                             articlesModels = new ArrayList<>();
                         }
@@ -116,6 +117,12 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
                         articlesModels = loadBooksList(url, page);
                     } else if (url.contains("izib.uk/")) {
                         articlesModels = loadBooksListIzibuk(url, page);
+                    } else if (url.contains("audiobook-mp3.com")) {
+                        if (url.contains("search")) {
+                            articlesModels = new AutorsSearchABMP3().getAutors(url, page);
+                        } else {
+                            articlesModels = loadBooksListABMP3(url + "?page=", page);
+                        }
                     } else {
                         articlesModels = new ArrayList<>();
                     }
@@ -127,5 +134,41 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
                 observableEmitter.onComplete();
             }
         });
+    }
+
+    protected ArrayList<GenrePOJO> loadBooksListABMP3(String url, int page) throws IOException {
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url + page)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Elements items = doc.getElementsByClass("b-posts");
+        if (items != null && items.size() != 0) {
+            Elements list = items.first().children();
+            if (list != null && list.size() > 0) {
+                for (Element item : list) {
+                    GenrePOJO genrePOJO = new GenrePOJO();
+                    Elements titles = item.getElementsByClass("title");
+                    if (titles != null && titles.size() != 0) {
+                        Elements aGenre = titles.first().getElementsByTag("a");
+                        if (aGenre != null && aGenre.size() != 0) {
+                            genrePOJO.setUrl(Url.SERVER_ABMP3 + aGenre.first().attr("href") + "?page=");
+                            genrePOJO.setName(aGenre.first().text());
+                        }
+                    }
+                    Elements ratings = item.getElementsByClass("rating");
+                    if (ratings != null && ratings.size() != 0) {
+                        genrePOJO.setDescription(ratings.first().text().trim().replace("кни", " кни"));
+                    }
+
+                    if (!genrePOJO.isNull()) {
+                        result.add(genrePOJO);
+                    }
+                }
+            }
+        }
+        return result;
     }
 }

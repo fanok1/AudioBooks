@@ -1,13 +1,11 @@
 package com.fanok.audiobooks.adapter;
 
 import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
-
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.fragment.ComentsBookFragment;
 import com.fanok.audiobooks.fragment.DescriptionBookFragment;
@@ -16,18 +14,18 @@ import com.fanok.audiobooks.fragment.OtherSourceFragment;
 import com.fanok.audiobooks.fragment.SeriesBookFragment;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
 
 
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     private final ArrayList<String> tabItems;
     private final BookPOJO mBookPOJO;
+
     private ArrayList<OtherArtistPOJO> mArtistPOJO;
-    private Context mContext;
+
+    private final Context mContext;
 
     public void setArtistPOJO(ArrayList<OtherArtistPOJO> artistPOJO) {
         mArtistPOJO = artistPOJO;

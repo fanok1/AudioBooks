@@ -33,4 +33,8 @@
     <color name="imageTint">#80000000</color>
 
 
+    <color name="primaryColorBlack">#202022</color>
+    <color name="primaryDarkColorBlack">#1A1A1B</color>
+    <color name="backgroundSelectedBlack">#ECF2FE</color>
+    <color name="backgraundColorBlack">#0B0B0B</color>
 </resources>

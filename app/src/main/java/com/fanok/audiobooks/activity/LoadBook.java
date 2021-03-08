@@ -5,15 +5,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
-
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.BookPOJO;
-
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -44,6 +41,8 @@ public class LoadBook extends AppCompatActivity {
             setTheme(R.style.AppTheme_NoAnimTheme);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             setTheme(R.style.LightAppTheme_NoAnimTheme);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            setTheme(R.style.AppThemeBlack_NoAnimTheme);
         }
 
         mContext = this;
@@ -66,6 +65,11 @@ public class LoadBook extends AppCompatActivity {
                     mUrl = mUrl.replace("https://pda.", "https://");
                 }
 
+            } else if (mUrl.contains("audiobook-mp3.com")) {
+                if (!mUrl.contains("/audio")) {
+                    startActivity(new Intent(this, MainActivity.class));
+                    finish();
+                }
             } else {
                 finish();
             }
@@ -115,6 +119,8 @@ public class LoadBook extends AppCompatActivity {
             theme.applyStyle(R.style.AppTheme_NoAnimTheme, true);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             theme.applyStyle(R.style.LightAppTheme_NoAnimTheme, true);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            theme.applyStyle(R.style.AppThemeBlack_NoAnimTheme, true);
         }
 
 

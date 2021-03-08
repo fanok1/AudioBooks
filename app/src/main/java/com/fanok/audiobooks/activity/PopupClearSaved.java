@@ -6,39 +6,27 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.Toast;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.ClearSavedAdapter;
+import com.fanok.audiobooks.databinding.ActivityClearSavedPopupBinding;
 import com.fanok.audiobooks.pojo.ClearSavedPOJO;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class PopupClearSaved extends AppCompatActivity {
 
     private static final String TAG = "PopupClearSaved";
 
-    @BindView(R.id.checkBoxAll)
-    CheckBox mCheckBoxAll;
-    @BindView(R.id.button)
-    Button mButton;
-    @BindView(R.id.recycler_view)
-    RecyclerView mRecyclerView;
+    private ActivityClearSavedPopupBinding binding;
+
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -48,8 +36,9 @@ public class PopupClearSaved extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_clear_saved_popup);
-        ButterKnife.bind(this);
+        binding = ActivityClearSavedPopupBinding.inflate(getLayoutInflater());
+
+        setContentView(binding.getRoot());
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
@@ -59,6 +48,8 @@ public class PopupClearSaved extends AppCompatActivity {
             setTheme(R.style.AppTheme_Popup2);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             setTheme(R.style.LightAppTheme_Popup2);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            setTheme(R.style.AppThemeBlack_Popup2);
         }
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -69,7 +60,7 @@ public class PopupClearSaved extends AppCompatActivity {
 
         getWindow().setLayout((int) (width * 0.8), (int) (height * 0.8));
 
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
         ClearSavedAdapter clearSavedAdapter = new ClearSavedAdapter();
         ArrayList<ClearSavedPOJO> list = new ArrayList<>();
         File[] folders = getExternalFilesDirs(null);
@@ -110,26 +101,22 @@ public class PopupClearSaved extends AppCompatActivity {
         clearSavedAdapter.setData(list);
 
         int spacing = (int) getResources().getDimension(R.dimen.text_margin);
-        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(1, spacing, true));
+        binding.recyclerView.addItemDecoration(new GridSpacingItemDecoration(1, spacing, true));
         clearSavedAdapter.setChackedChange(() -> {
-            if (clearSavedAdapter.getItemCount() == clearSavedAdapter.getSelectedItemsSize()) {
-                mCheckBoxAll.setChecked(true);
-            } else {
-                mCheckBoxAll.setChecked(false);
-            }
+            binding.checkBoxAll.setChecked(
+                    clearSavedAdapter.getItemCount() == clearSavedAdapter.getSelectedItemsSize());
         });
-        mRecyclerView.setAdapter(clearSavedAdapter);
+        binding.recyclerView.setAdapter(clearSavedAdapter);
 
-
-        mCheckBoxAll.setOnClickListener(view -> {
-            if (mCheckBoxAll.isChecked()) {
+        binding.checkBoxAll.setOnClickListener(view -> {
+            if (binding.checkBoxAll.isChecked()) {
                 clearSavedAdapter.setSelectedAll();
             } else {
                 clearSavedAdapter.clearSelected();
             }
         });
 
-        mButton.setOnClickListener(view -> {
+        binding.button.setOnClickListener(view -> {
             HashSet<File> files = clearSavedAdapter.getSelectedItems();
             if (files.size() == 0) {
                 Toast.makeText(this, R.string.no_selecetd, Toast.LENGTH_SHORT).show();
@@ -181,6 +168,8 @@ public class PopupClearSaved extends AppCompatActivity {
             theme.applyStyle(R.style.AppTheme_Popup, true);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             theme.applyStyle(R.style.LightAppTheme_Popup, true);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            theme.applyStyle(R.style.AppThemeBlack_Popup, true);
         }
 
 

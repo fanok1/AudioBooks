@@ -5,7 +5,8 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="@dimen/text_margin"
-    tools:background="@color/colorBackgraund">
+    tools:background="@color/colorBackgraund"
+    tools:viewBindingIgnore="true">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/imageView"

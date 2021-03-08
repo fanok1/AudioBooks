@@ -2,7 +2,6 @@ package com.fanok.audiobooks;
 
 
 import static android.content.Context.ACTIVITY_SERVICE;
-
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_PLAY;
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_PLAY_NEXT;
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_PLAY_PREVIOUS;
@@ -16,15 +15,12 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
-
 import androidx.annotation.NonNull;
 import androidx.core.graphics.drawable.DrawableCompat;
-
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.regex.Pattern;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -83,6 +79,9 @@ public class Consts {
     public static final int IMPORT_SITE_KNIGA_V_UHE = 0;
     public static final int SOURCE_KNIGA_V_UHE = 0;
     public static final int SOURCE_IZI_BUK = 1;
+
+    public static final int SOURCE_AUDIO_BOOK_MP3 = 2;
+
     public static boolean izibuk_reiting = false;
 
     private static int SOURCE;
@@ -97,6 +96,8 @@ public class Consts {
             Consts.SOURCE = Consts.SOURCE_KNIGA_V_UHE;
         } else if (value.equals(context.getString(R.string.izibuc_value))) {
             Consts.SOURCE = Consts.SOURCE_IZI_BUK;
+        } else if (value.equals(context.getString(R.string.audiobook_mp3_value))) {
+            Consts.SOURCE = Consts.SOURCE_AUDIO_BOOK_MP3;
         }
     }
 

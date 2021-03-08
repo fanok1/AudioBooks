@@ -19,11 +19,9 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.PreferenceManager;
-
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
@@ -47,16 +45,14 @@ import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.service.MediaPlayerService;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Objects;
-
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Objects;
 
 
 @InjectViewState
@@ -105,7 +101,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         mBooksDBModel = new BooksDBModel(context);
         mAudioListDBModel = new AudioListDBModel(context);
         mBooksDBModel.addHistory(mBookPOJO);
-        mAudioModel = new AudioModel();
+        mAudioModel = new AudioModel(context);
         mOtherSourceModel = new OtherSourceModel();
         mAudioDBModel = new AudioDBModel(context);
         pref = PreferenceManager.getDefaultSharedPreferences(context);

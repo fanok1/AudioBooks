@@ -1,11 +1,10 @@
 package com.fanok.audiobooks.pojo;
 
 import androidx.annotation.NonNull;
-
 import java.util.ArrayList;
 
 public class ComentsPOJO extends ContentParentPOJO {
-    private ArrayList<SubComentsPOJO> childComents;
+    private final ArrayList<SubComentsPOJO> childComents;
 
     public ComentsPOJO() {
         childComents = new ArrayList<>();

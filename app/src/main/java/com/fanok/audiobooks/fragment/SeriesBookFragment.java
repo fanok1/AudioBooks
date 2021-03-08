@@ -6,16 +6,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
@@ -23,38 +18,32 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.adapter.SeriesListAddapter;
+import com.fanok.audiobooks.databinding.FragmentBookSeriasBinding;
 import com.fanok.audiobooks.interface_pacatge.book_content.Series;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 import com.fanok.audiobooks.presenter.BookSeriesPresenter;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
 
 public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
 
     private static final String TAG = "SeriesBookFragment";
+
     private static final String ARG_URL = "arg_url";
-    @BindView(R.id.list)
-    RecyclerView mList;
-    @BindView(R.id.progressBar)
-    ProgressBar mProgressBar;
-    Unbinder unbinder;
+
+    private FragmentBookSeriasBinding binding;
 
     @InjectPresenter
     BookSeriesPresenter mPresenter;
-    @BindView(R.id.placeholder)
-    TextView mPlaceholder;
 
     @ProvidePresenter
     BookSeriesPresenter provide() {
         mUrl = Objects.requireNonNull(getArguments()).getString(ARG_URL);
-        if (mUrl == null || mUrl.isEmpty()) throw new NullPointerException();
+        if (mUrl == null || mUrl.isEmpty()) {
+            throw new NullPointerException();
+        }
         return new BookSeriesPresenter(mUrl);
     }
 
@@ -85,8 +74,7 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_book_serias, container, false);
-        unbinder = ButterKnife.bind(this, view);
+        binding = FragmentBookSeriasBinding.inflate(inflater, container, false);
 
         mSeriesListAddapter = new SeriesListAddapter(mUrl);
 
@@ -102,35 +90,30 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
             }
         });
 
-        mList.setLayoutManager(new LinearLayoutManager(getContext()));
-        mList.setAdapter(mSeriesListAddapter);
-        mList.addItemDecoration(
-                new DividerItemDecoration(mList.getContext(), DividerItemDecoration.VERTICAL));
+        binding.list.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.list.setAdapter(mSeriesListAddapter);
+        binding.list.addItemDecoration(
+                new DividerItemDecoration(binding.list.getContext(), DividerItemDecoration.VERTICAL));
 
-
-
-        return view;
+        return binding.getRoot();
     }
 
+    @Override
+    public void onDestroyView() {
+        mPresenter.onDestroy();
+        super.onDestroyView();
+        mSeriesListAddapter = null;
+        binding = null;
+    }
 
     @Override
     public void showProgress(boolean b) {
         if (b) {
-            mProgressBar.setVisibility(View.VISIBLE);
+            binding.progressBar.setVisibility(View.VISIBLE);
         } else {
-            mProgressBar.setVisibility(View.GONE);
+            binding.progressBar.setVisibility(View.GONE);
         }
 
-    }
-
-    @Override
-    public void showSeries(ArrayList<SeriesPOJO> data) {
-        if (data.size() == 0) {
-            mPlaceholder.setVisibility(View.VISIBLE);
-        } else {
-            mPlaceholder.setVisibility(View.GONE);
-        }
-        mSeriesListAddapter.setItem(data);
     }
 
     @Override
@@ -151,11 +134,13 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
     }
 
     @Override
-    public void onDestroyView() {
-        mPresenter.onDestroy();
-        super.onDestroyView();
-        mSeriesListAddapter = null;
-        unbinder.unbind();
+    public void showSeries(ArrayList<SeriesPOJO> data) {
+        if (data.size() == 0) {
+            binding.placeholder.setVisibility(View.VISIBLE);
+        } else {
+            binding.placeholder.setVisibility(View.GONE);
+        }
+        mSeriesListAddapter.setItem(data);
     }
 
 }

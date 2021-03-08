@@ -24,6 +24,9 @@
             <item
                 android:id="@+id/source_izi_book"
                 android:title="@string/izibuc" />
+            <item
+                android:id="@+id/source_audio_book_mp3"
+                android:title="@string/audionook_mp3" />
         </menu>
     </item>
 

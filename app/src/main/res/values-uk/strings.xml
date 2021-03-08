@@ -326,5 +326,10 @@
     <string name="source">Джерело</string>
     <string name="buffer_size">Розмір буфера в секундах (макс 999с)</string>
     <string name="rewind_back">Перемотування назад</string>
+    <string name="source_search">Джерела пошуку</string>
+    <string name="source_search_desc">Вибрати джерела за якими буде здійснюватися пошук</string>
+    <string name="speed_up_search_abmp3">Ускорить пошук за джерелом Audiobook-mp3</string>
+    <string name="speed_up_search_abmp3_desc">Прискорює пошук книг за рахунок зменшення кількості даних при завантаженні. Швидкість пошуку збільшитися в 4 рази</string>
+    <string name="theme_black">Чорна</string>
 
 </resources>

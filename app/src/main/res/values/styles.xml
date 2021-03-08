@@ -75,6 +75,74 @@
         <item name="android:windowBackground">@drawable/launch_screen</item>
     </style>
 
+
+    <!-- BLACK application theme. -->
+
+
+    <style name="AppThemeBlack" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/primaryColorBlack</item>
+        <item name="colorPrimaryDark">@color/primaryDarkColorBlack</item>
+        <item name="colorPrimaryText">@color/primaryTextColor</item>
+        <item name="colorSelected">@color/primaryTextColor</item>
+        <item name="colorUnSelected">@color/primaryTextColor</item>
+        <item name="backgroundSelected">@color/backgroundSelectedBlack</item>
+        <item name="backgroundItem">@color/primaryColorBlack</item>
+        <item name="hrefColor">@color/hrefColor</item>
+        <item name="subTextColor">@color/subTextColor</item>
+        <item name="backgraundColor">@color/colorBackgraund</item>
+        <item name="mySelectableItemBackground">@color/backgroundSelectedBlack</item>
+        <item name="colorItemMenu">@color/primaryTextColor</item>
+        <item name="prefIconColor">@color/primaryTextColor</item>
+        <item name="deleteColor">@color/colorDelete</item>
+    </style>
+
+    <style name="AppThemeBlack.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppThemeBlack.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+
+    <style name="AppThemeBlack.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark" />
+
+    <style name="AppThemeBlack.SwipeOnClose" parent="AppThemeBlack.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="AppThemeBlack.NoAnimTheme" parent="AppThemeBlack.NoActionBar">
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
+    <style name="AppThemeBlack.Popup" parent="AppThemeBlack.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="windowActionBarOverlay">true</item>
+        <item name="android:statusBarColor">@color/actionBarTrac</item>
+
+        <!-- specify enter and exit transitions -->
+        <!--<item name="android:windowEnterTransition">@transition/explode</item>
+        <item name="android:windowExitTransition">@transition/explode</item>
+-->
+        <!-- specify shared element transitions -->
+        <item name="android:windowSharedElementEnterTransition">
+            @transition/change_image_transform
+        </item>
+        <item name="android:windowSharedElementExitTransition">
+            @transition/change_image_transform
+        </item>
+    </style>
+
+    <style name="AppThemeBlack.Popup2" parent="AppThemeBlack.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+    </style>
+
+
     <!-- LIGHT application theme. -->
 
 

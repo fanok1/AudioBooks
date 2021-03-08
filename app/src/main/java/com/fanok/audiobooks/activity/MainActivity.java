@@ -22,7 +22,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -34,7 +33,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
@@ -51,15 +51,10 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.material.navigation.NavigationView;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import org.jetbrains.annotations.NotNull;
 
 
 public class MainActivity extends MvpAppCompatActivity
@@ -290,6 +285,8 @@ public class MainActivity extends MvpAppCompatActivity
             setTheme(R.style.AppTheme_NoAnimTheme);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             setTheme(R.style.LightAppTheme_NoAnimTheme);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            setTheme(R.style.AppThemeBlack_NoAnimTheme);
         }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -404,6 +401,8 @@ public class MainActivity extends MvpAppCompatActivity
             theme.applyStyle(R.style.AppTheme_NoActionBar, true);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             theme.applyStyle(R.style.LightAppTheme_NoActionBar, true);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            theme.applyStyle(R.style.AppThemeBlack_NoActionBar, true);
         }
 
 

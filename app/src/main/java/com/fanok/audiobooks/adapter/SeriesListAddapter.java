@@ -5,79 +5,24 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
-
 import java.util.ArrayList;
 
 public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.MyHolder> {
 
     private ArrayList<SeriesPOJO> mModel;
-    private String carentUrl;
-
-    private OnListItemSelectedInterface mListener;
-
-    public SeriesListAddapter(@NonNull String carentUrl) {
-        this.carentUrl = carentUrl;
-    }
-
-    public void setListener(
-            OnListItemSelectedInterface listener) {
-        mListener = listener;
-    }
-
-    public void setItem(ArrayList<SeriesPOJO> model) {
-        mModel = model;
-        notifyDataSetChanged();
-    }
-
-    public void clearItem() {
-        mModel.clear();
-        notifyDataSetChanged();
-    }
-
-    public SeriesPOJO getItem(int postion) {
-        return mModel.get(postion);
-    }
-
-    @NonNull
-    @Override
-    public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                R.layout.series_recyler_item, viewGroup, false);
-        return new MyHolder(view);
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
-        myHolder.bind(mModel.get(i));
-    }
-
-    @Override
-    public int getItemCount() {
-        if (mModel == null) {
-            return 0;
-        } else {
-            return mModel.size();
-        }
-    }
-
-
-    public interface OnListItemSelectedInterface {
-        void onItemSelected(View view, int position);
-    }
-
     class MyHolder extends RecyclerView.ViewHolder {
 
 
-        private TextView mLine;
-        private TextView mText;
-        private LinearLayout mLinearLayout;
+        private final TextView mLine;
+
+        private final LinearLayout mLinearLayout;
+
+        private final TextView mText;
 
 
         MyHolder(@NonNull final View itemView) {
@@ -130,5 +75,59 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
             }*/
 
         }
+    }
+
+    public interface OnListItemSelectedInterface {
+
+        void onItemSelected(View view, int position);
+    }
+
+    private final String carentUrl;
+
+    private OnListItemSelectedInterface mListener;
+
+    public SeriesListAddapter(@NonNull String carentUrl) {
+        this.carentUrl = carentUrl;
+    }
+
+    public void clearItem() {
+        mModel.clear();
+        notifyDataSetChanged();
+    }
+
+    public SeriesPOJO getItem(int postion) {
+        return mModel.get(postion);
+    }
+
+    @Override
+    public int getItemCount() {
+        if (mModel == null) {
+            return 0;
+        } else {
+            return mModel.size();
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
+        myHolder.bind(mModel.get(i));
+    }
+
+    @NonNull
+    @Override
+    public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                R.layout.series_recyler_item, viewGroup, false);
+        return new MyHolder(view);
+    }
+
+    public void setItem(ArrayList<SeriesPOJO> model) {
+        mModel = model;
+        notifyDataSetChanged();
+    }
+
+    public void setListener(
+            OnListItemSelectedInterface listener) {
+        mListener = listener;
     }
 }

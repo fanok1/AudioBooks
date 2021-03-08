@@ -22,10 +22,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,8 +31,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
@@ -46,20 +42,16 @@ import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.activity.SearchableActivity;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
 import com.fanok.audiobooks.adapter.GenreListAddapter;
+import com.fanok.audiobooks.databinding.FragmentBooksBinding;
 import com.fanok.audiobooks.interface_pacatge.books.BooksView;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.fanok.audiobooks.presenter.BooksPresenter;
 import com.google.android.material.navigation.NavigationView;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
 
 public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     private static final String TAG = "BooksFragment";
@@ -69,19 +61,15 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     private static final String ARG_SUB_TITLE_STRING = "sub_title_string";
     private static final String ARG_MODEL = "model_id";
 
-    @BindView(R.id.list)
-    RecyclerView mRecyclerView;
-    @BindView(R.id.refresh)
-    SwipeRefreshLayout mRefresh;
-    @BindView(R.id.mProgressBarLayout)
-    LinearLayout mProgressBar;
-    Unbinder unbinder;
 
     @InjectPresenter
     BooksPresenter mPresenter;
 
     private BooksListAddapter mAddapterBooks;
+
     private GenreListAddapter mAddapterGenre;
+
+    private FragmentBooksBinding binding;
 
     private int titleId;
     private int subTitleId;
@@ -179,8 +167,8 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_books, container, false);
-        unbinder = ButterKnife.bind(this, view);
+
+        binding = FragmentBooksBinding.inflate(inflater, container, false);
 
         if (titleId != 0) {
             Objects.requireNonNull(getActivity()).setTitle(titleId);
@@ -200,20 +188,20 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         switch (modelID) {
             case Consts.MODEL_BOOKS:
                 mAddapterBooks = new BooksListAddapter();
-                mRecyclerView.setAdapter(mAddapterBooks);
+                binding.list.setAdapter(mAddapterBooks);
                 break;
             case Consts.MODEL_GENRE:
             case Consts.MODEL_AUTOR:
             case Consts.MODEL_ARTIST:
                 mAddapterGenre = new GenreListAddapter();
-                mRecyclerView.setAdapter(mAddapterGenre);
+                binding.list.setAdapter(mAddapterGenre);
                 break;
         }
         setHasOptionsMenu(true);
 
-        mRefresh.setOnRefreshListener(() -> getPresenter().onRefresh());
+        binding.refresh.setOnRefreshListener(() -> getPresenter().onRefresh());
 
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        binding.list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
@@ -259,7 +247,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
             }
         }
 
-        return view;
+        return binding.getRoot();
     }
 
 
@@ -282,30 +270,62 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         mAddapterBooks = null;
         mAddapterGenre = null;
         super.onDestroyView();
-        unbinder.unbind();
+        binding = null;
     }
 
+    @Override
+    public void onCreateOptionsMenu(@NotNull Menu menu, @NotNull MenuInflater inflater) {
+        if (mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com")) {
+            inflater.inflate(R.menu.books_izibuk_options_menu, menu);
+        } else {
+            inflater.inflate(R.menu.books_options_menu, menu);
+        }
+
+        if (modelID == Consts.MODEL_BOOKS) {
+
+            if (mUrl.contains("reader") || mUrl.contains("author") || mUrl.contains("genre")
+                    || mUrl.contains("serie") || mUrl.contains("performer")) {
+                menu.findItem(R.id.source).setVisible(false);
+            } else {
+                setColorPrimeriTextInIconItemMenu(
+                        menu.findItem(R.id.source), Objects.requireNonNull(getContext()));
+            }
+
+            if (mUrl.contains("reader") || mUrl.contains("author") ||
+                    mUrl.contains("serie") ||
+                    (mUrl.contains("audiobook-mp3.com") && mUrl.contains("genre")) ||
+                    (mUrl.contains("izib.uk") && mUrl.contains("genre"))) {
+                menu.findItem(R.id.order).setVisible(false);
+            } else {
+                setColorPrimeriTextInIconItemMenu(
+                        menu.findItem(R.id.order), Objects.requireNonNull(getContext()));
+            }
+        } else {
+            menu.findItem(R.id.order).setVisible(false);
+            menu.findItem(R.id.source).setVisible(false);
+        }
+        setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search),
+                Objects.requireNonNull(getContext()));
+
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void recreate() {
+        Intent mStartActivity = new Intent(getContext(), MainActivity.class);
+        int mPendingIntentId = 123456;
+        PendingIntent mPendingIntent = PendingIntent.getActivity(getContext(), mPendingIntentId,
+                mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+        AlarmManager mgr = (AlarmManager) Objects.requireNonNull(getContext())
+                .getSystemService(Context.ALARM_SERVICE);
+        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+        System.exit(0);
+    }
 
     @Override
     public void setLayoutManager() {
-        if (mRecyclerView != null) {
-            mRecyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
-            setItemDecoration(1);
-        }
-    }
-
-    @Override
-    public void setLayoutManager(int count) {
-        if (mRecyclerView != null) {
-            mRecyclerView.setLayoutManager(new GridLayoutManager(this.getContext(), count));
-            setItemDecoration(count);
-        }
-    }
-
-    private void setItemDecoration(int count) {
-        int spacing = (int) getResources().getDimension(R.dimen.recycler_item_margin);
-        boolean includeEdge = true;
-        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(count, spacing, includeEdge));
+        binding.list.setLayoutManager(new LinearLayoutManager(this.getContext()));
+        setItemDecoration(1);
     }
 
     @Override
@@ -330,14 +350,10 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         if (mAddapterGenre != null) mAddapterGenre.clearItem();
     }
 
-
     @Override
-    public void showProgres(boolean b) {
-        if (b) {
-            mProgressBar.setVisibility(View.VISIBLE);
-        } else {
-            mProgressBar.setVisibility(View.GONE);
-        }
+    public void setLayoutManager(int count) {
+        binding.list.setLayoutManager(new GridLayoutManager(this.getContext(), count));
+        setItemDecoration(count);
     }
 
     @Override
@@ -352,13 +368,17 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     }
 
     @Override
-    public void showRefreshing(boolean b) {
-        mRefresh.setRefreshing(b);
+    public void setPosition(int position) {
+        Objects.requireNonNull(binding.list.getLayoutManager()).scrollToPosition(position);
     }
 
     @Override
-    public void setPosition(int position) {
-        Objects.requireNonNull(mRecyclerView.getLayoutManager()).scrollToPosition(position);
+    public void showProgres(boolean b) {
+        if (b) {
+            binding.mProgressBarLayout.getRoot().setVisibility(View.VISIBLE);
+        } else {
+            binding.mProgressBarLayout.getRoot().setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -376,41 +396,9 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         startActivityForResult(intent, REQEST_CODE_SEARCH);
     }
 
-
     @Override
-    public void onCreateOptionsMenu(@NotNull Menu menu, @NotNull MenuInflater inflater) {
-        if (mUrl.contains("izib.uk")) {
-            inflater.inflate(R.menu.books_izibuk_options_menu, menu);
-        } else {
-            inflater.inflate(R.menu.books_options_menu, menu);
-        }
-
-        if (modelID == Consts.MODEL_BOOKS) {
-
-            if (mUrl.contains("reader") || mUrl.contains("author") || mUrl.contains("genre")
-                    || mUrl.contains("serie")) {
-                menu.findItem(R.id.source).setVisible(false);
-            } else {
-                setColorPrimeriTextInIconItemMenu(
-                        menu.findItem(R.id.source), Objects.requireNonNull(getContext()));
-            }
-
-            if (mUrl.contains("reader") || mUrl.contains("author") ||
-                    mUrl.contains("serie") ||
-                    (mUrl.contains("izib.uk") && mUrl.contains("genre"))) {
-                menu.findItem(R.id.order).setVisible(false);
-            } else {
-                setColorPrimeriTextInIconItemMenu(
-                        menu.findItem(R.id.order), Objects.requireNonNull(getContext()));
-            }
-        } else {
-            menu.findItem(R.id.order).setVisible(false);
-            menu.findItem(R.id.source).setVisible(false);
-        }
-        setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search),
-                Objects.requireNonNull(getContext()));
-
-        super.onCreateOptionsMenu(menu, inflater);
+    public void showRefreshing(boolean b) {
+        binding.refresh.setRefreshing(b);
     }
 
     @Override
@@ -481,15 +469,10 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         BookActivity.startNewActivity(Objects.requireNonNull(getContext()), bookPOJO);
     }
 
-    @Override
-    public void recreate() {
-        Intent mStartActivity = new Intent(getContext(), MainActivity.class);
-        int mPendingIntentId = 123456;
-        PendingIntent mPendingIntent = PendingIntent.getActivity(getContext(), mPendingIntentId,
-                mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
-        AlarmManager mgr = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
-        System.exit(0);
+    private void setItemDecoration(int count) {
+        int spacing = (int) getResources().getDimension(R.dimen.recycler_item_margin);
+        boolean includeEdge = true;
+        binding.list.addItemDecoration(new GridSpacingItemDecoration(count, spacing, includeEdge));
     }
 
     private void onItemSelected(View view12, int position) {

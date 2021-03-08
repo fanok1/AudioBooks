@@ -2,9 +2,7 @@ package com.fanok.audiobooks.model;
 
 
 import android.content.Context;
-
 import androidx.annotation.NonNull;
-
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
@@ -13,7 +11,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
+import io.reactivex.Observable;
+import java.io.IOException;
+import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -21,19 +21,18 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.IOException;
-import java.util.Map;
-
-import io.reactivex.Observable;
-
 public class ImportModel {
 
-    private Context mContext;
-    private int src;
+    private final Context mContext;
+
+    private final int src;
 
     private Map<String, String> cookies;
+
     private Map<String, String> cookiesAuth;
+
     private String token;
+
     private String userUrl;
 
 
@@ -92,8 +91,7 @@ public class ImportModel {
         } else {
             cookiesAuth = res.cookies();
             String json = res.body();
-            JsonParser parser = new JsonParser();
-            JsonElement root = parser.parse(json);
+            JsonElement root = JsonParser.parseString(json);
             if (root.isJsonArray()) {
                 JsonArray jsonArray = root.getAsJsonArray();
                 for (int i = 0; i < jsonArray.size(); i++) {

@@ -15,19 +15,13 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
@@ -40,55 +34,35 @@ import com.fanok.audiobooks.adapter.BooksListAddapter;
 import com.fanok.audiobooks.adapter.FilterAdapter;
 import com.fanok.audiobooks.adapter.GenreListAddapter;
 import com.fanok.audiobooks.adapter.SearchebleAdapter;
+import com.fanok.audiobooks.databinding.ActivitySearchableBinding;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchableView;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.fanok.audiobooks.pojo.SearcheblPOJO;
 import com.fanok.audiobooks.presenter.SearchbalePresenter;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Objects;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import org.jetbrains.annotations.NotNull;
 
 public class SearchableActivity extends MvpAppCompatActivity implements SearchableView {
-    private static final String TAG = "SearchableActivity";
 
-    @BindView(R.id.searchView)
-    SearchView mSearchView;
-    @BindView(R.id.list)
-    RecyclerView mRecyclerView;
+    private static final String TAG = "SearchableActivity";
 
     @InjectPresenter
     SearchbalePresenter mPresenter;
-    @BindView(R.id.progressBarLayout)
-    LinearLayout mProgressBar;
-    @BindView(R.id.autors)
-    TextView mAutors;
-    @BindView(R.id.authorList)
-    RecyclerView mAuthorList;
-    @BindView(R.id.series)
-    TextView mSeries;
-    @BindView(R.id.seriesList)
-    RecyclerView mSeriesList;
-    @BindView(R.id.progressBarTop)
-    ProgressBar mProgressBarTop;
-    @BindView(R.id.topList)
-    LinearLayout mTopList;
-    @BindView(R.id.booksNotFound)
-    TextView mBooksNotFound;
-    @BindView(R.id.filter)
-    RecyclerView mFilter;
+
     private int mModelId;
 
+    private ActivitySearchableBinding binding;
+
     private BooksListAddapter mAddapterBooks;
+
     private GenreListAddapter mAddapterGenre;
 
     private SearchebleAdapter mAdapterAutors;
+
     private SearchebleAdapter mAdapterSeries;
+
     private FilterAdapter mFilterAdapter;
 
 
@@ -104,9 +78,8 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: called");
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_searchable);
-        ButterKnife.bind(this);
-
+        binding = ActivitySearchableBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
@@ -116,26 +89,26 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
             setTheme(R.style.AppTheme_SwipeOnClose);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             setTheme(R.style.LightAppTheme_SwipeOnClose);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            setTheme(R.style.AppThemeBlack_SwipeOnClose);
         }
-
 
         Intent intent = getIntent();
         mModelId = intent.getIntExtra(Consts.ARG_MODEL, -1);
-        if (mModelId == -1) throw new IllegalArgumentException("mModelId require parameter");
-
+        if (mModelId == -1) {
+            throw new IllegalArgumentException("mModelId require parameter");
+        }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mSearchView.onActionViewExpanded();
-        mSearchView.setIconified(false);
-
+        binding.searchView.onActionViewExpanded();
+        binding.searchView.setIconified(false);
 
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         if (searchManager != null) {
-            mSearchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+            binding.searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         }
-
 
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
@@ -168,38 +141,38 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
         switch (mModelId) {
             case Consts.MODEL_BOOKS:
                 mAddapterBooks = new BooksListAddapter();
-                mRecyclerView.setAdapter(mAddapterBooks);
+                binding.list.setAdapter(mAddapterBooks);
                 mAdapterAutors = new SearchebleAdapter();
                 mAdapterSeries = new SearchebleAdapter();
-                mAuthorList.setLayoutManager(
+                binding.authorList.setLayoutManager(
                         new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-                mSeriesList.setLayoutManager(
+                binding.seriesList.setLayoutManager(
                         new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-                mAuthorList.setAdapter(mAdapterAutors);
-                mSeriesList.setAdapter(mAdapterSeries);
-                mFilterAdapter = new FilterAdapter();
+                binding.authorList.setAdapter(mAdapterAutors);
+                binding.seriesList.setAdapter(mAdapterSeries);
+                mFilterAdapter = new FilterAdapter(
+                        PreferenceManager.getDefaultSharedPreferences(getApplicationContext()));
                 mFilterAdapter.setListener((view, position) -> {
                     mPresenter.setFilter(mFilterAdapter.getItem(position));
                     mPresenter.filterBooks();
                     mPresenter.filterAutorsAndSeries();
                 });
-                mFilter.setLayoutManager(
+                binding.filter.setLayoutManager(
                         new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-                mFilter.setAdapter(mFilterAdapter);
-
+                binding.filter.setAdapter(mFilterAdapter);
 
                 break;
             case Consts.MODEL_GENRE:
             case Consts.MODEL_AUTOR:
             case Consts.MODEL_ARTIST:
                 mAddapterGenre = new GenreListAddapter();
-                mRecyclerView.setAdapter(mAddapterGenre);
-                mFilter.setVisibility(View.GONE);
-                mProgressBarTop.setVisibility(View.GONE);
+                binding.list.setAdapter(mAddapterGenre);
+                binding.filter.setVisibility(View.GONE);
+                binding.progressBarTop.setVisibility(View.GONE);
                 break;
         }
 
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        binding.list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
@@ -239,8 +212,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                     (view, position) -> mPresenter.onAutorsListItemClick(view, position));
         }
 
-
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        binding.list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
@@ -253,16 +225,16 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                     b = true;
                 }
 
-                if (y == 0 && mTopList.getVisibility() == View.GONE && b) {
-                    mTopList.setVisibility(View.VISIBLE);
+                if (y == 0 && binding.topList.getVisibility() == View.GONE && b) {
+                    binding.topList.setVisibility(View.VISIBLE);
                 }
             }
 
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (dy > 0 && mTopList.getVisibility() == View.VISIBLE) {
-                    mTopList.setVisibility(View.GONE);
+                if (dy > 0 && binding.topList.getVisibility() == View.VISIBLE) {
+                    binding.topList.setVisibility(View.GONE);
                 }
             }
         });
@@ -307,30 +279,43 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                 SearchRecentSuggestions suggestions = new SearchRecentSuggestions(this,
                         MySuggestionProvider.AUTHORITY, MySuggestionProvider.MODE);
                 suggestions.saveRecentQuery(query, null);
-                mSearchView.setQuery(query, false);
+                binding.searchView.setQuery(query, false);
                 mPresenter.setQuery(query);
                 mPresenter.loadBoks();
             }
         }
-        mRecyclerView.requestFocus();
+        binding.list.requestFocus();
     }
 
     @Override
-    public void setLayoutManager() {
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        setItemDecoration(1);
+    public Resources.Theme getTheme() {
+        Resources.Theme theme = super.getTheme();
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            theme.applyStyle(R.style.AppThemeBlack_SwipeOnClose, true);
+        }
+
+        return theme;
     }
 
     @Override
     public void setLayoutManager(int count) {
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, count));
+        binding.list.setLayoutManager(new GridLayoutManager(this, count));
         setItemDecoration(count);
     }
 
-    private void setItemDecoration(int count) {
-        int spacing = (int) getResources().getDimension(R.dimen.recycler_item_margin);
-        boolean includeEdge = true;
-        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(count, spacing, includeEdge));
+    @Override
+    public void setLayoutManager() {
+        binding.list.setLayoutManager(new LinearLayoutManager(this));
+        setItemDecoration(1);
     }
 
     @Override
@@ -373,20 +358,20 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     }
 
     @Override
-    public void showProgres(boolean b) {
+    public void setNotFoundVisibile(boolean b) {
         if (b) {
-            mProgressBar.setVisibility(View.VISIBLE);
+            binding.booksNotFound.setVisibility(View.VISIBLE);
         } else {
-            mProgressBar.setVisibility(View.GONE);
+            binding.booksNotFound.setVisibility(View.GONE);
         }
     }
 
     @Override
-    public void showProgresTop(boolean b) {
+    public void showProgres(boolean b) {
         if (b) {
-            mProgressBarTop.setVisibility(View.VISIBLE);
+            binding.progressBarLayout.getRoot().setVisibility(View.VISIBLE);
         } else {
-            mProgressBarTop.setVisibility(View.INVISIBLE);
+            binding.progressBarLayout.getRoot().setVisibility(View.GONE);
         }
     }
 
@@ -402,63 +387,63 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     }
 
     @Override
+    public void showProgresTop(boolean b) {
+        if (b) {
+            binding.progressBarTop.setVisibility(View.VISIBLE);
+        } else {
+            binding.progressBarTop.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    @Override
     public void showSeriesAndAutors(SearcheblPOJO searcheblPOJO) {
         if (mAdapterSeries != null && mAdapterAutors != null && searcheblPOJO != null) {
             if (searcheblPOJO.getAutorsList().size() == 0) {
-                mAutors.setVisibility(View.GONE);
-                mAuthorList.setVisibility(View.GONE);
+                binding.autors.setVisibility(View.GONE);
+                binding.authorList.setVisibility(View.GONE);
             } else {
-                mAutors.setVisibility(View.VISIBLE);
-                mAuthorList.setVisibility(View.VISIBLE);
-                mAutors.setText(searcheblPOJO.getAutorsCount());
+                binding.autors.setVisibility(View.VISIBLE);
+                binding.authorList.setVisibility(View.VISIBLE);
+                binding.autors.setText(searcheblPOJO.getAutorsCount());
                 mAdapterAutors.setItem(searcheblPOJO.getAutorsList());
             }
 
             if (searcheblPOJO.getSeriesList().size() == 0) {
-                mSeries.setVisibility(View.GONE);
-                mSeriesList.setVisibility(View.GONE);
+                binding.series.setVisibility(View.GONE);
+                binding.seriesList.setVisibility(View.GONE);
             } else {
-                mSeries.setVisibility(View.VISIBLE);
-                mSeriesList.setVisibility(View.VISIBLE);
-                mSeries.setText(searcheblPOJO.getSeriesCount());
+                binding.series.setVisibility(View.VISIBLE);
+                binding.seriesList.setVisibility(View.VISIBLE);
+                binding.series.setText(searcheblPOJO.getSeriesCount());
                 mAdapterSeries.setItem(searcheblPOJO.getSeriesList());
             }
         } else {
-            mTopList.setVisibility(View.GONE);
+            binding.topList.setVisibility(View.GONE);
         }
 
     }
 
     @Override
     public void startBookActivity(@NotNull @NonNull BookPOJO bookPOJO) {
-        BookActivity.startNewActivity(this, bookPOJO);
-    }
 
-    @Override
-    public void setNotFoundVisibile(boolean b) {
-        if (b) {
-            mBooksNotFound.setVisibility(View.VISIBLE);
+        if (bookPOJO.getUrl().contains("audiobook-mp3.com")) {
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            if (preferences.getBoolean("speed_up_search_abmp3", false)) {
+                Intent intent = new Intent(this, LoadBook.class);
+                intent.putExtra("url", bookPOJO.getUrl());
+                startActivity(intent);
+            } else {
+                BookActivity.startNewActivity(this, bookPOJO);
+            }
         } else {
-            mBooksNotFound.setVisibility(View.GONE);
+            BookActivity.startNewActivity(this, bookPOJO);
         }
     }
 
-    @Override
-    public Resources.Theme getTheme() {
-        Resources.Theme theme = super.getTheme();
-
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
-            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
-        } else if (themeName.equals(getString(R.string.theme_light_value))) {
-            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
-        }
-
-
-        return theme;
+    private void setItemDecoration(int count) {
+        int spacing = (int) getResources().getDimension(R.dimen.recycler_item_margin);
+        boolean includeEdge = true;
+        binding.list.addItemDecoration(new GridSpacingItemDecoration(count, spacing, includeEdge));
     }
 
     @Override

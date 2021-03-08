@@ -19,10 +19,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
@@ -31,7 +29,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
@@ -42,42 +39,33 @@ import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.activity.SearchableActivity;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
+import com.fanok.audiobooks.databinding.FragmentFavoriteBinding;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.presenter.FavoritePresenter;
 import com.google.android.material.navigation.NavigationView;
-
-import org.jetbrains.annotations.NotNull;
-
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 import java.util.ArrayList;
 import java.util.Objects;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
-import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
+import org.jetbrains.annotations.NotNull;
 
 public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteView {
     private static final String TAG = "FavoriteFragment";
     private static final String ARG_TITLE = "title";
     private static final String ARG_TABLE = "table";
 
-    @BindView(R.id.list)
-    RecyclerView mRecyclerView;
-    @BindView(R.id.progressBarLayout)
-    LinearLayout mProgressBar;
-    Unbinder unbinder;
-
     @InjectPresenter
     FavoritePresenter mPresenter;
-    @BindView(R.id.view)
-    View mView;
 
     private BooksListAddapter mAddapterBooks;
 
     private int titleId;
+
     private int table;
+
     private SearchView searchView;
+
+    private FragmentFavoriteBinding binding;
 
     @ProvidePresenter
     FavoritePresenter provide() {
@@ -114,8 +102,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_favorite, container, false);
-        unbinder = ButterKnife.bind(this, view);
+        binding = FragmentFavoriteBinding.inflate(inflater, container, false);
 
         if (titleId != 0) {
             Objects.requireNonNull(getActivity()).setTitle(titleId);
@@ -125,7 +112,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                 .getDefaultSharedPreferences(Objects.requireNonNull(getContext()));
 
         mAddapterBooks = new BooksListAddapter(pref.getBoolean("history_procent", true));
-        mRecyclerView.setAdapter(mAddapterBooks);
+        binding.list.setAdapter(mAddapterBooks);
         setHasOptionsMenu(true);
         mAddapterBooks.setListener(this::onItemSelected);
 
@@ -167,7 +154,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         };
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
-        itemTouchHelper.attachToRecyclerView(mRecyclerView);
+        itemTouchHelper.attachToRecyclerView(binding.list);
 
 
         int orientation = this.getResources().getConfiguration().orientation;
@@ -188,7 +175,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                 setLayoutManager(3);
             }
         }
-        return view;
+        return binding.getRoot();
     }
 
 
@@ -200,30 +187,33 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         }
         mAddapterBooks = null;
         super.onDestroyView();
-        unbinder.unbind();
+        binding = null;
     }
 
     @Override
-    public void setLayoutManager() {
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
-        setItemDecoration(1);
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        mPresenter.onOptionsItemSelected(binding.view, item.getItemId());
+        item.setChecked(true);
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
     public void setLayoutManager(int count) {
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this.getContext(), count));
+        binding.list.setLayoutManager(new GridLayoutManager(this.getContext(), count));
         setItemDecoration(count);
     }
 
-    private void setItemDecoration(int count) {
-        int spacing = (int) getResources().getDimension(R.dimen.recycler_item_margin);
-        boolean includeEdge = true;
-        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(count, spacing, includeEdge));
+    @Override
+    public void setLayoutManager() {
+        binding.list.setLayoutManager(new LinearLayoutManager(this.getContext()));
+        setItemDecoration(1);
     }
 
     @Override
     public void showData(@NonNull ArrayList<BookPOJO> bookPOJOS) {
-        if (mAddapterBooks != null) mAddapterBooks.setItem(bookPOJOS);
+        if (mAddapterBooks != null) {
+            mAddapterBooks.setItem(bookPOJOS);
+        }
     }
 
     @Override
@@ -253,9 +243,9 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     @Override
     public void showProgres(boolean b) {
         if (b) {
-            mProgressBar.setVisibility(View.VISIBLE);
+            binding.progressBarLayout.getRoot().setVisibility(View.VISIBLE);
         } else {
-            mProgressBar.setVisibility(View.GONE);
+            binding.progressBarLayout.getRoot().setVisibility(View.GONE);
         }
     }
 
@@ -371,15 +361,13 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
         }
 
-
         super.onCreateOptionsMenu(menu, inflater);
     }
 
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        mPresenter.onOptionsItemSelected(mView, item.getItemId());
-        item.setChecked(true);
-        return super.onOptionsItemSelected(item);
+    private void setItemDecoration(int count) {
+        int spacing = (int) getResources().getDimension(R.dimen.recycler_item_margin);
+        boolean includeEdge = true;
+        binding.list.addItemDecoration(new GridSpacingItemDecoration(count, spacing, includeEdge));
     }
 
     @Override

@@ -13,49 +13,27 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.preference.PreferenceManager;
-
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.databinding.PlusVersionInfoBinding;
 import com.fanok.audiobooks.pojo.StorageAds;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class PopupGetPlus extends AppCompatActivity {
 
     public static final String Broadcast_RECREATE = "recreate";
 
-    @BindView(R.id.ib_close)
-    ImageButton mIbClose;
-    @BindView(R.id.title)
-    TextView mTitle;
-    @BindView(R.id.subTitle)
-    TextView mSubTitle;
-    @BindView(R.id.buy)
-    LinearLayout mBuy;
-    @BindView(R.id.linearLayout)
-    LinearLayout mLinearLayout;
-    @BindView(R.id.coordinator)
-    CoordinatorLayout mCoordinator;
-    @BindView(R.id.buttonTitle)
-    TextView mButtonTitle;
-    @BindView(R.id.buttonSubTitle)
-    TextView mButtonSubTitle;
+    private PlusVersionInfoBinding binding;
 
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(LocaleManager.onAttach(base));
     }
 
-    private BroadcastReceiver recreate = new BroadcastReceiver() {
+    private final BroadcastReceiver recreate = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             recreate();
@@ -65,8 +43,8 @@ public class PopupGetPlus extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.plus_version_info);
-        ButterKnife.bind(this);
+        binding = PlusVersionInfoBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         register_recreate();
 
@@ -78,6 +56,8 @@ public class PopupGetPlus extends AppCompatActivity {
             setTheme(R.style.AppTheme_Popup);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             setTheme(R.style.LightAppTheme_Popup);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            setTheme(R.style.AppThemeBlack_Popup);
         }
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -86,22 +66,21 @@ public class PopupGetPlus extends AppCompatActivity {
         int width = displayMetrics.widthPixels;
         int height = displayMetrics.heightPixels;
 
-
-        ViewGroup.LayoutParams layoutParams = mLinearLayout.getLayoutParams();
+        ViewGroup.LayoutParams layoutParams = binding.linearLayout.getLayoutParams();
         layoutParams.height = (int) (height * .8);
         layoutParams.width = (int) (width * .8);
-        mLinearLayout.setLayoutParams(layoutParams);
-        mLinearLayout.setOnClickListener(null);
+        binding.linearLayout.setLayoutParams(layoutParams);
+        binding.linearLayout.setOnClickListener(null);
 
-        mIbClose.setOnClickListener(view -> finish());
-        mCoordinator.setOnClickListener(view -> finish());
+        binding.ibClose.setOnClickListener(view -> finish());
+        binding.coordinator.setOnClickListener(view -> finish());
 
         if (!StorageAds.idDisableAds()) {
-            mTitle.setText(R.string.getPlusTitle);
-            mSubTitle.setText(R.string.getPlusSubTitle);
-            mButtonTitle.setText(R.string.buy);
-            mButtonSubTitle.setText(R.string.price);
-            mBuy.setOnClickListener(view -> {
+            binding.title.setText(R.string.getPlusTitle);
+            binding.subTitle.setText(R.string.getPlusSubTitle);
+            binding.buttonTitle.setText(R.string.buy);
+            binding.buttonSubTitle.setText(R.string.price);
+            binding.buy.setOnClickListener(view -> {
                 //Billing.launchBilling(getActivity(), Consts.mSkuId);
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Плюс версия");
@@ -117,11 +96,11 @@ public class PopupGetPlus extends AppCompatActivity {
                 builder.show();
             });
         } else {
-            mTitle.setText(R.string.congratulations);
-            mSubTitle.setText(R.string.plusSubTitle);
-            mButtonTitle.setText(R.string.good);
-            mButtonSubTitle.setVisibility(View.GONE);
-            mBuy.setOnClickListener(view -> finish());
+            binding.title.setText(R.string.congratulations);
+            binding.subTitle.setText(R.string.plusSubTitle);
+            binding.buttonTitle.setText(R.string.good);
+            binding.buttonSubTitle.setVisibility(View.GONE);
+            binding.buy.setOnClickListener(view -> finish());
         }
 
 
@@ -140,6 +119,8 @@ public class PopupGetPlus extends AppCompatActivity {
             theme.applyStyle(R.style.AppTheme_Popup, true);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             theme.applyStyle(R.style.LightAppTheme_Popup, true);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            theme.applyStyle(R.style.AppThemeBlack_Popup, true);
         }
 
 

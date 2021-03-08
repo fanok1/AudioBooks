@@ -5,13 +5,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.GenrePOJO;
-
 import java.util.ArrayList;
 
 public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.MyHolder> {
@@ -66,9 +63,11 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
 
     class MyHolder extends RecyclerView.ViewHolder {
 
-        private TextView mName;
-        private TextView mReting;
-        private TextView mDescription;
+        private final TextView mDescription;
+
+        private final TextView mName;
+
+        private final TextView mReting;
 
         MyHolder(@NonNull final View itemView) {
             super(itemView);
@@ -77,7 +76,9 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
             mReting = itemView.findViewById(R.id.reting);
             mDescription = itemView.findViewById(R.id.desc);
             itemView.setOnClickListener(view -> {
-                if (listner != null) listner.onClickItem(itemView, getAdapterPosition());
+                if (listner != null) {
+                    listner.onClickItem(itemView, getAdapterPosition());
+                }
             });
         }
 

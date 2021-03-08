@@ -9,43 +9,30 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.widget.Toolbar;
 import androidx.preference.PreferenceManager;
-
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.databinding.ActivityImportBinding;
 import com.fanok.audiobooks.interface_pacatge.import_favorite.ActivityImportInterface;
 import com.fanok.audiobooks.presenter.ImportPresenter;
 import com.r0adkll.slidr.Slidr;
-
 import org.jetbrains.annotations.NotNull;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class ActivityImport extends MvpAppCompatActivity implements ActivityImportInterface {
 
     private static final String IMPORT = "IMPORT_SITE";
+
     @InjectPresenter
     ImportPresenter mPresenter;
-    @BindView(R.id.login)
-    Button mLogin;
-    @BindView(R.id.password)
-    EditText mPassword;
-    @BindView(R.id.username)
-    EditText mUsername;
-    @BindView(R.id.loading)
-    ProgressBar mLoading;
+
+    private ActivityImportBinding binding;
 
     public static void startActivity(@NotNull Activity activity, int site) {
         Intent intent = new Intent(activity, ActivityImport.class);
@@ -67,31 +54,29 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_import);
-        ButterKnife.bind(this);
+        binding = ActivityImportBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         Slidr.attach(this);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-        mUsername.setOnFocusChangeListener((view, b) -> {
+        binding.username.setOnFocusChangeListener((view, b) -> {
             if (!b) {
                 mPresenter.validate((EditText) view);
             }
         });
 
-        mPassword.setOnFocusChangeListener((view, b) -> {
+        binding.password.setOnFocusChangeListener((view, b) -> {
             if (!b) {
                 mPresenter.validate((EditText) view);
             }
         });
 
-        mLogin.setOnClickListener(view -> click());
+        binding.login.setOnClickListener(view -> click());
 
-
-        mPassword.setOnEditorActionListener((textView, i, keyEvent) -> {
+        binding.password.setOnEditorActionListener((textView, i, keyEvent) -> {
             if (i == EditorInfo.IME_ACTION_DONE) {
                 click();
                 return true;
@@ -101,13 +86,23 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
 
     }
 
-    private void click() {
-        mPresenter.validate(mUsername);
-        mPresenter.validate(mPassword);
+    @Override
+    public Resources.Theme getTheme() {
+        Resources.Theme theme = super.getTheme();
 
-        if (mUsername.getError() == null && mPassword.getError() == null) {
-            mPresenter.login(mUsername.getText().toString(), mPassword.getText().toString());
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            theme.applyStyle(R.style.AppThemeBlack_SwipeOnClose, true);
         }
+
+        return theme;
     }
 
     @Override
@@ -128,9 +123,9 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
     @Override
     public void showProgress(boolean b) {
         if (b) {
-            mLoading.setVisibility(View.VISIBLE);
+            binding.loading.setVisibility(View.VISIBLE);
         } else {
-            mLoading.setVisibility(View.GONE);
+            binding.loading.setVisibility(View.GONE);
         }
     }
 
@@ -149,22 +144,13 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
         overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left);
     }
 
-    @Override
-    public Resources.Theme getTheme() {
-        Resources.Theme theme = super.getTheme();
+    private void click() {
+        mPresenter.validate(binding.username);
+        mPresenter.validate(binding.password);
 
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
-            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
-        } else if (themeName.equals(getString(R.string.theme_light_value))) {
-            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
+        if (binding.username.getError() == null && binding.password.getError() == null) {
+            mPresenter.login(binding.username.getText().toString(), binding.password.getText().toString());
         }
-
-
-        return theme;
     }
 
     @Override

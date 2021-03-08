@@ -6,7 +6,8 @@
     android:background="?android:selectableItemBackground"
     android:orientation="horizontal"
     android:padding="@dimen/text_margin_book_description"
-    tools:background="@color/colorBackgraund">
+    tools:background="@color/colorBackgraund"
+    tools:viewBindingIgnore="true">
 
     <RadioButton
         android:id="@+id/radio"

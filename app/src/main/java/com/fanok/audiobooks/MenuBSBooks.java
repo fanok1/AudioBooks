@@ -5,19 +5,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
+import butterknife.BindView;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.books.BooksView;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
-
 import org.jetbrains.annotations.NotNull;
-
-import butterknife.BindView;
 
 public class MenuBSBooks extends BottomSheetDialogFragment {
 
@@ -38,8 +34,10 @@ public class MenuBSBooks extends BottomSheetDialogFragment {
     TextView mSeries;
 
     private BooksDBModel mBooksDBModel;
+
     private BookPOJO mBook;
-    private BooksView mViewState;
+
+    private final BooksView mViewState;
 
     public MenuBSBooks(@NotNull BooksView viewState) {
         mViewState = viewState;

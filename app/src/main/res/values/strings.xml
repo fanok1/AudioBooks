@@ -83,6 +83,7 @@
 
     <string name="theme_dark_value" translatable="false">dark</string>
     <string name="theme_light_value" translatable="false">light</string>
+    <string name="theme_black_value" translatable="false">black</string>
 
     <string name="setting_lang">Язык</string>
 
@@ -335,6 +336,8 @@
     <string name="kniga_v_uhe_value" translatable="false">kniga_v_uhe</string>
     <string name="izibuc_value" translatable="false">izibuc</string>
     <string name="izibuc">ИзиБук</string>
+    <string name="audionook_mp3" translatable="false">AudioBook-mp3</string>
+    <string name="audiobook_mp3_value" translatable="false">audiobook_mp3</string>
     <string name="menu_saved">Скачанные</string>
     <string name="clear_audio_list">Очистить список аудио файлов</string>
     <string name="confirm_clear_audio_list">Вы уверены что хотите очистить список аудио файлов</string>
@@ -352,5 +355,11 @@
     <string name="source">Источник</string>
     <string name="buffer_size">Размер буфера в секундах (макс 999с)</string>
     <string name="rewind_back">Перемотка назад</string>
+    <string name="source_search">Источники поиска</string>
+    <string name="source_search_desc">Выбрать источники по которым будет осуществляться поиск</string>
+    <string name="speed_up_search_abmp3">Ускорить поиск по источнику Audiobook-mp3</string>
+    <string name="speed_up_search_abmp3_desc">Ускоряет поиск книг за счет уменьшения количества загружаемых данных. Скорость поиска увеличиться в 4 раза</string>
+    <string name="theme_black">Черная</string>
+
 
 </resources>

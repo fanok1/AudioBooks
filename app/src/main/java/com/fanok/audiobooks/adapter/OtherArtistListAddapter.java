@@ -4,13 +4,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
-
 import java.util.ArrayList;
 
 public class OtherArtistListAddapter extends
@@ -70,7 +67,7 @@ public class OtherArtistListAddapter extends
     class MyHolder extends RecyclerView.ViewHolder {
 
 
-        private TextView mText;
+        private final TextView mText;
 
 
         MyHolder(@NonNull final View itemView) {

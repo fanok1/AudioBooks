@@ -4,6 +4,7 @@ import static android.content.Context.UI_MODE_SERVICE;
 import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.UiModeManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -21,7 +22,6 @@ import android.provider.SearchRecentSuggestions;
 import android.util.TypedValue;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -35,7 +35,6 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceGroup;
 import androidx.preference.PreferenceManager;
 import androidx.preference.PreferenceScreen;
-
 import com.codekidlabs.storagechooser.Content;
 import com.codekidlabs.storagechooser.StorageChooser;
 import com.fanok.audiobooks.Consts;
@@ -53,9 +52,6 @@ import com.fanok.audiobooks.pojo.StorageUtil;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -67,7 +63,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-
+import org.jetbrains.annotations.NotNull;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class SettingsFragment extends PreferenceFragmentCompat implements
@@ -103,9 +99,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 .allowCustomPath(true)
                 .setType(StorageChooser.DIRECTORY_CHOOSER);
 
-
         SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(Objects.requireNonNull(getContext()));
+                .getDefaultSharedPreferences(getActivity().getApplicationContext());
         String themeName = pref.getString("pref_theme", getString(R.string.theme_light_value));
         if (themeName.equals(getString(R.string.theme_dark_value))) {
             StorageChooser.Theme theme = new StorageChooser.Theme(
@@ -146,6 +141,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         }
     }
 
+    @SuppressLint("InlinedApi")
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         if (getArguments() != null) {
@@ -192,7 +188,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
 */
         preferenceChangeListner("pref_theme", (preference, newValue) -> {
-            if (newValue.equals(getString(R.string.theme_dark_value))) {
+            if (newValue.equals(getString(R.string.theme_dark_value)) || newValue
+                    .equals(getString(R.string.theme_black_value))) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             } else {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
@@ -214,7 +211,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 if (folders.length == 1) {
                     Toast.makeText(getContext(), R.string.no_sdcard, Toast.LENGTH_SHORT).show();
                     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(
-                            getContext());
+                            getActivity().getApplicationContext());
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putString("pref_downland_path",
                             getContext().getString(R.string.dir_value_emulated));
@@ -343,8 +340,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                         return true;
                     });
         }
-
-
 
         preferenceClickListner("restore", preference -> {
 

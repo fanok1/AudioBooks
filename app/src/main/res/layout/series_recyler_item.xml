@@ -10,7 +10,8 @@
     android:paddingTop="@dimen/text_margin"
     android:paddingEnd="@dimen/text_margin_book_description"
     android:paddingBottom="@dimen/text_margin"
-    tools:background="@color/blackColor">
+    tools:background="@color/blackColor"
+    tools:viewBindingIgnore="true">
 
     <TextView
         android:id="@+id/line"

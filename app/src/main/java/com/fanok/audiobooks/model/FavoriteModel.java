@@ -1,18 +1,15 @@
 package com.fanok.audiobooks.model;
 
 import android.content.Context;
-
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.pojo.BookPOJO;
-
-import java.util.ArrayList;
-
 import io.reactivex.Observable;
+import java.util.ArrayList;
 
 public class FavoriteModel implements
         com.fanok.audiobooks.interface_pacatge.favorite.FavoriteModel {
 
-    private BooksDBModel mBooksDBModel;
+    private final BooksDBModel mBooksDBModel;
 
     public FavoriteModel(Context context) {
         mBooksDBModel = new BooksDBModel(context);

@@ -5,7 +5,8 @@
     android:layout_height="@dimen/recycler_item_height_big"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:background="?attr/backgroundItem"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    tools:viewBindingIgnore="true">
 
     <LinearLayout
         android:id="@+id/contentConteiner"

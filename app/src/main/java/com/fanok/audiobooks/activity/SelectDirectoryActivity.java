@@ -12,44 +12,35 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
-
 import com.codekidlabs.storagechooser.Content;
 import com.codekidlabs.storagechooser.StorageChooser;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
-import com.google.android.material.textfield.TextInputEditText;
+import com.fanok.audiobooks.databinding.ActivitySelectDirectoryBinding;
 import com.r0adkll.slidr.Slidr;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.util.Objects;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import org.jetbrains.annotations.NotNull;
 
 public class SelectDirectoryActivity extends AppCompatActivity {
 
-    @BindView(R.id.textInputEditText)
-    TextInputEditText mTextInputEditText;
-    @BindView(R.id.button)
-    Button mButton;
-
 
     private static final String TAG = "SelectDirectoryActivity";
+
     private static final int REQUEST_DIRECTORY = 165;
+
     private String oldPath;
 
     private StorageChooser chooser;
+
+    private ActivitySelectDirectoryBinding binding;
 
 
     @Override
@@ -60,15 +51,15 @@ public class SelectDirectoryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_select_directory);
-        ButterKnife.bind(this);
+        binding = ActivitySelectDirectoryBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         Slidr.attach(this);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-        mTextInputEditText.setKeyListener(null);
-        mTextInputEditText.setOnFocusChangeListener((view, b) -> click(view));
-        mTextInputEditText.setOnClickListener(this::click);
+        binding.textInputEditText.setKeyListener(null);
+        binding.textInputEditText.setOnFocusChangeListener((view, b) -> click(view));
+        binding.textInputEditText.setOnClickListener(this::click);
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
@@ -76,8 +67,8 @@ public class SelectDirectoryActivity extends AppCompatActivity {
                 Environment.getExternalStoragePublicDirectory(
                         Environment.DIRECTORY_DOWNLOADS).getPath());
 
-        mTextInputEditText.setText(oldPath);
-        mButton.setOnClickListener(view -> mTextInputEditText.setText(new ContextWrapper(
+        binding.textInputEditText.setText(oldPath);
+        binding.button.setOnClickListener(view -> binding.textInputEditText.setText(new ContextWrapper(
                 view.getContext()).getFilesDir().toString()));
 
         Content content = new Content();
@@ -103,7 +94,8 @@ public class SelectDirectoryActivity extends AppCompatActivity {
                 .setType(StorageChooser.DIRECTORY_CHOOSER);
 
         String themeName = pref.getString("pref_theme", getString(R.string.theme_light_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
+        if (themeName.equals(getString(R.string.theme_dark_value)) || themeName
+                .equals(getString(R.string.theme_black_value))) {
             StorageChooser.Theme theme = new StorageChooser.Theme(getApplicationContext());
             theme.setScheme(getResources().getIntArray(R.array.paranoid_theme));
             builder.setTheme(theme);
@@ -127,22 +119,23 @@ public class SelectDirectoryActivity extends AppCompatActivity {
         }
     }
 
-    private void showDirPiker() {
-        chooser.setOnSelectListener(path -> {
-            String s = path.substring(indexOf('/', path, 2) + 1, indexOf('/', path, 3));
-            if (s.equals("emulated")) {
-                mTextInputEditText.setText(path);
-            } else {
-                //String newPath = path.replace(s, "emulated/1");
-                File file = new File(path);
-                if (file.isDirectory() && file.canWrite()) {
-                    mTextInputEditText.setText(path);
-                } else {
-                    Toast.makeText(this, R.string.not_can_writing, Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-        chooser.show();
+    @Override
+    public Resources.Theme getTheme() {
+        Resources.Theme theme = super.getTheme();
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            theme.applyStyle(R.style.AppThemeBlack_SwipeOnClose, true);
+        }
+
+        return theme;
     }
 
     private int indexOf(char c, String path, int pos) {
@@ -169,29 +162,18 @@ public class SelectDirectoryActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void save() {
-        if (mTextInputEditText.getText() != null) {
-            SharedPreferences pref = PreferenceManager
-                    .getDefaultSharedPreferences(this);
-            SharedPreferences.Editor editor = pref.edit();
-            editor.putString("pref_downland_path", mTextInputEditText.getText().toString());
-            editor.apply();
-            oldPath = mTextInputEditText.getText().toString();
-        }
-    }
-
     @Override
     public void onBackPressed() {
 
-        if (mTextInputEditText.getText() != null && oldPath.equals(
-                mTextInputEditText.getText().toString())) {
+        if (binding.textInputEditText.getText() != null && oldPath.equals(
+                binding.textInputEditText.getText().toString())) {
             super.onBackPressed();
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(R.string.exit);
             builder.setMessage(R.string.exit_confirm);
             builder.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
-                if (mTextInputEditText.getText() != null) {
+                if (binding.textInputEditText.getText() != null) {
                     save();
                     finish();
                 }
@@ -201,6 +183,17 @@ public class SelectDirectoryActivity extends AppCompatActivity {
                     (dialogInterface, i) -> dialogInterface.cancel());
             builder.setCancelable(false);
             builder.show();
+        }
+    }
+
+    private void save() {
+        if (binding.textInputEditText.getText() != null) {
+            SharedPreferences pref = PreferenceManager
+                    .getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = pref.edit();
+            editor.putString("pref_downland_path", binding.textInputEditText.getText().toString());
+            editor.apply();
+            oldPath = binding.textInputEditText.getText().toString();
         }
     }
 
@@ -226,22 +219,22 @@ public class SelectDirectoryActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public Resources.Theme getTheme() {
-        Resources.Theme theme = super.getTheme();
-
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
-            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
-        } else if (themeName.equals(getString(R.string.theme_light_value))) {
-            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
-        }
-
-
-        return theme;
+    private void showDirPiker() {
+        chooser.setOnSelectListener(path -> {
+            String s = path.substring(indexOf('/', path, 2) + 1, indexOf('/', path, 3));
+            if (s.equals("emulated")) {
+                binding.textInputEditText.setText(path);
+            } else {
+                //String newPath = path.replace(s, "emulated/1");
+                File file = new File(path);
+                if (file.isDirectory() && file.canWrite()) {
+                    binding.textInputEditText.setText(path);
+                } else {
+                    Toast.makeText(this, R.string.not_can_writing, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        chooser.show();
     }
 
 

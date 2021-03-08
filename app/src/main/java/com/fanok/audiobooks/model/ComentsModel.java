@@ -2,20 +2,16 @@ package com.fanok.audiobooks.model;
 
 
 import androidx.annotation.NonNull;
-
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.pojo.ComentsPOJO;
 import com.fanok.audiobooks.pojo.SubComentsPOJO;
-
+import io.reactivex.Observable;
+import java.io.IOException;
+import java.util.ArrayList;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import java.io.IOException;
-import java.util.ArrayList;
-
-import io.reactivex.Observable;
 
 public class ComentsModel implements
         com.fanok.audiobooks.interface_pacatge.book_content.ComentsModel {
@@ -120,6 +116,7 @@ public class ComentsModel implements
         return result;
     }
 
+
     @Override
     public Observable<ArrayList<ComentsPOJO>> getComents(@NonNull String url) {
 
@@ -128,6 +125,8 @@ public class ComentsModel implements
             try {
                 if (url.contains("knigavuhe.org")) {
                     articlesModels = loadComentsList(url);
+                } else if (url.contains("audiobook-mp3.com")) {
+                    articlesModels = loadComentsListABMP3(url);
                 } else {
                     articlesModels = new ArrayList<>();
                 }
@@ -138,5 +137,104 @@ public class ComentsModel implements
                 observableEmitter.onComplete();
             }
         });
+    }
+
+    private SubComentsPOJO getChildCOmentsABMP3(Element comentConteiner, String parent) {
+
+        SubComentsPOJO comentsPOJO = new SubComentsPOJO();
+        Elements imageConteiner = comentConteiner.getElementsByTag("img");
+        if (imageConteiner != null && imageConteiner.size() != 0) {
+            comentsPOJO.setImage(imageConteiner.first().attr("src"));
+        }
+        Elements nameConteiner = comentConteiner.getElementsByClass("comment-author-name");
+        if (nameConteiner != null && nameConteiner.size() != 0) {
+            Element child = nameConteiner.first().child(0);
+            if (child != null) {
+                comentsPOJO.setName(child.text());
+            }
+
+            Element time = nameConteiner.first().child(1);
+            if (time != null) {
+                comentsPOJO.setDate(time.text());
+            }
+        }
+
+        Elements text = comentConteiner.getElementsByClass("comment-body");
+        if (text.size() != 0) {
+            comentsPOJO.setText(text.first().text());
+        }
+
+        comentsPOJO.setParentName(parent);
+
+        return comentsPOJO;
+
+
+    }
+
+    private ArrayList<ComentsPOJO> loadComentsListABMP3(String url) throws IOException {
+        ArrayList<ComentsPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Element comentsElement = doc.getElementById("w0");
+        if (comentsElement == null) {
+            return result;
+        }
+
+        Elements empty = comentsElement.getElementsByClass("empty");
+        if (empty != null && empty.size() != 0) {
+            return result;
+        }
+
+        for (Element comentConteiner : comentsElement.children()) {
+            ComentsPOJO comentsPOJO = new ComentsPOJO();
+            Elements imageConteiner = comentConteiner.getElementsByTag("img");
+            if (imageConteiner != null && imageConteiner.size() != 0) {
+                comentsPOJO.setImage(imageConteiner.first().attr("src"));
+            }
+            Elements nameConteiner = comentConteiner.getElementsByClass("comment-author-name");
+            if (nameConteiner != null && nameConteiner.size() != 0) {
+                Element child = nameConteiner.first().child(0);
+                if (child != null) {
+                    comentsPOJO.setName(child.text());
+                }
+
+                Element time = nameConteiner.first().child(1);
+                if (time != null) {
+                    comentsPOJO.setDate(time.text());
+                }
+            }
+
+            Elements text = comentConteiner.getElementsByClass("comment-body");
+            if (text.size() != 0) {
+                comentsPOJO.setText(text.first().text());
+            }
+
+            Elements childrenConteiner = comentConteiner.getElementsByClass("children");
+            if (childrenConteiner != null && childrenConteiner.size() != 0) {
+                Elements children = childrenConteiner.first().getElementsByClass("item");
+                if (children != null) {
+                    ArrayList<SubComentsPOJO> subComentsPOJOS = new ArrayList<>();
+                    for (int i = 0; i < children.size(); i++) {
+                        SubComentsPOJO subComentsPOJO = getChildCOmentsABMP3(children.get(i), comentsPOJO.getName());
+                        if (!subComentsPOJO.isEmty()) {
+                            subComentsPOJOS.add(subComentsPOJO);
+                        }
+                    }
+                    if (subComentsPOJOS.size() != 0) {
+                        comentsPOJO.setChildComents(subComentsPOJOS);
+                    }
+                }
+            }
+
+            if (!comentsPOJO.isEmty()) {
+                result.add(comentsPOJO);
+            }
+
+        }
+        return result;
     }
 }

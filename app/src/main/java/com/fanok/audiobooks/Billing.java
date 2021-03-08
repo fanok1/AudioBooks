@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils;
 import android.widget.Toast;
-
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
@@ -17,18 +16,18 @@ import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
-
 import com.fanok.audiobooks.pojo.StorageAds;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 
 public class Billing {
 
     private static BillingClient mBillingClient;
-    private static Map<String, SkuDetails> mSkuDetailsMap = new HashMap<>();
+
+    private static final Map<String, SkuDetails> mSkuDetailsMap = new HashMap<>();
 
     static void initBilding(Context context) {
         mBillingClient = BillingClient.newBuilder(context).enablePendingPurchases().setListener(
@@ -41,7 +40,7 @@ public class Billing {
                 }).build();
         mBillingClient.startConnection(new BillingClientStateListener() {
             @Override
-            public void onBillingSetupFinished(BillingResult billingResult) {
+            public void onBillingSetupFinished(@NotNull BillingResult billingResult) {
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     querySkuDetails();
 

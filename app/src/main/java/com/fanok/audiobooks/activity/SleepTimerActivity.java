@@ -16,10 +16,10 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import androidx.appcompat.widget.Toolbar;
 import androidx.preference.PreferenceManager;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.fanok.audiobooks.LocaleManager;
@@ -27,12 +27,8 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.sleep_timer.SleepTimerView;
 import com.fanok.audiobooks.presenter.SleepTimerPresenter;
 import com.r0adkll.slidr.Slidr;
-
 import java.util.ArrayList;
 import java.util.Objects;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTimerView {
 
@@ -234,6 +230,8 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
             theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            theme.applyStyle(R.style.AppThemeBlack_SwipeOnClose, true);
         }
 
 

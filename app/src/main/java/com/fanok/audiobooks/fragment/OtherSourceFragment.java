@@ -5,41 +5,29 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.adapter.OtherArtistListAddapter;
+import com.fanok.audiobooks.databinding.FragmentBookSeriasBinding;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
 import java.util.ArrayList;
 import java.util.Objects;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
+
 
 public class OtherSourceFragment extends Fragment {
 
     private static final String ARG_URL = "arg_url";
-    @BindView(R.id.list)
-    RecyclerView mList;
-    @BindView(R.id.progressBar)
-    ProgressBar mProgressBar;
-    Unbinder unbinder;
 
-    @BindView(R.id.placeholder)
-    TextView mPlaceholder;
+    private FragmentBookSeriasBinding binding;
+
 
 
     private OtherArtistListAddapter mOtherArtistListAddapter;
@@ -57,8 +45,7 @@ public class OtherSourceFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_book_serias, container, false);
-        unbinder = ButterKnife.bind(this, view);
+        binding = FragmentBookSeriasBinding.inflate(inflater, container, false);
 
         ArrayList<OtherArtistPOJO> bookPOJO = new Gson().fromJson(
                 Objects.requireNonNull(getArguments()).getString(ARG_URL),
@@ -78,26 +65,26 @@ public class OtherSourceFragment extends Fragment {
         });
 
         if (bookPOJO.size() == 0) {
-            mPlaceholder.setText(R.string.error_load_data);
-            mPlaceholder.setVisibility(View.VISIBLE);
+            binding.placeholder.setText(R.string.error_load_data);
+            binding.placeholder.setVisibility(View.VISIBLE);
         } else {
-            mPlaceholder.setVisibility(View.GONE);
+            binding.placeholder.setVisibility(View.GONE);
         }
         mOtherArtistListAddapter.setItem(bookPOJO);
 
-        mList.setLayoutManager(new LinearLayoutManager(getContext()));
-        mList.setAdapter(mOtherArtistListAddapter);
-        mList.addItemDecoration(
-                new DividerItemDecoration(mList.getContext(), DividerItemDecoration.VERTICAL));
+        binding.list.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.list.setAdapter(mOtherArtistListAddapter);
+        binding.list.addItemDecoration(
+                new DividerItemDecoration(binding.list.getContext(), DividerItemDecoration.VERTICAL));
 
-        mProgressBar.setVisibility(View.GONE);
+        binding.progressBar.setVisibility(View.GONE);
 
-        return view;
+        return binding.getRoot();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        unbinder.unbind();
+        binding = null;
     }
 }

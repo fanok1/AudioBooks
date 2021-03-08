@@ -17,28 +17,58 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.AudioPOJO;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;
 
 public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> {
+
     private static final String TAG = "AudioAdapter";
+
     private int indexSelected = -1;
 
     private ArrayList<AudioPOJO> mData;
+
     private AudioAdapter.OnListItemSelectedInterface mListener;
+
     private AudioAdapter.OnSelectedListner mSelectedListner;
-    private HashSet<String> mSelectedItems;
-    private HashSet<String> mDownloadingItems;
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+
+
+        private final ImageView mImageView;
+
+        private final ProgressBar mProgressBar;
+
+        private final RadioButton mRadioButton;
+
+        private final TextView mTime;
+
+        private final TextView mTitle;
+
+        private final View mView;
+
+        ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            mView = itemView;
+            mTitle = itemView.findViewById(R.id.title);
+            mTime = itemView.findViewById(R.id.time);
+            mRadioButton = itemView.findViewById(R.id.radio);
+            mImageView = itemView.findViewById(R.id.is_download);
+            mProgressBar = itemView.findViewById(R.id.progressBar);
+        }
+    }
+
+    public interface OnListItemSelectedInterface {
+
+        void onItemSelected(View view, int position);
+    }
 
     public AudioAdapter() {
         mData = new ArrayList<>();
@@ -121,18 +151,45 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         return new ViewHolder(view);
     }
 
+    public interface OnSelectedListner {
+
+        void onItemSelected();
+    }
+
+    private final HashSet<String> mDownloadingItems;
+
+    private final HashSet<String> mSelectedItems;
+
+    public void clearSelected() {
+        mSelectedItems.clear();
+        if (mSelectedListner != null) {
+            mSelectedListner.onItemSelected();
+        }
+        notifyDataSetChanged();
+    }
+
+    @Override
+    public int getItemCount() {
+        return mData.size();
+    }
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
         Log.d(TAG, "onBindViewHolder: called");
 
-        int totalSecs = mData.get(i).getTime();
-        int hours = totalSecs / 3600;
-        int minutes = (totalSecs % 3600) / 60;
-        int seconds = totalSecs % 60;
-        String timeString = String.format(Locale.forLanguageTag("UK"), "%02d:%02d:%02d", hours,
-                minutes, seconds);
+        if (mData.get(i).getTime() != 0) {
+            int totalSecs = mData.get(i).getTime();
+            int hours = totalSecs / 3600;
+            int minutes = (totalSecs % 3600) / 60;
+            int seconds = totalSecs % 60;
+            String timeString = String.format(Locale.forLanguageTag("UK"), "%02d:%02d:%02d", hours,
+                    minutes, seconds);
 
-        viewHolder.mTime.setText(timeString);
+            viewHolder.mTime.setText(timeString);
+            viewHolder.mTime.setVisibility(View.VISIBLE);
+        } else {
+            viewHolder.mTime.setVisibility(View.GONE);
+        }
 
         viewHolder.mTitle.setText(mData.get(i).getName());
 
@@ -203,44 +260,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
 
         viewHolder.mRadioButton.setOnClickListener(view -> selectedItemsAdd(mData.get(i).getUrl()));
 
-        if (mSelectedItems.contains(mData.get(i).getUrl())) {
-            viewHolder.mRadioButton.setChecked(true);
-        } else {
-            viewHolder.mRadioButton.setChecked(false);
-        }
-    }
-
-    private void click(View view, int pos) {
-        if (mSelectedItems.isEmpty()) {
-            indexSelected = pos;
-            if (mListener != null) {
-                mListener.onItemSelected(view, pos);
-            }
-            notifyDataSetChanged();
-        } else {
-            selectedItemsAdd(mData.get(pos).getUrl());
-        }
-    }
-
-    @Override
-    public int getItemCount() {
-        return mData.size();
-    }
-
-    public interface OnListItemSelectedInterface {
-        void onItemSelected(View view, int position);
-    }
-
-    private void selectedItemsAdd(String s) {
-        if (mSelectedItems.contains(s)) {
-            mSelectedItems.remove(s);
-        } else {
-            mSelectedItems.add(s);
-        }
-        if (mSelectedListner != null) {
-            mSelectedListner.onItemSelected();
-        }
-        notifyDataSetChanged();
+        viewHolder.mRadioButton.setChecked(mSelectedItems.contains(mData.get(i).getUrl()));
     }
 
     public void selectedItemsAddAll() {
@@ -260,36 +280,27 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         notifyDataSetChanged();
     }
 
-    public void clearSelected() {
-        mSelectedItems.clear();
+    private void click(View view, int pos) {
+        if (mSelectedItems.isEmpty()) {
+            indexSelected = pos;
+            if (mListener != null) {
+                mListener.onItemSelected(view, pos);
+            }
+            notifyDataSetChanged();
+        } else {
+            selectedItemsAdd(mData.get(pos).getUrl());
+        }
+    }
+
+    private void selectedItemsAdd(String s) {
+        if (mSelectedItems.contains(s)) {
+            mSelectedItems.remove(s);
+        } else {
+            mSelectedItems.add(s);
+        }
         if (mSelectedListner != null) {
             mSelectedListner.onItemSelected();
         }
         notifyDataSetChanged();
-    }
-
-    public interface OnSelectedListner {
-        void onItemSelected();
-    }
-
-    class ViewHolder extends RecyclerView.ViewHolder {
-
-
-        private View mView;
-        private TextView mTitle;
-        private TextView mTime;
-        private RadioButton mRadioButton;
-        private ImageView mImageView;
-        private ProgressBar mProgressBar;
-
-        ViewHolder(@NonNull View itemView) {
-            super(itemView);
-            mView = itemView;
-            mTitle = itemView.findViewById(R.id.title);
-            mTime = itemView.findViewById(R.id.time);
-            mRadioButton = itemView.findViewById(R.id.radio);
-            mImageView = itemView.findViewById(R.id.is_download);
-            mProgressBar = itemView.findViewById(R.id.progressBar);
-        }
     }
 }

@@ -4,58 +4,40 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
-import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.AnswerListAddapter;
 import com.fanok.audiobooks.adapter.ComentsListAddapter;
+import com.fanok.audiobooks.databinding.FragmentBookComentsBinding;
 import com.fanok.audiobooks.interface_pacatge.book_content.Coments;
 import com.fanok.audiobooks.pojo.ComentsPOJO;
 import com.fanok.audiobooks.pojo.SubComentsPOJO;
 import com.fanok.audiobooks.presenter.BookComentsPresenter;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Objects;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
+import org.jetbrains.annotations.NotNull;
 
 public class ComentsBookFragment extends MvpAppCompatFragment implements Coments {
 
     private static final String TAG = "DescriptionBookFragment";
+
     private static final String ARG_URL = "arg_url";
+
+    private FragmentBookComentsBinding binding;
 
 
     @InjectPresenter
     BookComentsPresenter mPresenter;
-    @BindView(R.id.list)
-    RecyclerView mList;
-    @BindView(R.id.progressBar)
-    ProgressBar mProgressBar;
-    @BindView(R.id.close)
-    ImageButton mClose;
-    @BindView(R.id.listAnswer)
-    RecyclerView mListAnswer;
-    Unbinder unbinder;
-    @BindView(R.id.placeholder)
-    TextView mPlaceholder;
+
     private ComentsListAddapter mComentsListAddapter;
+
     private AnswerListAddapter mAnswerListAddapter;
 
     @ProvidePresenter
@@ -77,18 +59,15 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_book_coments, container, false);
-        unbinder = ButterKnife.bind(this, view);
 
+        binding = FragmentBookComentsBinding.inflate(inflater, container, false);
 
-        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(
-                view.findViewById(R.id.answer));
-        mClose.setOnClickListener(view1 -> {
+        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(binding.answer.getRoot());
+        binding.answer.close.setOnClickListener(view1 -> {
             if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
         });
-
 
         mComentsListAddapter = new ComentsListAddapter(getContext());
         mAnswerListAddapter = new AnswerListAddapter(getContext());
@@ -110,58 +89,56 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
             }
         });
 
-        mList.setLayoutManager(new LinearLayoutManager(getContext()));
-        mList.setAdapter(mComentsListAddapter);
-        mList.addItemDecoration(
-                new DividerItemDecoration(mList.getContext(), DividerItemDecoration.VERTICAL));
+        binding.list.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.list.setAdapter(mComentsListAddapter);
+        binding.list.addItemDecoration(
+                new DividerItemDecoration(binding.list.getContext(), DividerItemDecoration.VERTICAL));
 
-        mListAnswer.setLayoutManager(new LinearLayoutManager(getContext()));
-        mListAnswer.setAdapter(mAnswerListAddapter);
+        binding.answer.listAnswer.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.answer.listAnswer.setAdapter(mAnswerListAddapter);
 
-        ViewCompat.setNestedScrollingEnabled(mList, false);
+        ViewCompat.setNestedScrollingEnabled(binding.list, false);
 
-        return view;
+        return binding.getRoot();
     }
 
+    @Override
+    public void onDestroyView() {
+        mComentsListAddapter = null;
+        mAnswerListAddapter = null;
+        mPresenter.onDestroy();
+        super.onDestroyView();
+        binding = null;
+    }
 
     @Override
-    public void showProgress(boolean b) {
-        if (b) {
-            mProgressBar.setVisibility(View.VISIBLE);
-        } else {
-            mProgressBar.setVisibility(View.GONE);
-        }
+    public void setPlaceholder(int id) {
+        binding.placeholder.setText(getString(id));
+    }
 
+    @Override
+    public void setPlaceholder(@NotNull String text) {
+        binding.placeholder.setText(text);
     }
 
     @Override
     public void showComents(ArrayList<ComentsPOJO> data) {
         if (data.size() == 0) {
-            mPlaceholder.setVisibility(View.VISIBLE);
+            binding.placeholder.setVisibility(View.VISIBLE);
         } else {
-            mPlaceholder.setVisibility(View.GONE);
+            binding.placeholder.setVisibility(View.GONE);
         }
         mComentsListAddapter.setItem(data);
 
     }
 
     @Override
-    public void onDestroyView() {
-        unbinder.unbind();
-        mComentsListAddapter = null;
-        mAnswerListAddapter = null;
-        mPresenter.onDestroy();
-        super.onDestroyView();
-    }
+    public void showProgress(boolean b) {
+        if (b) {
+            binding.progressBar.setVisibility(View.VISIBLE);
+        } else {
+            binding.progressBar.setVisibility(View.GONE);
+        }
 
-
-    @Override
-    public void setPlaceholder(int id) {
-        mPlaceholder.setText(getString(id));
-    }
-
-    @Override
-    public void setPlaceholder(@NotNull String text) {
-        mPlaceholder.setText(text);
     }
 }

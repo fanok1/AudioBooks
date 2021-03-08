@@ -2,13 +2,12 @@ package com.fanok.audiobooks;
 
 import android.graphics.Rect;
 import android.view.View;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class MarginItemDecoration extends RecyclerView.ItemDecoration {
 
-    private int margin;
+    private final int margin;
 
     public MarginItemDecoration(int margin) {
         this.margin = margin;

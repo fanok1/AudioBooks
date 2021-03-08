@@ -2,7 +2,6 @@ package com.fanok.audiobooks.activity;
 
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
-
 import static com.fanok.audiobooks.Consts.handleUserInput;
 import static com.fanok.audiobooks.Consts.isServiceRunning;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_ENABLED;
@@ -52,7 +51,6 @@ import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -67,7 +65,8 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.alimuzaffar.lib.pin.PinEntryEditText;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
@@ -98,18 +97,13 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 import com.stepstone.apprating.AppRatingDialog;
 import com.stepstone.apprating.listener.RatingDialogListener;
-
-import org.jetbrains.annotations.NotNull;
-import org.xmlpull.v1.XmlPullParser;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import org.jetbrains.annotations.NotNull;
+import org.xmlpull.v1.XmlPullParser;
 
 public class BookActivity extends MvpAppCompatActivity implements Activity, RatingDialogListener {
 
@@ -444,6 +438,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             setTheme(R.style.AppTheme_NoActionBar);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             setTheme(R.style.LightAppTheme_NoActionBar);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            setTheme(R.style.AppThemeBlack_NoActionBar);
         }
 
         if (mBookPOJO != null && mBookPOJO.getName() != null) {
@@ -1278,6 +1274,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
             theme.applyStyle(R.style.AppTheme_NoActionBar, true);
         } else if (themeName.equals(getString(R.string.theme_light_value))) {
             theme.applyStyle(R.style.LightAppTheme_NoActionBar, true);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            theme.applyStyle(R.style.AppThemeBlack_NoActionBar, true);
         }
 
 

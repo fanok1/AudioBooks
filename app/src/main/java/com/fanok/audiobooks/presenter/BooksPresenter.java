@@ -12,10 +12,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
@@ -32,14 +30,12 @@ import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
-import java.util.Objects;
-
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import java.util.ArrayList;
+import java.util.Objects;
 
 @InjectViewState
 public class BooksPresenter extends MvpPresenter<BooksView> implements
@@ -106,7 +102,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showProgres(true);
             page++;
             if (mModelId != Consts.MODEL_GENRE) {
-                if (!mUrl.contains("genre") || mUrl.contains("izib.uk")) {
+                if (!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com")) {
                     getData(mUrl + page + "/");
                 } else {
                     getData(mUrl.replace("<page>", Integer.toString(page)));
@@ -119,28 +115,127 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
     }
 
     @Override
-    public void onRefresh() {
-        if (!isLoading) {
-            isRefreshing = true;
-            isEnd = false;
-            getViewState().showRefreshing(true);
-            page = 1;
-            if (mModelId != Consts.MODEL_GENRE) {
-                if (!mUrl.contains("genre") || mUrl.contains("izib.uk")) {
-                    getData(mUrl + page + "/");
-                } else {
-                    getData(mUrl.replace("<page>", Integer.toString(page)));
-                }
-            } else {
-                getData(mUrl);
-            }
-        } else {
-            getViewState().showRefreshing(false);
+    public void onBookItemLongClick(View view, int position, LayoutInflater layoutInflater) {
+
+        @SuppressLint("InflateParams") View layout = layoutInflater.inflate(
+                R.layout.bootom_sheet_books_menu, null);
+        final BottomSheetDialog dialog = new BottomSheetDialog(view.getContext());
+        dialog.setContentView(layout);
+
+        TextView open = layout.findViewById(R.id.open);
+        TextView add = layout.findViewById(R.id.addFavorite);
+        TextView remove = layout.findViewById(R.id.removeFavorite);
+        TextView genre = layout.findViewById(R.id.genre);
+        TextView author = layout.findViewById(R.id.author);
+        TextView artist = layout.findViewById(R.id.artist);
+        TextView series = layout.findViewById(R.id.series);
+
+        if (books.get(position).getPhoto() != null) {
+            ImageView imageView = layout.findViewById(R.id.imageView);
+            Picasso.get()
+                    .load(books.get(position).getPhoto())
+                    .error(R.drawable.image_placeholder)
+                    .placeholder(R.drawable.image_placeholder)
+                    .into(imageView);
         }
 
+        TextView title = layout.findViewById(R.id.title);
+        title.setText(books.get(position).getName());
+
+        TextView authorName = layout.findViewById(R.id.authorName);
+        if (books.get(position).getAutor() != null) {
+            authorName.setText(books.get(position).getAutor());
+            authorName.setVisibility(View.VISIBLE);
+        } else {
+            authorName.setVisibility(View.GONE);
+        }
+
+        if (books.get(position).getSeries() == null || books.get(position).getUrlSeries() == null) {
+            series.setVisibility(View.GONE);
+        } else {
+            series.setVisibility(View.VISIBLE);
+        }
+
+        if (mBooksDBModel.inFavorite(books.get(position))) {
+            add.setVisibility(View.GONE);
+            remove.setVisibility(View.VISIBLE);
+        } else {
+            add.setVisibility(View.VISIBLE);
+            remove.setVisibility(View.GONE);
+        }
+
+        open.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            MyInterstitialAd.increase();
+            getViewState().showBooksActivity(books.get(position));
+        });
+
+        add.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            mBooksDBModel.addFavorite(books.get(position));
+        });
+
+        remove.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            mBooksDBModel.removeFavorite(books.get(position));
+        });
+
+        if (books.get(position).getUrlGenre() != null) {
+            genre.setVisibility(View.VISIBLE);
+            genre.setOnClickListener(view1 -> {
+                dialog.dismiss();
+                getViewState().showFragment(BooksFragment.newInstance(
+                        books.get(position).getUrlGenre(),
+                        R.string.menu_audiobooks,
+                        books.get(position).getGenre(), Consts.MODEL_BOOKS),
+                        "genreBooks");
+            });
+        } else {
+            genre.setVisibility(View.GONE);
+        }
+
+        if (books.get(position).getUrlAutor() != null) {
+            author.setVisibility(View.VISIBLE);
+            author.setOnClickListener(view1 -> {
+                dialog.dismiss();
+                if (!books.get(position).getUrlAutor().isEmpty()) {
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            books.get(position).getUrlAutor(),
+                            R.string.menu_audiobooks,
+                            books.get(position).getAutor(), Consts.MODEL_BOOKS),
+                            "autorBooks");
+                }
+            });
+        } else {
+            author.setVisibility(View.GONE);
+        }
+
+        if (books.get(position).getUrlArtist() != null) {
+            artist.setVisibility(View.VISIBLE);
+            artist.setOnClickListener(view1 -> {
+                dialog.dismiss();
+                getViewState().showFragment(BooksFragment.newInstance(
+                        books.get(position).getUrlArtist(),
+                        R.string.menu_audiobooks,
+                        books.get(position).getArtist(), Consts.MODEL_BOOKS),
+                        "artistBooks");
+            });
+        } else {
+            artist.setVisibility(View.GONE);
+        }
+
+        series.setOnClickListener(view12 -> {
+            dialog.dismiss();
+            getViewState().showFragment(BooksFragment.newInstance(
+                    books.get(position).getUrlSeries(),
+                    R.string.menu_audiobooks,
+                    books.get(position).getSeries(), Consts.MODEL_BOOKS),
+                    "seriesBooks");
+        });
+        dialog.show();
     }
 
-
+    @SuppressLint("ApplySharedPref")
     @Override
     public void onOptionItemSelected(int itemId) {
         String subTitle = mSubTitle.replace(" " + getStringById(R.string.order_new), "");
@@ -148,13 +243,16 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         subTitle = subTitle.replace(" " + getStringById(R.string.order_popular), "");
         String url = "";
 
-        if (itemId == R.id.source_izi_book || itemId == R.id.source_kniga_v_uhe) {
+        if (itemId == R.id.source_izi_book || itemId == R.id.source_kniga_v_uhe
+                || itemId == R.id.source_audio_book_mp3) {
             SharedPreferences pref = getDefaultSharedPreferences(Objects.requireNonNull(mContext));
             SharedPreferences.Editor editor = pref.edit();
             if (itemId == R.id.source_kniga_v_uhe) {
                 editor.putString("sorce_books", getStringById(R.string.kniga_v_uhe_value));
             } else if (itemId == R.id.source_izi_book) {
                 editor.putString("sorce_books", getStringById(R.string.izibuc_value));
+            } else if (itemId == R.id.source_audio_book_mp3) {
+                editor.putString("sorce_books", getStringById(R.string.audiobook_mp3_value));
             }
             editor.commit();
             getViewState().recreate();
@@ -240,12 +338,36 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             "audioBooksOrederNew");
                 }
             }
+        } else if (mUrl.contains("audiobook-mp3.com")) {
+            if (itemId == R.id.order) {
+                Consts.izibuk_reiting = !Consts.izibuk_reiting;
+                if (Consts.izibuk_reiting) {
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            Url.SERVER_ABMP3 + "/top?page=",
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_popular),
+                            Consts.MODEL_BOOKS),
+                            "audioBooksOrederDiscussedAllTime");
+                } else {
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            Url.INDEX_ABMP3, R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_new), Consts.MODEL_BOOKS),
+                            "audioBooksOrederNew");
+                }
+            }
         }
-
 
         switch (itemId) {
             case R.id.app_bar_search:
-                getViewState().showSearchActivity(mModelId);
+                if (mUrl.contains("audiobook-mp3.com")) {
+                    if (mModelId == Consts.MODEL_AUTOR) {
+                        getViewState().showSearchActivity(Consts.MODEL_AUTOR);
+                    } else {
+                        getViewState().showSearchActivity(Consts.MODEL_BOOKS);
+                    }
+                } else {
+                    getViewState().showSearchActivity(mModelId);
+                }
                 break;
             case R.id.new_data:
                 getViewState().showFragment(BooksFragment.newInstance(
@@ -351,125 +473,25 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
     }
 
     @Override
-    public void onBookItemLongClick(View view, int position, LayoutInflater layoutInflater) {
-
-        @SuppressLint("InflateParams") View layout = layoutInflater.inflate(
-                R.layout.bootom_sheet_books_menu, null);
-        final BottomSheetDialog dialog = new BottomSheetDialog(view.getContext());
-        dialog.setContentView(layout);
-
-        TextView open = layout.findViewById(R.id.open);
-        TextView add = layout.findViewById(R.id.addFavorite);
-        TextView remove = layout.findViewById(R.id.removeFavorite);
-        TextView genre = layout.findViewById(R.id.genre);
-        TextView author = layout.findViewById(R.id.author);
-        TextView artist = layout.findViewById(R.id.artist);
-        TextView series = layout.findViewById(R.id.series);
-
-        if (books.get(position).getPhoto() != null) {
-            ImageView imageView = layout.findViewById(R.id.imageView);
-            Picasso.get()
-                    .load(books.get(position).getPhoto())
-                    .error(android.R.drawable.ic_menu_camera)
-                    .placeholder(android.R.drawable.ic_menu_camera)
-                    .into(imageView);
-        }
-
-        TextView title = layout.findViewById(R.id.title);
-        title.setText(books.get(position).getName());
-
-        TextView authorName = layout.findViewById(R.id.authorName);
-        if (books.get(position).getAutor() != null) {
-            authorName.setText(books.get(position).getAutor());
-            authorName.setVisibility(View.VISIBLE);
-        } else {
-            authorName.setVisibility(View.GONE);
-        }
-
-
-        if (books.get(position).getSeries() == null || books.get(position).getUrlSeries() == null) {
-            series.setVisibility(View.GONE);
-        } else {
-            series.setVisibility(View.VISIBLE);
-        }
-
-        if (mBooksDBModel.inFavorite(books.get(position))) {
-            add.setVisibility(View.GONE);
-            remove.setVisibility(View.VISIBLE);
-        } else {
-            add.setVisibility(View.VISIBLE);
-            remove.setVisibility(View.GONE);
-        }
-
-        open.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            MyInterstitialAd.increase();
-            getViewState().showBooksActivity(books.get(position));
-        });
-
-        add.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            mBooksDBModel.addFavorite(books.get(position));
-        });
-
-        remove.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            mBooksDBModel.removeFavorite(books.get(position));
-        });
-
-        if (books.get(position).getUrlGenre() != null) {
-            genre.setVisibility(View.VISIBLE);
-            genre.setOnClickListener(view1 -> {
-                dialog.dismiss();
-                getViewState().showFragment(BooksFragment.newInstance(
-                        books.get(position).getUrlGenre(),
-                        R.string.menu_audiobooks,
-                        books.get(position).getGenre(), Consts.MODEL_BOOKS),
-                        "genreBooks");
-            });
-        } else {
-            genre.setVisibility(View.GONE);
-        }
-
-        if (books.get(position).getUrlAutor() != null) {
-            author.setVisibility(View.VISIBLE);
-            author.setOnClickListener(view1 -> {
-                dialog.dismiss();
-                if (!books.get(position).getUrlAutor().isEmpty()) {
-                    getViewState().showFragment(BooksFragment.newInstance(
-                            books.get(position).getUrlAutor(),
-                            R.string.menu_audiobooks,
-                            books.get(position).getAutor(), Consts.MODEL_BOOKS),
-                            "autorBooks");
+    public void onRefresh() {
+        if (!isLoading) {
+            isRefreshing = true;
+            isEnd = false;
+            getViewState().showRefreshing(true);
+            page = 1;
+            if (mModelId != Consts.MODEL_GENRE) {
+                if (!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com")) {
+                    getData(mUrl + page + "/");
+                } else {
+                    getData(mUrl.replace("<page>", Integer.toString(page)));
                 }
-            });
+            } else {
+                getData(mUrl);
+            }
         } else {
-            author.setVisibility(View.GONE);
+            getViewState().showRefreshing(false);
         }
 
-        if (books.get(position).getUrlArtist() != null) {
-            artist.setVisibility(View.VISIBLE);
-            artist.setOnClickListener(view1 -> {
-                dialog.dismiss();
-                getViewState().showFragment(BooksFragment.newInstance(
-                        books.get(position).getUrlArtist(),
-                        R.string.menu_audiobooks,
-                        books.get(position).getArtist(), Consts.MODEL_BOOKS),
-                        "artistBooks");
-            });
-        } else {
-            artist.setVisibility(View.GONE);
-        }
-
-        series.setOnClickListener(view12 -> {
-            dialog.dismiss();
-            getViewState().showFragment(BooksFragment.newInstance(
-                    books.get(position).getUrlSeries(),
-                    R.string.menu_audiobooks,
-                    books.get(position).getSeries(), Consts.MODEL_BOOKS),
-                    "seriesBooks");
-        });
-        dialog.show();
     }
 
 

@@ -5,7 +5,8 @@
     android:layout_height="@dimen/recycler_item_height_genre"
     android:background="?attr/backgroundItem"
     android:orientation="horizontal"
-    tools:background="@color/colorBackgraund">
+    tools:background="@color/colorBackgraund"
+    tools:viewBindingIgnore="true">
 
 
     <CheckedTextView

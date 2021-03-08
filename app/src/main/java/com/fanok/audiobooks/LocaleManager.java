@@ -3,10 +3,8 @@ package com.fanok.audiobooks;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.PreferenceManager;
-
 import java.util.Locale;
 
 public class LocaleManager {
@@ -50,7 +48,8 @@ public class LocaleManager {
         String themeName = pref.getString("pref_theme",
                 context.getString(R.string.theme_dark_value));
         int mode;
-        if (themeName.equals(context.getString(R.string.theme_dark_value))) {
+        if (themeName.equals(context.getString(R.string.theme_dark_value)) || themeName
+                .equals(context.getString(R.string.theme_black_value))) {
             mode = AppCompatDelegate.MODE_NIGHT_YES;
         } else {
             mode = AppCompatDelegate.MODE_NIGHT_NO;

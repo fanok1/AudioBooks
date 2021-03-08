@@ -1,22 +1,21 @@
 package com.fanok.audiobooks.model;
 
+import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
-
+import com.fanok.audiobooks.AutorsSearchABMP3;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchableModel;
+import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.fanok.audiobooks.pojo.SearcheblPOJO;
 import com.fanok.audiobooks.pojo.SearchebleArrayPOJO;
-
+import io.reactivex.Observable;
+import java.io.IOException;
+import java.util.ArrayList;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import java.io.IOException;
-import java.util.ArrayList;
-
-import io.reactivex.Observable;
 
 public class SearchebleModel implements SearchableModel {
 
@@ -81,11 +80,9 @@ public class SearchebleModel implements SearchableModel {
                         }
                     }
                     if (title.contains("автор")) {
-                        searcheblPOJO.setAutorsCount(title);
                         searcheblPOJO.setAutorsList(list);
 
                     } else if (title.contains("цикл")) {
-                        searcheblPOJO.setSeriesCount(title);
                         searcheblPOJO.setSeriesList(list);
                     }
 
@@ -96,11 +93,33 @@ public class SearchebleModel implements SearchableModel {
     }
 
     @Override
-    public Observable<SearcheblPOJO> dowland(String url) {
+    public Observable<SearcheblPOJO> dowland(SharedPreferences preferences, ArrayList<String> urls, String query) {
         return Observable.create(observableEmitter -> {
-            SearcheblPOJO searcheblPOJO;
+
+            boolean searchKnigaVUhe = preferences.getBoolean("search_kniga_v_uhe", true);
+            boolean searchABMP3 = preferences.getBoolean("search_abmp3", true);
+
+            SearcheblPOJO searcheblPOJO = new SearcheblPOJO();
             try {
-                searcheblPOJO = getSearcheblPOJO(url);
+
+                for (String url : urls) {
+                    if (url.contains("knigavuhe.org") && searchKnigaVUhe) {
+                        searcheblPOJO = searcheblPOJO
+                                .concat(searcheblPOJO, getSearcheblPOJO(url.replace("<qery>", query).replace("<page>",
+                                        "1")));
+                    } else if (url.contains("audiobook-mp3.com") && searchABMP3) {
+                        SearcheblPOJO pojo = new SearcheblPOJO();
+                        ArrayList<GenrePOJO> genrePOJOs = new AutorsSearchABMP3()
+                                .getAutors(url.replace("<qery>", query), 1);
+                        ArrayList<SearchebleArrayPOJO> searchebleArrayPOJOS = new ArrayList<>();
+                        for (GenrePOJO genrePOJO : genrePOJOs) {
+                            searchebleArrayPOJOS
+                                    .add(new SearchebleArrayPOJO(genrePOJO.getName(), genrePOJO.getUrl()));
+                        }
+                        pojo.setAutorsList(searchebleArrayPOJOS);
+                        searcheblPOJO = searcheblPOJO.concat(searcheblPOJO, pojo);
+                    }
+                }
                 observableEmitter.onNext(searcheblPOJO);
             } catch (Exception e) {
                 observableEmitter.onError(e);

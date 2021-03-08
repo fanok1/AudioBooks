@@ -6,51 +6,38 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.adapter.OtherArtistListAddapter;
+import com.fanok.audiobooks.databinding.FragmentBookSeriasBinding;
 import com.fanok.audiobooks.interface_pacatge.book_content.OtherArtist;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import com.fanok.audiobooks.presenter.OtherArtistPresenter;
 import com.google.gson.Gson;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
 
 public class OtherArtistFragment extends MvpAppCompatFragment implements OtherArtist {
 
     private static final String TAG = "SeriesBookFragment";
+
     private static final String ARG_URL = "arg_url";
-    @BindView(R.id.list)
-    RecyclerView mList;
-    @BindView(R.id.progressBar)
-    ProgressBar mProgressBar;
-    Unbinder unbinder;
+
+    private FragmentBookSeriasBinding binding;
 
     @InjectPresenter
     OtherArtistPresenter mPresenter;
-    @BindView(R.id.placeholder)
-    TextView mPlaceholder;
 
 
     private OtherArtistListAddapter mOtherArtistListAddapter;
@@ -81,8 +68,7 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_book_serias, container, false);
-        unbinder = ButterKnife.bind(this, view);
+        binding = FragmentBookSeriasBinding.inflate(inflater, container, false);
 
         mOtherArtistListAddapter = new OtherArtistListAddapter();
 
@@ -91,34 +77,29 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
             showBook(otherArtistPOJO.getUrl());
         });
 
-        mList.setLayoutManager(new LinearLayoutManager(getContext()));
-        mList.setAdapter(mOtherArtistListAddapter);
-        mList.addItemDecoration(
-                new DividerItemDecoration(mList.getContext(), DividerItemDecoration.VERTICAL));
+        binding.list.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.list.setAdapter(mOtherArtistListAddapter);
+        binding.list.addItemDecoration(
+                new DividerItemDecoration(binding.list.getContext(), DividerItemDecoration.VERTICAL));
 
-        return view;
+        return binding.getRoot();
     }
 
+    @Override
+    public void onDestroyView() {
+        mPresenter.onDestroy();
+        super.onDestroyView();
+        binding = null;
+    }
 
     @Override
     public void showProgress(boolean b) {
         if (b) {
-            mProgressBar.setVisibility(View.VISIBLE);
+            binding.progressBar.setVisibility(View.VISIBLE);
         } else {
-            mProgressBar.setVisibility(View.GONE);
+            binding.progressBar.setVisibility(View.GONE);
         }
 
-    }
-
-    @Override
-    public void showSeries(ArrayList<OtherArtistPOJO> data) {
-        if (data.size() == 0) {
-            mPlaceholder.setText(R.string.error_load_data);
-            mPlaceholder.setVisibility(View.VISIBLE);
-        } else {
-            mPlaceholder.setVisibility(View.GONE);
-        }
-        mOtherArtistListAddapter.setItem(data);
     }
 
     @Override
@@ -139,9 +120,13 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
     }
 
     @Override
-    public void onDestroyView() {
-        mPresenter.onDestroy();
-        super.onDestroyView();
-        unbinder.unbind();
+    public void showSeries(ArrayList<OtherArtistPOJO> data) {
+        if (data.size() == 0) {
+            binding.placeholder.setText(R.string.error_load_data);
+            binding.placeholder.setVisibility(View.VISIBLE);
+        } else {
+            binding.placeholder.setVisibility(View.GONE);
+        }
+        mOtherArtistListAddapter.setItem(data);
     }
 }

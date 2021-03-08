@@ -11,35 +11,22 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.palette.graphics.Palette;
-
 import com.fanok.audiobooks.R;
-import com.github.chrisbanes.photoview.PhotoView;
-import com.google.android.material.appbar.AppBarLayout;
+import com.fanok.audiobooks.databinding.ActivityImageFullScrinBinding;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
-
 import org.jetbrains.annotations.NotNull;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class ImageFullScreenActivity extends AppCompatActivity {
 
-    @BindView(R.id.image)
-    PhotoView mImage;
-    @BindView(R.id.toolbar)
-    Toolbar mToolbar;
-    @BindView(R.id.app_bar)
-    AppBarLayout mAppBar;
-
     private boolean isHide = true;
+
+    private ActivityImageFullScrinBinding binding;
 
     public static void start(@NotNull Activity activity, @NotNull String image, String title,
             View anim) {
@@ -64,11 +51,10 @@ public class ImageFullScreenActivity extends AppCompatActivity {
             throw new IllegalArgumentException(
                     "imageUrl must be not empty");
         }
-
-        setContentView(R.layout.activity_image_full_scrin);
-        ButterKnife.bind(this);
-        mToolbar.setOutlineProvider(null);
-        setSupportActionBar(mToolbar);
+        binding = ActivityImageFullScrinBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        binding.toolbar.setOutlineProvider(null);
+        setSupportActionBar(binding.toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -76,7 +62,7 @@ public class ImageFullScreenActivity extends AppCompatActivity {
             actionBar.hide();
         }
 
-        mAppBar.setAlpha(0);
+        binding.appBar.setAlpha(0);
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_VISIBLE | View.SYSTEM_UI_FLAG_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
@@ -85,7 +71,7 @@ public class ImageFullScreenActivity extends AppCompatActivity {
         String title = intent.getStringExtra("title");
         if (title != null) setTitle(title);
 
-        mAppBar.animate().setListener(new Animator.AnimatorListener() {
+        binding.appBar.animate().setListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animator) {
 
@@ -116,12 +102,19 @@ public class ImageFullScreenActivity extends AppCompatActivity {
 
         Picasso.get()
                 .load(imageUrl)
-                .error(android.R.drawable.ic_menu_camera)
-                .placeholder(android.R.drawable.ic_menu_camera)
+                .error(R.drawable.image_placeholder)
+                .placeholder(R.drawable.image_placeholder)
                 .into(new Target() {
                     @Override
+                    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                        binding.image.setImageDrawable(errorDrawable);
+                        Toast.makeText(ImageFullScreenActivity.this,
+                                getString(R.string.error_load_photo), Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
                     public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                        mImage.setImageBitmap(bitmap);
+                        binding.image.setImageBitmap(bitmap);
                         Palette p = createPaletteSync(bitmap);
                         Palette.Swatch vibrantSwatch = p.getVibrantSwatch();
                         Palette.Swatch darkVibrantSwatch = p.getMutedSwatch();
@@ -134,35 +127,28 @@ public class ImageFullScreenActivity extends AppCompatActivity {
                                     GradientDrawable.Orientation.TOP_BOTTOM,
                                     new int[]{gradientColor1, gradientColor2});
                             gd.setCornerRadius(45f);
-                            mImage.setBackgroundDrawable(gd);
+                            binding.image.setBackgroundDrawable(gd);
                         }
 
                     }
 
                     @Override
-                    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                        mImage.setImageDrawable(errorDrawable);
-                        Toast.makeText(ImageFullScreenActivity.this,
-                                getString(R.string.error_load_photo), Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
                     public void onPrepareLoad(Drawable placeHolderDrawable) {
-                        mImage.setImageDrawable(placeHolderDrawable);
+                        binding.image.setImageDrawable(placeHolderDrawable);
                     }
                 });
 
-        mImage.setOnClickListener(view -> {
+        binding.image.setOnClickListener(view -> {
             if (actionBar != null) {
                 if (actionBar.isShowing()) {
-                    mAppBar.animate().alpha(0f).setDuration(340).start();
+                    binding.appBar.animate().alpha(0f).setDuration(340).start();
                     View decorView1 = getWindow().getDecorView();
                     int uiOptions1 =
                             View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
                     decorView1.setSystemUiVisibility(uiOptions1);
                 } else {
                     actionBar.show();
-                    mAppBar.animate().alpha(1f).setDuration(300).start();
+                    binding.appBar.animate().alpha(1f).setDuration(300).start();
                     View decorView1 = getWindow().getDecorView();
                     int uiOptions1 =
                             View.SYSTEM_UI_FLAG_VISIBLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;

@@ -5,13 +5,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.ClearSavedPOJO;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -19,7 +16,25 @@ import java.util.HashSet;
 public class ClearSavedAdapter extends RecyclerView.Adapter<ClearSavedAdapter.ViewHolder> {
 
     private ArrayList<ClearSavedPOJO> mData;
-    private HashSet<File> mSelectedItems;
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+
+
+        private final CheckBox mCheckBox;
+
+        private final TextView mTitle;
+
+        private final View mView;
+
+        ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            mView = itemView;
+            mTitle = itemView.findViewById(R.id.title);
+            mCheckBox = itemView.findViewById(R.id.checkBox);
+
+        }
+    }
+
     private OnChackedChangeInterface mChackedChange;
 
     public ClearSavedAdapter() {
@@ -73,6 +88,18 @@ public class ClearSavedAdapter extends RecyclerView.Adapter<ClearSavedAdapter.Vi
         return new ViewHolder(view);
     }
 
+    public interface OnChackedChangeInterface {
+
+        void onChackedChange();
+    }
+
+    private final HashSet<File> mSelectedItems;
+
+    @Override
+    public int getItemCount() {
+        return mData.size();
+    }
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
         viewHolder.mView.setOnClickListener(view -> {
@@ -89,37 +116,8 @@ public class ClearSavedAdapter extends RecyclerView.Adapter<ClearSavedAdapter.Vi
 
         String text = mData.get(i).getFile().getName() + " (" + mData.get(i).getStorege() + ")";
         viewHolder.mTitle.setText(text);
-        if (mSelectedItems.contains(mData.get(i).getFile())) {
-            viewHolder.mCheckBox.setChecked(true);
-        } else {
-            viewHolder.mCheckBox.setChecked(false);
-        }
+        viewHolder.mCheckBox.setChecked(mSelectedItems.contains(mData.get(i).getFile()));
         viewHolder.mCheckBox.setClickable(false);
 
-    }
-
-    @Override
-    public int getItemCount() {
-        return mData.size();
-    }
-
-    public interface OnChackedChangeInterface {
-        void onChackedChange();
-    }
-
-    class ViewHolder extends RecyclerView.ViewHolder {
-
-
-        private View mView;
-        private TextView mTitle;
-        private CheckBox mCheckBox;
-
-        ViewHolder(@NonNull View itemView) {
-            super(itemView);
-            mView = itemView;
-            mTitle = itemView.findViewById(R.id.title);
-            mCheckBox = itemView.findViewById(R.id.checkBox);
-
-        }
     }
 }

@@ -10,10 +10,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.appcompat.widget.PopupMenu;
 import androidx.preference.PreferenceManager;
-
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
@@ -29,18 +27,15 @@ import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.squareup.picasso.Picasso;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import org.jetbrains.annotations.NotNull;
 
 @InjectViewState
 public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
@@ -153,7 +148,6 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
             mAudioListDBModel.closeDB();
         }
         mContext = null;
-        //mContext = null;
     }
 
     @Override
@@ -179,15 +173,20 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         ImageView imageView = layout.findViewById(R.id.imageView);
         Picasso.get()
                 .load(books.get(position).getPhoto())
-                .error(android.R.drawable.ic_menu_camera)
-                .placeholder(android.R.drawable.ic_menu_camera)
+                .error(R.drawable.image_placeholder)
+                .placeholder(R.drawable.image_placeholder)
                 .into(imageView);
 
         TextView title = layout.findViewById(R.id.title);
         title.setText(books.get(position).getName());
 
         TextView authorName = layout.findViewById(R.id.authorName);
-        authorName.setText(books.get(position).getAutor());
+        if (books.get(position).getAutor() != null) {
+            authorName.setText(books.get(position).getAutor());
+            authorName.setVisibility(View.VISIBLE);
+        } else {
+            authorName.setVisibility(View.GONE);
+        }
 
         if (books.get(position).getSeries() == null || books.get(position).getUrlSeries() == null) {
             series.setVisibility(View.GONE);
@@ -211,34 +210,49 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
             onRemove(position);
         });
 
-        genre.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            getViewState().showFragment(BooksFragment.newInstance(
-                    books.get(position).getUrlGenre(),
-                    R.string.menu_audiobooks,
-                    books.get(position).getGenre(), Consts.MODEL_BOOKS),
-                    "genreBooks");
-        });
-
-        author.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            if (!books.get(position).getUrlAutor().isEmpty()) {
+        if (books.get(position).getUrlGenre() != null) {
+            genre.setVisibility(View.VISIBLE);
+            genre.setOnClickListener(view1 -> {
+                dialog.dismiss();
                 getViewState().showFragment(BooksFragment.newInstance(
-                        books.get(position).getUrlAutor(),
+                        books.get(position).getUrlGenre(),
                         R.string.menu_audiobooks,
-                        books.get(position).getAutor(), Consts.MODEL_BOOKS),
-                        "autorBooks");
-            }
-        });
+                        books.get(position).getGenre(), Consts.MODEL_BOOKS),
+                        "genreBooks");
+            });
+        } else {
+            genre.setVisibility(View.GONE);
+        }
 
-        artist.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            getViewState().showFragment(BooksFragment.newInstance(
-                    books.get(position).getUrlArtist(),
-                    R.string.menu_audiobooks,
-                    books.get(position).getArtist(), Consts.MODEL_BOOKS),
-                    "artistBooks");
-        });
+        if (books.get(position).getUrlAutor() != null) {
+            author.setVisibility(View.VISIBLE);
+            author.setOnClickListener(view1 -> {
+                dialog.dismiss();
+                if (!books.get(position).getUrlAutor().isEmpty()) {
+                    getViewState().showFragment(BooksFragment.newInstance(
+                            books.get(position).getUrlAutor(),
+                            R.string.menu_audiobooks,
+                            books.get(position).getAutor(), Consts.MODEL_BOOKS),
+                            "autorBooks");
+                }
+            });
+        } else {
+            author.setVisibility(View.GONE);
+        }
+
+        if (books.get(position).getUrlArtist() != null) {
+            artist.setVisibility(View.VISIBLE);
+            artist.setOnClickListener(view1 -> {
+                dialog.dismiss();
+                getViewState().showFragment(BooksFragment.newInstance(
+                        books.get(position).getUrlArtist(),
+                        R.string.menu_audiobooks,
+                        books.get(position).getArtist(), Consts.MODEL_BOOKS),
+                        "artistBooks");
+            });
+        } else {
+            artist.setVisibility(View.GONE);
+        }
 
         series.setOnClickListener(view12 -> {
             dialog.dismiss();

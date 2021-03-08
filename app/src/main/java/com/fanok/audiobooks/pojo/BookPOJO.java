@@ -1,21 +1,17 @@
 package com.fanok.audiobooks.pojo;
 
 import androidx.annotation.NonNull;
-
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
+import io.reactivex.Observable;
+import java.io.IOException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
-
-import java.io.IOException;
-
-import io.reactivex.Observable;
 
 public class BookPOJO {
     private static final String TAG = "BookPOJO";
@@ -30,36 +26,92 @@ public class BookPOJO {
     private String urlSeries;
     private String genre;
     private String urlGenre;
+
     private String reting = "0";
+
     private int coments = 0;
+
     private String name;
+
     private String url;
+
     private String desc;
 
     public String getName() {
         return name;
     }
 
-    public static Observable<BookPOJO> getDescription(String url) {
-        return Observable.create(observableEmitter -> {
-            if (url != null) {
-                BookPOJO articlesModels;
-                try {
-                    if (url.contains("knigavuhe.org")) {
-                        articlesModels = getBookByUrl(url);
-                    } else if (url.contains("izib.uk")) {
-                        articlesModels = getBookByUrlIziBuk(url);
-                    } else {
-                        articlesModels = new BookPOJO();
+    public static BookPOJO getBookByUrlABMP3(String url) throws IOException {
+        String autor = "";
+
+        BookPOJO bookPOJO = new BookPOJO();
+
+        Document document = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .sslSocketFactory(Consts.socketFactory())
+                .referrer("https://google.com/")
+                .get();
+
+        bookPOJO.setUrl(url);
+
+        Elements img = document.getElementsByClass("abook_image");
+        if (img != null && img.size() != 0) {
+            bookPOJO.setPhoto(Url.SERVER_ABMP3 + img.first().attr("src"));
+        }
+
+        Elements desc = document.getElementsByClass("abook-desc");
+        if (desc != null && desc.size() != 0) {
+            bookPOJO.setDesc(desc.first().ownText());
+        }
+
+        Elements infos = document.getElementsByClass("panel-item");
+        if (infos != null) {
+            for (Element info : infos) {
+                if (info.text().contains("Автор")) {
+                    Elements element = info.getElementsByTag("a");
+                    if (element != null && element.size() != 0) {
+                        autor = element.first().text();
+                        bookPOJO.setAutor(autor);
+                        bookPOJO.setUrlAutor(Url.SERVER_ABMP3 + element.first().attr("href") + "?page=");
                     }
-                    observableEmitter.onNext(articlesModels);
-                } catch (Exception e) {
-                    observableEmitter.onError(e);
-                } finally {
-                    observableEmitter.onComplete();
+                } else if (info.text().contains("Читает")) {
+                    Elements element = info.getElementsByTag("a");
+                    if (element != null && element.size() != 0) {
+                        bookPOJO.setArtist(element.first().text());
+                        bookPOJO.setUrlArtist(Url.SERVER_ABMP3 + element.first().attr("href") + "?page=");
+                    }
+                } else if (info.text().contains("Жанры")) {
+                    Elements element = info.getElementsByTag("a");
+                    if (element != null && element.size() != 0) {
+                        bookPOJO.setGenre(element.first().text());
+                        bookPOJO.setUrlGenre(Url.SERVER_ABMP3 + element.first().attr("href") + "?page=");
+                    }
+                } else {
+                    Elements clock = info.getElementsByClass("fa-clock-o");
+                    if (clock != null && clock.size() != 0) {
+                        bookPOJO.setTime(info.text().trim());
+                    }
+
+                    Elements reting = info.getElementsByClass("fa-eye");
+                    if (reting != null && reting.size() != 0) {
+                        bookPOJO.setReting(info.text().trim());
+                    }
+
                 }
             }
-        });
+        }
+
+        Elements titleElement = document.getElementsByTag("h1");
+        if (titleElement.size() != 0) {
+            String name = titleElement.first().text().trim();
+            if (autor.isEmpty()) {
+                bookPOJO.setName(name);
+            } else {
+                bookPOJO.setName(name.replace(autor + " - ", ""));
+            }
+        }
+
+        return bookPOJO;
     }
 
     public String getUrl() {
@@ -297,12 +349,38 @@ public class BookPOJO {
         return bookPOJO;
     }
 
+    public static Observable<BookPOJO> getDescription(String url) {
+        return Observable.create(observableEmitter -> {
+            if (url != null) {
+                BookPOJO articlesModels;
+                try {
+                    if (url.contains("knigavuhe.org")) {
+                        articlesModels = getBookByUrl(url);
+                    } else if (url.contains("izib.uk")) {
+                        articlesModels = getBookByUrlIziBuk(url);
+                    } else if (url.contains("audiobook-mp3.com")) {
+                        articlesModels = getBookByUrlABMP3(url);
+                    } else {
+                        articlesModels = new BookPOJO();
+                    }
+                    observableEmitter.onNext(articlesModels);
+                } catch (Exception e) {
+                    observableEmitter.onError(e);
+                } finally {
+                    observableEmitter.onComplete();
+                }
+            }
+        });
+    }
+
     public String getAutor() {
         return autor;
     }
 
     public void setAutor(String autor) {
-        if (autor == null || autor.isEmpty()) return;
+        if (autor == null || autor.isEmpty()) {
+            return;
+        }
         this.autor = autor;
     }
 

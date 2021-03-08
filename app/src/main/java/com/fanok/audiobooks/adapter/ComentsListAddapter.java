@@ -7,85 +7,38 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.ComentsPOJO;
 import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
-
 import de.hdodenhof.circleimageview.CircleImageView;
+import java.util.ArrayList;
 
 public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapter.MyHolder> {
 
     private static final int MAX_LINES = 5;
     private ArrayList<ComentsPOJO> mModel;
     private OnListItemSelectedInterface mListener;
-    private Context mContext;
-
-    public ComentsListAddapter(Context context) {
-        mModel = new ArrayList<>();
-        mContext = context;
-    }
-
-    public void setListener(OnListItemSelectedInterface listener) {
-        mListener = listener;
-    }
-
-    public void setItem(ArrayList<ComentsPOJO> model) {
-        mModel = model;
-        notifyDataSetChanged();
-    }
-
-    public void clearItem() {
-        mModel.clear();
-        notifyDataSetChanged();
-    }
-
-    public ComentsPOJO getItem(int position) {
-        return mModel.get(position);
-    }
-
-    @NonNull
-    @Override
-    public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(mContext).inflate(
-                R.layout.coments_recyler_item, viewGroup, false);
-        return new MyHolder(view);
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
-        myHolder.bind(mModel.get(i));
-    }
-
-    @Override
-    public int getItemCount() {
-        if (mModel == null) {
-            return 0;
-        } else {
-            return mModel.size();
-        }
-    }
-
-
-    public interface OnListItemSelectedInterface {
-        void onItemSelected(View view, int position);
-    }
 
     class MyHolder extends RecyclerView.ViewHolder {
 
-        private CircleImageView mImageView;
-        private TextView mName;
-        private TextView mTime;
-        private TextView mText;
-        private TextView mReadMore;
-        private TextView mReting;
-        private TextView mComents;
-        private TextView mShowAnswer;
+        private final TextView mComents;
+
+        private final CircleImageView mImageView;
+
+        private final TextView mName;
+
+        private final TextView mReadMore;
+
+        private final TextView mReting;
+
+        private final TextView mShowAnswer;
+
+        private final TextView mText;
+
+        private final TextView mTime;
+
         private boolean showMore;
 
         MyHolder(@NonNull final View itemView) {
@@ -117,7 +70,12 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
             }
             mName.setText(comentsPOJO.getName());
             mTime.setText(comentsPOJO.getDate());
-            mReting.setText(comentsPOJO.getReting());
+            if (!comentsPOJO.getReting().isEmpty()) {
+                mReting.setText(comentsPOJO.getReting());
+                mReting.setVisibility(View.VISIBLE);
+            } else {
+                mReting.setVisibility(View.GONE);
+            }
             int childCount = comentsPOJO.getChildComents().size();
             if (childCount == 0) {
                 mComents.setVisibility(View.GONE);
@@ -151,5 +109,57 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
                 });
             });
         }
+    }
+
+    public interface OnListItemSelectedInterface {
+
+        void onItemSelected(View view, int position);
+    }
+
+    private final Context mContext;
+
+    public ComentsListAddapter(Context context) {
+        mModel = new ArrayList<>();
+        mContext = context;
+    }
+
+    public void clearItem() {
+        mModel.clear();
+        notifyDataSetChanged();
+    }
+
+    public ComentsPOJO getItem(int position) {
+        return mModel.get(position);
+    }
+
+    @Override
+    public int getItemCount() {
+        if (mModel == null) {
+            return 0;
+        } else {
+            return mModel.size();
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
+        myHolder.bind(mModel.get(i));
+    }
+
+    @NonNull
+    @Override
+    public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        View view = LayoutInflater.from(mContext).inflate(
+                R.layout.coments_recyler_item, viewGroup, false);
+        return new MyHolder(view);
+    }
+
+    public void setItem(ArrayList<ComentsPOJO> model) {
+        mModel = model;
+        notifyDataSetChanged();
+    }
+
+    public void setListener(OnListItemSelectedInterface listener) {
+        mListener = listener;
     }
 }

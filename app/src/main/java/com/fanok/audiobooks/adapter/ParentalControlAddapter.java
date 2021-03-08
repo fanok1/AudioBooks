@@ -1,7 +1,6 @@
 package com.fanok.audiobooks.adapter;
 
 import static android.content.Context.MODE_PRIVATE;
-
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
 
 import android.content.Context;
@@ -10,22 +9,41 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckedTextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.R;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
 
 public class ParentalControlAddapter extends
         RecyclerView.Adapter<ParentalControlAddapter.MyHolder> {
 
     private ArrayList<String> mModel;
-    private Context mContext;
-    private SharedPreferences mSharedPreferences;
+
+    class MyHolder extends RecyclerView.ViewHolder {
+
+        private final CheckedTextView mCheckedTextView;
+
+        MyHolder(@NonNull final View itemView) {
+            super(itemView);
+            mCheckedTextView = itemView.findViewById(R.id.checkedTextView);
+        }
+
+        void bind(@NotNull String string) {
+            mCheckedTextView.setText(string);
+            mCheckedTextView.setChecked(mSharedPreferences.getBoolean(string, false));
+            mCheckedTextView.setEnabled(enabled);
+            mCheckedTextView.setOnClickListener(view -> {
+                mCheckedTextView.toggle();
+                SharedPreferences.Editor editor = mSharedPreferences.edit();
+                editor.putBoolean(string, mCheckedTextView.isChecked());
+                editor.apply();
+            });
+        }
+    }
+
+    private final Context mContext;
+
     private boolean enabled = false;
 
     public ParentalControlAddapter(Context context) {
@@ -80,26 +98,5 @@ public class ParentalControlAddapter extends
         }
     }
 
-
-    class MyHolder extends RecyclerView.ViewHolder {
-
-        private CheckedTextView mCheckedTextView;
-
-        MyHolder(@NonNull final View itemView) {
-            super(itemView);
-            mCheckedTextView = itemView.findViewById(R.id.checkedTextView);
-        }
-
-        void bind(@NotNull String string) {
-            mCheckedTextView.setText(string);
-            mCheckedTextView.setChecked(mSharedPreferences.getBoolean(string, false));
-            mCheckedTextView.setEnabled(enabled);
-            mCheckedTextView.setOnClickListener(view -> {
-                mCheckedTextView.toggle();
-                SharedPreferences.Editor editor = mSharedPreferences.edit();
-                editor.putBoolean(string, mCheckedTextView.isChecked());
-                editor.apply();
-            });
-        }
-    }
+    private final SharedPreferences mSharedPreferences;
 }

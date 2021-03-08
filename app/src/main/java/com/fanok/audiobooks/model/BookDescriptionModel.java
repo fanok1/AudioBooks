@@ -5,21 +5,20 @@ import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.interface_pacatge.book_content.DescriptionModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.DescriptionPOJO;
-
+import com.fanok.audiobooks.pojo.OtherArtistPOJO;
+import io.reactivex.Observable;
+import java.io.IOException;
+import java.util.ArrayList;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
-import java.io.IOException;
-import java.util.ArrayList;
-
-import io.reactivex.Observable;
-
 public class BookDescriptionModel implements DescriptionModel {
 
-    private String mUrl;
+    private final String mUrl;
+
     private Document mDocument;
 
     public BookDescriptionModel(String url) {
@@ -272,9 +271,55 @@ public class BookDescriptionModel implements DescriptionModel {
         return descriptionPOJO;
     }
 
+    @Override
+    public Observable<ArrayList<BookPOJO>> getBooks() {
+        return Observable.create(observableEmitter -> {
+            ArrayList<BookPOJO> bookPOJOArrayList;
+            try {
+                if (mUrl.contains("knigavuhe.org")) {
+                    bookPOJOArrayList = loadBooks();
+                } else if (mUrl.contains("audiobook-mp3.com")) {
+                    bookPOJOArrayList = loadBooksABMP3();
+                } else {
+                    bookPOJOArrayList = new ArrayList<>();
+                }
+                observableEmitter.onNext(bookPOJOArrayList);
+            } catch (Exception e) {
+                observableEmitter.onError(e);
+            } finally {
+                observableEmitter.onComplete();
+            }
+        });
+    }
+
+    @Override
+    public Observable<DescriptionPOJO> getDescription() {
+        return Observable.create(observableEmitter -> {
+            DescriptionPOJO articlesModels;
+            try {
+                if (mUrl.contains("knigavuhe.org")) {
+                    articlesModels = loadDescription();
+                } else if (mUrl.contains("izib.uk")) {
+                    articlesModels = loadDescriptionIzibuk();
+                } else if (mUrl.contains("audiobook-mp3.com")) {
+                    articlesModels = loadDescriptionABMP3();
+                } else {
+                    articlesModels = new DescriptionPOJO();
+                }
+                observableEmitter.onNext(articlesModels);
+            } catch (Exception e) {
+                observableEmitter.onError(e);
+            } finally {
+                observableEmitter.onComplete();
+            }
+        });
+    }
+
     private ArrayList<BookPOJO> loadBooks() throws IOException {
         ArrayList<BookPOJO> books = new ArrayList<>();
-        if (getDocument() == null) setDocument();
+        if (getDocument() == null) {
+            setDocument();
+        }
         Document document = getDocument();
         Elements root = document.getElementsByClass("suggested");
         if (root.size() > 0) {
@@ -306,43 +351,124 @@ public class BookDescriptionModel implements DescriptionModel {
         return books;
     }
 
-    @Override
-    public Observable<DescriptionPOJO> getDescription() {
-        return Observable.create(observableEmitter -> {
-            DescriptionPOJO articlesModels;
-            try {
-                if (mUrl.contains("knigavuhe.org")) {
-                    articlesModels = loadDescription();
-                } else if (mUrl.contains("izib.uk")) {
-                    articlesModels = loadDescriptionIzibuk();
-                } else {
-                    articlesModels = new DescriptionPOJO();
+    private ArrayList<BookPOJO> loadBooksABMP3() throws IOException {
+        ArrayList<BookPOJO> books = new ArrayList<>();
+        if (getDocument() == null) {
+            setDocument();
+        }
+        Document document = getDocument();
+
+        Elements root = document.getElementsByClass("similar-abooks-block");
+        if (root != null && root.size() > 0) {
+            Elements booksConteiner = root.get(0).getElementsByClass("abook-similar-item");
+            if (booksConteiner != null) {
+                for (int i = 0; i < booksConteiner.size(); i++) {
+                    BookPOJO bookPOJO = new BookPOJO();
+                    Elements aTag = booksConteiner.get(i).getElementsByTag("a");
+                    if (aTag != null && aTag.size() > 0) {
+                        Element a = aTag.first();
+                        bookPOJO.setUrl(Url.SERVER_ABMP3 + a.attr("href"));
+                        Elements img = a.getElementsByTag("img");
+                        if (img != null && img.size() > 0) {
+                            String imgUrl = img.first().attr("src");
+                            bookPOJO.setPhoto(Url.SERVER_ABMP3 + imgUrl);
+                        }
+                        Elements name = a.getElementsByTag("span");
+                        if (name != null && name.size() > 0) {
+                            bookPOJO.setName(name.first().text());
+                        }
+                    }
+                    if (!bookPOJO.isNull()) {
+                        books.add(bookPOJO);
+                    }
                 }
-                observableEmitter.onNext(articlesModels);
-            } catch (Exception e) {
-                observableEmitter.onError(e);
-            } finally {
-                observableEmitter.onComplete();
             }
-        });
+        }
+
+        return books;
     }
 
-    @Override
-    public Observable<ArrayList<BookPOJO>> getBooks() {
-        return Observable.create(observableEmitter -> {
-            ArrayList<BookPOJO> bookPOJOArrayList;
-            try {
-                if (mUrl.contains("knigavuhe.org")) {
-                    bookPOJOArrayList = loadBooks();
+    private DescriptionPOJO loadDescriptionABMP3() throws IOException {
+
+        String autor = "";
+
+        DescriptionPOJO descriptionPOJO = new DescriptionPOJO();
+        if (getDocument() == null) {
+            setDocument();
+        }
+        Document document = getDocument();
+
+        Elements img = document.getElementsByClass("abook_image");
+        if (img != null && img.size() != 0) {
+            descriptionPOJO.setPoster(Url.SERVER_ABMP3 + img.first().attr("src"));
+        }
+
+        Elements desc = document.getElementsByClass("abook-desc");
+        if (desc != null && desc.size() != 0) {
+            descriptionPOJO.setDescription(desc.first().ownText());
+        }
+
+        Elements infos = document.getElementsByClass("panel-item");
+        if (infos != null) {
+            for (Element info : infos) {
+                if (info.text().contains("Автор")) {
+                    Elements element = info.getElementsByTag("a");
+                    if (element != null && element.size() != 0) {
+                        autor = element.first().text();
+                        descriptionPOJO.setAutor(autor);
+                        descriptionPOJO.setAutorUrl(Url.SERVER_ABMP3 + element.first().attr("href") + "?page=");
+                    }
+                } else if (info.text().contains("Читает")) {
+                    Elements element = info.getElementsByTag("a");
+                    if (element != null && element.size() != 0) {
+                        descriptionPOJO.setArtist(element.first().text());
+                        descriptionPOJO.setArtistUrl(Url.SERVER_ABMP3 + element.first().attr("href") + "?page=");
+                    }
+                } else if (info.text().contains("Жанры")) {
+                    Elements element = info.getElementsByTag("a");
+                    if (element != null && element.size() != 0) {
+                        descriptionPOJO.setGenre(element.first().text());
+                        descriptionPOJO.setGenreUrl(Url.SERVER_ABMP3 + element.first().attr("href") + "?page=");
+                    }
                 } else {
-                    bookPOJOArrayList = new ArrayList<>();
+                    Elements clock = info.getElementsByClass("fa-clock-o");
+                    if (clock != null && clock.size() != 0) {
+                        descriptionPOJO.setTime(info.text().trim());
+                    }
+
+                    Elements reting = info.getElementsByClass("fa-eye");
+                    if (reting != null && reting.size() != 0) {
+                        descriptionPOJO.setReiting(Integer.parseInt(info.text().trim()));
+                    }
+
                 }
-                observableEmitter.onNext(bookPOJOArrayList);
-            } catch (Exception e) {
-                observableEmitter.onError(e);
-            } finally {
-                observableEmitter.onComplete();
             }
-        });
+        }
+
+        Elements titleElement = document.getElementsByTag("h1");
+        if (titleElement.size() != 0) {
+            String name = titleElement.first().text().trim();
+            if (autor.isEmpty()) {
+                descriptionPOJO.setTitle(name);
+            } else {
+                descriptionPOJO.setTitle(name.replace(autor + " - ", ""));
+            }
+        }
+
+        Elements like = document.getElementsByClass("vote-count");
+        if (like != null && like.size() != 0) {
+            descriptionPOJO.setLike(Integer.parseInt(like.first().text()));
+        }
+
+        try {
+            ArrayList<OtherArtistPOJO> arrayList = OtherArtistModel
+                    .loadOtherArtistABMP3(descriptionPOJO.getTitle(), descriptionPOJO.getAutor(), mUrl,
+                            descriptionPOJO.getArtist());
+            descriptionPOJO.setOtherReader(arrayList.size() != 0);
+        } catch (Exception ignored) {
+            descriptionPOJO.setOtherReader(false);
+        }
+
+        return descriptionPOJO;
     }
 }

@@ -3,7 +3,8 @@ package com.fanok.audiobooks;
 import androidx.annotation.NonNull;
 
 public class FragmentTagSteck {
-    private String tag;
+    private final String tag;
+
     private boolean skip;
 
     public FragmentTagSteck(@NonNull String tag) {

@@ -5,8 +5,8 @@
         android:dialogTitle="@string/setting_theme"
         android:entries="@array/settings_them_titles"
         android:entryValues="@array/settings_them_values"
-        android:key="pref_theme"
         android:icon="@drawable/ic_theme"
+        android:key="pref_theme"
         android:title="@string/setting_theme" />
 
     <!--<ListPreference
@@ -25,6 +25,37 @@
         android:icon="@drawable/ic_inbox_arrow_up"
         android:key="sorce_books"
         android:title="@string/sorce_books" />
+
+    <PreferenceScreen
+        android:icon="@drawable/ic_layers_search"
+        android:key="source_search"
+        android:persistent="true"
+        android:summary="@string/source_search_desc"
+        android:title="@string/source_search">
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="search_kniga_v_uhe"
+            android:title="@string/kniga_v_uhe" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="search_izibuc"
+            android:title="@string/izibuc" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="search_abmp3"
+            android:title="@string/audionook_mp3" />
+
+    </PreferenceScreen>
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:icon="@drawable/ic_speedometer"
+        android:key="speed_up_search_abmp3"
+        android:summary="@string/speed_up_search_abmp3_desc"
+        android:title="@string/speed_up_search_abmp3" />
 
     <ListPreference
         android:defaultValue="@string/books_adapter_layout_list_value"
@@ -138,9 +169,9 @@
         android:dialogTitle="@string/pref_dowland_path"
         android:entries="@array/settings_dir_titles"
         android:entryValues="@array/settings_dir_values"
+        android:icon="@drawable/ic_folder"
         android:key="pref_downland_path"
-        android:title="@string/pref_dowland_path"
-        android:icon="@drawable/ic_folder" />
+        android:title="@string/pref_dowland_path" />
 
     <!--
     <PreferenceScreen

@@ -326,5 +326,10 @@
     <string name="source">Source</string>
     <string name="buffer_size">Buffer size in seconds (max 999s)</string>
     <string name="rewind_back">Rewind</string>
+    <string name="source_search">Sources of search</string>
+    <string name="source_search_desc">Select the sources by which the search will be carried out</string>
+    <string name="speed_up_search_abmp3">Speed up search by source Audiobook-mp3</string>
+    <string name="speed_up_search_abmp3_desc">Accelerates book searches by reducing the amount of data downloaded. Search speed will increase 4 times</string>
+    <string name="theme_black">Black</string>
 
 </resources>

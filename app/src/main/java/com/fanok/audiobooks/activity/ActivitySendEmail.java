@@ -11,65 +11,39 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.widget.Toolbar;
 import androidx.preference.PreferenceManager;
-
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
+import com.fanok.audiobooks.databinding.ActivitySendEmailBinding;
 import com.r0adkll.slidr.Slidr;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.util.Objects;
 import java.util.regex.Matcher;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ActivitySendEmail extends MvpAppCompatActivity {
 
 
-    @BindView(R.id.emailInput)
-    TextInputEditText mEmailInput;
-    @BindView(R.id.emailLayout)
-    TextInputLayout mEmailLayout;
-    @BindView(R.id.spinner)
-    Spinner mSpinner;
-    @BindView(R.id.send)
-    Button mSend;
-    @BindView(R.id.messageInput)
-    TextInputEditText mMessageInput;
-    @BindView(R.id.messageLayout)
-    TextInputLayout mMessageLayout;
-    @BindView(R.id.progressBar)
-    ProgressBar mProgressBar;
+    private ActivitySendEmailBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_send_email);
-        ButterKnife.bind(this);
+        binding = ActivitySendEmailBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         Slidr.attach(this);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -78,38 +52,38 @@ public class ActivitySendEmail extends MvpAppCompatActivity {
         Intent intent = getIntent();
         String message = intent.getStringExtra("message");
         if (message != null) {
-            mMessageInput.setText(message);
+            binding.messageInput.setText(message);
         }
         boolean enabled = intent.getBooleanExtra("enebled", true);
-        mMessageInput.setEnabled(enabled);
-        mSpinner.setEnabled(enabled);
+        binding.messageInput.setEnabled(enabled);
+        binding.spinner.setEnabled(enabled);
 
         int subject = intent.getIntExtra("subject", 0);
-        mSpinner.setSelection(subject);
+        binding.spinner.setSelection(subject);
 
-        mEmailInput.setOnFocusChangeListener((view, b) -> {
+        binding.emailInput.setOnFocusChangeListener((view, b) -> {
             if (!b) {
-                if (!validateEmail(Objects.requireNonNull(mEmailInput.getText()).toString())) {
-                    mEmailLayout.setError(getString(R.string.incorect_email));
-                    mEmailLayout.setErrorEnabled(true);
+                if (!validateEmail(Objects.requireNonNull(binding.emailInput.getText()).toString())) {
+                    binding.emailLayout.setError(getString(R.string.incorect_email));
+                    binding.emailLayout.setErrorEnabled(true);
                 }
             } else {
-                mEmailLayout.setErrorEnabled(false);
+                binding.emailLayout.setErrorEnabled(false);
             }
         });
 
-        mMessageInput.setOnFocusChangeListener((view, b) -> {
+        binding.messageInput.setOnFocusChangeListener((view, b) -> {
             if (!b) {
-                if (!validateEmpty(Objects.requireNonNull(mMessageInput.getText()).toString())) {
-                    mMessageLayout.setError(getString(R.string.empty_text));
-                    mMessageLayout.setErrorEnabled(true);
+                if (!validateEmpty(Objects.requireNonNull(binding.messageInput.getText()).toString())) {
+                    binding.messageLayout.setError(getString(R.string.empty_text));
+                    binding.messageLayout.setErrorEnabled(true);
                 }
             } else {
-                mMessageLayout.setErrorEnabled(false);
+                binding.messageLayout.setErrorEnabled(false);
             }
         });
 
-        mSend.setOnClickListener(view -> click());
+        binding.send.setOnClickListener(view -> click());
 
     }
 
@@ -122,34 +96,77 @@ public class ActivitySendEmail extends MvpAppCompatActivity {
         return matcher.find();
     }
 
+    @Override
+    public Resources.Theme getTheme() {
+        Resources.Theme theme = super.getTheme();
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_light_value))) {
+            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
+        } else if (themeName.equals(getString(R.string.theme_black_value))) {
+            theme.applyStyle(R.style.AppThemeBlack_SwipeOnClose, true);
+        }
+
+        return theme;
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     @SuppressLint("StaticFieldLeak")
     private void click() {
-        if (!validateEmail(Objects.requireNonNull(mEmailInput.getText()).toString())) {
-            mEmailLayout.setError(getString(R.string.incorect_email));
-            mEmailLayout.setErrorEnabled(true);
+        if (!validateEmail(Objects.requireNonNull(binding.emailInput.getText()).toString())) {
+            binding.emailLayout.setError(getString(R.string.incorect_email));
+            binding.emailLayout.setErrorEnabled(true);
         }
 
-        if (!validateEmpty(Objects.requireNonNull(mMessageInput.getText()).toString())) {
-            mMessageLayout.setError(getString(R.string.empty_text));
-            mMessageLayout.setErrorEnabled(true);
+        if (!validateEmpty(Objects.requireNonNull(binding.messageInput.getText()).toString())) {
+            binding.messageLayout.setError(getString(R.string.empty_text));
+            binding.messageLayout.setErrorEnabled(true);
         }
 
-        if (!mMessageLayout.isErrorEnabled() && !mEmailLayout.isErrorEnabled()) {
+        if (!binding.messageLayout.isErrorEnabled() && !binding.emailLayout.isErrorEnabled()) {
 
             new AsyncTask<Void, Void, Boolean>() {
 
                 String email;
+
                 String message;
+
                 String sunject;
 
 
                 @Override
+                protected void onPostExecute(Boolean aBoolean) {
+                    super.onPostExecute(aBoolean);
+                    binding.progressBar.setVisibility(View.GONE);
+                    if (aBoolean) {
+                        Toast.makeText(ActivitySendEmail.this, getString(R.string.email_send),
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(ActivitySendEmail.this, getString(R.string.error_send_mail),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
                 protected void onPreExecute() {
                     super.onPreExecute();
-                    mProgressBar.setVisibility(View.VISIBLE);
+                    binding.progressBar.setVisibility(View.VISIBLE);
 
                     StringBuilder builder = new StringBuilder();
-                    builder.append("email = ").append(mEmailInput.getText().toString()).append(
+                    builder.append("email = ").append(binding.emailInput.getText().toString()).append(
                             "<br/>");
                     builder.append("phone = ").append(Build.MODEL).append("<br/>");
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -162,24 +179,11 @@ public class ActivitySendEmail extends MvpAppCompatActivity {
                     }
 
                     builder.append("<br/>").append("<br/>");
-                    builder.append(mMessageInput.getText().toString().replaceAll("\n", "<br/>"));
+                    builder.append(binding.messageInput.getText().toString().replaceAll("\n", "<br/>"));
 
-                    email = mEmailInput.getText().toString();
-                    sunject = mSpinner.getSelectedItem().toString();
+                    email = binding.emailInput.getText().toString();
+                    sunject = binding.spinner.getSelectedItem().toString();
                     message = builder.toString();
-                }
-
-                @Override
-                protected void onPostExecute(Boolean aBoolean) {
-                    super.onPostExecute(aBoolean);
-                    mProgressBar.setVisibility(View.GONE);
-                    if (aBoolean) {
-                        Toast.makeText(ActivitySendEmail.this, getString(R.string.email_send),
-                                Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(ActivitySendEmail.this, getString(R.string.error_send_mail),
-                                Toast.LENGTH_SHORT).show();
-                    }
                 }
 
                 @Override
@@ -213,33 +217,6 @@ public class ActivitySendEmail extends MvpAppCompatActivity {
             }.execute();
 
         }
-    }
-
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public Resources.Theme getTheme() {
-        Resources.Theme theme = super.getTheme();
-
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
-            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
-        } else if (themeName.equals(getString(R.string.theme_light_value))) {
-            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
-        }
-
-
-        return theme;
     }
 
     @Override

@@ -4,13 +4,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.SearchebleArrayPOJO;
-
 import java.util.ArrayList;
 
 public class SearchebleAdapter extends RecyclerView.Adapter<SearchebleAdapter.MyHolder> {
@@ -62,7 +59,7 @@ public class SearchebleAdapter extends RecyclerView.Adapter<SearchebleAdapter.My
 
     class MyHolder extends RecyclerView.ViewHolder {
 
-        private TextView mTextView;
+        private final TextView mTextView;
 
         MyHolder(@NonNull final View itemView) {
             super(itemView);

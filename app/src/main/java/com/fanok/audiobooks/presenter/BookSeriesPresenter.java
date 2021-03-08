@@ -2,7 +2,6 @@ package com.fanok.audiobooks.presenter;
 
 
 import android.util.Log;
-
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.R;
@@ -10,24 +9,25 @@ import com.fanok.audiobooks.interface_pacatge.book_content.ComentsPresenter;
 import com.fanok.audiobooks.interface_pacatge.book_content.Series;
 import com.fanok.audiobooks.interface_pacatge.book_content.SeriesModel;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
-
-import java.util.ArrayList;
-
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import java.util.ArrayList;
 
 @InjectViewState
 public class BookSeriesPresenter extends MvpPresenter<Series> implements
         ComentsPresenter {
 
     private static final String TAG = "BookSeriesPresenter";
-    private boolean isLoading = false;
-    private SeriesModel mComentsModel;
 
-    private ArrayList<SeriesPOJO> mComentsPOJOS;
-    private String mUrl;
+    private boolean isLoading = false;
+
+    private final SeriesModel mComentsModel;
+
+    private final ArrayList<SeriesPOJO> mComentsPOJOS;
+
+    private final String mUrl;
 
     public BookSeriesPresenter(String url) {
         mComentsPOJOS = new ArrayList<>();

@@ -3,26 +3,24 @@ package com.fanok.audiobooks.presenter;
 
 import android.content.Context;
 import android.widget.EditText;
-
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.import_favorite.ActivityImportInterface;
 import com.fanok.audiobooks.interface_pacatge.import_favorite.ImportPresenterInterface;
 import com.fanok.audiobooks.model.ImportModel;
-
-import org.jetbrains.annotations.NotNull;
-
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import org.jetbrains.annotations.NotNull;
 
 @InjectViewState
 public class ImportPresenter extends MvpPresenter<ActivityImportInterface> implements
         ImportPresenterInterface {
 
-    private ImportModel mImportModel;
+    private final ImportModel mImportModel;
+
     private boolean loading = false;
 
     public ImportPresenter(@NotNull Context context, int src) {

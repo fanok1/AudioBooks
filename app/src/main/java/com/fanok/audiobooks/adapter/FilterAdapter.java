@@ -1,61 +1,23 @@
 package com.fanok.audiobooks.adapter;
 
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
+import java.util.ArrayList;
 
 public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> {
 
-    private static final int[] mData = {-1, Consts.SOURCE_KNIGA_V_UHE, Consts.SOURCE_IZI_BUK};
-
-    private OnListItemSelectedInterface mListener;
-    private int selected = 0;
-
-
-    public void setListener(
-            OnListItemSelectedInterface listener) {
-        mListener = listener;
-    }
-
-
-    public int getItem(int postion) {
-        return mData[postion];
-    }
-
-    @NonNull
-    @Override
-    public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                R.layout.simple_row_3, viewGroup, false);
-        return new MyHolder(view);
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
-        myHolder.bind(i);
-    }
-
-    @Override
-    public int getItemCount() {
-        return mData.length;
-    }
-
-
-    public interface OnListItemSelectedInterface {
-        void onItemSelected(View view, int position);
-    }
-
     class MyHolder extends RecyclerView.ViewHolder {
 
-        private TextView mText;
-        private View mView;
+        private final TextView mText;
+
+        private final View mView;
 
 
         MyHolder(@NonNull final View itemView) {
@@ -64,7 +26,9 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
             mView = itemView;
             itemView.setOnClickListener(view -> {
                 int pos = getAdapterPosition();
-                if (mListener != null) mListener.onItemSelected(view, pos);
+                if (mListener != null) {
+                    mListener.onItemSelected(view, pos);
+                }
                 selected = pos;
                 notifyDataSetChanged();
             });
@@ -80,7 +44,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
                         mView.getContext().getResources().getColor(android.R.color.transparent));
             }
 
-            switch (mData[pos]) {
+            switch (mData.get(pos)) {
                 case -1:
                     mText.setText(R.string.all);
                     break;
@@ -90,8 +54,67 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
                 case Consts.SOURCE_IZI_BUK:
                     mText.setText(R.string.izibuc);
                     break;
+                case Consts.SOURCE_AUDIO_BOOK_MP3:
+                    mText.setText(R.string.audionook_mp3);
+                    break;
             }
 
         }
+    }
+
+    public interface OnListItemSelectedInterface {
+
+        void onItemSelected(View view, int position);
+    }
+
+    private final ArrayList<Integer> mData;
+
+    private OnListItemSelectedInterface mListener;
+
+    private int selected = 0;
+
+
+    public FilterAdapter(SharedPreferences preferences) {
+        mData = new ArrayList<>();
+        mData.add(-1);
+        if (preferences.getBoolean("search_kniga_v_uhe", true)) {
+            mData.add(Consts.SOURCE_KNIGA_V_UHE);
+        }
+
+        if (preferences.getBoolean("search_izibuc", true)) {
+            mData.add(Consts.SOURCE_IZI_BUK);
+        }
+
+        if (preferences.getBoolean("search_abmp3", true)) {
+            mData.add(Consts.SOURCE_AUDIO_BOOK_MP3);
+        }
+
+    }
+
+    public int getItem(int postion) {
+        return mData.get(postion);
+    }
+
+    @Override
+    public int getItemCount() {
+        return mData.size();
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
+        myHolder.bind(i);
+    }
+
+    @NonNull
+    @Override
+    public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                R.layout.simple_row_3, viewGroup, false);
+        return new MyHolder(view);
+    }
+
+    public void setListener(
+            OnListItemSelectedInterface listener) {
+        mListener = listener;
     }
 }
