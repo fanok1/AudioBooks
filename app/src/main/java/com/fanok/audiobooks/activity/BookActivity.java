@@ -1062,6 +1062,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                     // Ad opened.
                 }
 
+
                 @Override
                 public void onRewardedAdClosed() {
                     rewardedAd = createAndLoadRewardedAd();
