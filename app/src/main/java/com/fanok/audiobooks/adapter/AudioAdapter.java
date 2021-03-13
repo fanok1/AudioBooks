@@ -97,8 +97,6 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
     }
 
 
-
-
     public HashSet<String> getSelectedItems() {
         return mSelectedItems;
     }

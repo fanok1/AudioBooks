@@ -17,40 +17,53 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
-
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.preference.PreferenceManager;
-
 import com.downloader.Error;
 import com.downloader.OnDownloadListener;
 import com.downloader.PRDownloader;
 import com.downloader.PRDownloaderConfig;
+import com.downloader.httpclient.DefaultHttpClient;
+import com.downloader.httpclient.HttpClient;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.broadcasts.OnNotificationButtonClick;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
 
 public class Download extends Service {
 
     public static final String ACTION_RESUME = "audioBook.download.ACTION_PLAY";
+
     public static final String ACTION_PAUSE = "audioBook.download.ACTION_PAUSE";
+
     public static final String ACTION_STOP = "audioBook.download.ACTION_STOP";
+
     private static final String TAG = "Download";
-    private static final int notificationId = 487;
-    private static final String chanalId = "574";
-    private static final String chanalName = "Download";
-    private ArrayList<String> mList;
-    private ArrayList<String> dirName;
-    private String path;
-    private int mProgress;
-    private int downloadId;
-    private PendingIntent notificationClickIntent;
-    private boolean pause;
-    private String val;
+
+    protected static final int notificationId = 487;
+
+    protected static final String chanalId = "574";
+
+    protected static final String chanalName = "Download";
+
+    protected ArrayList<String> dirName;
+
+    protected int downloadId;
+
+    protected ArrayList<String> mList;
+
+    protected int mProgress;
+
+    protected PendingIntent notificationClickIntent;
+
+    protected String path;
+
+    protected boolean pause;
+
+    protected String val;
+
 
     @Override
     public void onCreate() {
@@ -143,24 +156,28 @@ public class Download extends Service {
         }
     }
 
-    private void download(int postion) {
+    protected void download(int postion) {
         String urlPath = mList.get(postion);
         String fileName = urlPath.substring(urlPath.lastIndexOf("/") + 1);
+        HttpClient httpClient = new DefaultHttpClient();
 
         PRDownloaderConfig config = PRDownloaderConfig.newBuilder()
                 .setReadTimeout(30_000)
                 .setConnectTimeout(30_000)
+                .setUserAgent(
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36")
+                .setHttpClient(httpClient)
                 .build();
         PRDownloader.initialize(getApplicationContext(), config);
         downloadId = PRDownloader.download(urlPath, path + "/" + dirName.get(postion), fileName)
                 .build()
                 .setOnStartOrResumeListener(() -> {
                     pause = false;
-                    showNotification(postion, mProgress);
+                    showNotification(postion, mProgress, false);
                 })
                 .setOnPauseListener(() -> {
                     pause = true;
-                    showNotification(postion, mProgress);
+                    showNotification(postion, mProgress, false);
                 })
                 .setOnCancelListener(() -> {
                     sendBroadcast(new Intent(Broadcast_CLEAR_DOWNLOADING));
@@ -171,7 +188,7 @@ public class Download extends Service {
                     int progessProcent = (int) (progress.currentBytes * 100 / progress.totalBytes);
                     if (progessProcent % 5 == 0 && progessProcent != mProgress) {
                         mProgress = progessProcent;
-                        showNotification(postion, mProgress);
+                        showNotification(postion, mProgress, false);
                     }
                 })
                 .start(new OnDownloadListener() {
@@ -193,11 +210,11 @@ public class Download extends Service {
 
     }
 
-    private void downloadNext(int positionNext) {
+    protected void downloadNext(int positionNext) {
         sendBroadcast(new Intent(Broadcast_UPDATE_ADAPTER));
         if (positionNext == mList.size()) {
             stopForeground(false);
-            showNotification(positionNext, 0);
+            showNotification(positionNext, 0, false);
             Toast.makeText(this, R.string.loading_completed, Toast.LENGTH_SHORT).show();
             stopSelf();
         } else {
@@ -205,7 +222,7 @@ public class Download extends Service {
         }
     }
 
-    private void showNotification(int postion, int progress) {
+    protected void showNotification(int postion, int progress, boolean indeteminate) {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -219,16 +236,16 @@ public class Download extends Service {
         }
         if (postion < mList.size()) {
             builder.setContentText(postion + " " + getString(R.string.of) + " " + mList.size())
-                    .setProgress(100, progress, false);
+                    .setProgress(100, progress, indeteminate);
             if (!pause) {
                 builder.addAction(R.drawable.ic_pause, getString(R.string.pause),
-                        playbackAction(ACTION_PAUSE));
+                        playbackAction(ACTION_PAUSE, postion));
             } else {
                 builder.addAction(R.drawable.ic_play, getString(R.string.play),
-                        playbackAction(ACTION_RESUME));
+                        playbackAction(ACTION_RESUME, postion));
             }
             builder.addAction(R.drawable.ic_stop, getString(R.string.stop),
-                    playbackAction(ACTION_STOP));
+                    playbackAction(ACTION_STOP, postion));
             builder.setOngoing(true);
             builder.setAutoCancel(false);
         } else {
@@ -244,11 +261,15 @@ public class Download extends Service {
         }
     }
 
-    private PendingIntent playbackAction(@NotNull String action) {
+    private PendingIntent playbackAction(@NotNull String action, int postion) {
         Intent playbackAction = new Intent(getApplicationContext(),
                 OnNotificationButtonClick.class);
+        String urlPath = mList.get(postion);
+        String fileName = urlPath.substring(urlPath.lastIndexOf("/") + 1);
         playbackAction.setAction(action);
         playbackAction.putExtra("downloadId", downloadId);
+        playbackAction.putExtra("path", path + "/" + dirName.get(postion));
+        playbackAction.putExtra("fileName", fileName);
         return PendingIntent.getBroadcast(getApplicationContext(), 0, playbackAction,
                 PendingIntent.FLAG_UPDATE_CURRENT);
     }

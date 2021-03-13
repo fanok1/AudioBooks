@@ -3,9 +3,7 @@ package com.fanok.audiobooks.interface_pacatge.book_content;
 
 import android.content.Intent;
 import android.content.ServiceConnection;
-
 import androidx.annotation.NonNull;
-
 import com.arellomobile.mvp.MvpView;
 import com.arellomobile.mvp.viewstate.strategy.AddToEndSingleStrategy;
 import com.arellomobile.mvp.viewstate.strategy.SingleStateStrategy;
@@ -13,7 +11,6 @@ import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
-
 import java.util.ArrayList;
 
 public interface Activity extends MvpView {
@@ -74,6 +71,9 @@ public interface Activity extends MvpView {
 
     @StateStrategyType(SkipStrategy.class)
     void downloadFile(String url, String fileName);
+
+    @StateStrategyType(SkipStrategy.class)
+    void downloadFileABMP3(String url, String fileName);
 
     @StateStrategyType(SkipStrategy.class)
     void showGetPlus();

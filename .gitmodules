@@ -1,0 +1,3 @@
+[submodule "PRDownloader"]
+	path = PRDownloader
+	url = git://github.com/MindorksOpenSource/PRDownloader

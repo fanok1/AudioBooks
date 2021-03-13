@@ -83,6 +83,7 @@ import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.fanok.audiobooks.service.Download;
+import com.fanok.audiobooks.service.DownloadABMP3;
 import com.fanok.audiobooks.service.MediaPlayerService;
 import com.fanok.audiobooks.аndroid_equalizer.DialogEqualizerFragment;
 import com.google.android.gms.ads.AdRequest;
@@ -1290,6 +1291,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
+        mAudioAdapter.notifyDataSetChanged();
 
         if (bottomSheetBehavior != null) {
             bottomSheetBehavior.setState(mPresenter.getState());
@@ -1310,6 +1312,15 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     public void downloadFile(String url, String fileName) {
         mAudioAdapter.addDownloadingItem(url);
         Intent intent = new Intent(this, Download.class);
+        intent.putExtra("url", url);
+        intent.putExtra("fileName", fileName);
+        startService(intent);
+    }
+
+    @Override
+    public void downloadFileABMP3(final String url, final String fileName) {
+        mAudioAdapter.addDownloadingItem(url);
+        Intent intent = new Intent(this, DownloadABMP3.class);
         intent.putExtra("url", url);
         intent.putExtra("fileName", fileName);
         startService(intent);

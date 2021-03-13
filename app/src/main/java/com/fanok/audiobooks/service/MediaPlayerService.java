@@ -710,7 +710,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
             source.setDefaultRequestProperty("accept", "*/*");
             source.setDefaultRequestProperty("accept-encoding", "identity;q=1, *;q=0");
             source.setDefaultRequestProperty("accept-language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,uk;q=0.6");
-            //source.setDefaultRequestProperty("range", "bytes=0-");
+            //source.setDefaultRequestProperty("range", "bytes=0-1262485504");
             source.setDefaultRequestProperty("referer", "https://audiobook-mp3.com/");
             source.setDefaultRequestProperty("sec-ch-ua",
                     "Google Chrome\";v=\"89\", \"Chromium\";v=\"89\", \";Not A Brand\";v=\"99");

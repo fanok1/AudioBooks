@@ -582,7 +582,11 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     public void loadBooks(HashSet<String> data) {
         for (String url : data) {
-            getViewState().downloadFile(url, mBookPOJO.getName());
+            if (mBookPOJO.getUrl().contains("audiobook-mp3.com")) {
+                getViewState().downloadFileABMP3(url, mBookPOJO.getName());
+            } else {
+                getViewState().downloadFile(url, mBookPOJO.getName());
+            }
         }
     }
 
