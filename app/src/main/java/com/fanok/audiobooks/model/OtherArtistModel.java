@@ -17,6 +17,81 @@ import org.jsoup.select.Elements;
 public class OtherArtistModel implements
         com.fanok.audiobooks.interface_pacatge.book_content.OtherArtistModel {
 
+    public static ArrayList<OtherArtistPOJO> loadOtherArtistAbook(String bookName, String bookAuthor, String bookUrl,
+            String bookReader) throws IOException {
+        ArrayList<OtherArtistPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(
+                "https://akniga.org/search/books?q=" + bookAuthor + " - " + bookName)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("https://akniga.org/")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Elements root = doc.getElementsByClass("content__main__articles--item");
+        if (root != null) {
+            for (Element book : root) {
+                String autorName = "";
+                String readerName = "";
+                String bookTitle = "";
+                OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+                Elements aTag = book.getElementsByClass("content__article-main-link tap-link");
+                if (aTag != null && aTag.size() != 0) {
+                    String href = aTag.first().attr("href");
+                    if (href != null && !href.isEmpty()) {
+                        otherArtistPOJO.setUrl(href);
+                    }
+                }
+
+                Elements title = book.getElementsByClass("caption__article-main");
+                if (title != null && title.size() != 0) {
+                    String text = title.first().text();
+                    if (text != null && !text.isEmpty()) {
+                        bookTitle = text.trim();
+                    }
+                }
+
+                Elements elements = book.getElementsByClass("link__action link__action--author");
+                if (elements != null) {
+                    for (Element element : elements) {
+                        Elements use = element.getElementsByTag("use");
+                        if (use != null && use.size() != 0) {
+                            String useHref = use.first().attr("xlink:href");
+                            if (useHref != null) {
+                                aTag = element.getElementsByTag("a");
+                                if (aTag != null && aTag.size() != 0) {
+                                    Element a = aTag.first();
+                                    String name = a.text();
+
+                                    if (name != null && !name.isEmpty()) {
+                                        switch (useHref) {
+                                            case "#author":
+                                                autorName = name;
+                                                break;
+                                            case "#performer":
+                                                readerName = name;
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                bookTitle = bookTitle.replace(autorName + " - ", "");
+                otherArtistPOJO.setName("Исполнитель " + readerName);
+                if (!readerName.isEmpty()
+                        && bookName.equals(bookTitle)
+                        && bookAuthor.equals(autorName)
+                        && !bookUrl.equals(otherArtistPOJO.getUrl())
+                        && !bookReader.equals(readerName)) {
+                    result.add(otherArtistPOJO);
+                }
+            }
+        }
+        return result;
+    }
+
 
     public static ArrayList<OtherArtistPOJO> loadOtherArtistABMP3(String bookName, String bookAuthor, String bookUrl,
             String bookReader) throws IOException {
@@ -41,9 +116,6 @@ public class OtherArtistModel implements
                                 String autorName = "";
                                 String readerName = "";
                                 String bookTitle = "";
-                                if (i >= books.size()) {
-                                    break;
-                                }
                                 Element book = books.get(i);
                                 OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
                                 Elements aTag = book.getElementsByTag("a");
@@ -106,6 +178,9 @@ public class OtherArtistModel implements
                     articlesModels = loadOtherArtistIzibuk(bookPOJO);
                 } else if (bookPOJO.getUrl().contains("audiobook-mp3.com")) {
                     articlesModels = loadOtherArtistABMP3(bookPOJO.getName(), bookPOJO.getAutor(), bookPOJO.getUrl(),
+                            bookPOJO.getArtist());
+                } else if (bookPOJO.getUrl().contains("akniga.org")) {
+                    articlesModels = loadOtherArtistAbook(bookPOJO.getName(), bookPOJO.getAutor(), bookPOJO.getUrl(),
                             bookPOJO.getArtist());
                 } else {
                     articlesModels = new ArrayList<>();

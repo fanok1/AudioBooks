@@ -369,6 +369,12 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             return true;
         });
 
+        preferenceClickListner("import_abook", preference -> {
+            ActivityImport.startActivity(Objects.requireNonNull(getActivity()),
+                    Consts.IMPORT_SITE_ABOOK);
+            return true;
+        });
+
 
         /*findPreference("pref_lang").setOnPreferenceChangeListener(
                 (preference, newValue) -> {

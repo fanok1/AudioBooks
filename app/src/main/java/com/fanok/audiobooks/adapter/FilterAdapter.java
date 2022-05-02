@@ -57,6 +57,9 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
                 case Consts.SOURCE_AUDIO_BOOK_MP3:
                     mText.setText(R.string.audionook_mp3);
                     break;
+                case Consts.SOURCE_ABOOK:
+                    mText.setText(R.string.abook);
+                    break;
             }
 
         }
@@ -77,6 +80,11 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
     public FilterAdapter(SharedPreferences preferences) {
         mData = new ArrayList<>();
         mData.add(-1);
+
+        if (preferences.getBoolean("search_abook", true)) {
+            mData.add(Consts.SOURCE_ABOOK);
+        }
+
         if (preferences.getBoolean("search_kniga_v_uhe", true)) {
             mData.add(Consts.SOURCE_KNIGA_V_UHE);
         }

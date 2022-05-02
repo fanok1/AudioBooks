@@ -138,6 +138,9 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             } else if (book.getUrl().contains("audiobook-mp3.com")) {
                 mSource.setText(R.string.audionook_mp3);
                 mSource.setVisibility(View.VISIBLE);
+            } else if (book.getUrl().contains("akniga.org")) {
+                mSource.setText(R.string.abook);
+                mSource.setVisibility(View.VISIBLE);
             } else {
                 mSource.setVisibility(View.GONE);
             }

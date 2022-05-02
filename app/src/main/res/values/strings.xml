@@ -179,7 +179,7 @@
     <string name="bunerID" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
     <string name="interstitiaID" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
     <string name="rewardedID" translatable="false">ca-app-pub-3940256099942544/5224354917</string>
-    <string name="setIgnoredBatteryOptimyze">Для корректной работы приложения необходимо добавить его в список игнорирования экономии зараяда батареи (Battery optimizetion).</string>
+    <string name="setIgnoredBatteryOptimyze">Для корректной работы приложения необходимо добавить его в список игнорирования экономии заряда батареи (Battery optimizetion).</string>
 
 
     <!--About -->
@@ -333,6 +333,8 @@
     <string name="books_adapter_layout_big_list_title">Большой список</string>
     <string name="books_adapter_layout_list_value" translatable="false">list</string>
     <string name="books_adapter_layout_big_list_value" translatable="false">big_list</string>
+    <string name="abook_value" translatable="false">abook</string>
+    <string name="abook" translatable="false">Akniga</string>
     <string name="kniga_v_uhe_value" translatable="false">kniga_v_uhe</string>
     <string name="izibuc_value" translatable="false">izibuc</string>
     <string name="izibuc">ИзиБук</string>
@@ -360,6 +362,7 @@
     <string name="speed_up_search_abmp3">Ускорить поиск по источнику Audiobook-mp3</string>
     <string name="speed_up_search_abmp3_desc">Ускоряет поиск книг за счет уменьшения количества загружаемых данных. Скорость поиска увеличиться в 4 раза</string>
     <string name="theme_black">Черная</string>
+    <string name="abook_description">Импортировать с сайта \"Akniga\"</string>
 
 
 </resources>

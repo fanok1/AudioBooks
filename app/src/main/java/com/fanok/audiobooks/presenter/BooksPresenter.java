@@ -102,7 +102,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showProgres(true);
             page++;
             if (mModelId != Consts.MODEL_GENRE) {
-                if (!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com")) {
+                if ((!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com"))
+                        && !mUrl.contains("akniga.org")) {
                     getData(mUrl + page + "/");
                 } else {
                     getData(mUrl.replace("<page>", Integer.toString(page)));
@@ -244,7 +245,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         String url = "";
 
         if (itemId == R.id.source_izi_book || itemId == R.id.source_kniga_v_uhe
-                || itemId == R.id.source_audio_book_mp3) {
+                || itemId == R.id.source_audio_book_mp3 || itemId == R.id.source_abook) {
             SharedPreferences pref = getDefaultSharedPreferences(Objects.requireNonNull(mContext));
             SharedPreferences.Editor editor = pref.edit();
             if (itemId == R.id.source_kniga_v_uhe) {
@@ -253,6 +254,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                 editor.putString("sorce_books", getStringById(R.string.izibuc_value));
             } else if (itemId == R.id.source_audio_book_mp3) {
                 editor.putString("sorce_books", getStringById(R.string.audiobook_mp3_value));
+            } else if (itemId == R.id.source_abook) {
+                editor.putString("sorce_books", getStringById(R.string.abook_value));
             }
             editor.commit();
             getViewState().recreate();
@@ -353,6 +356,69 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             Url.INDEX_ABMP3, R.string.menu_audiobooks,
                             subTitle + " " + getStringById(R.string.order_new), Consts.MODEL_BOOKS),
                             "audioBooksOrederNew");
+                }
+            }
+        } else if (mUrl.contains("akniga.org")) {
+            if (!mUrl.contains("section")) {
+                switch (itemId) {
+                    case R.id.new_data:
+                        url = Url.NEW_BOOK_AKNIGA;
+                        break;
+                    case R.id.reting_all_time:
+                        url = Url.RATING_ALL_TIME_AKNIGA;
+                        break;
+                    case R.id.reting_month:
+                        url = Url.RATING_MONTH_AKNIGA;
+                        break;
+                    case R.id.reting_week:
+                        url = Url.RATING_WEEK_AKNIGA;
+                        break;
+                    case R.id.reting_day:
+                        url = Url.RATING_TODATY_AKNIGA;
+                        break;
+                    case R.id.popular_all_time:
+                        url = Url.BEST_ALL_TIME_AKNIGA;
+                        break;
+                    case R.id.popular_month:
+                        url = Url.BEST_MONTH_AKNIGA;
+                        break;
+                    case R.id.popular_week:
+                        url = Url.BEST_WEEK_AKNIGA;
+                        break;
+                    case R.id.popular_day:
+                        url = Url.BEST_TODAY_AKNIGA;
+                        break;
+                }
+            } else {
+                url = mUrl.substring(0, Consts.indexOfByNumber(mUrl, '/', 5) + 1);
+                switch (itemId) {
+                    case R.id.new_data:
+                        url += "page<page>/";
+                        break;
+                    case R.id.reting_all_time:
+                        url += "top/page<page>/?period=all";
+                        break;
+                    case R.id.reting_month:
+                        url += "top/page<page>/?period=30";
+                        break;
+                    case R.id.reting_week:
+                        url += "top/page<page>/?period=7";
+                        break;
+                    case R.id.reting_day:
+                        url += "top/page<page>/?period=1";
+                        break;
+                    case R.id.popular_all_time:
+                        url += "discussed/page<page>/?period=all";
+                        break;
+                    case R.id.popular_month:
+                        url += "discussed/page<page>/?period=30";
+                        break;
+                    case R.id.popular_week:
+                        url += "discussed/page<page>/?period=7";
+                        break;
+                    case R.id.popular_day:
+                        url += "discussed/page<page>/?period=1";
+                        break;
                 }
             }
         }
@@ -480,7 +546,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showRefreshing(true);
             page = 1;
             if (mModelId != Consts.MODEL_GENRE) {
-                if (!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com")) {
+                if ((!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com"))
+                        && !mUrl.contains("akniga.org")) {
                     getData(mUrl + page + "/");
                 } else {
                     getData(mUrl.replace("<page>", Integer.toString(page)));

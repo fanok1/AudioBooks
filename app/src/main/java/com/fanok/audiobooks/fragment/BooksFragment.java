@@ -289,6 +289,28 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
             } else {
                 setColorPrimeriTextInIconItemMenu(
                         menu.findItem(R.id.source), Objects.requireNonNull(getContext()));
+                MenuItem item;
+                switch (Consts.getSOURCE()) {
+                    case Consts.SOURCE_KNIGA_V_UHE:
+                        item = menu.findItem(R.id.source_kniga_v_uhe);
+                        break;
+                    case Consts.SOURCE_IZI_BUK:
+                        item = menu.findItem(R.id.source_izi_book);
+                        break;
+                    case Consts.SOURCE_AUDIO_BOOK_MP3:
+                        item = menu.findItem(R.id.source_audio_book_mp3);
+                        break;
+                    case Consts.SOURCE_ABOOK:
+                        item = menu.findItem(R.id.source_abook);
+                        break;
+                    default:
+                        item = null;
+                        break;
+                }
+                if (item != null) {
+                    item.setChecked(true);
+                }
+
             }
 
             if (mUrl.contains("reader") || mUrl.contains("author") ||

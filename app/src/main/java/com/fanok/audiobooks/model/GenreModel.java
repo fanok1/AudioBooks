@@ -4,9 +4,15 @@ import com.fanok.audiobooks.AutorsSearchABMP3;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.GenrePOJO;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.reactivex.Observable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
+import org.jsoup.Connection.Method;
+import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -95,7 +101,16 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
         return Observable.create(observableEmitter -> {
             ArrayList<GenrePOJO> articlesModels;
             try {
-                if (url.contains(String.valueOf(page))) {
+                if (url.contains("akniga.org") && url.contains("ajax-search")) {
+                    if (page > 1) {
+                        throw new NullPointerException();
+                    }
+                    String qery = url.substring(url.indexOf("?q="));
+                    qery = qery.replace("?q=", "");
+                    String url1 = url.substring(0, url.indexOf("?q="));
+                    articlesModels = searchAutorAbook(url1, qery);
+                    observableEmitter.onNext(articlesModels);
+                } else if (url.contains(String.valueOf(page))) {
                     for (int i = 1; i <= size; i++) {
                         int temp = (page - 1) * size + i;
                         if (url.contains("knigavuhe.org")) {
@@ -107,6 +122,9 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
                         } else if (url.contains("audiobook-mp3.com")) {
                             articlesModels = loadBooksListABMP3(
                                     url.replace("?page=" + page + "/", "?page=" + temp), temp);
+                        } else if (url.contains("akniga.org")) {
+                            articlesModels = loadBooksListAbook(
+                                    url.replace("page" + page + "/", "page" + temp), temp);
                         } else {
                             articlesModels = new ArrayList<>();
                         }
@@ -123,6 +141,8 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
                         } else {
                             articlesModels = loadBooksListABMP3(url + "?page=", page);
                         }
+                    } else if (url.contains("akniga.org")) {
+                        articlesModels = loadBooksListAbook(url, page);
                     } else {
                         articlesModels = new ArrayList<>();
                     }
@@ -171,4 +191,125 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
         }
         return result;
     }
+
+    protected ArrayList<GenrePOJO> loadBooksListAbook(String url, int page) throws IOException {
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Elements items = doc.getElementsByClass("table-authors");
+        if (items != null && items.size() != 0) {
+            Elements tbody = items.first().getElementsByTag("tbody");
+            if (tbody != null && tbody.size() != 0) {
+                Elements list = tbody.first().children();
+                if (list != null && list.size() > 0) {
+                    for (Element item : list) {
+                        GenrePOJO genrePOJO = new GenrePOJO();
+                        Elements titles = item.getElementsByClass("name-obj");
+                        if (titles != null && titles.size() != 0) {
+                            Elements aGenre = titles.first().getElementsByTag("a");
+                            if (aGenre != null && aGenre.size() != 0) {
+                                genrePOJO.setUrl(aGenre.first().attr("href") + "page<page>/");
+                                genrePOJO.setName(aGenre.first().text());
+                            }
+                        }
+                        Elements description = item.getElementsByClass("description");
+                        if (description != null && description.size() != 0) {
+                            genrePOJO.setDescription(description.first().text().trim());
+                        }
+
+                        Elements reting = item.getElementsByClass("cell-rating");
+                        if (reting != null && reting.size() != 0) {
+                            genrePOJO.setReting(Integer.parseInt(reting.first().text().trim()));
+                        }
+
+                        if (!genrePOJO.isNull()) {
+                            result.add(genrePOJO);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<GenrePOJO> searchAutorAbook(String url, String qery) throws IOException {
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        Response response = Jsoup.connect("https://akniga.org/authors/")
+                .userAgent(Consts.USER_AGENT)
+                .referrer("https://akniga.org/performers/")
+                .sslSocketFactory(Consts.socketFactory())
+                .execute();
+        Map<String, String> cookies = response.cookies();
+
+        Document doc = response.parse();
+
+        Elements sriptTag = doc.getElementsByTag("script");
+        String key = "";
+        if (sriptTag != null) {
+            for (Element script : sriptTag) {
+                String text = script.data();
+                if (text != null && text.contains("LIVESTREET_SECURITY_KEY")) {
+                    text = text.substring(text.indexOf("LIVESTREET_SECURITY_KEY"));
+                    text = text.replace("LIVESTREET_SECURITY_KEY = '", "");
+                    key = text.substring(0, text.indexOf("'"));
+                    break;
+                }
+            }
+        }
+
+        String text = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .method(Method.POST)
+                .referrer("https://akniga.org/authors/")
+                .sslSocketFactory(Consts.socketFactory())
+                .data("security_ls_key", key)
+                .data("sText", qery)
+                .maxBodySize(0)
+                .ignoreContentType(true)
+                .cookies(cookies)
+                .execute()
+                .body();
+        JsonElement json = JsonParser.parseString(text.replaceAll("\\n", ""));
+        if (json.isJsonObject()) {
+            JsonObject jsonObject = json.getAsJsonObject();
+            String html = jsonObject.get("html").getAsString();
+            doc = Jsoup.parse("<html><head></head><body><table>" + html + "</table></body></html>");
+            Elements tr = doc.getElementsByTag("tr");
+            if (tr != null && tr.size() != 0) {
+                for (Element item : tr) {
+                    GenrePOJO genrePOJO = new GenrePOJO();
+                    Elements titles = item.getElementsByClass("name-obj");
+                    if (titles != null && titles.size() != 0) {
+                        Elements aGenre = titles.first().getElementsByTag("a");
+                        if (aGenre != null && aGenre.size() != 0) {
+                            genrePOJO.setUrl(aGenre.first().attr("href") + "/page<page>/");
+                            genrePOJO.setName(aGenre.first().text());
+                        }
+                    }
+                    Elements description = item.getElementsByClass("description");
+                    if (description != null && description.size() != 0) {
+                        genrePOJO.setDescription(description.first().text().trim());
+                    }
+
+                    Elements reting = item.getElementsByClass("cell-rating");
+                    if (reting != null && reting.size() != 0) {
+                        genrePOJO.setReting(Integer.parseInt(reting.first().text().trim()));
+                    }
+
+                    if (!genrePOJO.isNull()) {
+                        result.add(genrePOJO);
+                    }
+                }
+            }
+
+        }
+
+        return result;
+    }
+
+
 }

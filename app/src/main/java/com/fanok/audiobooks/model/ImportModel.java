@@ -57,6 +57,40 @@ public class ImportModel {
 
     }
 
+    public Observable<Integer> importBooks(@NonNull String username, @NotNull String password) {
+        return Observable.create(observableEmitter -> {
+            try {
+                if (src == Consts.IMPORT_SITE_KNIGA_V_UHE) {
+                    if (!login(username, password)) {
+                        observableEmitter.onNext(R.string.incorect_login_or_password);
+                    } else {
+                        if (importBooks()) {
+                            observableEmitter.onNext(R.string.import_complite);
+                        } else {
+                            observableEmitter.onNext(R.string.error_import);
+                        }
+                    }
+                } else if (src == Consts.IMPORT_SITE_ABOOK) {
+                    if (!loginAbook(username, password)) {
+                        observableEmitter.onNext(R.string.incorect_login_or_password);
+                    } else {
+                        if (importBooksAbook()) {
+                            observableEmitter.onNext(R.string.import_complite);
+                        } else {
+                            observableEmitter.onNext(R.string.error_import);
+                        }
+                    }
+                } else {
+                    observableEmitter.onNext(R.string.worong_data_sorce);
+                }
+            } catch (Exception e) {
+                observableEmitter.onError(e);
+            } finally {
+                observableEmitter.onComplete();
+            }
+        });
+    }
+
     private Map<String, String> getCookies() {
         return cookies;
     }
@@ -133,27 +167,135 @@ public class ImportModel {
         return false;
     }
 
-    public Observable<Integer> importBooks(@NonNull String username, @NotNull String password) {
-        return Observable.create(observableEmitter -> {
-            try {
-                if (src == Consts.IMPORT_SITE_KNIGA_V_UHE) {
-                    if (!login(username, password)) {
-                        observableEmitter.onNext(R.string.incorect_login_or_password);
-                    } else {
-                        if (importBooks()) {
-                            observableEmitter.onNext(R.string.import_complite);
-                        } else {
-                            observableEmitter.onNext(R.string.error_import);
+    private boolean importBooksAbook() throws IOException {
+        int page = 1;
+        BooksDBModel booksDBModel = new BooksDBModel(mContext);
+        boolean end = false;
+        while (true) {
+            Document document = Jsoup.connect(getUserUrl() + "/books/page" + page + "/")
+                    .cookies(getCookiesAuth())
+                    .userAgent(Consts.USER_AGENT)
+                    .sslSocketFactory(Consts.socketFactory())
+                    .referrer("https://akniga.org/")
+                    .get();
+            Elements bootom = document.getElementsByClass("page__nav");
+            if (bootom != null && bootom.size() != 0) {
+                Elements nextButton = bootom.get(0).getElementsByClass("page__nav--next");
+                if (!(nextButton != null && nextButton.size() != 0)) {
+                    if (end) {
+                        return true;
+                    }
+                    end = true;
+                }
+            } else if (page > 1) {
+                return true;
+            }
+
+            Elements listElements = document.getElementsByClass("content__main__articles--item");
+            if (listElements != null && listElements.size() != 0) {
+                for (Element book : listElements) {
+                    Elements paid = book.getElementsByAttributeValue("href", "https://akniga.org/paid/");
+                    if (paid != null && paid.size() != 0) {
+                        continue;
+                    }
+                    Elements fragment = book.getElementsByClass("caption__article-preview");
+                    if (fragment != null && fragment.size() != 0) {
+                        String text = fragment.first().text();
+                        if (text != null && text.equals("Фрагмент")) {
+                            continue;
                         }
                     }
-                } else {
-                    observableEmitter.onNext(R.string.worong_data_sorce);
+                    Elements link = book.getElementsByClass("content__article-main-link");
+                    if (link != null && link.size() != 0) {
+                        String src = link.first().attr("href");
+                        if (src != null && !src.isEmpty()) {
+                            if (!booksDBModel.inFavorite(src)) {
+                                booksDBModel.addFavorite(BookPOJO.getBookByUrlAbook(src));
+                            }
+                        }
+                    }
                 }
-            } catch (Exception e) {
-                observableEmitter.onError(e);
-            } finally {
-                observableEmitter.onComplete();
             }
-        });
+
+            page++;
+        }
+    }
+
+    private boolean loginAbook(@NotNull String username, @NotNull String password) throws IOException {
+        if (getCookies() == null || getToken() == null) {
+            setCookesAbook();
+        }
+
+        Connection.Response res = Jsoup.connect("https://akniga.org/auth/ajax-login")
+                .cookies(getCookies())
+                .data("login", username)
+                .data("password", password)
+                .data("security_ls_key", getToken())
+                .data("remember", "1")
+                .data("return-path", "https://akniga.org/")
+                .method(Connection.Method.POST)
+                .sslSocketFactory(Consts.socketFactory())
+                .ignoreContentType(true)
+                .followRedirects(true)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("https://akniga.org/")
+                .execute();
+
+        String json = res.body();
+
+        JsonElement root = JsonParser.parseString(json);
+        if (root.isJsonObject()) {
+            JsonElement sMsg = root.getAsJsonObject().get("sMsg");
+            if (!sMsg.isJsonNull() && sMsg.isJsonPrimitive()) {
+                String text = sMsg.getAsString();
+                if (text == null || text.contains("Неправильно указан логин (e-mail) или пароль!")) {
+                    return false;
+                } else {
+                    cookiesAuth = res.cookies();
+                    Document document = Jsoup.connect("https://akniga.org/")
+                            .userAgent(Consts.USER_AGENT)
+                            .referrer("http://www.google.com")
+                            .sslSocketFactory(Consts.socketFactory())
+                            .cookies(cookiesAuth)
+                            .get();
+                    Elements elements = document.getElementsByClass("menu__user--wrapper--wrapper");
+                    if (elements != null && elements.size() != 0) {
+                        Element a = elements.first().child(2);
+                        if (a != null) {
+                            String href = a.attr("href");
+                            if (href != null && !href.isEmpty()) {
+                                userUrl = href;
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private void setCookesAbook() throws IOException {
+        Connection.Response res = Jsoup.connect("https://akniga.org/")
+                .method(Connection.Method.GET)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("https://www.google.com.ua/")
+                .sslSocketFactory(Consts.socketFactory())
+                .execute();
+        Document doc = res.parse();
+        cookies = res.cookies();
+        Elements sriptTag = doc.getElementsByTag("script");
+        if (sriptTag != null) {
+            for (Element script : sriptTag) {
+                String text = script.data();
+                if (text != null && text.contains("LIVESTREET_SECURITY_KEY")) {
+                    text = text.substring(text.indexOf("LIVESTREET_SECURITY_KEY"));
+                    text = text.replace("LIVESTREET_SECURITY_KEY = '", "");
+                    token = text.substring(0, text.indexOf("'"));
+                    break;
+                }
+            }
+        }
+
     }
 }

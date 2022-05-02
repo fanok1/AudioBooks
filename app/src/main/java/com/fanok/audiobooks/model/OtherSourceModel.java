@@ -25,6 +25,14 @@ public class OtherSourceModel implements
         return Observable.create(observableEmitter -> {
             ArrayList<OtherArtistPOJO> articlesModels = new ArrayList<>();
             try {
+
+                if (!bookPOJO.getUrl().contains("akniga.org")) {
+                    OtherArtistPOJO artistPOJO = getAbook(bookPOJO);
+                    if (artistPOJO != null) {
+                        articlesModels.add(artistPOJO);
+                    }
+                }
+
                 if (!bookPOJO.getUrl().contains("knigavuhe.org")) {
                     OtherArtistPOJO artistPOJO = getKnigaVuhe(bookPOJO);
                     if (artistPOJO != null) {
@@ -112,10 +120,35 @@ public class OtherSourceModel implements
 
                                 }
 
+                                String[] name = autorName.split(" ");
+                                boolean authorFlag = false;
+                                if (autorName.length() == bookPOJO.getAutor().length()) {
+                                    authorFlag = true;
+                                    for (final String s : name) {
+                                        if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
+                                            authorFlag = false;
+                                            break;
+                                        }
+
+                                    }
+                                }
+
+                                String[] artist = readerName.split(" ");
+                                boolean readerFlag = false;
+                                if (readerName.length() == bookPOJO.getArtist().length()) {
+                                    readerFlag = true;
+                                    for (final String s : artist) {
+                                        if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
+                                            readerFlag = false;
+                                            break;
+                                        }
+
+                                    }
+                                }
+
                                 if (!readerName.isEmpty()
-                                        && bookPOJO.getName().equals(bookTitle)
-                                        && bookPOJO.getAutor().equals(autorName)
-                                        && bookPOJO.getArtist().equals(readerName)) {
+                                        && bookPOJO.getName().toLowerCase().equals(bookTitle.toLowerCase()) &&
+                                        authorFlag && readerFlag) {
                                     return otherArtistPOJO;
                                 }
                             }
@@ -128,72 +161,120 @@ public class OtherSourceModel implements
     }
 
     @Nullable
-    private OtherArtistPOJO getKnigaVuhe(BookPOJO bookPOJO) throws IOException {
+    private OtherArtistPOJO getAbook(BookPOJO bookPOJO) throws IOException {
 
-        Document doc = Jsoup.connect("https://knigavuhe.org/search/?q=" + bookPOJO.getName()
-                + " " + bookPOJO.getAutor())
+        Document doc = Jsoup.connect("https://akniga.org/search/books?q=" + bookPOJO.getName() + " "
+                + bookPOJO.getAutor() + " " + bookPOJO.getArtist())
                 .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
+                .referrer("https://akniga.org/")
                 .sslSocketFactory(Consts.socketFactory())
                 .get();
 
-        Element bookList = doc.getElementById("books_updates_list");
-        if (bookList == null) bookList = doc.getElementById("books_list");
-        if (bookList != null) {
-            Elements books = bookList.getElementsByClass("bookkitem");
-            if (books.size() == 0) return null;
-            for (Element book : books) {
+        Elements listElements = doc.getElementsByClass("content__main__articles--item");
+        if (listElements != null && listElements.size() != 0) {
+            for (Element book : listElements) {
+                Elements paid = book.getElementsByAttributeValue("href", "https://akniga.org/paid/");
+                if (paid != null && paid.size() != 0) {
+                    continue;
+                }
 
-                String title = "";
+                Elements fragment = book.getElementsByClass("caption__article-preview");
+                if (fragment != null && fragment.size() != 0) {
+                    String text = fragment.first().text();
+                    if (text != null && text.equals("Фрагмент")) {
+                        continue;
+                    }
+                }
+
+                String url = "";
+                String titleResulr = "";
                 String author = "";
                 String reader = "";
-                String url = "";
 
-                Elements litRes = book.getElementsByClass("bookkitem_litres_icon");
-                if (litRes.size() != 0) continue;
-                Elements aTags = book.getElementsByClass("bookkitem_name");
-                if (aTags.size() != 0) {
-                    Element a = aTags.first().child(0);
-                    if (a != null) {
-                        url = Url.SERVER + a.attr("href");
-                        title = a.text();
+                Elements elements = book.getElementsByClass("link__action link__action--author");
+                if (elements != null) {
+                    for (Element element : elements) {
+                        Elements use = element.getElementsByTag("use");
+                        if (use != null && use.size() != 0) {
+                            String useHref = use.first().attr("xlink:href");
+                            if (useHref != null) {
+                                Elements aTag = element.getElementsByTag("a");
+                                if (aTag != null && aTag.size() != 0) {
+                                    Element a = aTag.first();
+                                    String name = a.text();
+
+                                    if (name != null && !name.isEmpty()) {
+                                        switch (useHref) {
+                                            case "#author":
+                                                author = name;
+                                                break;
+                                            case "#performer":
+                                                reader = name;
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
-                Elements autorConteiner = book.getElementsByClass("bookkitem_author");
-                if (autorConteiner.size() != 0) {
-                    Elements aAutor = autorConteiner.first().getElementsByTag("a");
-                    if (aAutor.size() != 0) {
-                        author = aAutor.first().text();
+                Elements titleElements = book.getElementsByClass("caption__article-main");
+                if (titleElements != null && titleElements.size() != 0) {
+                    String title = titleElements.first().text();
+                    if (title != null && !title.isEmpty()) {
+                        titleResulr = title.replace(author + " - ", "");
                     }
                 }
 
-
-                Elements artistConteiner = book.getElementsByClass("bookkitem_icon -reader");
-                if (artistConteiner.size() != 0) {
-                    Element parent = artistConteiner.first().parent();
-                    Elements artist = parent.getElementsByTag("a");
-                    if (artist.size() != 0) {
-                        reader = artist.first().text();
+                Elements link = book.getElementsByClass("content__article-main-link");
+                if (link != null && link.size() != 0) {
+                    String src = link.first().attr("href");
+                    if (src != null && !src.isEmpty()) {
+                        url = src;
                     }
                 }
 
+                String[] name = author.split(" ");
+                boolean authorFlag = false;
+                if (author.length() == bookPOJO.getAutor().length()) {
+                    authorFlag = true;
+                    for (final String s : name) {
+                        if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
+                            authorFlag = false;
+                            break;
+                        }
 
-                if (!title.isEmpty() && !url.isEmpty() &&
-                        title.toLowerCase().equals(bookPOJO.getName().toLowerCase()) &&
-                        author.toLowerCase().equals(bookPOJO.getAutor().toLowerCase()) &&
-                        reader.toLowerCase().equals(bookPOJO.getArtist().toLowerCase())) {
+                    }
+                }
 
+                String[] artist = reader.split(" ");
+                boolean readerFlag = false;
+                if (reader.length() == bookPOJO.getArtist().length()) {
+                    readerFlag = true;
+                    for (final String s : artist) {
+                        if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
+                            readerFlag = false;
+                            break;
+                        }
+
+                    }
+                }
+
+                if (!titleResulr.isEmpty() && !url.isEmpty() &&
+                        titleResulr.toLowerCase().equals(bookPOJO.getName().toLowerCase()) &&
+                        authorFlag && readerFlag) {
                     OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
-                    otherArtistPOJO.setName("knigavuhe.org");
+                    otherArtistPOJO.setName("akniga.org");
                     otherArtistPOJO.setUrl(url);
                     return otherArtistPOJO;
                 }
+
             }
+
         }
 
         return null;
-
     }
 
     @Nullable
@@ -265,10 +346,35 @@ public class OtherSourceModel implements
                         }
                     }
 
+                    String[] name = author.split(" ");
+                    boolean authorFlag = false;
+                    if (author.length() == bookPOJO.getAutor().length()) {
+                        authorFlag = true;
+                        for (final String s : name) {
+                            if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
+                                authorFlag = false;
+                                break;
+                            }
+
+                        }
+                    }
+
+                    String[] artist = reader.split(" ");
+                    boolean readerFlag = false;
+                    if (reader.length() == bookPOJO.getArtist().length()) {
+                        readerFlag = true;
+                        for (final String s : artist) {
+                            if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
+                                readerFlag = false;
+                                break;
+                            }
+
+                        }
+                    }
+
                     if (!titleResulr.isEmpty() && !url.isEmpty() &&
                             titleResulr.toLowerCase().equals(bookPOJO.getName().toLowerCase()) &&
-                            author.toLowerCase().equals(bookPOJO.getAutor().toLowerCase()) &&
-                            reader.toLowerCase().equals(bookPOJO.getArtist().toLowerCase())) {
+                            authorFlag && readerFlag) {
 
                         OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
                         otherArtistPOJO.setName("izib.uk");
@@ -282,5 +388,103 @@ public class OtherSourceModel implements
         }
 
         return null;
+    }
+
+    @Nullable
+    private OtherArtistPOJO getKnigaVuhe(BookPOJO bookPOJO) throws IOException {
+
+        Document doc = Jsoup.connect("https://knigavuhe.org/search/?q=" + bookPOJO.getName()
+                + " " + bookPOJO.getAutor())
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Element bookList = doc.getElementById("books_updates_list");
+        if (bookList == null) {
+            bookList = doc.getElementById("books_list");
+        }
+        if (bookList != null) {
+            Elements books = bookList.getElementsByClass("bookkitem");
+            if (books.size() == 0) {
+                return null;
+            }
+            for (Element book : books) {
+
+                String title = "";
+                String author = "";
+                String reader = "";
+                String url = "";
+
+                Elements litRes = book.getElementsByClass("bookkitem_litres_icon");
+                if (litRes.size() != 0) {
+                    continue;
+                }
+                Elements aTags = book.getElementsByClass("bookkitem_name");
+                if (aTags.size() != 0) {
+                    Element a = aTags.first().child(0);
+                    if (a != null) {
+                        url = Url.SERVER + a.attr("href");
+                        title = a.text();
+                    }
+                }
+
+                Elements autorConteiner = book.getElementsByClass("bookkitem_author");
+                if (autorConteiner.size() != 0) {
+                    Elements aAutor = autorConteiner.first().getElementsByTag("a");
+                    if (aAutor.size() != 0) {
+                        author = aAutor.first().text();
+                    }
+                }
+
+                Elements artistConteiner = book.getElementsByClass("bookkitem_icon -reader");
+                if (artistConteiner.size() != 0) {
+                    Element parent = artistConteiner.first().parent();
+                    Elements artist = parent.getElementsByTag("a");
+                    if (artist.size() != 0) {
+                        reader = artist.first().text();
+                    }
+                }
+
+                String[] name = author.split(" ");
+                boolean authorFlag = false;
+                if (author.length() == bookPOJO.getAutor().length()) {
+                    authorFlag = true;
+                    for (final String s : name) {
+                        if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
+                            authorFlag = false;
+                            break;
+                        }
+
+                    }
+                }
+
+                String[] artist = reader.split(" ");
+                boolean readerFlag = false;
+                if (reader.length() == bookPOJO.getArtist().length()) {
+                    readerFlag = true;
+                    for (final String s : artist) {
+                        if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
+                            readerFlag = false;
+                            break;
+                        }
+
+                    }
+                }
+
+                if (!title.isEmpty() && !url.isEmpty() &&
+                        title.toLowerCase().equals(bookPOJO.getName().toLowerCase()) &&
+                        authorFlag && readerFlag) {
+
+                    OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+                    otherArtistPOJO.setName("knigavuhe.org");
+                    otherArtistPOJO.setUrl(url);
+                    return otherArtistPOJO;
+                }
+            }
+        }
+
+        return null;
+
     }
 }

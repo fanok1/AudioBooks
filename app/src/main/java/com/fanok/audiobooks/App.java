@@ -38,7 +38,7 @@ public class App extends Application {
 
         BookPresenter.setSpeedWithoutBroadcast(new StorageUtil(getBaseContext()).loadSpeed());
 
-        String source = pref.getString("sorce_books", getString(R.string.kniga_v_uhe_value));
+        String source = pref.getString("sorce_books", getString(R.string.abook_value));
         Consts.setSOURCE(this, source);
 
 

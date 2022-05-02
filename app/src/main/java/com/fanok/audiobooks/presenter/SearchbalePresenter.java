@@ -89,6 +89,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         switch (modelId) {
             case Consts.MODEL_BOOKS:
                 mUrls = new ArrayList<>();
+                mUrls.add("https://akniga.org/search/books/page<page>/?q=<qery>");
                 mUrls.add("https://knigavuhe.org/search/?q=<qery>&page=<page>");
                 mUrls.add("https://izib.uk/search?q=<qery>&p=<page>");
                 mUrls.add("https://audiobook-mp3.com/search?text=<qery>");
@@ -98,6 +99,8 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                     mUrl = "https://knigavuhe.org/search/authors/?q=<qery>&page=<page>";
                 } else if (Consts.SOURCE_AUDIO_BOOK_MP3 == Consts.getSOURCE()) {
                     mUrl = "https://audiobook-mp3.com/search?text=<qery>";
+                } else if (Consts.SOURCE_ABOOK == Consts.getSOURCE()) {
+                    mUrl = "https://akniga.org/authors/ajax-search/";
                 } else {
                     mUrl = "https://izib.uk/authors?p=<page>&q=<qery>";
                 }
@@ -105,6 +108,8 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             case Consts.MODEL_ARTIST:
                 if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
                     mUrl = "https://knigavuhe.org/search/readers/?q=<qery>&page=<page>";
+                } else if (Consts.SOURCE_ABOOK == Consts.getSOURCE()) {
+                    mUrl = "https://akniga.org/performers/ajax-search/";
                 } else {
                     mUrl = "https://izib.uk/readers?p=<page>&q=<qery>";
                 }
@@ -153,30 +158,32 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 mSearcheblPOJOFilter = new SearcheblPOJO();
             } else if (filter == Consts.SOURCE_AUDIO_BOOK_MP3) {
                 setAutorsAndSeriesFilter("audiobook-mp3.com");
+            } else if (filter == Consts.SOURCE_ABOOK) {
+                mSearcheblPOJOFilter = new SearcheblPOJO();
             }
             getViewState().showSeriesAndAutors(mSearcheblPOJOFilter);
         }
     }
 
-
     @Override
-    public void loadNext() {
-        if (query != null) {
-            if (!isEnd && !isLoading) {
-                getViewState().showProgres(true);
-                page++;
-                if (mUrls != null && mUrls.size() != 0) {
-                    ArrayList<String> temp = new ArrayList<>();
-                    for (String url : mUrls) {
-                        temp.add(url.replace("<qery>", query).replace("<page>",
-                                String.valueOf(page)));
-                    }
-                    getData(temp);
-                } else if (mUrl != null) {
-                    getData(mUrl.replace("<qery>", query).replace("<page>", String.valueOf(page)));
-                }
-            }
+    public void filterBooks() {
+        if (filter == -1) {
+            books_filter = null;
+            getViewState().showData(books);
+        } else if (filter == Consts.SOURCE_KNIGA_V_UHE) {
+            setBooksFilter("knigavuhe.org");
+            getViewState().showData(books_filter);
+        } else if (filter == Consts.SOURCE_IZI_BUK) {
+            setBooksFilter("izib.uk");
+            getViewState().showData(books_filter);
+        } else if (filter == Consts.SOURCE_AUDIO_BOOK_MP3) {
+            setBooksFilter("audiobook-mp3.com");
+            getViewState().showData(books_filter);
+        } else if (filter == Consts.SOURCE_ABOOK) {
+            setBooksFilter("akniga.org");
+            getViewState().showData(books_filter);
         }
+
     }
 
     @Override
@@ -210,21 +217,27 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
     }
 
     @Override
-    public void filterBooks() {
-        if (filter == -1) {
-            books_filter = null;
-            getViewState().showData(books);
-        } else if (filter == Consts.SOURCE_KNIGA_V_UHE) {
-            setBooksFilter("knigavuhe.org");
-            getViewState().showData(books_filter);
-        } else if (filter == Consts.SOURCE_IZI_BUK) {
-            setBooksFilter("izib.uk");
-            getViewState().showData(books_filter);
-        } else if (filter == Consts.SOURCE_AUDIO_BOOK_MP3) {
-            setBooksFilter("audiobook-mp3.com");
-            getViewState().showData(books_filter);
+    public void loadNext() {
+        if (query != null) {
+            if (!isEnd && !isLoading) {
+                getViewState().showProgres(true);
+                page++;
+                if (mUrls != null && mUrls.size() != 0) {
+                    ArrayList<String> temp = new ArrayList<>();
+                    for (String url : mUrls) {
+                        temp.add(url.replace("<qery>", query).replace("<page>",
+                                String.valueOf(page)));
+                    }
+                    getData(temp);
+                } else if (mUrl != null) {
+                    if (mUrl.contains("akniga.org")) {
+                        getData(mUrl + "?q=" + query);
+                    } else {
+                        getData(mUrl.replace("<qery>", query).replace("<page>", String.valueOf(page)));
+                    }
+                }
+            }
         }
-
     }
 
     @Override
@@ -430,6 +443,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                         @Override
                         public void onComplete() {
                             Log.d(TAG, "onComplete");
+                            books = sort(url, books); //при добавлении источников изменять не надо
                             filterBooks();
                             getViewState().showProgres(false);
                             isLoading = false;
@@ -441,6 +455,26 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                     });
 
         }
+    }
+
+    private ArrayList<BookPOJO> sort(ArrayList<String> urls, ArrayList<BookPOJO> array) {
+        //при добавлении источников изменять не надо
+        ArrayList<BookPOJO> result = new ArrayList<>();
+        while (array.size() != 0) {
+            for (String url : urls) {
+                String text = url.replace("https://", "");
+                text = text.replace("http://", "");
+                text = text.substring(0, text.indexOf("/"));
+                for (BookPOJO bookPOJO : array) {
+                    if (bookPOJO.getUrl().contains(text)) {
+                        result.add(bookPOJO);
+                        array.remove(bookPOJO);
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     private void getData(String url) {

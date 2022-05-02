@@ -64,6 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/item_genre_title_top_margin"
             android:textColor="?attr/colorPrimaryText"
+            android:textIsSelectable="true"
             tools:text="Увлекательно и атмосферно, герои симпатичны, динамичны и слишком нереальные роботы. Девочка, попавшая непростую ситуацию, «Чем старше она становилась, тем становил" />
 
         <TextView

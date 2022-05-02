@@ -15,9 +15,14 @@ import org.jsoup.select.Elements;
 public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.BooksModel {
 
     private String genreName;
+
     private String genreSrc;
+
     private String authorName;
+
     private String authorUrl;
+
+    private boolean end = false;
 
 
     private void setSiries(String url) throws IOException {
@@ -86,6 +91,9 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     } else if (url.contains("audiobook-mp3.com")) {
                         articlesModels = loadBooksListABMP3(
                                 url.replace("?page=" + page + "/", "?page=" + temp), temp);
+                    } else if (url.contains("akniga.org")) {
+                        articlesModels = loadBooksListAbook(
+                                url.replace("/page" + page + "/", "/page" + temp + "/"), temp);
                     } else {
                         articlesModels = new ArrayList<>();
                     }
@@ -112,9 +120,11 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
             boolean endKnigaVUhe = false;
             boolean endIziBuk = false;
             boolean endABMP3 = false;
+            boolean endAbook = false;
             boolean searchKnigaVUhe = preferences.getBoolean("search_kniga_v_uhe", true);
             boolean searchIzibuk = preferences.getBoolean("search_izibuc", true);
             boolean searchABMP3 = preferences.getBoolean("search_abmp3", true);
+            boolean searchAbook = preferences.getBoolean("search_abook", true);
             boolean speedUpABMP3 = preferences.getBoolean("speed_up_search_abmp3", false);
 
             if (!searchKnigaVUhe) {
@@ -127,6 +137,10 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                 exit++;
             }
 
+            if (!searchAbook) {
+                exit++;
+            }
+
             try {
                 for (int i = 1; i <= size; i++) {
                     ArrayList<BookPOJO> articlesModels = new ArrayList<>();
@@ -134,7 +148,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     try {
                         if (!endKnigaVUhe && searchKnigaVUhe) {
                             articlesModels.addAll(loadBooksList(
-                                    urls.get(0).replace(String.valueOf(page), String.valueOf(temp)),
+                                    urls.get(1).replace(String.valueOf(page), String.valueOf(temp)),
                                     temp));
                         }
                     } catch (NullPointerException e) {
@@ -148,7 +162,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     try {
                         if (!endIziBuk && searchIzibuk) {
                             articlesModels.addAll(loadBooksListIzibuk(
-                                    urls.get(1).replace("p=" + page, "p=" + temp), temp));
+                                    urls.get(2).replace("p=" + page, "p=" + temp), temp));
                         }
                     } catch (NullPointerException e) {
                         endIziBuk = true;
@@ -162,14 +176,27 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                         if (!endABMP3 && searchABMP3) {
                             if (temp % size == 0) {
                                 if (!speedUpABMP3) {
-                                    articlesModels.addAll(loadBooksListSearchABMP3(urls.get(2), temp / size));
+                                    articlesModels.addAll(loadBooksListSearchABMP3(urls.get(3), temp / size));
                                 } else {
-                                    articlesModels.addAll(loadBooksListSearchABMP3SpeedUp(urls.get(2), temp / size));
+                                    articlesModels.addAll(loadBooksListSearchABMP3SpeedUp(urls.get(3), temp / size));
                                 }
                             }
                         }
                     } catch (NullPointerException e) {
                         endABMP3 = true;
+                        exit++;
+                        if (exit >= urls.size()) {
+                            observableEmitter.onError(e);
+                        }
+                    }
+
+                    try {
+                        if (!endAbook && searchAbook) {
+                            articlesModels.addAll(loadBooksListAbook(
+                                    urls.get(0).replace("/page" + page + "/", "/page" + temp + "/"), temp));
+                        }
+                    } catch (NullPointerException e) {
+                        endAbook = true;
                         exit++;
                         if (exit >= urls.size()) {
                             observableEmitter.onError(e);
@@ -185,6 +212,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
             }
         });
     }
+
 
     private ArrayList<BookPOJO> loadBooksList(String url, int page) throws IOException {
         ArrayList<BookPOJO> result = new ArrayList<>();
@@ -258,7 +286,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
 
                 Element aGenre = book.getElementsByClass("bookkitem_genre").first().child(0);
                 if (aGenre != null) {
-                    bookPOJO.setUrlGenre(Url.SERVER + aGenre.attr("href"));
+                    bookPOJO.setUrlGenre(Url.SERVER + aGenre.attr("href") + "<page>/");
                     bookPOJO.setGenre(aGenre.text());
                 }
 
@@ -440,6 +468,172 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         return result;
     }
 
+    private ArrayList<BookPOJO> loadBooksListAbook(String url, int page) throws IOException {
+        ArrayList<BookPOJO> result = new ArrayList<>();
+        Document document = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Elements bootom = document.getElementsByClass("page__nav");
+        if (bootom != null && bootom.size() != 0) {
+            Elements nextButton = bootom.get(0).getElementsByClass("page__nav--next");
+            if (!(nextButton != null && nextButton.size() != 0)) {
+                if (end) {
+                    throw new NullPointerException();
+                }
+                end = true;
+            }
+        } else if (page > 1) {
+            throw new NullPointerException();
+        }
+
+        Elements listElements = document.getElementsByClass("content__main__articles--item");
+        if (listElements != null && listElements.size() != 0) {
+            for (Element book : listElements) {
+                Elements paid = book.getElementsByAttributeValue("href", "https://akniga.org/paid/");
+                if (paid != null && paid.size() != 0) {
+                    continue;
+                }
+                Elements fragment = book.getElementsByClass("caption__article-preview");
+                if (fragment != null && fragment.size() != 0) {
+                    String text = fragment.first().text();
+                    if (text != null && text.equals("Фрагмент")) {
+                        continue;
+                    }
+                }
+
+                BookPOJO bookPOJO = new BookPOJO();
+                Elements genreParent = book.getElementsByClass("section__title");
+                if (genreParent != null && genreParent.size() != 0) {
+                    Element element = genreParent.first();
+                    String genreName = element.text();
+                    if (genreName != null) {
+                        bookPOJO.setGenre(genreName);
+                    }
+                    String genreUrl = element.attr("href");
+                    if (genreUrl != null) {
+                        bookPOJO.setUrlGenre(genreUrl + "page<page>/");
+                    }
+                }
+                Elements imageParent = book.getElementsByTag("img");
+                if (imageParent != null && imageParent.size() != 0) {
+                    Element image = imageParent.first();
+                    String imageSrc = image.attr("src");
+                    if (imageSrc != null) {
+                        bookPOJO.setPhoto(imageSrc);
+                    }
+                }
+
+                Elements elements = book.getElementsByClass("link__action link__action--author");
+                if (elements != null) {
+                    for (Element element : elements) {
+                        Elements use = element.getElementsByTag("use");
+                        if (use != null && use.size() != 0) {
+                            String useHref = use.first().attr("xlink:href");
+                            if (useHref != null) {
+                                Elements aTag = element.getElementsByTag("a");
+                                if (aTag != null && aTag.size() != 0) {
+                                    Element a = aTag.first();
+                                    String src = a.attr("href");
+                                    String name = a.text();
+                                    if (src != null && !src.isEmpty()) {
+                                        switch (useHref) {
+                                            case "#author":
+                                                bookPOJO.setUrlAutor(src + "page<page>/");
+                                                break;
+                                            case "#performer":
+                                                bookPOJO.setUrlArtist(src + "page<page>/");
+                                                break;
+                                            case "#series":
+                                                bookPOJO.setUrlSeries(src);
+                                                break;
+                                        }
+                                    }
+
+                                    if (name != null && !name.isEmpty()) {
+                                        switch (useHref) {
+                                            case "#author":
+                                                bookPOJO.setAutor(name);
+                                                break;
+                                            case "#performer":
+                                                bookPOJO.setArtist(name);
+                                                break;
+                                            case "#series":
+                                                bookPOJO.setSeries(name);
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Elements titleElements = book.getElementsByClass("caption__article-main");
+                if (titleElements != null && titleElements.size() != 0) {
+                    String title = titleElements.first().text();
+                    if (title != null && !title.isEmpty()) {
+                        bookPOJO.setName(title.replace(bookPOJO.getAutor() + " - ", ""));
+                    }
+                }
+
+                Elements link = book.getElementsByClass("content__article-main-link");
+                if (link != null && link.size() != 0) {
+                    String src = link.first().attr("href");
+                    if (src != null && !src.isEmpty()) {
+                        bookPOJO.setUrl(src);
+                    }
+                }
+
+                Elements desc = book.getElementsByClass("description__article-main");
+                if (desc != null && desc.size() != 0) {
+                    String text = desc.first().text();
+                    if (text != null && !text.isEmpty()) {
+                        bookPOJO.setDesc(text);
+                    }
+                }
+
+                Elements time = book.getElementsByClass("link__action link__action--label link__action--label--time");
+                if (time != null && time.size() != 0) {
+                    String text = time.first().text();
+                    if (text != null && !text.isEmpty()) {
+                        bookPOJO.setTime(text);
+                    }
+                }
+
+                Elements coments = book.getElementsByClass("link__action link__action--comment");
+                if (coments != null && coments.size() != 0) {
+                    String text = coments.first().text();
+                    if (text != null && !text.contains("нет комментариев")) {
+                        String count = text.trim().substring(0, text.trim().indexOf(" "));
+                        bookPOJO.setComents(count);
+                    }
+                }
+
+                Elements reting = book.getElementsByClass("link__action--label--views");
+                if (reting != null && reting.size() != 0) {
+                    String text = reting.text();
+                    if (text != null && !text.isEmpty()) {
+                        bookPOJO.setReting(text.trim());
+                    }
+                }
+
+                if (bookPOJO.isNull()) {
+                    continue;
+                }
+                result.add(bookPOJO);
+            }
+
+        }
+
+        if (result.size() == 0) {
+            throw new NullPointerException();
+        }
+        return result;
+    }
+
     private ArrayList<BookPOJO> loadBooksListIzibuk(String url, int page) throws IOException {
         ArrayList<BookPOJO> result = new ArrayList<>();
         int cookie;
@@ -451,7 +645,6 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         Document document = Jsoup.connect(url).userAgent(Consts.USER_AGENT).sslSocketFactory(
                 Consts.socketFactory()).referrer(
                 Url.INDEX_IZIBUK + "1").cookie("sort_pop", String.valueOf(cookie)).get();
-
 
         Element bootom = document.getElementById("books_updates_list__pn");
         if (bootom == null) {
@@ -495,7 +688,6 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         } else if (page > 1) {
             throw new NullPointerException();
         }
-
 
         Element listParent = document.getElementById("books_list");
         if (listParent == null) {
@@ -648,7 +840,6 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                                 }
                             }
 
-
                             Element description = content.child(3);
                             if (description != null) {
                                 String text = description.text();
@@ -658,7 +849,9 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                             }
                         }
                     }
-                    if (bookPOJO.isNull()) continue;
+                    if (bookPOJO.isNull()) {
+                        continue;
+                    }
                     result.add(bookPOJO);
                 }
 

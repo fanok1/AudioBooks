@@ -18,15 +18,20 @@
         android:title="@string/source"
         app:showAsAction="ifRoom">
         <menu>
-            <item
-                android:id="@+id/source_kniga_v_uhe"
-                android:title="@string/kniga_v_uhe" />
-            <item
-                android:id="@+id/source_izi_book"
-                android:title="@string/izibuc" />
-            <item
-                android:id="@+id/source_audio_book_mp3"
-                android:title="@string/audionook_mp3" />
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/source_abook"
+                    android:title="@string/abook" />
+                <item
+                    android:id="@+id/source_kniga_v_uhe"
+                    android:title="@string/kniga_v_uhe" />
+                <item
+                    android:id="@+id/source_izi_book"
+                    android:title="@string/izibuc" />
+                <item
+                    android:id="@+id/source_audio_book_mp3"
+                    android:title="@string/audionook_mp3" />
+            </group>
         </menu>
     </item>
 

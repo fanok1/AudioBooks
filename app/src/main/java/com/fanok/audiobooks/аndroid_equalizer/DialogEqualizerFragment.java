@@ -30,20 +30,17 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.DialogFragment;
-
 import com.db.chart.model.LineSet;
 import com.db.chart.view.AxisController;
 import com.db.chart.view.ChartView;
 import com.db.chart.view.LineChartView;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.StorageUtil;
-
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -57,22 +54,37 @@ public class DialogEqualizerFragment extends DialogFragment {
     private static int themeColor = Color.parseColor("#B24242");
     private static int backgroundColor = Color.WHITE;
     private static int themeRes = 0;
+
     private static String titleString = "";
+
     private static int titleRes = 0;
 
     private Equalizer mEqualizer;
+
     private BassBoost bassBoost;
+
     private PresetReverb presetReverb;
+
     private LineSet dataset;
+
     private LineChartView chart;
+
     private float[] points;
+
     private int y = 0;
-    private SeekBar[] seekBarFinal = new SeekBar[5];
+
+    private final SeekBar[] seekBarFinal = new SeekBar[5];
+
     private Spinner presetSpinner;
+
     private Context ctx;
+
     private int audioSesionId;
+
     private TextView titleTextView;
+
     private AnalogController bassController;
+
     private AnalogController reverbController;
 
 
@@ -526,7 +538,6 @@ public class DialogEqualizerFragment extends DialogFragment {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
 
         new StorageUtil(Objects.requireNonNull(getContext())).saveEqualizerSettings();
         Intent intent = new Intent(Broadcast_EqualizerEnabled);
@@ -546,6 +557,8 @@ public class DialogEqualizerFragment extends DialogFragment {
         }
 
         Settings.isEditing = false;
+
+        super.onDestroy();
 
     }
 

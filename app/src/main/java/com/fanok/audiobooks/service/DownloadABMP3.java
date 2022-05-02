@@ -12,6 +12,7 @@ import com.downloader.PRDownloaderConfig;
 import com.downloader.httpclient.HttpClient;
 import com.fanok.audiobooks.ABMP3HttpClient;
 import com.fanok.audiobooks.R;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -75,36 +76,42 @@ public class DownloadABMP3 extends Download {
 
                     @Override
                     public void onError(Error error) {
-                        if (!error.getConnectionException().getMessage().equals("unexpected end of stream")) {
+                        if (error.getConnectionException().getMessage() == null || (
+                                !error.getConnectionException().getMessage().equals("unexpected end of stream")
+                                        && !error.getConnectionException().getMessage()
+                                        .contains("Connection reset by peer")
+                        )) {
+                            Toast.makeText(DownloadABMP3.this,
+                                    getString(R.string.error_load_file) + " " + fileName,
+                                    Toast.LENGTH_SHORT).show();
+                            FirebaseCrashlytics.getInstance().setCustomKey("fileUrl", urlPath);
+                            FirebaseCrashlytics.getInstance().setCustomKey("bookName", dirName.get(postion));
+                            FirebaseCrashlytics.getInstance().recordException(error.getConnectionException());
+                        }
+                        int i = 0;
+                        ArrayList<File> files = new ArrayList<>();
+                        while (true) {
+                            File file = new File(path + "/" + dirName.get(postion), fileName + ".temp" + i);
+                            if (file.exists()) {
+                                files.add(file);
+                            } else {
+                                File file1 = new File(path + "/" + dirName.get(postion),
+                                        fileName + ".temp" + i + ".temp");
+                                if (file1.exists()) {
+                                    files.add(file1);
+                                }
+                                break;
+                            }
+                            i++;
+                        }
+                        if (files.isEmpty()) {
                             Toast.makeText(DownloadABMP3.this,
                                     getString(R.string.error_load_file) + " " + fileName,
                                     Toast.LENGTH_SHORT).show();
                         } else {
-                            int i = 0;
-                            ArrayList<File> files = new ArrayList<>();
-                            while (true) {
-                                File file = new File(path + "/" + dirName.get(postion), fileName + ".temp" + i);
-                                if (file.exists()) {
-                                    files.add(file);
-                                } else {
-                                    File file1 = new File(path + "/" + dirName.get(postion),
-                                            fileName + ".temp" + i + ".temp");
-                                    if (file1.exists()) {
-                                        files.add(file1);
-                                    }
-                                    break;
-                                }
-                                i++;
-                            }
-                            if (files.isEmpty()) {
-                                Toast.makeText(DownloadABMP3.this,
-                                        getString(R.string.error_load_file) + " " + fileName,
-                                        Toast.LENGTH_SHORT).show();
-                            } else {
-                                meargeAudio(files);
-                            }
-
+                            meargeAudio(files);
                         }
+
                         downloadNext(postion + 1);
                     }
 
@@ -146,10 +153,11 @@ public class DownloadABMP3 extends Download {
             }
         }
         File oldFile = new File(filesToMearge.get(0).getPath());
-        File newFile = new File(filesToMearge.get(0).getPath().replace(".temp0", ""));
-        if (!newFile.exists()) {
-            boolean success = oldFile.renameTo(newFile);
+        File newFile = new File(filesToMearge.get(0).getPath().replace(".temp0", "").replace(".temp", ""));
+        if (newFile.exists()) {
+            boolean deleted = newFile.delete();
         }
+        boolean success = oldFile.renameTo(newFile);
     }
 
 }

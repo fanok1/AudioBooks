@@ -152,7 +152,11 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
     @Override
     public void onBookItemClick(View view, int position) {
-        getViewState().showBooksActivity(books.get(position));
+        if (filterSearch.isEmpty()) {
+            getViewState().showBooksActivity(books.get(position));
+        } else {
+            getViewState().showBooksActivity(filterSearch.get(position));
+        }
     }
 
     @Override
@@ -169,26 +173,32 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         TextView author = layout.findViewById(R.id.author);
         TextView artist = layout.findViewById(R.id.artist);
         TextView series = layout.findViewById(R.id.series);
+        BookPOJO book;
+        if (filterSearch.isEmpty()) {
+            book = books.get(position);
+        } else {
+            book = filterSearch.get(position);
+        }
 
         ImageView imageView = layout.findViewById(R.id.imageView);
         Picasso.get()
-                .load(books.get(position).getPhoto())
+                .load(book.getPhoto())
                 .error(R.drawable.image_placeholder)
                 .placeholder(R.drawable.image_placeholder)
                 .into(imageView);
 
         TextView title = layout.findViewById(R.id.title);
-        title.setText(books.get(position).getName());
+        title.setText(book.getName());
 
         TextView authorName = layout.findViewById(R.id.authorName);
-        if (books.get(position).getAutor() != null) {
-            authorName.setText(books.get(position).getAutor());
+        if (book.getAutor() != null) {
+            authorName.setText(book.getAutor());
             authorName.setVisibility(View.VISIBLE);
         } else {
             authorName.setVisibility(View.GONE);
         }
 
-        if (books.get(position).getSeries() == null || books.get(position).getUrlSeries() == null) {
+        if (book.getSeries() == null || book.getUrlSeries() == null) {
             series.setVisibility(View.GONE);
         } else {
             series.setVisibility(View.VISIBLE);
@@ -202,7 +212,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         open.setOnClickListener(view1 -> {
             dialog.dismiss();
             MyInterstitialAd.increase();
-            getViewState().showBooksActivity(books.get(position));
+            getViewState().showBooksActivity(book);
         });
 
         remove.setOnClickListener(view1 -> {
@@ -210,29 +220,29 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
             onRemove(position);
         });
 
-        if (books.get(position).getUrlGenre() != null) {
+        if (book.getUrlGenre() != null) {
             genre.setVisibility(View.VISIBLE);
             genre.setOnClickListener(view1 -> {
                 dialog.dismiss();
                 getViewState().showFragment(BooksFragment.newInstance(
-                        books.get(position).getUrlGenre(),
+                        book.getUrlGenre(),
                         R.string.menu_audiobooks,
-                        books.get(position).getGenre(), Consts.MODEL_BOOKS),
+                        book.getGenre(), Consts.MODEL_BOOKS),
                         "genreBooks");
             });
         } else {
             genre.setVisibility(View.GONE);
         }
 
-        if (books.get(position).getUrlAutor() != null) {
+        if (book.getUrlAutor() != null) {
             author.setVisibility(View.VISIBLE);
             author.setOnClickListener(view1 -> {
                 dialog.dismiss();
-                if (!books.get(position).getUrlAutor().isEmpty()) {
+                if (!book.getUrlAutor().isEmpty()) {
                     getViewState().showFragment(BooksFragment.newInstance(
-                            books.get(position).getUrlAutor(),
+                            book.getUrlAutor(),
                             R.string.menu_audiobooks,
-                            books.get(position).getAutor(), Consts.MODEL_BOOKS),
+                            book.getAutor(), Consts.MODEL_BOOKS),
                             "autorBooks");
                 }
             });
@@ -240,14 +250,14 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
             author.setVisibility(View.GONE);
         }
 
-        if (books.get(position).getUrlArtist() != null) {
+        if (book.getUrlArtist() != null) {
             artist.setVisibility(View.VISIBLE);
             artist.setOnClickListener(view1 -> {
                 dialog.dismiss();
                 getViewState().showFragment(BooksFragment.newInstance(
-                        books.get(position).getUrlArtist(),
+                        book.getUrlArtist(),
                         R.string.menu_audiobooks,
-                        books.get(position).getArtist(), Consts.MODEL_BOOKS),
+                        book.getArtist(), Consts.MODEL_BOOKS),
                         "artistBooks");
             });
         } else {
@@ -257,9 +267,9 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         series.setOnClickListener(view12 -> {
             dialog.dismiss();
             getViewState().showFragment(BooksFragment.newInstance(
-                    books.get(position).getUrlSeries() + "?page=",
+                    book.getUrlSeries() + "?page=",
                     R.string.menu_audiobooks,
-                    books.get(position).getSeries(), Consts.MODEL_BOOKS),
+                    book.getSeries(), Consts.MODEL_BOOKS),
                     "seriesBooks");
         });
         dialog.show();
@@ -267,14 +277,27 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
     @Override
     public void onRemove(int position) {
-        if (table == Consts.TABLE_FAVORITE) {
-            mBooksDBModel.removeFavorite(books.get(position));
-        } else if (table == Consts.TABLE_HISTORY) {
-            mBooksDBModel.removeHistory(books.get(position));
-            mAudioDBModel.remove(books.get(position).getUrl());
+        BookPOJO book;
+        if (filterSearch.isEmpty()) {
+            book = books.get(position);
+        } else {
+            book = filterSearch.get(position);
         }
-        books.remove(position);
-        getViewState().showData(books);
+
+        if (table == Consts.TABLE_FAVORITE) {
+            mBooksDBModel.removeFavorite(book);
+        } else if (table == Consts.TABLE_HISTORY) {
+            mBooksDBModel.removeHistory(book);
+            mAudioDBModel.remove(book.getUrl());
+        }
+        if (filterSearch.isEmpty()) {
+            books.remove(position);
+            getViewState().showData(books);
+        } else {
+            books.remove(filterSearch.get(position));
+            filterSearch.remove(position);
+            getViewState().showData(filterSearch);
+        }
     }
 
     @Override

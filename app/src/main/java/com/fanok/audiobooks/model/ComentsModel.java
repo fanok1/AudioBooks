@@ -127,6 +127,8 @@ public class ComentsModel implements
                     articlesModels = loadComentsList(url);
                 } else if (url.contains("audiobook-mp3.com")) {
                     articlesModels = loadComentsListABMP3(url);
+                } else if (url.contains("akniga.org")) {
+                    articlesModels = loadComentsListAbook(url);
                 } else {
                     articlesModels = new ArrayList<>();
                 }
@@ -235,6 +237,178 @@ public class ComentsModel implements
             }
 
         }
+        return result;
+    }
+
+    private ArrayList<ComentsPOJO> loadComentsListAbook(String url) throws IOException {
+        ArrayList<ComentsPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Element comentsElement = doc.getElementById("comments");
+        if (comentsElement != null) {
+            Elements elements = comentsElement.getElementsByClass("caption--inline js-comments-title");
+            if (elements != null && elements.size() != 0) {
+                String text = elements.first().text();
+                if (text != null) {
+                    if (text.equals("Нет комментариев")) {
+                        return result;
+                    }
+                    Elements comentsList = comentsElement.getElementsByClass("comments__block js-comment-list");
+                    if (comentsList != null && comentsList.size() != 0) {
+                        for (Element comentConteiner : comentsList.first().children()) {
+                            ComentsPOJO comentsPOJO = new ComentsPOJO();
+                            Element conteiner = comentConteiner.child(0);
+                            if (conteiner != null) {
+                                Elements comentsText = conteiner.getElementsByClass("comments__block--item--comment");
+                                if (comentsText != null && comentsText.size() != 0) {
+                                    comentsPOJO.setText(comentsText.first().text());
+                                }
+
+                                Elements autorInfos = conteiner.getElementsByClass("comments__block--item-content");
+                                if (autorInfos != null && autorInfos.size() != 0) {
+                                    Element autorInfo = autorInfos.first();
+                                    Elements imageConteiner = autorInfo.getElementsByTag("img");
+                                    if (imageConteiner != null && imageConteiner.size() != 0) {
+                                        comentsPOJO.setImage(imageConteiner.first().attr("data-src"));
+                                    }
+
+                                    Elements nameConteiner = autorInfo
+                                            .getElementsByClass("comments__block--item--name");
+                                    if (nameConteiner != null && nameConteiner.size() != 0) {
+                                        comentsPOJO.setName(nameConteiner.first().ownText());
+                                    }
+
+                                    Elements time = autorInfo.getElementsByTag("time");
+                                    if (time != null && time.size() != 0) {
+                                        comentsPOJO.setDate(time.first().text());
+                                    }
+
+                                    int up = 0;
+                                    int down = 0;
+
+                                    Elements upElements = autorInfo.getElementsByClass("js-vote-rating-up");
+                                    if (upElements != null && upElements.size() != 0) {
+                                        text = upElements.first().text();
+                                        if (text != null && !text.isEmpty()) {
+                                            up = Integer.parseInt(text);
+                                        }
+                                    }
+
+                                    Elements downElements = autorInfo.getElementsByClass("js-vote-rating-down");
+                                    if (downElements != null && downElements.size() != 0) {
+                                        text = downElements.first().text();
+                                        if (text != null && !text.isEmpty()) {
+                                            down = Integer.parseInt(text);
+                                        }
+                                    }
+
+                                    int raiting = up - down;
+                                    if (raiting != 0) {
+                                        comentsPOJO.setReting(String.valueOf(raiting));
+                                    }
+
+                                }
+
+                                Elements childrenConteiner = comentConteiner.getElementsByClass("has-parent");
+                                if (childrenConteiner != null) {
+                                    ArrayList<SubComentsPOJO> arrayList = new ArrayList<>();
+                                    for (Element child : childrenConteiner) {
+                                        SubComentsPOJO subComentsPOJO = new SubComentsPOJO();
+                                        conteiner = child.child(0);
+                                        if (conteiner != null) {
+                                            comentsText = conteiner
+                                                    .getElementsByClass("comments__block--item--comment");
+                                            if (comentsText != null && comentsText.size() != 0) {
+                                                subComentsPOJO.setText(comentsText.first().text());
+                                            }
+
+                                            autorInfos = conteiner
+                                                    .getElementsByClass("comments__block--item-content");
+                                            if (autorInfos != null && autorInfos.size() != 0) {
+                                                Element autorInfo = autorInfos.first();
+                                                Elements imageConteiner = autorInfo.getElementsByTag("img");
+                                                if (imageConteiner != null && imageConteiner.size() != 0) {
+                                                    subComentsPOJO.setImage(imageConteiner.first().attr("data-src"));
+                                                }
+
+                                                Elements nameConteiner = autorInfo
+                                                        .getElementsByClass("comments__block--item--name");
+                                                if (nameConteiner != null && nameConteiner.size() != 0) {
+                                                    subComentsPOJO.setName(nameConteiner.first().ownText());
+                                                }
+
+                                                Elements time = autorInfo.getElementsByTag("time");
+                                                if (time != null && time.size() != 0) {
+                                                    subComentsPOJO.setDate(time.first().text());
+                                                }
+
+                                                int up = 0;
+                                                int down = 0;
+
+                                                Elements upElements = autorInfo
+                                                        .getElementsByClass("js-vote-rating-up");
+                                                if (upElements != null && upElements.size() != 0) {
+                                                    text = upElements.first().text();
+                                                    if (text != null && !text.isEmpty()) {
+                                                        up = Integer.parseInt(text);
+                                                    }
+                                                }
+
+                                                Elements downElements = autorInfo
+                                                        .getElementsByClass("js-vote-rating-down");
+                                                if (downElements != null && downElements.size() != 0) {
+                                                    text = downElements.first().text();
+                                                    if (text != null && !text.isEmpty()) {
+                                                        down = Integer.parseInt(text);
+                                                    }
+                                                }
+
+                                                int raiting = up - down;
+                                                if (raiting != 0) {
+                                                    subComentsPOJO.setReting(String.valueOf(raiting));
+                                                }
+
+                                                Elements replyto = conteiner.getElementsByClass("replyto");
+                                                if (replyto != null && replyto.size() != 0) {
+                                                    text = replyto.first().text();
+                                                    if (text != null && !text.isEmpty()) {
+                                                        subComentsPOJO.setParentName(text);
+                                                    }
+                                                }
+
+                                                if (!subComentsPOJO.isEmty()) {
+                                                    arrayList.add(subComentsPOJO);
+                                                }
+
+                                            }
+                                        }
+
+                                    }
+
+                                    if (!arrayList.isEmpty()) {
+                                        comentsPOJO.setChildComents(arrayList);
+                                    }
+
+                                }
+
+                                if (!comentsPOJO.isEmty()) {
+                                    result.add(comentsPOJO);
+                                }
+                            }
+
+                        }
+
+
+                    }
+                }
+            }
+
+        }
+
         return result;
     }
 }

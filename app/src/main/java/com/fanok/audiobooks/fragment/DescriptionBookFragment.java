@@ -1,7 +1,6 @@
 package com.fanok.audiobooks.fragment;
 
 import static android.content.Context.UI_MODE_SERVICE;
-
 import static java.lang.Integer.MAX_VALUE;
 
 import android.app.UiModeManager;
@@ -16,13 +15,14 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.Unbinder;
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
@@ -39,13 +39,8 @@ import com.fanok.audiobooks.pojo.DescriptionPOJO;
 import com.fanok.audiobooks.presenter.BookDescriptionPresenter;
 import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
-
 import java.util.ArrayList;
 import java.util.Objects;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
 
 public class DescriptionBookFragment extends MvpAppCompatFragment implements Description {
 
@@ -65,24 +60,35 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     TextView mTime;
     @BindView(R.id.author)
     TextView mAuthor;
+
     @BindView(R.id.autorConteiner)
     LinearLayout mAutorConteiner;
+
     @BindView(R.id.artist)
     TextView mArtist;
+
     @BindView(R.id.artistConteiner)
     LinearLayout mArtistConteiner;
+
     @BindView(R.id.series)
     TextView mSeries;
+
     @BindView(R.id.seriesConteiner)
     LinearLayout mSeriesConteiner;
+
+    @Nullable
     @BindView(R.id.desc)
     TextView mDesc;
+
     @BindView(R.id.showMore)
     TextView mShowMore;
+
     @BindView(R.id.recommendedBooks)
     RecyclerView mRecommendedBooks;
+
     @BindView(R.id.recommendedBooksTitle)
     TextView mRecommendedBooksTitle;
+
     @BindView(R.id.scrollView)
     ScrollView mScrollView;
     @BindView(R.id.progressBar)
@@ -217,7 +223,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
             }
 
             if (mReting != null) {
-                if (description.getReiting() != 0) {
+                if (!description.getReiting().equals("0")) {
                     String reting = String.valueOf(description.getReiting());
                     mReting.setText(reting);
                     mReting.setVisibility(View.VISIBLE);

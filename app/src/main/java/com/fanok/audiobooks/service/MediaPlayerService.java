@@ -559,6 +559,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
         stopMedia();
         removeNotification();
         removeAudioFocus();
+        stopEqualizer();
         //Disable the PhoneStateListener
         if (phoneStateListener != null) {
             telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
@@ -703,25 +704,11 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
         }
 
         if (urlBook.contains("audiobook-mp3.com") && file == null) {
-
             DefaultHttpDataSourceFactory source = new DefaultHttpDataSourceFactory(
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
                     null);
-            source.setDefaultRequestProperty("accept", "*/*");
-            source.setDefaultRequestProperty("accept-encoding", "identity;q=1, *;q=0");
-            source.setDefaultRequestProperty("accept-language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,uk;q=0.6");
-            //source.setDefaultRequestProperty("range", "bytes=0-1262485504");
             source.setDefaultRequestProperty("referer", "https://audiobook-mp3.com/");
-            source.setDefaultRequestProperty("sec-ch-ua",
-                    "Google Chrome\";v=\"89\", \"Chromium\";v=\"89\", \";Not A Brand\";v=\"99");
-            source.setDefaultRequestProperty("sec-ch-ua-mobile", "?0");
-            source.setDefaultRequestProperty("sec-fetch-dest", "video");
-            source.setDefaultRequestProperty("sec-fetch-mode", "no-cors");
-            source.setDefaultRequestProperty("sec-fetch-site", "cross-site");
-
             dateSourceFactory = new DefaultDataSourceFactory(this, null, source);
-
-
         } else {
             dateSourceFactory = new DefaultDataSourceFactory(this,
                     Util.getUserAgent(this, getPackageName()));

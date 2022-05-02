@@ -1,20 +1,16 @@
 package com.fanok.audiobooks.model;
 
 import androidx.annotation.NonNull;
-
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
-
+import io.reactivex.Observable;
+import java.io.IOException;
+import java.util.ArrayList;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import java.io.IOException;
-import java.util.ArrayList;
-
-import io.reactivex.Observable;
 
 public class SeriesModel implements
         com.fanok.audiobooks.interface_pacatge.book_content.SeriesModel {
@@ -121,6 +117,8 @@ public class SeriesModel implements
                     articlesModels = loadSeriesList(url);
                 } else if (url.contains("izib.uk")) {
                     articlesModels = loadSeriesListIzibuk(url);
+                } else if (url.contains("akniga.org")) {
+                    articlesModels = loadSeriesListAbook(url);
                 } else {
                     articlesModels = new ArrayList<>();
                 }
@@ -131,5 +129,46 @@ public class SeriesModel implements
                 observableEmitter.onComplete();
             }
         });
+    }
+
+    private ArrayList<SeriesPOJO> loadSeriesListAbook(String url) throws IOException {
+        ArrayList<SeriesPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Elements parents = doc.getElementsByClass("content__main__book--item--series-list");
+        if (parents != null && parents.size() != 0) {
+            Elements series = parents.first().children();
+            if (series != null) {
+                for (Element serie : series) {
+                    SeriesPOJO seriesPOJO = new SeriesPOJO();
+                    Elements namberConteiner = serie.getElementsByTag("b");
+                    if (namberConteiner != null && namberConteiner.size() != 0) {
+                        String number = namberConteiner.first().text();
+                        if (number != null) {
+                            seriesPOJO.setNumber(number);
+                        }
+                    }
+
+                    String href = serie.attr("href");
+                    if (href != null && !href.isEmpty()) {
+                        seriesPOJO.setUrl(href);
+                    }
+                    Elements stringTag = serie.getElementsByClass("caption");
+                    if (stringTag != null && stringTag.size() != 0) {
+                        String text = stringTag.first().text();
+                        if (text != null && !text.isEmpty()) {
+                            seriesPOJO.setName(text);
+                        }
+                    }
+                    result.add(seriesPOJO);
+                }
+            }
+        }
+
+        return result;
     }
 }

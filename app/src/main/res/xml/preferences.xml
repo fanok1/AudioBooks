@@ -18,11 +18,11 @@
         android:title="@string/setting_lang" />-->
 
     <ListPreference
-        android:defaultValue="@string/kniga_v_uhe_value"
+        android:defaultValue="@string/abook_value"
         android:dialogTitle="@string/sorce_books"
         android:entries="@array/sorce_books_titles"
         android:entryValues="@array/sorce_books_values"
-        android:icon="@drawable/ic_inbox_arrow_up"
+        android:icon="@drawable/ic_web"
         android:key="sorce_books"
         android:title="@string/sorce_books" />
 
@@ -32,6 +32,11 @@
         android:persistent="true"
         android:summary="@string/source_search_desc"
         android:title="@string/source_search">
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="search_abook"
+            android:title="@string/abook" />
 
         <CheckBoxPreference
             android:defaultValue="true"
@@ -162,6 +167,11 @@
             android:key="import_kniga_v_uhe"
             android:summary="@string/kniga_v_uhe_description"
             android:title="@string/kniga_v_uhe" />
+
+        <Preference
+            android:key="import_abook"
+            android:summary="@string/abook_description"
+            android:title="@string/abook" />
     </PreferenceScreen>
 
     <ListPreference

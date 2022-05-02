@@ -12,6 +12,8 @@ import org.jsoup.select.Elements;
 
 public class AutorsModel extends GenreModel {
 
+    private boolean end = false;
+
     @Override
     protected ArrayList<GenrePOJO> loadBooksList(String url, int page) throws IOException {
         ArrayList<GenrePOJO> result = new ArrayList<>();
@@ -229,6 +231,69 @@ public class AutorsModel extends GenreModel {
         return result;
     }
 
+    @Override
+    protected ArrayList<GenrePOJO> loadBooksListAbook(final String url, final int page) throws IOException {
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Elements bootom = doc.getElementsByClass("page__nav");
+        if (bootom != null && bootom.size() != 0) {
+            Elements nextButton = bootom.get(0).getElementsByClass("page__nav--next");
+            if (!(nextButton != null && nextButton.size() != 0)) {
+                if (end) {
+                    throw new NullPointerException();
+                }
+                end = true;
+            }
+        } else if (page > 1) {
+            throw new NullPointerException();
+        }
+
+        Elements items = doc.getElementsByClass("table-authors");
+        if (items != null && items.size() != 0) {
+            Elements tbody = items.first().getElementsByTag("tbody");
+            if (tbody != null && tbody.size() != 0) {
+                Elements list = tbody.first().children();
+                if (list != null && list.size() > 0) {
+                    for (Element item : list) {
+                        GenrePOJO genrePOJO = new GenrePOJO();
+                        Elements titles = item.getElementsByClass("name-obj");
+                        if (titles != null && titles.size() != 0) {
+                            Elements aGenre = titles.first().getElementsByTag("a");
+                            if (aGenre != null && aGenre.size() != 0) {
+                                genrePOJO.setUrl(aGenre.first().attr("href") + "/page<page>/");
+                                genrePOJO.setName(aGenre.first().text());
+                            }
+                        }
+                        Elements description = item.getElementsByClass("description");
+                        if (description != null && description.size() != 0) {
+                            genrePOJO.setDescription(description.first().text().trim());
+                        }
+
+                        Elements reting = item.getElementsByClass("cell-rating");
+                        if (reting != null && reting.size() != 0) {
+                            genrePOJO.setReting(Integer.parseInt(reting.first().text().trim()));
+                        }
+
+                        if (!genrePOJO.isNull()) {
+                            result.add(genrePOJO);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (result.size() == 0) {
+            throw new NullPointerException();
+        }
+
+        return result;
+    }
+
     private ArrayList<GenrePOJO> getGenre(String url) throws IOException {
         ArrayList<GenrePOJO> result = new ArrayList<>();
         Document doc = Jsoup.connect(url)
@@ -260,7 +325,7 @@ public class AutorsModel extends GenreModel {
                                 ratings.first().text().trim().replace("кни", " кни"));
                     }
 
-                    if (genrePOJO != null && !genrePOJO.isNull()) {
+                    if (!genrePOJO.isNull()) {
                         result.add(genrePOJO);
                     }
                 }
@@ -269,5 +334,4 @@ public class AutorsModel extends GenreModel {
         }
         return result;
     }
-
 }

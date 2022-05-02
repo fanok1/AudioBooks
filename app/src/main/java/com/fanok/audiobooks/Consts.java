@@ -68,19 +68,32 @@ public class Consts {
 
 
     public static final int FRAGMENT_AUDIOBOOK = 0;
+
     public static final int FRAGMENT_GENRE = 1;
+
     public static final int FRAGMENT_AUTOR = 2;
+
     public static final int FRAGMENT_ARTIST = 3;
+
     public static final int FRAGMENT_FAVORITE = 4;
+
     public static final int FRAGMENT_HISTORY = 5;
+
     public static final int LAST_BOOK = 6;
+
     public static final int FRAGMENT_SETTINGS = 7;
 
     public static final int IMPORT_SITE_KNIGA_V_UHE = 0;
+
+    public static final int IMPORT_SITE_ABOOK = 1;
+
     public static final int SOURCE_KNIGA_V_UHE = 0;
+
     public static final int SOURCE_IZI_BUK = 1;
 
     public static final int SOURCE_AUDIO_BOOK_MP3 = 2;
+
+    public static final int SOURCE_ABOOK = 3;
 
     public static boolean izibuk_reiting = false;
 
@@ -98,6 +111,8 @@ public class Consts {
             Consts.SOURCE = Consts.SOURCE_IZI_BUK;
         } else if (value.equals(context.getString(R.string.audiobook_mp3_value))) {
             Consts.SOURCE = Consts.SOURCE_AUDIO_BOOK_MP3;
+        } else if (value.equals(context.getString(R.string.abook_value))) {
+            Consts.SOURCE = Consts.SOURCE_ABOOK;
         }
     }
 

@@ -114,6 +114,120 @@ public class BookPOJO {
         return bookPOJO;
     }
 
+    public static BookPOJO getBookByUrlAbook(String url) throws IOException {
+        String autor = "";
+
+        BookPOJO bookPOJO = new BookPOJO();
+
+        Document document = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .sslSocketFactory(Consts.socketFactory())
+                .referrer("https://google.com/")
+                .get();
+
+        bookPOJO.setUrl(url);
+
+        Elements titleElement = document.getElementsByClass("caption__article-main");
+
+        Elements autorElements = document.getElementsByClass("about-author");
+        if (autorElements != null && autorElements.size() != 0) {
+            Elements aElements = autorElements.first().getElementsByTag("a");
+            if (aElements != null && aElements.size() != 0) {
+                autor = aElements.first().text();
+                if (autor != null && !autor.isEmpty()) {
+                    bookPOJO.setAutor(autor);
+                }
+                String href = aElements.first().attr("href");
+                if (href != null && !href.isEmpty()) {
+                    bookPOJO.setUrlAutor(href + "page<page>/");
+                }
+            }
+        }
+
+        if (titleElement != null && titleElement.size() != 0) {
+            bookPOJO.setName(titleElement.first().text().trim().replace(autor + " - ", ""));
+        }
+
+        Elements posterElements = document.getElementsByClass("cover__wrapper--image");
+        if (posterElements != null && posterElements.size() != 0) {
+            Elements img = posterElements.first().getElementsByTag("img");
+            if (img != null && img.size() != 0) {
+                String imgUrl = img.first().attr("src");
+                if (imgUrl != null && !imgUrl.isEmpty()) {
+                    bookPOJO.setPhoto(imgUrl);
+                }
+            }
+        }
+
+        String time = "";
+        Elements timeElements = document.getElementsByClass("hours");
+        if (timeElements != null && timeElements.size() != 0) {
+            time = timeElements.first().text();
+        }
+
+        timeElements = document.getElementsByClass("minutes");
+        if (timeElements != null && timeElements.size() != 0) {
+            time += " " + timeElements.first().text();
+        }
+        if (!time.isEmpty()) {
+            bookPOJO.setTime(time.trim());
+        }
+
+        Elements artistElements = document.getElementsByClass("link__reader");
+        if (artistElements != null && artistElements.size() != 0) {
+            String href = artistElements.first().attr("href");
+            if (href != null && !href.isEmpty()) {
+                bookPOJO.setUrlArtist(href + "page<page>/");
+            }
+            String name = artistElements.first().text();
+            if (name != null && !name.isEmpty()) {
+                bookPOJO.setArtist(name);
+            }
+        }
+
+        Elements seriesElements = document.getElementsByClass("content__main__book--item--series-list");
+        if (seriesElements != null && seriesElements.size() != 0) {
+            Elements aTag = seriesElements.first().parent().getElementsByTag("a");
+            if (aTag != null && aTag.size() != 0) {
+                String href = aTag.first().attr("href");
+                if (href != null && !href.isEmpty()) {
+                    bookPOJO.setUrlSeries(href);
+                }
+                String title = aTag.first().text();
+                if (title != null && !title.isEmpty()) {
+                    bookPOJO.setSeries(title);
+                }
+            }
+        }
+
+        Elements descriptionElements = document.getElementsByAttributeValue("itemprop",
+                "description");
+        if (descriptionElements.size() != 0) {
+            bookPOJO.setDesc(descriptionElements.first().ownText().trim());
+        }
+
+        Elements genreConteiner = document.getElementsByClass("section__title");
+        if (genreConteiner != null && genreConteiner.size() != 0) {
+            Element a = genreConteiner.first();
+            String href = a.attr("href");
+            if (href != null && !href.isEmpty()) {
+                bookPOJO.setUrlGenre(href + "page<page>/");
+            }
+            String text = a.text();
+            if (text != null && !text.isEmpty()) {
+                bookPOJO.setGenre(text);
+            }
+        }
+
+        Elements retingElements = document
+                .getElementsByClass("link__action--label link__action--label--views pull-right");
+        if (retingElements != null && retingElements.size() != 0) {
+            bookPOJO.setReting(retingElements.first().text().trim());
+        }
+
+        return bookPOJO;
+    }
+
     public String getUrl() {
         return url;
     }
@@ -360,6 +474,8 @@ public class BookPOJO {
                         articlesModels = getBookByUrlIziBuk(url);
                     } else if (url.contains("audiobook-mp3.com")) {
                         articlesModels = getBookByUrlABMP3(url);
+                    } else if (url.contains("akniga.org")) {
+                        articlesModels = getBookByUrlAbook(url);
                     } else {
                         articlesModels = new BookPOJO();
                     }
@@ -531,7 +647,7 @@ public class BookPOJO {
         DescriptionPOJO descriptionPOJO = new DescriptionPOJO();
         descriptionPOJO.setTitle(this.name);
         descriptionPOJO.setPoster(this.photo);
-        descriptionPOJO.setReiting(Integer.parseInt(this.reting.replaceAll(" ", "")));
+        descriptionPOJO.setReiting(this.reting.replaceAll(" ", ""));
         descriptionPOJO.setTime(this.time);
         descriptionPOJO.setAutor(this.autor);
         descriptionPOJO.setArtist(this.artist);

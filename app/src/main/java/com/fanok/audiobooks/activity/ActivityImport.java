@@ -47,7 +47,7 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
         Intent intent = getIntent();
         int site = intent.getIntExtra(IMPORT, -1);
         if (site == -1) throw new IllegalArgumentException();
-        return new ImportPresenter(this, site);
+        return new ImportPresenter(getApplicationContext(), site);
     }
 
 

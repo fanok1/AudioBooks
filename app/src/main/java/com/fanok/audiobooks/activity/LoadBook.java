@@ -66,10 +66,18 @@ public class LoadBook extends AppCompatActivity {
                 }
 
             } else if (mUrl.contains("audiobook-mp3.com")) {
-                if (!mUrl.contains("/audio")) {
+                if (!mUrl.contains("/audio-")) {
                     startActivity(new Intent(this, MainActivity.class));
                     finish();
                 }
+            } else if (mUrl.contains("akniga.org")) {
+                if (mUrl.contains("/index/") || mUrl.contains("/sections/") || mUrl.contains("/authors/")
+                        || mUrl.contains("/performers/") || mUrl.contains("/search/") || mUrl
+                        .equals("https://akniga.org/")) {
+                    startActivity(new Intent(this, MainActivity.class));
+                    finish();
+                }
+
             } else {
                 finish();
             }

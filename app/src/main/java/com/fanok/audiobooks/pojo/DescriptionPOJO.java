@@ -5,16 +5,27 @@ import com.fanok.audiobooks.Consts;
 public class DescriptionPOJO {
 
     private String title = "";
+
     private String poster = "";
-    private int reiting = 0;
+
+    private String reiting = "";
+
     private String time = "";
+
     private String autor = "";
+
     private String artist = "";
+
     private String series = "";
+
     private String seriesUrl = "";
+
     private String description = "";
+
     private String autorUrl = "";
+
     private String artistUrl = "";
+
     private String genre = "";
     private String genreUrl = "";
     private int favorite = 0;
@@ -78,11 +89,11 @@ public class DescriptionPOJO {
         }
     }
 
-    public int getReiting() {
+    public String getReiting() {
         return reiting;
     }
 
-    public void setReiting(int reiting) {
+    public void setReiting(String reiting) {
         this.reiting = reiting;
     }
 
