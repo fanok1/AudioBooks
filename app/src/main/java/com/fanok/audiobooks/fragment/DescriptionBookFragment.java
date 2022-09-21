@@ -15,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
@@ -117,14 +118,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         return fragment;
     }
 
-    @ProvidePresenter
-    BookDescriptionPresenter provide() {
-        BookPOJO pojo = new Gson().fromJson(
-                Objects.requireNonNull(getArguments()).getString(ARG_BOOK_POJO), BookPOJO.class);
-        if (pojo == null) throw new NullPointerException();
-        return new BookDescriptionPresenter(pojo);
-    }
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -135,7 +128,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 container).getContext().getSystemService(UI_MODE_SERVICE);
 
         SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(Objects.requireNonNull(getContext()));
+                .getDefaultSharedPreferences(requireContext());
 
         int isTablet = getResources().getInteger(R.integer.isTablet);
         if (pref.getBoolean("androidAutoPref", false) && isTablet != 0) {
@@ -152,7 +145,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         mRecommendedBooks.setAdapter(mAdapterBooksRecomended);
         mRecommendedBooks.setLayoutManager(
                 new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        int margin = (int) getContext().getResources().getDimension(R.dimen.books_other_margin);
+        int margin = (int) requireContext().getResources().getDimension(R.dimen.books_other_margin);
         mRecommendedBooks.addItemDecoration(new MarginItemDecoration(margin));
         return view;
     }
@@ -162,31 +155,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         mPresenter.onDestroy();
         super.onDestroyView();
         unbinder.unbind();
-    }
-
-    @Override
-    public void showProgress(boolean b) {
-        if (b) {
-            mProgressBar.setVisibility(View.VISIBLE);
-            mScrollView.setVisibility(View.INVISIBLE);
-        } else {
-            mProgressBar.setVisibility(View.GONE);
-            mScrollView.setVisibility(View.VISIBLE);
-        }
-    }
-
-    public void showOtherBooks(@NonNull ArrayList<BookPOJO> data) {
-        if (mAdapterBooksRecomended != null) mAdapterBooksRecomended.setData(data);
-        if (data.size() != 0) {
-            mRecommendedBooks.setVisibility(View.VISIBLE);
-            mRecommendedBooksTitle.setVisibility(View.VISIBLE);
-            showOtherBooksLine(true);
-        } else {
-            mRecommendedBooks.setVisibility(View.GONE);
-            mRecommendedBooksTitle.setVisibility(View.GONE);
-            showOtherBooksLine(false);
-        }
-
     }
 
     @Override
@@ -223,7 +191,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
             }
 
             if (mReting != null) {
-                if (!description.getReiting().equals("0")) {
+                if (!description.getReiting().equals("0") && !description.getReiting().isEmpty()) {
                     String reting = String.valueOf(description.getReiting());
                     mReting.setText(reting);
                     mReting.setVisibility(View.VISIBLE);
@@ -278,28 +246,26 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 } else {
                     mDesc.setText("");
                 }
-                mDesc.post(() -> {
-                    if (mShowMore != null) {
-                        if (mDesc == null || mDesc.getLineCount() <= MAX_LINES) {
-                            mShowMore.setVisibility(View.GONE);
-                        } else {
-                            mShowMore.setVisibility(View.VISIBLE);
-                        }
-                        mShowMore.setOnClickListener(view1 -> {
-                            if (!showMore) {
-                                mDesc.setMaxLines(MAX_VALUE);
-                                mShowMore.setText(R.string.show_less);
-                            } else {
-                                mDesc.setMaxLines(MAX_LINES);
-                                mShowMore.setText(R.string.show_more);
-                            }
-                            showMore = !showMore;
-                        });
-                    }
-                    mDesc.setMaxLines(MAX_LINES);
-                    showMore = false;
 
-                });
+                if (mShowMore != null) {
+                    if (mDesc == null || mDesc.getLineCount() <= MAX_LINES) {
+                        mShowMore.setVisibility(View.GONE);
+                    } else {
+                        mShowMore.setVisibility(View.VISIBLE);
+                    }
+                    mShowMore.setOnClickListener(view1 -> {
+                        if (!showMore) {
+                            mDesc.setMaxLines(MAX_VALUE);
+                            mShowMore.setText(R.string.show_less);
+                        } else {
+                            mDesc.setMaxLines(MAX_LINES);
+                            mShowMore.setText(R.string.show_more);
+                        }
+                        showMore = !showMore;
+                    });
+                }
+                mDesc.setMaxLines(MAX_LINES);
+                showMore = false;
 
                 if (description.getDescription() == null
                         || description.getDescription().isEmpty()) {
@@ -335,22 +301,21 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 mLike.setVisibility(View.VISIBLE);
             }
 
-
-            if (mGenre != null) {
+            if (mGenre != null && description.getGenreUrl() != null && !description.getGenreUrl().isEmpty()) {
                 mGenre.setOnClickListener(
-                        view -> MainActivity.startMainActivity(Objects.requireNonNull(getContext()),
+                        view -> MainActivity.startMainActivity(requireContext(),
                                 Consts.FRAGMENT_AUDIOBOOK, description.getGenreUrl()));
             }
 
-            if (mAuthor != null) {
+            if (mAuthor != null && description.getAutorUrl() != null && !description.getAutorUrl().isEmpty()) {
                 mAuthor.setOnClickListener(
-                        view -> MainActivity.startMainActivity(Objects.requireNonNull(getContext()),
+                        view -> MainActivity.startMainActivity(requireContext(),
                                 Consts.FRAGMENT_AUDIOBOOK, description.getAutorUrl()));
             }
 
-            if (mArtist != null) {
+            if (mArtist != null && description.getArtistUrl() != null && !description.getArtistUrl().isEmpty()) {
                 mArtist.setOnClickListener(
-                        view -> MainActivity.startMainActivity(Objects.requireNonNull(getContext()),
+                        view -> MainActivity.startMainActivity(requireContext(),
                                 Consts.FRAGMENT_AUDIOBOOK, description.getArtistUrl()));
             }
 
@@ -368,6 +333,39 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         }
     }
 
+    public void showOtherBooks(@NonNull ArrayList<BookPOJO> data) {
+        if (mAdapterBooksRecomended != null) {
+            mAdapterBooksRecomended.setData(data);
+        }
+        if (data.size() != 0) {
+            mRecommendedBooks.setVisibility(View.VISIBLE);
+            mRecommendedBooksTitle.setVisibility(View.VISIBLE);
+            showOtherBooksLine(true);
+        } else {
+            mRecommendedBooks.setVisibility(View.GONE);
+            mRecommendedBooksTitle.setVisibility(View.GONE);
+            showOtherBooksLine(false);
+        }
+
+    }
+
+    @Override
+    public void showProgress(boolean b) {
+        if (b) {
+            mProgressBar.setVisibility(View.VISIBLE);
+            mScrollView.setVisibility(View.INVISIBLE);
+        } else {
+            mProgressBar.setVisibility(View.GONE);
+            mScrollView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void showToast(final int id) {
+        Toast.makeText(getContext(), getResources().getText(id),
+                Toast.LENGTH_LONG).show();
+    }
+
     @Override
     public void showOtherBooksLine(boolean b) {
         if (b) {
@@ -375,5 +373,15 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         } else {
             mOtherBookLine.setVisibility(View.GONE);
         }
+    }
+
+    @ProvidePresenter
+    BookDescriptionPresenter provide() {
+        BookPOJO pojo = new Gson().fromJson(
+                requireArguments().getString(ARG_BOOK_POJO), BookPOJO.class);
+        if (pojo == null) {
+            throw new NullPointerException();
+        }
+        return new BookDescriptionPresenter(pojo);
     }
 }

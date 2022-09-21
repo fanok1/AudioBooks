@@ -114,7 +114,7 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
 
             if (mPreferences.getBoolean(PARENTAL_CONTROL_ENABLED, false) && (book.getGenre() == null
                     || book.getGenre().isEmpty() ||
-                    !mPreferences.getBoolean(book.getGenre(), false))) {
+                    !mPreferences.getBoolean(book.getUrlGenre(), false))) {
                 Glide.with(mImageView).load(R.drawable.ic_parental_control).into(mImageView);
 
             } else {
@@ -140,6 +140,9 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 mSource.setVisibility(View.VISIBLE);
             } else if (book.getUrl().contains("akniga.org")) {
                 mSource.setText(R.string.abook);
+                mSource.setVisibility(View.VISIBLE);
+            } else if (book.getUrl().contains("baza-knig.ru")) {
+                mSource.setText(R.string.baza_knig);
                 mSource.setVisibility(View.VISIBLE);
             } else {
                 mSource.setVisibility(View.GONE);

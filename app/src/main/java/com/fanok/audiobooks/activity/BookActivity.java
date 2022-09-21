@@ -71,6 +71,8 @@ import com.alimuzaffar.lib.pin.PinEntryEditText;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
+import com.evgenii.jsevaluator.JsEvaluator;
+import com.evgenii.jsevaluator.interfaces.JsCallback;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
@@ -1173,13 +1175,32 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     }
 
     @Override
-    public void showData(@NonNull ArrayList<AudioPOJO> data) {
-        if (mAudioAdapter != null) mAudioAdapter.setData(data);
+    public void decode(@NotNull @NonNull final String key) {
+        JsEvaluator jsEvaluator = new JsEvaluator(this);
+        jsEvaluator.callFunction(Consts.decodeScript,
+                new JsCallback() {
+                    @Override
+                    public void onError(String errorMessage) {
+                        showToast(R.string.error_decode);
+                    }
+
+                    @Override
+                    public void onResult(String result) {
+                        mPresenter.addDecodeData(result);
+                    }
+                }, "strDecode", key);
     }
 
     @Override
     public void showTitle(@NotNull @NonNull String name) {
         mNameCurent.setText(name);
+    }
+
+    @Override
+    public void showData(@NonNull ArrayList<AudioPOJO> data) {
+        if (mAudioAdapter != null) {
+            mAudioAdapter.setData(data);
+        }
     }
 
     @Override

@@ -24,7 +24,6 @@ import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import com.fanok.audiobooks.presenter.OtherArtistPresenter;
 import com.google.gson.Gson;
 import java.util.ArrayList;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -50,12 +49,11 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
         return fragment;
     }
 
-    @ProvidePresenter
-    OtherArtistPresenter provide() {
-        BookPOJO bookPOJO = new Gson().fromJson(
-                Objects.requireNonNull(getArguments()).getString(ARG_URL), BookPOJO.class);
-        if (bookPOJO == null) throw new NullPointerException();
-        return new OtherArtistPresenter(bookPOJO);
+    @Override
+    public void showBook(@NotNull @NonNull String url) {
+        Intent intent = new Intent(getContext(), LoadBook.class);
+        intent.putExtra("url", url);
+        requireContext().startActivity(intent);
     }
 
     @Override
@@ -102,11 +100,14 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
 
     }
 
-    @Override
-    public void showBook(@NotNull @NonNull String url) {
-        Intent intent = new Intent(getContext(), LoadBook.class);
-        intent.putExtra("url", url);
-        Objects.requireNonNull(getContext()).startActivity(intent);
+    @ProvidePresenter
+    OtherArtistPresenter provide() {
+        BookPOJO bookPOJO = new Gson().fromJson(
+                requireArguments().getString(ARG_URL), BookPOJO.class);
+        if (bookPOJO == null) {
+            throw new NullPointerException();
+        }
+        return new OtherArtistPresenter(bookPOJO);
     }
 
     @Override

@@ -31,7 +31,11 @@ public interface Activity extends MvpView {
 
     @StateStrategyType(AddToEndSingleStrategy.class)
     void showData(ArrayList<AudioPOJO> data);
+
     void showTitle(@NonNull String name);
+
+    @StateStrategyType(SkipStrategy.class)
+    void decode(@NonNull String key);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
     void updateTime(int timeCurent, int timeEnd, int buffered);

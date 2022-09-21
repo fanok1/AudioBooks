@@ -26,6 +26,7 @@ import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.ParentalControlAddapter;
 import com.fanok.audiobooks.databinding.ActivityParentalControlBinding;
+import com.fanok.audiobooks.pojo.ParentControlPOJO;
 import com.fanok.audiobooks.presenter.ParentalControlPresenter;
 import com.r0adkll.slidr.Slidr;
 import java.util.ArrayList;
@@ -292,7 +293,7 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
     }
 
     @Override
-    public void showData(@NotNull ArrayList<String> arrayList) {
+    public void showData(@NotNull ArrayList<ParentControlPOJO> arrayList) {
         mAddapter.setItem(arrayList);
     }
 

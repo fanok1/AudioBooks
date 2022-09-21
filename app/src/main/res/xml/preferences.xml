@@ -53,7 +53,27 @@
             android:key="search_abmp3"
             android:title="@string/audionook_mp3" />
 
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="search_baza_knig"
+            android:title="@string/baza_knig" />
+
     </PreferenceScreen>
+
+    <Preference
+        android:icon="@drawable/ic_cookie"
+        android:key="cookies"
+        android:summary="@string/cookies_info_baza_knig"
+        android:title="@string/getCookies" />
+
+    <ListPreference
+        android:defaultValue="@string/vpn_no_value"
+        android:dialogTitle="@string/use_vpn"
+        android:entries="@array/vpn_titles"
+        android:entryValues="@array/vpn_values"
+        android:icon="@drawable/vpn"
+        android:key="vpn"
+        android:title="@string/use_vpn" />
 
     <CheckBoxPreference
         android:defaultValue="false"

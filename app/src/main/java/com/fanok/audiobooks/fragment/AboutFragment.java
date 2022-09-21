@@ -17,13 +17,11 @@ import android.os.PowerManager;
 import android.util.TypedValue;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.preference.PreferenceScreen;
-
 import com.fanok.audiobooks.BuildConfig;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.ActivitySendEmail;
@@ -31,11 +29,8 @@ import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.activity.PopupGetPlus;
 import com.fanok.audiobooks.pojo.StorageAds;
 import com.google.android.material.navigation.NavigationView;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
-import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 public class AboutFragment extends PreferenceFragmentCompat {
 
@@ -64,15 +59,15 @@ public class AboutFragment extends PreferenceFragmentCompat {
             setPreferencesFromResource(R.xml.about_preferences, rootKey);
         }
 
-        Objects.requireNonNull(getActivity()).setTitle(R.string.menu_about);
+        requireActivity().setTitle(R.string.menu_about);
         PreferenceManager.setDefaultValues(
-                Objects.requireNonNull(getActivity()).getApplicationContext(),
+                requireActivity().getApplicationContext(),
                 R.xml.about_preferences,
                 false);
 
         preferenceClickListner("privacy", preference -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(
-                    Objects.requireNonNull(getContext()));
+                    requireContext());
             builder.setTitle(getString(R.string.privacy))
                     .setMessage(getString(R.string.privacy_message))
                     .setIcon(R.drawable.ic_privacy)
@@ -101,9 +96,8 @@ public class AboutFragment extends PreferenceFragmentCompat {
         preferenceClickListner("disable_battary_optimize", preference -> {
             boolean enabled;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PowerManager pm = (PowerManager) Objects.requireNonNull(
-                        getContext()).getSystemService(Context.POWER_SERVICE);
-                UiModeManager uiModeManager = (UiModeManager) getContext().getSystemService(
+                PowerManager pm = (PowerManager) requireContext().getSystemService(Context.POWER_SERVICE);
+                UiModeManager uiModeManager = (UiModeManager) requireContext().getSystemService(
                         UI_MODE_SERVICE);
                 if (uiModeManager != null && uiModeManager.getCurrentModeType()
                         == Configuration.UI_MODE_TYPE_TELEVISION) {
@@ -138,7 +132,7 @@ public class AboutFragment extends PreferenceFragmentCompat {
 
         Preference.OnPreferenceClickListener clickToCopy = preference -> {
             ClipboardManager clipboardManager =
-                    (ClipboardManager) Objects.requireNonNull(getContext()).getSystemService(
+                    (ClipboardManager) requireContext().getSystemService(
                             CLIPBOARD_SERVICE);
             String text = preference.getSummary().toString().replaceAll(" ", "");
             ClipData clipData = ClipData.newPlainText("Source Text", text);

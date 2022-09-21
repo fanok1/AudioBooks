@@ -14,6 +14,7 @@
     <dimen name="recycler_item_margin">5dp</dimen>
     <dimen name="subTextSize">12sp</dimen>
     <dimen name="titleSize">16sp</dimen>
+    <dimen name="titleSizeParentControl">20sp</dimen>
     <dimen name="recycler_item_textmargin">6dp</dimen>
     <dimen name="scale_drawable">18dp</dimen>
     <dimen name="fab_margin">16dp</dimen>

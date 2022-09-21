@@ -1,5 +1,8 @@
 package com.fanok.audiobooks.model;
 
+
+import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
@@ -7,6 +10,8 @@ import com.fanok.audiobooks.pojo.SeriesPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -111,6 +116,7 @@ public class SeriesModel implements
     public Observable<ArrayList<SeriesPOJO>> getSeries(@NonNull String url) {
 
         return Observable.create(observableEmitter -> {
+            waitVpnConetion();
             ArrayList<SeriesPOJO> articlesModels;
             try {
                 if (url.contains("knigavuhe.org")) {
@@ -119,6 +125,8 @@ public class SeriesModel implements
                     articlesModels = loadSeriesListIzibuk(url);
                 } else if (url.contains("akniga.org")) {
                     articlesModels = loadSeriesListAbook(url);
+                } else if (url.contains("baza-knig.ru")) {
+                    articlesModels = loadSeriesListBazaKnig(url);
                 } else {
                     articlesModels = new ArrayList<>();
                 }
@@ -169,6 +177,146 @@ public class SeriesModel implements
             }
         }
 
+        return result;
+    }
+
+    private ArrayList<SeriesPOJO> loadSeriesListBazaKnig(String url) throws IOException {
+
+        Connection connection = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .ignoreHttpErrors(true);
+
+        if (!Consts.getBazaKnigCookies().isEmpty()) {
+            connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+        }
+
+        Document document = connection.get();
+        String urlSeries = "";
+
+        Elements conteiners = document.getElementsByClass("reset full-items");
+        if (conteiners != null && conteiners.size() > 0) {
+            Elements liElem = conteiners.first().getElementsByTag("li");
+            if (liElem != null && liElem.size() > 0) {
+                for (Element li : liElem) {
+                    String liText = li.text();
+                    if (liText != null) {
+                        if (liText.contains("Цикл")) {
+                            Elements seriesConteiner = li.getElementsByTag("a");
+                            if (seriesConteiner != null && seriesConteiner.size() > 0) {
+                                Element a = seriesConteiner.first();
+                                String href = a.attr("href");
+                                if (href != null) {
+                                    urlSeries = href;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        ArrayList<SeriesPOJO> result = new ArrayList<>();
+        int page = 0;
+        String bookName = "";
+        while (true) {
+            page++;
+            Document doc = Jsoup.connect(urlSeries + "/page/" + page + "/")
+                    .userAgent(Consts.USER_AGENT)
+                    .referrer("http://www.google.com")
+                    .sslSocketFactory(Consts.socketFactory())
+                    .ignoreHttpErrors(true)
+                    .get();
+
+            Elements navConteiner = doc.getElementsByClass("page-nav");
+            if (page > 1) {
+                if (navConteiner != null && navConteiner.size() > 0) {
+                    Elements navigainClass = navConteiner.first().getElementsByClass("navigation");
+                    if (navigainClass != null && navigainClass.size() > 0) {
+                        Elements children = navigainClass.first().children();
+                        if (children != null && children.size() > 0) {
+                            int last = Integer.parseInt(children.last().text());
+                            if (page > last) {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            Element conteiner = doc.getElementById("dle-content");
+            if (conteiner != null) {
+                Elements bookList = conteiner.getElementsByClass("short");
+                if (bookList != null && bookList.size() > 0) {
+                    for (Element book : bookList) {
+                        SeriesPOJO seriesPOJO = new SeriesPOJO();
+                        Elements imgConteiner = book.getElementsByClass("short-img");
+                        if (imgConteiner != null && imgConteiner.size() > 0) {
+                            Element element = imgConteiner.first();
+                            Elements aElement = element.getElementsByTag("a");
+                            if (aElement != null && aElement.size() > 0) {
+                                String aHref = aElement.first().attr("href");
+                                if (aHref != null && !aHref.isEmpty()) {
+                                    seriesPOJO.setUrl(aHref);
+                                } else {
+                                    continue;
+                                }
+                            }
+                        }
+
+                        Elements nameConteiner = book.getElementsByClass("short-title");
+                        if (nameConteiner != null && nameConteiner.size() > 0) {
+                            Elements aTag = nameConteiner.first().getElementsByTag("a");
+                            if (aTag != null && aTag.size() > 0) {
+                                String name = aTag.first().ownText();
+                                if (name != null && !name.isEmpty()) {
+                                    bookName = name;
+                                } else {
+                                    continue;
+                                }
+                                Elements b = aTag.first().getElementsByTag("b");
+                                if (b != null && b.size() != 0) {
+                                    String number = b.first().text();
+                                    if (number != null && !number.isEmpty()) {
+                                        seriesPOJO.setNumber(number);
+                                    }
+                                }
+                            }
+                        }
+
+                        Elements cont = book.getElementsByClass("reset short-items");
+                        if (cont != null && cont.size() > 0) {
+                            Elements liElem = cont.first().getElementsByTag("li");
+                            if (liElem != null && liElem.size() > 0) {
+                                for (Element li : liElem) {
+                                    String liText = li.text();
+                                    if (liText != null) {
+                                        if (liText.contains("Читает")) {
+                                            seriesPOJO.setName(bookName + " " + liText);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        result.add(seriesPOJO);
+                    }
+
+                }
+            }
+            if (result.size() == 0) {
+                throw new NullPointerException();
+            }
+        }
+
+        Collections.reverse(result);
         return result;
     }
 }

@@ -60,6 +60,9 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
                 case Consts.SOURCE_ABOOK:
                     mText.setText(R.string.abook);
                     break;
+                case Consts.SOURCE_BAZA_KNIG:
+                    mText.setText(R.string.baza_knig);
+                    break;
             }
 
         }
@@ -95,6 +98,10 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
 
         if (preferences.getBoolean("search_abmp3", true)) {
             mData.add(Consts.SOURCE_AUDIO_BOOK_MP3);
+        }
+
+        if (preferences.getBoolean("search_baza_knig", true)) {
+            mData.add(Consts.SOURCE_BAZA_KNIG);
         }
 
     }

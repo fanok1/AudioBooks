@@ -5,9 +5,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
+import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.BookPOJO;
@@ -15,6 +17,8 @@ import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 public class LoadBook extends AppCompatActivity {
 
@@ -78,6 +82,11 @@ public class LoadBook extends AppCompatActivity {
                     finish();
                 }
 
+            } else if (mUrl.contains("baza-knig.ru")) {
+                if (!mUrl.contains(".html")) {
+                    startActivity(new Intent(this, MainActivity.class));
+                    finish();
+                }
             } else {
                 finish();
             }
@@ -95,17 +104,23 @@ public class LoadBook extends AppCompatActivity {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<BookPOJO>() {
                     @Override
-                    public void onSubscribe(Disposable d) {
+                    public void onError(@NotNull Throwable e) {
+                        if (e.getClass() == CookesExeption.class) {
+                            if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                                Toast.makeText(mContext, getResources().getText(R.string.cookes_baza_knig_exeption),
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        }
+                        finish();
                     }
 
                     @Override
-                    public void onNext(BookPOJO bookPOJO) {
+                    public void onNext(@NotNull BookPOJO bookPOJO) {
                         mBookPOJO = bookPOJO;
                     }
 
                     @Override
-                    public void onError(Throwable e) {
-                        finish();
+                    public void onSubscribe(@NotNull Disposable d) {
                     }
 
                     @Override

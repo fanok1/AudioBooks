@@ -23,7 +23,6 @@ import com.fanok.audiobooks.interface_pacatge.book_content.Series;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 import com.fanok.audiobooks.presenter.BookSeriesPresenter;
 import java.util.ArrayList;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -38,17 +37,16 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
     @InjectPresenter
     BookSeriesPresenter mPresenter;
 
-    @ProvidePresenter
-    BookSeriesPresenter provide() {
-        mUrl = Objects.requireNonNull(getArguments()).getString(ARG_URL);
-        if (mUrl == null || mUrl.isEmpty()) {
-            throw new NullPointerException();
-        }
-        return new BookSeriesPresenter(mUrl);
+    @Override
+    public void showBook(@NotNull @NonNull String url) {
+        Intent intent = new Intent(getContext(), LoadBook.class);
+        intent.putExtra("url", url);
+        requireContext().startActivity(intent);
     }
 
 
     private String mUrl;
+
     private SeriesListAddapter mSeriesListAddapter;
 
 
@@ -116,11 +114,13 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
 
     }
 
-    @Override
-    public void showBook(@NotNull @NonNull String url) {
-        Intent intent = new Intent(getContext(), LoadBook.class);
-        intent.putExtra("url", url);
-        Objects.requireNonNull(getContext()).startActivity(intent);
+    @ProvidePresenter
+    BookSeriesPresenter provide() {
+        mUrl = requireArguments().getString(ARG_URL);
+        if (mUrl == null || mUrl.isEmpty()) {
+            throw new NullPointerException();
+        }
+        return new BookSeriesPresenter(mUrl);
     }
 
     @Override

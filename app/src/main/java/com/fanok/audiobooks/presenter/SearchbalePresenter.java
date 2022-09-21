@@ -14,6 +14,7 @@ import androidx.preference.PreferenceManager;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchableModel;
@@ -34,6 +35,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import java.util.ArrayList;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 @InjectViewState
@@ -93,6 +95,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 mUrls.add("https://knigavuhe.org/search/?q=<qery>&page=<page>");
                 mUrls.add("https://izib.uk/search?q=<qery>&p=<page>");
                 mUrls.add("https://audiobook-mp3.com/search?text=<qery>");
+                mUrls.add("https://baza-knig.ru/index.php?do=search///qery=<qery>&page=<page>");
                 break;
             case Consts.MODEL_AUTOR:
                 if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
@@ -160,6 +163,8 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 setAutorsAndSeriesFilter("audiobook-mp3.com");
             } else if (filter == Consts.SOURCE_ABOOK) {
                 mSearcheblPOJOFilter = new SearcheblPOJO();
+            } else if (filter == Consts.SOURCE_BAZA_KNIG) {
+                mSearcheblPOJOFilter = new SearcheblPOJO();
             }
             getViewState().showSeriesAndAutors(mSearcheblPOJOFilter);
         }
@@ -181,6 +186,9 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             getViewState().showData(books_filter);
         } else if (filter == Consts.SOURCE_ABOOK) {
             setBooksFilter("akniga.org");
+            getViewState().showData(books_filter);
+        } else if (filter == Consts.SOURCE_BAZA_KNIG) {
+            setBooksFilter("baza-knig.ru");
             getViewState().showData(books_filter);
         }
 
@@ -421,23 +429,26 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<ArrayList<BookPOJO>>() {
                         @Override
-                        public void onSubscribe(Disposable d) {
-                        }
-
-                        @Override
-                        public void onNext(ArrayList<BookPOJO> bookPOJOS) {
-                            books.addAll(bookPOJOS);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            if (e.getClass() == NullPointerException.class) {
+                        public void onError(@NotNull Throwable e) {
+                            if (e.getClass() == CookesExeption.class) {
+                                if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                                    getViewState().showToast(R.string.cookes_baza_knig_exeption);
+                                }
+                            } else if (e.getClass() == NullPointerException.class) {
                                 isEnd = true;
                             } else {
                                 page--;
                             }
                             onComplete();
+                        }
 
+                        @Override
+                        public void onNext(@NotNull ArrayList<BookPOJO> bookPOJOS) {
+                            books.addAll(bookPOJOS);
+                        }
+
+                        @Override
+                        public void onSubscribe(@NotNull Disposable d) {
                         }
 
                         @Override
@@ -485,16 +496,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<ArrayList<GenrePOJO>>() {
                         @Override
-                        public void onSubscribe(Disposable d) {
-                        }
-
-                        @Override
-                        public void onNext(ArrayList<GenrePOJO> bookPOJOS) {
-                            genre.addAll(bookPOJOS);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
+                        public void onError(@NotNull Throwable e) {
                             if (e.getClass() == NullPointerException.class) {
                                 isEnd = true;
                             } else {
@@ -503,6 +505,15 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                             }
                             onComplete();
 
+                        }
+
+                        @Override
+                        public void onNext(@NotNull ArrayList<GenrePOJO> bookPOJOS) {
+                            genre.addAll(bookPOJOS);
+                        }
+
+                        @Override
+                        public void onSubscribe(@NotNull Disposable d) {
                         }
 
                         @Override
@@ -536,7 +547,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                     }
 
                     @Override
-                    public void onError(Throwable e) {
+                    public void onError(@NotNull Throwable e) {
                         getViewState().showToast(R.string.error_load_data);
                         onComplete();
                     }

@@ -94,6 +94,7 @@
         <item>@string/kniga_v_uhe</item>
         <item>@string/izibuc</item>
         <item>@string/audionook_mp3</item>
+        <item>@string/baza_knig</item>
     </string-array>
 
     <string-array name="sorce_books_values">
@@ -101,6 +102,21 @@
         <item>@string/kniga_v_uhe_value</item>
         <item>@string/izibuc_value</item>
         <item>@string/audiobook_mp3_value</item>
+        <item>@string/baza_knig_value</item>
+    </string-array>
+
+    <string-array name="vpn_titles">
+        <item>@string/no</item>
+        <item>@string/antizapret</item>
+        <item>@string/zaborona</item>
+        <item>@string/zaborona_europe</item>
+    </string-array>
+
+    <string-array name="vpn_values">
+        <item>@string/vpn_no_value</item>
+        <item>@string/vpn_antizapret_value</item>
+        <item>@string/vpn_zaborona_value</item>
+        <item>@string/vpn_zaborona_europe_value</item>
     </string-array>
 
     <string-array name="email_catigory">

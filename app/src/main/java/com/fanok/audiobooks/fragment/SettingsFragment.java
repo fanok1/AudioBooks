@@ -1,6 +1,7 @@
 package com.fanok.audiobooks.fragment;
 
 import static android.content.Context.UI_MODE_SERVICE;
+import static android.os.Build.VERSION.SDK_INT;
 import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS;
 
 import android.Manifest;
@@ -18,7 +19,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
+import android.os.RemoteException;
 import android.provider.SearchRecentSuggestions;
+import android.provider.Settings;
 import android.util.TypedValue;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,6 +43,7 @@ import com.codekidlabs.storagechooser.StorageChooser;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.activity.ActivityCookies;
 import com.fanok.audiobooks.activity.ActivityImport;
 import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.activity.ParentalControlActivity;
@@ -52,29 +56,35 @@ import com.fanok.audiobooks.pojo.StorageUtil;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.blinkt.openvpn.OpenVpnApi;
+import de.blinkt.openvpn.core.OpenVPNThread;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class SettingsFragment extends PreferenceFragmentCompat implements
         SharedPreferences.OnSharedPreferenceChangeListener, EasyPermissions.PermissionCallbacks {
+
     private static final int CODE_RESTORE = 292;
+
     private static final int REQUEST_WRITE_STORAGE = 112;
+
     private static final int EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 342;
 
 
     private final DialogInterface.OnClickListener mOnClickListener = (dialogInterface, i) -> {
-
 
         Content content = new Content();
         content.setCancelLabel(getString(R.string.cancel));
@@ -87,30 +97,28 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         content.setTextfieldHintText(getString(R.string.new_folder));
         content.setTextfieldErrorText(getString(R.string.empty_text));
 
-
         StorageChooser.Builder builder = new StorageChooser.Builder()
                 .withContent(content)
                 .allowAddFolder(true)
                 .withActivity(getActivity())
                 .withMemoryBar(true)
-                .withFragmentManager(Objects.requireNonNull(getActivity()).getFragmentManager())
+                .withFragmentManager(requireActivity().getFragmentManager())
                 .withPredefinedPath(Environment.getExternalStoragePublicDirectory(
                         Environment.DIRECTORY_DOWNLOADS).getPath())
                 .allowCustomPath(true)
                 .setType(StorageChooser.DIRECTORY_CHOOSER);
 
         SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(getActivity().getApplicationContext());
+                .getDefaultSharedPreferences(requireActivity().getApplicationContext());
         String themeName = pref.getString("pref_theme", getString(R.string.theme_light_value));
         if (themeName.equals(getString(R.string.theme_dark_value))) {
             StorageChooser.Theme theme = new StorageChooser.Theme(
-                    Objects.requireNonNull(getContext()).getApplicationContext());
+                    requireContext().getApplicationContext());
             theme.setScheme(getResources().getIntArray(R.array.paranoid_theme));
             builder.setTheme(theme);
         }
 
         StorageChooser chooser = builder.build();
-
 
         chooser.setOnSelectListener(path -> {
             String filePath = backup(path);
@@ -120,6 +128,51 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             } else {
                 Toast.makeText(getContext(),
                         getString(R.string.backup_not_created),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+        chooser.show();
+    };
+
+    private final DialogInterface.OnClickListener restoreClickListnere = (dialogInterface, i) -> {
+        Content content = new Content();
+        content.setCancelLabel(getString(R.string.cancel));
+        content.setSelectLabel(getString(R.string.select));
+        content.setOverviewHeading(getString(R.string.select_folder));
+        content.setCreateLabel(getString(R.string.create));
+        content.setFolderCreatedToastText(getString(R.string.folder_created));
+        content.setFolderErrorToastText(getString(R.string.error_folder_create));
+        content.setNewFolderLabel(getString(R.string.new_folder));
+        content.setTextfieldHintText(getString(R.string.new_folder));
+        content.setTextfieldErrorText(getString(R.string.empty_text));
+
+        StorageChooser.Builder builder = new StorageChooser.Builder()
+                .withContent(content)
+                .withActivity(getActivity())
+                .withMemoryBar(false)
+                .withFragmentManager(requireActivity().getFragmentManager())
+                .allowCustomPath(true)
+                .setType(StorageChooser.FILE_PICKER);
+
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(requireActivity().getApplicationContext());
+        String themeName = pref.getString("pref_theme", getString(R.string.theme_light_value));
+        if (themeName.equals(getString(R.string.theme_dark_value))) {
+            StorageChooser.Theme theme = new StorageChooser.Theme(
+                    requireContext().getApplicationContext());
+            theme.setScheme(getResources().getIntArray(R.array.paranoid_theme));
+            builder.setTheme(theme);
+        }
+
+        StorageChooser chooser = builder.build();
+
+        chooser.setOnSelectListener(path -> {
+            File file = new File(path);
+            if (path.contains(".json") && restore(readTextFile(file))) {
+                Toast.makeText(getContext(), getString(R.string.restored),
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), getString(R.string.error_restored),
                         Toast.LENGTH_SHORT).show();
             }
         });
@@ -141,6 +194,68 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         }
     }
 
+    @Override
+    public void onActivityResult(final int requestCode, final int resultCode, @Nullable final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CODE_RESTORE) {
+            if (SDK_INT >= Build.VERSION_CODES.R) {
+                if (Environment.isExternalStorageManager()) {
+                    showAllert(requireContext(), R.string.confirm_restore, restoreClickListnere);
+                } else {
+                    Toast.makeText(requireContext(), getString(R.string.worning_not_allowed_read_storege),
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Set up a listener whenever a key changes
+        getPreferenceScreen().getSharedPreferences()
+                .registerOnSharedPreferenceChangeListener(this);
+
+        MainActivity activity = (MainActivity) getActivity();
+        if (activity != null) {
+            NavigationView navigationView = activity.getNavigationView();
+            ArrayList<TextView> mTextViewArrayList = activity.getTextViewArrayList();
+            final TypedValue SelectedValue = new TypedValue();
+            activity.getTheme().resolveAttribute(R.attr.mySelectableItemBackground, SelectedValue,
+                    true);
+            if (navigationView != null) {
+                navigationView.setCheckedItem(R.id.nav_settings);
+            } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 7) {
+                mTextViewArrayList.get(7).setBackgroundResource(SelectedValue.resourceId);
+            }
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Unregister the listener whenever a key changes
+        getPreferenceScreen().getSharedPreferences()
+                .unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NotNull String[] permissions,
+            @NotNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_WRITE_STORAGE) {
+            if (grantResults.length <= 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(getContext(),
+                        getString(R.string.worning_not_allowed_write_storege),
+                        Toast.LENGTH_LONG).show();
+            } else {
+                showAllert(requireContext(), R.string.confirm_backup,
+                        mOnClickListener);
+            }
+        }
+    }
+
     @SuppressLint("InlinedApi")
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -150,9 +265,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         } else {
             setPreferencesFromResource(R.xml.preferences, rootKey);
         }
-        Objects.requireNonNull(getActivity()).setTitle(R.string.menu_settings);
+        requireActivity().setTitle(R.string.menu_settings);
         PreferenceManager.setDefaultValues(
-                Objects.requireNonNull(getActivity()).getApplicationContext(), R.xml.preferences,
+                requireActivity().getApplicationContext(), R.xml.preferences,
                 false);
         initSummary(getPreferenceScreen());
 
@@ -182,11 +297,57 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         });
 
         SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(Objects.requireNonNull(getContext()));
+                .getDefaultSharedPreferences(requireContext());
         setProxy(pref.getBoolean("proxy_enabled", false));
 
-
 */
+
+        preferenceChangeListner("vpn", (preference, newValue) -> {
+
+            if (!newValue.equals(getString(R.string.vpn_no_value))) {
+                String file = "";
+                String name = "";
+                if (newValue.equals(getString(R.string.vpn_antizapret_value))) {
+                    file = "antizapret-tcp.ovpn";
+                    name = "Антизапрет";
+                } else if (newValue.equals(getString(R.string.vpn_zaborona_value))) {
+                    file = "srv0.zaborona-help_maxroutes.ovpn";
+                    name = "Заборона";
+                } else if (newValue.equals(getString(R.string.vpn_zaborona_europe_value))) {
+                    file = "srv0.zaborona-help-UDP-no-encryption_maxroutes.ovpn";
+                    name = "Заборона Европа";
+                }
+                if (!file.isEmpty()) {
+                    try {
+                        // .ovpn file
+                        InputStream conf = requireContext().getAssets().open(file);
+                        InputStreamReader isr = new InputStreamReader(conf);
+                        BufferedReader br = new BufferedReader(isr);
+                        StringBuilder config = new StringBuilder();
+                        String line;
+
+                        while (true) {
+                            line = br.readLine();
+                            if (line == null) {
+                                break;
+                            }
+                            config.append(line).append("\n");
+                        }
+
+                        br.readLine();
+                        OpenVpnApi.startVpn(requireContext().getApplicationContext(), config.toString(), name, null,
+                                null);
+
+                    } catch (IOException | RemoteException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } else {
+                OpenVPNThread.stop();
+            }
+            return true;
+        });
+
         preferenceChangeListner("pref_theme", (preference, newValue) -> {
             if (newValue.equals(getString(R.string.theme_dark_value)) || newValue
                     .equals(getString(R.string.theme_black_value))) {
@@ -194,7 +355,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             } else {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             }
-            getActivity().recreate();
+            requireActivity().recreate();
             return true;
         });
 
@@ -207,14 +368,14 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         preferenceChangeListner("pref_downland_path", (preference, newValue) -> {
 
             if (newValue.equals(getString(R.string.dir_value_sdcrd))) {
-                File[] folders = Objects.requireNonNull(getContext()).getExternalFilesDirs(null);
+                File[] folders = requireContext().getExternalFilesDirs(null);
                 if (folders.length == 1) {
                     Toast.makeText(getContext(), R.string.no_sdcard, Toast.LENGTH_SHORT).show();
                     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(
-                            getActivity().getApplicationContext());
+                            requireActivity().getApplicationContext());
                     SharedPreferences.Editor editor = sharedPref.edit();
                     editor.putString("pref_downland_path",
-                            getContext().getString(R.string.dir_value_emulated));
+                            requireContext().getString(R.string.dir_value_emulated));
                     editor.apply();
                     return false;
                 }
@@ -223,7 +384,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         });
 
         preferenceChangeListner("sorce_books", (preference, newValue) -> {
-            Consts.setSOURCE(Objects.requireNonNull(getContext()), newValue.toString());
+            Consts.setSOURCE(requireContext(), newValue.toString());
             return true;
         });
 
@@ -284,12 +445,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         });
 
         preferenceClickListner("backup", preference -> {
-            boolean hasPermission = (ContextCompat.checkSelfPermission(
-                    Objects.requireNonNull(getContext()),
+            boolean hasPermission = (ContextCompat.checkSelfPermission(requireContext(),
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_GRANTED);
             if (!hasPermission) {
-                ActivityCompat.requestPermissions(getActivity(),
+                ActivityCompat.requestPermissions(requireActivity(),
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         REQUEST_WRITE_STORAGE);
             } else {
@@ -299,17 +459,22 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             return true;
         });
 
+        preferenceClickListner("cookies", preference -> {
+            startActivity(new Intent(getContext(), ActivityCookies.class));
+            return true;
+        });
+
         boolean ignor;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PowerManager pm = (PowerManager) Objects.requireNonNull(getContext()).getSystemService(
+        if (SDK_INT >= Build.VERSION_CODES.M) {
+            PowerManager pm = (PowerManager) requireContext().getSystemService(
                     Context.POWER_SERVICE);
             if (pm != null) {
 
-                UiModeManager uiModeManager = (UiModeManager) getContext().getSystemService(
+                UiModeManager uiModeManager = (UiModeManager) requireContext().getSystemService(
                         UI_MODE_SERVICE);
 
-                StorageUtil storageUtil = new StorageUtil(getContext());
+                StorageUtil storageUtil = new StorageUtil(requireContext());
                 if (uiModeManager == null || uiModeManager.getCurrentModeType()
                         == Configuration.UI_MODE_TYPE_TELEVISION) {
                     ignor = true;
@@ -334,8 +499,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                         try {
                             startActivity(new Intent(ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
                         } catch (ActivityNotFoundException e) {
-                            new StorageUtil(Objects.requireNonNull(
-                                    getContext())).storeBattaryOptimizeDisenbled(true);
+                            new StorageUtil(requireContext()).storeBattaryOptimizeDisenbled(true);
                         }
                         return true;
                     });
@@ -343,35 +507,36 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
         preferenceClickListner("restore", preference -> {
 
-            if (!EasyPermissions.hasPermissions(getActivity(),
-                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                EasyPermissions.requestPermissions(this,
-                        getString(R.string.permission_read_external_storage),
-                        EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE,
-                        Manifest.permission.READ_EXTERNAL_STORAGE);
+            if (SDK_INT >= Build.VERSION_CODES.R) {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    intent.addCategory("android.intent.category.DEFAULT");
+                    intent.setData(Uri.parse(String.format("package:%s", requireContext().getPackageName())));
+                    startActivityForResult(intent, CODE_RESTORE);
+                } catch (Exception e) {
+                    Intent intent = new Intent();
+                    intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                    startActivityForResult(intent, CODE_RESTORE);
+                }
             } else {
-                showAllert(preference.getContext(), R.string.confirm_restore,
-                        (dialogInterface, i) -> {
-                            Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
-                            chooseFile.setType("application/octet-stream");
-                            chooseFile = Intent.createChooser(chooseFile,
-                                    getString(R.string.choose_file));
-                            startActivityForResult(chooseFile, CODE_RESTORE);
-                        });
+                if (!EasyPermissions.hasPermissions(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                    EasyPermissions.requestPermissions(this, getString(R.string.permission_read_external_storage),
+                            EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE, Manifest.permission.READ_EXTERNAL_STORAGE);
+                } else {
+                    showAllert(preference.getContext(), R.string.confirm_restore, restoreClickListnere);
+                }
             }
 
             return true;
         });
 
         preferenceClickListner("import_kniga_v_uhe", preference -> {
-            ActivityImport.startActivity(Objects.requireNonNull(getActivity()),
-                    Consts.IMPORT_SITE_KNIGA_V_UHE);
+            ActivityImport.startActivity(requireActivity(), Consts.IMPORT_SITE_KNIGA_V_UHE);
             return true;
         });
 
         preferenceClickListner("import_abook", preference -> {
-            ActivityImport.startActivity(Objects.requireNonNull(getActivity()),
-                    Consts.IMPORT_SITE_ABOOK);
+            ActivityImport.startActivity(requireActivity(), Consts.IMPORT_SITE_ABOOK);
             return true;
         });
 
@@ -384,117 +549,17 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 });*/
     }
 
-    private void preferenceClickListner(@NotNull String key,
-            @NotNull Preference.OnPreferenceClickListener click) {
-        Preference preference = findPreference(key);
-        if (preference != null) {
-            preference.setOnPreferenceClickListener(click);
-        }
-    }
-
-    private void preferenceChangeListner(@NotNull String key,
-            @NotNull Preference.OnPreferenceChangeListener change) {
-        Preference preference = findPreference(key);
-        if (preference != null) {
-            preference.setOnPreferenceChangeListener(change);
-        }
-    }
-
-    private void showAllert(@NotNull Context context, int message,
-            DialogInterface.OnClickListener onClickListener) {
-        AlertDialog.Builder alert = new AlertDialog.Builder(context);
-        alert.setTitle(R.string.app_name);
-        alert.setMessage(message);
-        alert.setPositiveButton(R.string.yes, onClickListener);
-        alert.setCancelable(true);
-        alert.setNegativeButton(R.string.cancel, null);
-        alert.show();
-    }
-
     @Override
-    public void onResume() {
-        super.onResume();
-        // Set up a listener whenever a key changes
-        getPreferenceScreen().getSharedPreferences()
-                .registerOnSharedPreferenceChangeListener(this);
-
-        MainActivity activity = (MainActivity) getActivity();
-        if (activity != null) {
-            NavigationView navigationView = activity.getNavigationView();
-            ArrayList<TextView> mTextViewArrayList = activity.getTextViewArrayList();
-            final TypedValue SelectedValue = new TypedValue();
-            activity.getTheme().resolveAttribute(R.attr.mySelectableItemBackground, SelectedValue,
-                    true);
-            if (navigationView != null) {
-                navigationView.setCheckedItem(R.id.nav_settings);
-            } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 7) {
-                mTextViewArrayList.get(7).setBackgroundResource(SelectedValue.resourceId);
-            }
+    public void onPermissionsGranted(int requestCode, List<String> perms) {
+        if (requestCode == EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE) {
+            showAllert(requireContext(), R.string.confirm_restore,
+                    restoreClickListnere);
         }
     }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        // Unregister the listener whenever a key changes
-        getPreferenceScreen().getSharedPreferences()
-                .unregisterOnSharedPreferenceChangeListener(this);
-    }
-
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
             String key) {
         updatePrefSummary(findPreference(key));
-    }
-
-    private void initSummary(Preference p) {
-        if (p instanceof PreferenceGroup) {
-            PreferenceGroup pGrp = (PreferenceGroup) p;
-            for (int i = 0; i < pGrp.getPreferenceCount(); i++) {
-                initSummary(pGrp.getPreference(i));
-            }
-        } else {
-            updatePrefSummary(p);
-        }
-    }
-
-    private void updatePrefSummary(Preference p) {
-        if (p instanceof ListPreference) {
-            ListPreference listPref = (ListPreference) p;
-            p.setSummary(listPref.getEntry());
-        }
-        if (p instanceof EditTextPreference) {
-            EditTextPreference editTextPref = (EditTextPreference) p;
-            if (p.getTitle().toString().toLowerCase().contains("password")) {
-                p.setSummary("******");
-            } else {
-                p.setSummary(editTextPref.getText());
-            }
-        }
-        if (p instanceof MultiSelectListPreference) {
-            EditTextPreference editTextPref = (EditTextPreference) p;
-            p.setSummary(editTextPref.getText());
-        }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-
-        if (data != null) {
-            Uri uri = data.getData();
-            if (uri != null) {
-                if (requestCode == CODE_RESTORE) {
-                    if (restore(readTextFile(uri))) {
-                        Toast.makeText(getContext(), getString(R.string.restored),
-                                Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getContext(), getString(R.string.error_restored),
-                                Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private String backup(@NotNull String dir) {
@@ -528,6 +593,53 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         }
 
         return name;
+    }
+
+    private void initSummary(Preference p) {
+        if (p instanceof PreferenceGroup) {
+            PreferenceGroup pGrp = (PreferenceGroup) p;
+            for (int i = 0; i < pGrp.getPreferenceCount(); i++) {
+                initSummary(pGrp.getPreference(i));
+            }
+        } else {
+            updatePrefSummary(p);
+        }
+    }
+
+    private void preferenceChangeListner(@NotNull String key,
+            @NotNull Preference.OnPreferenceChangeListener change) {
+        Preference preference = findPreference(key);
+        if (preference != null) {
+            preference.setOnPreferenceChangeListener(change);
+        }
+    }
+
+    private void preferenceClickListner(@NotNull String key,
+            @NotNull Preference.OnPreferenceClickListener click) {
+        Preference preference = findPreference(key);
+        if (preference != null) {
+            preference.setOnPreferenceClickListener(click);
+        }
+    }
+
+    private String readTextFile(File file) {
+        StringBuilder myData = new StringBuilder();
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            DataInputStream in = new DataInputStream(fis);
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+
+            String strLine;
+            while ((strLine = br.readLine()) != null) {
+                myData.append(strLine).append("\n");
+            }
+            br.close();
+            in.close();
+            fis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return myData.toString();
     }
 
     private boolean restore(@NotNull String file) {
@@ -569,7 +681,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             }
 
 
-
         } catch (Exception e) {
             returnValue = false;
         }
@@ -578,61 +689,33 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         return returnValue;
     }
 
-    private String readTextFile(Uri uri) {
-        BufferedReader reader = null;
-        StringBuilder builder = new StringBuilder();
-        try {
-            reader = new BufferedReader(new InputStreamReader(
-                    Objects.requireNonNull(Objects.requireNonNull(
-                            getContext()).getContentResolver().openInputStream(uri))));
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return builder.toString();
+    private void showAllert(@NotNull Context context, int message,
+            DialogInterface.OnClickListener onClickListener) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(context);
+        alert.setTitle(R.string.app_name);
+        alert.setMessage(message);
+        alert.setPositiveButton(R.string.yes, onClickListener);
+        alert.setCancelable(true);
+        alert.setNegativeButton(R.string.cancel, null);
+        alert.show();
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NotNull String[] permissions,
-            @NotNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_WRITE_STORAGE) {
-            if (grantResults.length <= 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(getContext(),
-                        getString(R.string.worning_not_allowed_write_storege),
-                        Toast.LENGTH_LONG).show();
+    private void updatePrefSummary(Preference p) {
+        if (p instanceof ListPreference) {
+            ListPreference listPref = (ListPreference) p;
+            p.setSummary(listPref.getEntry());
+        }
+        if (p instanceof EditTextPreference) {
+            EditTextPreference editTextPref = (EditTextPreference) p;
+            if (p.getTitle().toString().toLowerCase().contains("password")) {
+                p.setSummary("******");
             } else {
-                showAllert(Objects.requireNonNull(getContext()), R.string.confirm_backup,
-                        mOnClickListener);
+                p.setSummary(editTextPref.getText());
             }
         }
-    }
-
-
-    @Override
-    public void onPermissionsGranted(int requestCode, List<String> perms) {
-        if (requestCode == EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE) {
-            showAllert(Objects.requireNonNull(getContext()), R.string.confirm_restore,
-                    (dialogInterface, i) -> {
-                        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
-                        chooseFile.setType("application/octet-stream");
-                        chooseFile = Intent.createChooser(chooseFile,
-                                getString(R.string.choose_file));
-                        startActivityForResult(chooseFile, CODE_RESTORE);
-                    });
+        if (p instanceof MultiSelectListPreference) {
+            EditTextPreference editTextPref = (EditTextPreference) p;
+            p.setSummary(editTextPref.getText());
         }
     }
 

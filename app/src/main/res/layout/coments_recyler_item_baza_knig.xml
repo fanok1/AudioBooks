@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    tools:background="@color/colorBackgraund"
+    tools:viewBindingIgnore="true">
+
+    <LinearLayout
+        android:id="@+id/quoteParent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingEnd="@dimen/text_margin"
+        android:paddingStart="@dimen/text_margin"
+        android:paddingTop="@dimen/text_margin">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginEnd="@dimen/text_margin"
+            android:background="@drawable/ic_undo"
+            android:contentDescription="@string/icon" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/quoteName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="?attr/subTextColor"
+                android:textSize="@dimen/subTextSize"
+                tools:text="➠Мyх๑м๑р✎" />
+
+            <TextView
+                android:id="@+id/quoteText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="?attr/subTextColor"
+                android:textSize="@dimen/subTextSize"
+                tools:text="tex" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/text_margin">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/imageView"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
+            tools:src="@tools:sample/avatars" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/text_margin"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/subTextSize"
+                    tools:text="Мyх๑м๑р✎" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/item_genre_title_top_margin"
+                    android:layout_marginStart="@dimen/item_genre_title_top_margin"
+                    android:text="•"
+                    android:textColor="?attr/subTextColor"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:id="@+id/time"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="@dimen/subTextSize"
+                    tools:text="2 апреля 2019, 15:15" />
+            </LinearLayout>
+
+
+            <TextView
+                android:id="@+id/text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/item_genre_title_top_margin"
+                android:textColor="?attr/colorPrimaryText"
+                tools:text="Увлекательно и атмосферно, герои симпатичны, динамичны и слишком нереальные роботы. Девочка, попавшая непростую ситуацию, «Чем старше она становилась, тем становил" />
+
+            <TextView
+                android:id="@+id/readMore"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/show_more"
+                android:textColor="?attr/subTextColor" />
+        </LinearLayout>
+
+
+    </LinearLayout>
+</LinearLayout>
+

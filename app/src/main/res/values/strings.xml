@@ -340,6 +340,8 @@
     <string name="izibuc">ИзиБук</string>
     <string name="audionook_mp3" translatable="false">AudioBook-mp3</string>
     <string name="audiobook_mp3_value" translatable="false">audiobook_mp3</string>
+    <string name="baza_knig">База Книг</string>
+    <string name="baza_knig_value" translatable="false">baza_knig</string>
     <string name="menu_saved">Скачанные</string>
     <string name="clear_audio_list">Очистить список аудио файлов</string>
     <string name="confirm_clear_audio_list">Вы уверены что хотите очистить список аудио файлов</string>
@@ -363,6 +365,26 @@
     <string name="speed_up_search_abmp3_desc">Ускоряет поиск книг за счет уменьшения количества загружаемых данных. Скорость поиска увеличиться в 4 раза</string>
     <string name="theme_black">Черная</string>
     <string name="abook_description">Импортировать с сайта \"Akniga\"</string>
+    <string name="section_not_available">У данного источника такого раздела не существует. Воспользуйтесь кнопкой поиска</string>
+    <string name="comets">Комментарии</string>
+    <string name="years">Год</string>
+    <string name="order_coments">Комментарии</string>
+    <string name="order_year">По годам</string>
+    <string name="error_decode">Не удалось расшифровать данные</string>
+    <string name="use_vpn">Использовать VPN</string>
+    <string name="antizapret">Антизапрет (Россия)</string>
+    <string name="zaborona">Заборона (Украина)</string>
+    <string name="zaborona_europe">Заборона Европа (для тех у кого не работает Заборона)</string>
+    <string name="vpn_no_value" translatable="false">no_vpn</string>
+    <string name="vpn_antizapret_value" translatable="false">antizapret</string>
+    <string name="vpn_zaborona_value" translatable="false">zaborona</string>
+    <string name="vpn_zaborona_europe_value" translatable="false">zaborona_europe</string>
+    <string name="cookes_baza_knig_exeption">Для доступа к источнику База Книг необходимо обновить cookies. Для этого необходимо перейти в настройки и нажать \"Получить Cookies\"</string>
+    <string name="getCookies">Получить Cookies</string>
+    <string name="cookies_info_baza_knig">Для доступа к источнику База Книг необходимо обновить Cookies</string>
+    <string name="error_cookies_load">Не удалось обновить cookies</string>
+    <string name="cookies_loaded">Cookies обновлены</string>
+    <string name="wait_loading">Подождите пока страница закончится, а затем закройте окно</string>
 
 
 </resources>

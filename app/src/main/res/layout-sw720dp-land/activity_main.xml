@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -22,13 +23,13 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
                 android:background="?android:selectableItemBackground"
-                android:drawableStart="@drawable/ic_menu_audiobooks"
                 android:drawablePadding="20dp"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:text="@string/menu_audiobooks"
                 android:textColor="?attr/prefIconColor"
+                app:drawableStartCompat="@drawable/ic_menu_audiobooks"
                 tools:textColor="" />
 
             <TextView
@@ -37,13 +38,13 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
                 android:background="?android:selectableItemBackground"
-                android:drawableStart="@drawable/ic_menu_genre"
                 android:drawablePadding="20dp"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:text="@string/menu_genre"
                 android:textColor="?attr/prefIconColor"
+                app:drawableStartCompat="@drawable/ic_menu_genre"
                 tools:textColor="" />
 
             <TextView
@@ -52,13 +53,13 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
                 android:background="?android:selectableItemBackground"
-                android:drawableStart="@drawable/ic_menu_autor"
                 android:drawablePadding="20dp"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:text="@string/menu_autor"
                 android:textColor="?attr/prefIconColor"
+                app:drawableStartCompat="@drawable/ic_menu_autor"
                 tools:textColor="" />
 
             <TextView
@@ -67,13 +68,13 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
                 android:background="?android:selectableItemBackground"
-                android:drawableStart="@drawable/ic_menu_artist"
                 android:drawablePadding="20dp"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:text="@string/menu_artist"
                 android:textColor="?attr/prefIconColor"
+                app:drawableStartCompat="@drawable/ic_menu_artist"
                 tools:textColor="" />
 
             <View
@@ -88,13 +89,13 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
                 android:background="?android:selectableItemBackground"
-                android:drawableStart="@drawable/ic_menu_favorite"
                 android:drawablePadding="20dp"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:text="@string/menu_favorite"
                 android:textColor="?attr/prefIconColor"
+                app:drawableStartCompat="@drawable/ic_menu_favorite"
                 tools:textColor="" />
 
             <TextView
@@ -103,13 +104,13 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
                 android:background="?android:selectableItemBackground"
-                android:drawableStart="@drawable/ic_menu_history"
                 android:drawablePadding="20dp"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:text="@string/menu_history"
                 android:textColor="?attr/prefIconColor"
+                app:drawableStartCompat="@drawable/ic_menu_history"
                 tools:textColor="" />
 
             <TextView
@@ -118,7 +119,6 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
                 android:background="?android:selectableItemBackground"
-                android:drawableStart="@drawable/ic_menu_saved"
                 android:drawablePadding="20dp"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -126,6 +126,7 @@
                 android:text="@string/menu_saved"
                 android:textColor="?attr/prefIconColor"
                 android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_menu_saved"
                 tools:textColor="" />
 
             <View
@@ -140,13 +141,13 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
                 android:background="?android:selectableItemBackground"
-                android:drawableStart="@drawable/ic_menu_settings"
                 android:drawablePadding="20dp"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:text="@string/menu_settings"
                 android:textColor="?attr/prefIconColor"
+                app:drawableStartCompat="@drawable/ic_menu_settings"
                 tools:textColor="" />
 
             <TextView
@@ -155,13 +156,13 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
                 android:background="?android:selectableItemBackground"
-                android:drawableStart="@drawable/ic_menu_about"
                 android:drawablePadding="20dp"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:text="@string/menu_about"
                 android:textColor="?attr/prefIconColor"
+                app:drawableStartCompat="@drawable/ic_menu_about"
                 tools:textColor="" />
 
         </LinearLayout>

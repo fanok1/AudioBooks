@@ -25,6 +25,7 @@ import androidx.preference.PreferenceManager;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.EncodingExeption;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.SleepTimerActivity;
@@ -45,6 +46,10 @@ import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.service.MediaPlayerService;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -53,6 +58,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 
 @InjectViewState
@@ -294,154 +300,84 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     }
 
     @Override
-    public void getAudio() {
+    public void addDecodeData(final String string) {
+        ArrayList<AudioPOJO> result = new ArrayList<>();
+        JsonElement jsonTree = JsonParser.parseString(string);
+        if (jsonTree.isJsonArray()) {
+            JsonArray jsonArray = jsonTree.getAsJsonArray();
+            for (JsonElement element : jsonArray) {
+                if (element.isJsonObject()) {
+                    AudioPOJO audioPOJO = new AudioPOJO();
+                    JsonObject jsonObject = element.getAsJsonObject();
+                    audioPOJO.setName(jsonObject.get("title").getAsString());
+                    audioPOJO.setUrl(jsonObject.get("file").getAsString());
+                    audioPOJO.setBookName(mBookPOJO.getName());
+                    result.add(audioPOJO);
+                }
+            }
+        }
+        mAudioPOJO = result;
+        getViewState().showData(mAudioPOJO);
         error = false;
-        getViewState().showProgres(true);
-        mAudioModel.getAudio(mBookPOJO.getUrl())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<ArrayList<AudioPOJO>>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
+        onCompleteAudio();
+
+    }
+
+    @Override
+    public void buttonSpeedClick(View view) {
+
+        final int step = 10;
+
+        final AlertDialog.Builder popDialog = new AlertDialog.Builder(view.getContext());
+        final LinearLayout linearLayout = new LinearLayout(view.getContext());
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        final TextView textView = new TextView(view.getContext());
+        textView.setGravity(Gravity.CENTER_HORIZONTAL);
+        textView.setText(String.valueOf(speed));
+        textView.setTextColor(getAttributeColor(textView.getContext(), R.attr.colorPrimaryText));
+        linearLayout.addView(textView);
+        final SeekBar seek = new SeekBar(view.getContext());
+        seek.setMax(300);
+        seek.incrementProgressBy(step);
+        seek.setProgress((int) (speed * 100));
+        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progress = progress / step;
+                progress = progress * step;
+                String s = progress / 100 + "." + progress % 100;
+                textView.setText(s);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        linearLayout.addView(seek);
+
+        popDialog.setIcon(R.drawable.ic_play_speed);
+        popDialog.setTitle(view.getContext().getString(R.string.title_set_speed_popup));
+        popDialog.setView(linearLayout);
+
+        // Button OK
+        popDialog.setPositiveButton("OK",
+                (dialog, which) -> {
+                    float s = Float.parseFloat(textView.getText().toString());
+                    if (s != speed) {
+                        setSpeed(s);
                     }
-
-                    @Override
-                    public void onNext(ArrayList<AudioPOJO> bookPOJOS) {
-                        mAudioPOJO = bookPOJOS;
-                        getViewState().showData(mAudioPOJO);
-                        error = false;
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.d(TAG, Objects.requireNonNull(e.getMessage()));
-                        boolean b = pref.getBoolean("offline", false);
-                        ArrayList<AudioListPOJO> list = mAudioListDBModel.get(mBookPOJO.getUrl());
-                        ArrayList<AudioPOJO> audioPOJOS = new ArrayList<>();
-                        File[] folders = mContext.getExternalFilesDirs(null);
-                        for (int i = 0; i < list.size(); i++) {
-                            AudioListPOJO audioListPOJO = list.get(i);
-                            for (File folder : folders) {
-                                File file = null;
-                                if (folder != null) {
-                                    file = new File(
-                                            folder.getAbsolutePath() + "/"
-                                                    + audioListPOJO.getBookName()
-                                                    + "/" + audioListPOJO.getAudioUrl().substring(
-                                                    audioListPOJO.getAudioUrl().lastIndexOf("/")
-                                                            + 1));
-                                }
-                                if ((file != null && file.exists()) || !b) {
-                                    AudioPOJO audioPOJO = new AudioPOJO();
-                                    audioPOJO.setName(audioListPOJO.getAudioName());
-                                    audioPOJO.setBookName(audioListPOJO.getBookName());
-                                    audioPOJO.setUrl(audioListPOJO.getAudioUrl());
-                                    audioPOJO.setTime(audioListPOJO.getTime());
-                                    audioPOJOS.add(audioPOJO);
-                                    break;
-                                }
-                            }
-                        }
-                        mAudioPOJO = audioPOJOS;
-                        getViewState().showData(mAudioPOJO);
-                        getViewState().showToast(mContext.getString(R.string.error_load_data)
-                                + "\n" + mContext.getString(R.string.go_offline));
-                        error = true;
-                        onComplete();
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        if (mAudioPOJO.size() > 0) {
-                            Log.d(TAG, "onComplete");
-                            int curentTrack = 0;
-                            AudioPOJO pojo = null;
-                            for (int i = 0; i < mAudioPOJO.size(); i++) {
-                                if (mAudioPOJO.get(i).getName().equals(last)) {
-                                    pojo = mAudioPOJO.get(i);
-                                    curentTrack = i;
-                                }
-                            }
-                            if (pojo == null) {
-                                pojo = mAudioPOJO.get(0);
-                                curentTrack = 0;
-                                if (!MediaPlayerService.isPlay()) {
-                                    getViewState().showTitle(pojo.getName());
-                                }
-                                mAudioDBModel.add(mBookPOJO.getUrl(), pojo.getName());
-                            }
-
-                            if (!error) {
-                                if (mAudioListDBModel.isset(mBookPOJO.getUrl())) {
-                                    mAudioListDBModel.remove(mBookPOJO.getUrl());
-                                }
-                                for (int i = 0; i < mAudioPOJO.size(); i++) {
-                                    AudioListPOJO audioListPOJO = new AudioListPOJO();
-                                    audioListPOJO.setBookUrl(mBookPOJO.getUrl());
-                                    audioListPOJO.setBookName(mBookPOJO.getName());
-                                    audioListPOJO.setAudioName(mAudioPOJO.get(i).getName());
-                                    audioListPOJO.setAudioUrl(mAudioPOJO.get(i).getUrl());
-                                    audioListPOJO.setTime(mAudioPOJO.get(i).getTime());
-                                    mAudioListDBModel.add(audioListPOJO);
-                                }
-                            }
-
-                            boolean b = pref.getBoolean("reproductionPref", true);
-                            boolean autoStart = pref.getBoolean("autoPlayPref", false);
-
-                            if (autoStart) {
-                                if (!MediaPlayerService.isPlay()) {
-                                    start = true;
-                                    resume = true;
-                                    playAudio(curentTrack,
-                                            mAudioDBModel.getTime(mBookPOJO.getUrl()));
-                                } else if (!b) {
-                                    start = true;
-                                    resume = true;
-                                    playAudio(curentTrack,
-                                            mAudioDBModel.getTime(mBookPOJO.getUrl()));
-                                }
-
-                            } else if (!MediaPlayerService.isPlay() || !b) {
-                                start = false;
-                                playAudio(curentTrack, mAudioDBModel.getTime(mBookPOJO.getUrl()));
-                            } else {
-                                start = true;
-                            }
-                            getViewState().setSelected(curentTrack,
-                                    mAudioPOJO.get(curentTrack).getName());
-
-
-                            getViewState().showProgres(false);
-                        }
-                    }
+                    dialog.dismiss();
                 });
 
-        mOtherSourceModel.getOtherArtist(mBookPOJO)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<ArrayList<OtherArtistPOJO>>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                    }
-
-                    @Override
-                    public void onNext(ArrayList<OtherArtistPOJO> bookPOJOS) {
-                        mOtherArtistPOJOS = bookPOJOS;
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.d(TAG, Objects.requireNonNull(e.getMessage()));
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        if (!mOtherArtistPOJOS.isEmpty()) {
-                            getViewState().showOtherSource();
-                        }
-                    }
-                });
+        popDialog.create();
+        popDialog.show();
     }
 
 
@@ -580,6 +516,103 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         getViewState().showToast(R.string.delete_complite);
     }
 
+    @Override
+    public void getAudio() {
+        error = false;
+        getViewState().showProgres(true);
+        mAudioModel.getAudio(mBookPOJO.getUrl())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<ArrayList<AudioPOJO>>() {
+                    @Override
+                    public void onComplete() {
+                        onCompleteAudio();
+                    }
+
+                    @Override
+                    public void onError(@NotNull Throwable e) {
+
+                        if (e.getClass() == EncodingExeption.class) {
+                            getViewState().decode(Objects.requireNonNull(e.getMessage()));
+
+                        } else {
+
+                            Log.d(TAG, Objects.requireNonNull(e.getMessage()));
+                            boolean b = pref.getBoolean("offline", false);
+                            ArrayList<AudioListPOJO> list = mAudioListDBModel.get(mBookPOJO.getUrl());
+                            ArrayList<AudioPOJO> audioPOJOS = new ArrayList<>();
+                            File[] folders = mContext.getExternalFilesDirs(null);
+                            for (int i = 0; i < list.size(); i++) {
+                                AudioListPOJO audioListPOJO = list.get(i);
+                                for (File folder : folders) {
+                                    File file = null;
+                                    if (folder != null) {
+                                        file = new File(
+                                                folder.getAbsolutePath() + "/"
+                                                        + audioListPOJO.getBookName()
+                                                        + "/" + audioListPOJO.getAudioUrl().substring(
+                                                        audioListPOJO.getAudioUrl().lastIndexOf("/")
+                                                                + 1));
+                                    }
+                                    if ((file != null && file.exists()) || !b) {
+                                        AudioPOJO audioPOJO = new AudioPOJO();
+                                        audioPOJO.setName(audioListPOJO.getAudioName());
+                                        audioPOJO.setBookName(audioListPOJO.getBookName());
+                                        audioPOJO.setUrl(audioListPOJO.getAudioUrl());
+                                        audioPOJO.setTime(audioListPOJO.getTime());
+                                        audioPOJOS.add(audioPOJO);
+                                        break;
+                                    }
+                                }
+                            }
+                            mAudioPOJO = audioPOJOS;
+                            getViewState().showData(mAudioPOJO);
+                            getViewState().showToast(mContext.getString(R.string.error_load_data)
+                                    + "\n" + mContext.getString(R.string.go_offline));
+                            error = true;
+                            onComplete();
+                        }
+                    }
+
+                    @Override
+                    public void onNext(@NotNull ArrayList<AudioPOJO> bookPOJOS) {
+                        mAudioPOJO = bookPOJOS;
+                        getViewState().showData(mAudioPOJO);
+                        error = false;
+                    }
+
+                    @Override
+                    public void onSubscribe(@NotNull Disposable d) {
+                    }
+                });
+
+        mOtherSourceModel.getOtherArtist(mBookPOJO)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<ArrayList<OtherArtistPOJO>>() {
+                    @Override
+                    public void onComplete() {
+                        if (!mOtherArtistPOJOS.isEmpty()) {
+                            getViewState().showOtherSource();
+                        }
+                    }
+
+                    @Override
+                    public void onError(@NotNull Throwable e) {
+                        Log.d(TAG, Objects.requireNonNull(e.getMessage()));
+                    }
+
+                    @Override
+                    public void onNext(@NotNull ArrayList<OtherArtistPOJO> bookPOJOS) {
+                        mOtherArtistPOJOS = bookPOJOS;
+                    }
+
+                    @Override
+                    public void onSubscribe(@NotNull Disposable d) {
+                    }
+                });
+    }
+
     public void loadBooks(HashSet<String> data) {
         for (String url : data) {
             if (mBookPOJO.getUrl().contains("audiobook-mp3.com")) {
@@ -590,62 +623,67 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         }
     }
 
-    @Override
-    public void buttonSpeedClick(View view) {
-
-        final int step = 10;
-
-        final AlertDialog.Builder popDialog = new AlertDialog.Builder(view.getContext());
-        final LinearLayout linearLayout = new LinearLayout(view.getContext());
-        linearLayout.setOrientation(LinearLayout.VERTICAL);
-        final TextView textView = new TextView(view.getContext());
-        textView.setGravity(Gravity.CENTER_HORIZONTAL);
-        textView.setText(String.valueOf(speed));
-        textView.setTextColor(getAttributeColor(textView.getContext(), R.attr.colorPrimaryText));
-        linearLayout.addView(textView);
-        final SeekBar seek = new SeekBar(view.getContext());
-        seek.setMax(300);
-        seek.incrementProgressBy(step);
-        seek.setProgress((int) (speed * 100));
-        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                progress = progress / step;
-                progress = progress * step;
-                String s = progress / 100 + "." + progress % 100;
-                textView.setText(s);
+    private void onCompleteAudio() {
+        if (mAudioPOJO.size() > 0) {
+            Log.d(TAG, "onComplete");
+            int curentTrack = 0;
+            AudioPOJO pojo = null;
+            for (int i = 0; i < mAudioPOJO.size(); i++) {
+                if (mAudioPOJO.get(i).getName().equals(last)) {
+                    pojo = mAudioPOJO.get(i);
+                    curentTrack = i;
+                }
+            }
+            if (pojo == null) {
+                pojo = mAudioPOJO.get(0);
+                curentTrack = 0;
+                if (!MediaPlayerService.isPlay()) {
+                    getViewState().showTitle(pojo.getName());
+                }
+                mAudioDBModel.add(mBookPOJO.getUrl(), pojo.getName());
             }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
+            if (!error) {
+                if (mAudioListDBModel.isset(mBookPOJO.getUrl())) {
+                    mAudioListDBModel.remove(mBookPOJO.getUrl());
+                }
+                for (int i = 0; i < mAudioPOJO.size(); i++) {
+                    AudioListPOJO audioListPOJO = new AudioListPOJO();
+                    audioListPOJO.setBookUrl(mBookPOJO.getUrl());
+                    audioListPOJO.setBookName(mBookPOJO.getName());
+                    audioListPOJO.setAudioName(mAudioPOJO.get(i).getName());
+                    audioListPOJO.setAudioUrl(mAudioPOJO.get(i).getUrl());
+                    audioListPOJO.setTime(mAudioPOJO.get(i).getTime());
+                    mAudioListDBModel.add(audioListPOJO);
+                }
             }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
+            boolean b = pref.getBoolean("reproductionPref", true);
+            boolean autoStart = pref.getBoolean("autoPlayPref", false);
 
+            if (autoStart) {
+                if (!MediaPlayerService.isPlay()) {
+                    start = true;
+                    resume = true;
+                    playAudio(curentTrack,
+                            mAudioDBModel.getTime(mBookPOJO.getUrl()));
+                } else if (!b) {
+                    start = true;
+                    resume = true;
+                    playAudio(curentTrack,
+                            mAudioDBModel.getTime(mBookPOJO.getUrl()));
+                }
+
+            } else if (!MediaPlayerService.isPlay() || !b) {
+                start = false;
+                playAudio(curentTrack, mAudioDBModel.getTime(mBookPOJO.getUrl()));
+            } else {
+                start = true;
             }
-        });
+            getViewState().setSelected(curentTrack,
+                    mAudioPOJO.get(curentTrack).getName());
 
-        linearLayout.addView(seek);
-
-        popDialog.setIcon(R.drawable.ic_play_speed);
-        popDialog.setTitle(view.getContext().getString(R.string.title_set_speed_popup));
-        popDialog.setView(linearLayout);
-
-
-        // Button OK
-        popDialog.setPositiveButton("OK",
-                (dialog, which) -> {
-                    float s = Float.valueOf(textView.getText().toString());
-                    if (s != speed) {
-                        setSpeed(s);
-                    }
-                    dialog.dismiss();
-                });
-
-
-        popDialog.create();
-        popDialog.show();
+            getViewState().showProgres(false);
+        }
     }
 }

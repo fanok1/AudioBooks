@@ -3,10 +3,19 @@ package com.fanok.audiobooks.pojo;
 import androidx.annotation.NonNull;
 
 public abstract class ContentParentPOJO {
+
+    private String quoteName = "";
+
+    private String quoteText = "";
+
     private String image = "";
+
     private String name = "";
+
     private String date = "";
+
     private String reting = "";
+
     private String text = "";
 
     public String getImage() {
@@ -47,6 +56,22 @@ public abstract class ContentParentPOJO {
 
     public void setText(@NonNull String text) {
         this.text = text;
+    }
+
+    public String getQuoteName() {
+        return quoteName;
+    }
+
+    public void setQuoteName(@NonNull final String quoteName) {
+        this.quoteName = quoteName;
+    }
+
+    public String getQuoteText() {
+        return quoteText;
+    }
+
+    public void setQuoteText(@NonNull final String quoteText) {
+        this.quoteText = quoteText;
     }
 
     public boolean isEmty() {

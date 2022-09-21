@@ -5,6 +5,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
+import com.fanok.audiobooks.CookesExeption;
+import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.book_content.Description;
 import com.fanok.audiobooks.interface_pacatge.book_content.DescriptionModel;
 import com.fanok.audiobooks.interface_pacatge.book_content.DescriptionPresenter;
@@ -16,6 +18,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import java.util.ArrayList;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 @InjectViewState
 public class BookDescriptionPresenter extends MvpPresenter<Description> implements
@@ -54,36 +58,6 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
         getData();
     }
 
-    private void loadBooks() {
-        mModelDescription.getBooks()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<ArrayList<BookPOJO>>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                    }
-
-                    @Override
-                    public void onNext(ArrayList<BookPOJO> bookPOJOS) {
-                        getViewState().showOtherBooks(bookPOJOS);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        if (e.getMessage() != null) {
-                            Log.d(TAG, e.getMessage());
-                        }
-                        getViewState().showOtherBooksLine(false);
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        Log.d(TAG, "onComplete");
-                    }
-                });
-    }
-
-
     private void getData() {
         if (!isLoading) {
             isLoading = true;
@@ -96,14 +70,19 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
                         }
 
                         @Override
-                        public void onNext(DescriptionPOJO descriptionPOJO) {
-                            mDescriptionPOJO = descriptionPOJO;
+                        public void onError(@NotNull Throwable e) {
+                            if (e.getClass() == CookesExeption.class) {
+                                if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                                    getViewState().showToast(R.string.cookes_baza_knig_exeption);
+                                }
+                            }
+                            mDescriptionPOJO = mBookPOJO.getDescriptionPOJO();
+                            onComplete();
                         }
 
                         @Override
-                        public void onError(Throwable e) {
-                            mDescriptionPOJO = mBookPOJO.getDescriptionPOJO();
-                            onComplete();
+                        public void onNext(@NotNull DescriptionPOJO descriptionPOJO) {
+                            mDescriptionPOJO = descriptionPOJO;
                         }
 
                         @Override
@@ -116,6 +95,36 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
                     });
 
         }
+    }
+
+    private void loadBooks() {
+        mModelDescription.getBooks()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<ArrayList<BookPOJO>>() {
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "onComplete");
+                    }
+
+                    @Override
+                    public void onError(@NotNull Throwable e) {
+
+                        if (e.getMessage() != null) {
+                            Log.d(TAG, e.getMessage());
+                        }
+                        getViewState().showOtherBooksLine(false);
+                    }
+
+                    @Override
+                    public void onNext(@NotNull ArrayList<BookPOJO> bookPOJOS) {
+                        getViewState().showOtherBooks(bookPOJOS);
+                    }
+
+                    @Override
+                    public void onSubscribe(@NotNull Disposable d) {
+                    }
+                });
     }
 
 

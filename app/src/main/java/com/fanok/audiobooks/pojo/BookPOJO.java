@@ -2,11 +2,13 @@ package com.fanok.audiobooks.pojo;
 
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.Url;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.reactivex.Observable;
 import java.io.IOException;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -56,7 +58,7 @@ public class BookPOJO {
 
         Elements img = document.getElementsByClass("abook_image");
         if (img != null && img.size() != 0) {
-            bookPOJO.setPhoto(Url.SERVER_ABMP3 + img.first().attr("src"));
+            bookPOJO.setPhoto(img.first().attr("src"));
         }
 
         Elements desc = document.getElementsByClass("abook-desc");
@@ -476,6 +478,8 @@ public class BookPOJO {
                         articlesModels = getBookByUrlABMP3(url);
                     } else if (url.contains("akniga.org")) {
                         articlesModels = getBookByUrlAbook(url);
+                    } else if (url.contains("baza-knig.ru")) {
+                        articlesModels = getBookByUrlBazaKnig(url);
                     } else {
                         articlesModels = new BookPOJO();
                     }
@@ -488,6 +492,171 @@ public class BookPOJO {
             }
         });
     }
+
+    private static BookPOJO getBookByUrlBazaKnig(final String url) throws IOException {
+
+        int indexSorce = url.indexOf("?sorce");
+        int sorce = 1;
+        if (indexSorce != -1) {
+            String substring = url.substring(indexSorce).replace("?sorce=", "");
+            sorce = Integer.parseInt(substring);
+        }
+
+        BookPOJO bookPOJO = new BookPOJO();
+
+        Connection connection = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .sslSocketFactory(Consts.socketFactory())
+                .referrer("https://google.com/")
+                .ignoreHttpErrors(true);
+
+        if (!Consts.getBazaKnigCookies().isEmpty()) {
+            connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+        }
+
+        Document document = connection.get();
+
+        if (document.title().contains("Just a moment")) {
+            throw new CookesExeption(url);
+        }
+
+        bookPOJO.setUrl(url);
+
+        Elements cont = document.getElementsByClass("reset full-items");
+        if (cont != null && cont.size() > 0) {
+            Elements liElem = cont.first().getElementsByTag("li");
+            if (liElem != null && liElem.size() > 0) {
+                for (Element li : liElem) {
+                    String liText = li.text();
+                    if (liText != null) {
+                        if (liText.contains("Автор")) {
+                            Elements aTag = li.getElementsByTag("a");
+                            if (aTag != null && aTag.size() > 0) {
+                                String aHref = aTag.first().attr("href");
+                                if (aHref != null) {
+                                    bookPOJO.setUrlAutor(aHref + "page/");
+                                }
+                                String autorName = aTag.first().text();
+                                if (autorName != null && !autorName.isEmpty()) {
+                                    bookPOJO.setAutor(autorName);
+
+                                }
+                            }
+                        }
+
+                        if (liText.contains("Читает")) {
+
+                            if (sorce == 1) {
+                                Elements aTag = li.getElementsByTag("a");
+                                if (aTag != null && aTag.size() > 0) {
+                                    String aHref = aTag.first().attr("href");
+                                    if (aHref != null) {
+                                        bookPOJO.setUrlArtist(aHref + "page/");
+                                    }
+                                    String artistName = aTag.first().text();
+                                    if (artistName != null && !artistName.isEmpty()) {
+                                        bookPOJO.setArtist(artistName);
+
+                                    }
+                                }
+                            } else if (sorce == 2) {
+                                Element otherReader = document.getElementById("content-tab2");
+                                if (otherReader != null) {
+                                    String text = otherReader.ownText();
+                                    if (text != null && text.contains("Озвучивает:")) {
+                                        String name = text.replace("Озвучивает:", "").trim();
+                                        bookPOJO.setArtist(name);
+                                    }
+                                }
+                            } else if (sorce == 3) {
+                                Element otherReader = document.getElementById("content-tab3");
+                                if (otherReader != null) {
+                                    String text = otherReader.ownText();
+                                    if (text != null && text.contains("Озвучивает:")) {
+                                        String name = text.replace("Озвучивает:", "").trim();
+                                        bookPOJO.setArtist(name);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (liText.contains("Длительность")) {
+                            Elements timeConteiner = li.getElementsByTag("b");
+                            if (timeConteiner != null && timeConteiner.size() > 0) {
+                                String time = timeConteiner.first().text();
+                                if (time != null && !time.isEmpty()) {
+                                    bookPOJO.setTime(time);
+                                }
+                            }
+                        }
+
+                        if (liText.contains("Цикл")) {
+                            Elements seriesConteiner = li.getElementsByTag("a");
+                            if (seriesConteiner != null && seriesConteiner.size() > 0) {
+                                Element a = seriesConteiner.first();
+                                String text = a.text();
+                                if (text != null && !text.isEmpty()) {
+                                    bookPOJO.setSeries(text);
+                                    String href = a.attr("href");
+                                    if (href != null) {
+                                        bookPOJO.setUrlSeries(href + "page/");
+                                    }
+                                }
+                            }
+                        }
+
+                        if (liText.contains("Жанр")) {
+                            Elements genreConteiner = li.getElementsByTag("a");
+                            if (genreConteiner != null && genreConteiner.size() > 0) {
+                                String text = genreConteiner.first().text();
+                                if (text != null && !text.isEmpty()) {
+                                    bookPOJO.setGenre(text);
+                                    String href = genreConteiner.first().attr("href");
+                                    if (href != null) {
+                                        bookPOJO.setUrlGenre(href + "page/");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Elements imgConteiner = document.getElementsByClass("full-img");
+        if (imgConteiner != null && imgConteiner.size() > 0) {
+            Element element = imgConteiner.first();
+            Elements img = element.getElementsByTag("img");
+            if (img != null && img.size() > 0) {
+                String src = img.first().attr("src");
+                if (src != null) {
+                    bookPOJO.setPhoto(src);
+                }
+            }
+        }
+
+        Elements title = document.getElementsByTag("h1");
+        if (title != null && title.size() > 0) {
+            String text = title.first().ownText();
+            bookPOJO.setName(text.substring(0, text.indexOf(" - ")));
+        }
+
+        Elements desc = document.getElementsByClass("short-text");
+        if (desc != null && desc.size() > 0) {
+            String text = desc.first().text();
+            bookPOJO.setDesc(text);
+        }
+
+        Elements coments = document.getElementsByClass("comments");
+        if (coments != null && coments.size() > 0) {
+            String text = coments.first().text();
+            if (text != null && !text.isEmpty()) {
+                bookPOJO.setComents(text);
+            }
+        }
+        return bookPOJO;
+    }
+
 
     public String getAutor() {
         return autor;

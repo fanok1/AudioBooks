@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
@@ -36,6 +37,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import java.util.ArrayList;
 import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 @InjectViewState
 public class BooksPresenter extends MvpPresenter<BooksView> implements
@@ -102,7 +104,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showProgres(true);
             page++;
             if (mModelId != Consts.MODEL_GENRE) {
-                if ((!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com"))
+                if ((!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com") || mUrl
+                        .contains("baza-knig.ru"))
                         && !mUrl.contains("akniga.org")) {
                     getData(mUrl + page + "/");
                 } else {
@@ -242,10 +245,13 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         String subTitle = mSubTitle.replace(" " + getStringById(R.string.order_new), "");
         subTitle = subTitle.replace(" " + getStringById(R.string.order_reting), "");
         subTitle = subTitle.replace(" " + getStringById(R.string.order_popular), "");
+        subTitle = subTitle.replace(" " + getStringById(R.string.order_coments), "");
+        subTitle = subTitle.replace(" " + getStringById(R.string.order_year), "");
         String url = "";
 
         if (itemId == R.id.source_izi_book || itemId == R.id.source_kniga_v_uhe
-                || itemId == R.id.source_audio_book_mp3 || itemId == R.id.source_abook) {
+                || itemId == R.id.source_audio_book_mp3 || itemId == R.id.source_abook
+                || itemId == R.id.source_baza_knig) {
             SharedPreferences pref = getDefaultSharedPreferences(Objects.requireNonNull(mContext));
             SharedPreferences.Editor editor = pref.edit();
             if (itemId == R.id.source_kniga_v_uhe) {
@@ -256,6 +262,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                 editor.putString("sorce_books", getStringById(R.string.audiobook_mp3_value));
             } else if (itemId == R.id.source_abook) {
                 editor.putString("sorce_books", getStringById(R.string.abook_value));
+            } else if (itemId == R.id.source_baza_knig) {
+                editor.putString("sorce_books", getStringById(R.string.baza_knig_value));
             }
             editor.commit();
             getViewState().recreate();
@@ -421,6 +429,24 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         break;
                 }
             }
+        } else if (mUrl.contains("baza-knig.ru")) {
+            switch (itemId) {
+                case R.id.new_data:
+                    url = Url.NEW_BOOK_BAZA_KNIG;
+                    break;
+                case R.id.reting:
+                    url = Url.RATING_BAZA_KNIG;
+                    break;
+                case R.id.popular:
+                    url = Url.BEST_BAZA_KNIG;
+                    break;
+                case R.id.coments:
+                    url = Url.COMENTS_BAZA_KNIG;
+                    break;
+                case R.id.years:
+                    url = Url.YEARS_BAZA_KNIG;
+                    break;
+            }
         }
 
         switch (itemId) {
@@ -442,6 +468,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         "audioBooksOrederNew");
                 break;
             case R.id.reting_all_time:
+            case R.id.reting:
                 getViewState().showFragment(BooksFragment.newInstance(
                         url,
                         R.string.menu_audiobooks,
@@ -470,6 +497,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         "audioBooksOrederBestDay");
                 break;
             case R.id.popular_all_time:
+            case R.id.popular:
                 getViewState().showFragment(BooksFragment.newInstance(
                         url,
                         R.string.menu_audiobooks,
@@ -501,6 +529,24 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         Consts.MODEL_BOOKS),
                         "audioBooksOrederDiscussedDay");
                 break;
+
+            case R.id.coments:
+                getViewState().showFragment(BooksFragment.newInstance(
+                        url,
+                        R.string.menu_audiobooks,
+                        subTitle + " " + getStringById(R.string.order_coments),
+                        Consts.MODEL_BOOKS),
+                        "audioBooksOrederComents");
+                break;
+
+            case R.id.years:
+                getViewState().showFragment(BooksFragment.newInstance(
+                        url,
+                        R.string.menu_audiobooks,
+                        subTitle + " " + getStringById(R.string.order_year),
+                        Consts.MODEL_BOOKS),
+                        "audioBooksOrederYears");
+                break;
         }
     }
 
@@ -524,8 +570,6 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
         if (genre != null && genre.size() - 1 >= position) {
             String url = genre.get(position).getUrl();
-
-            if (url.contains("genre") && mUrl.contains("knigavuhe.org")) url += "<page>/";
             getViewState().showFragment(BooksFragment.newInstance(
                     url,
                     R.string.menu_audiobooks,
@@ -546,7 +590,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showRefreshing(true);
             page = 1;
             if (mModelId != Consts.MODEL_GENRE) {
-                if ((!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com"))
+                if ((!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com") || mUrl
+                        .contains("baza-knig.ru"))
                         && !mUrl.contains("akniga.org")) {
                     getData(mUrl + page + "/");
                 } else {
@@ -571,11 +616,23 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new Observer<ArrayList<BookPOJO>>() {
                             @Override
-                            public void onSubscribe(Disposable d) {
+                            public void onError(@NotNull Throwable e) {
+                                if (e.getClass() == CookesExeption.class) {
+                                    if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                                        getViewState().showToast(R.string.cookes_baza_knig_exeption);
+                                    }
+                                } else if (e.getClass() == NullPointerException.class) {
+                                    isEnd = true;
+                                } else {
+                                    getViewState().showToast(R.string.error_load_data);
+                                    page--;
+                                }
+                                onComplete();
+
                             }
 
                             @Override
-                            public void onNext(ArrayList<BookPOJO> bookPOJOS) {
+                            public void onNext(@NotNull ArrayList<BookPOJO> bookPOJOS) {
                                 if (isRefreshing) {
                                     books.clear();
                                 }
@@ -588,15 +645,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             }
 
                             @Override
-                            public void onError(Throwable e) {
-                                if (e.getClass() == NullPointerException.class) {
-                                    isEnd = true;
-                                } else {
-                                    getViewState().showToast(R.string.error_load_data);
-                                    page--;
-                                }
-                                onComplete();
-
+                            public void onSubscribe(@NotNull Disposable d) {
                             }
 
                             @Override
@@ -614,11 +663,23 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new Observer<ArrayList<GenrePOJO>>() {
                             @Override
-                            public void onSubscribe(Disposable d) {
+                            public void onError(@NotNull Throwable e) {
+                                if (e.getClass() == CookesExeption.class) {
+                                    if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                                        getViewState().showToast(R.string.cookes_baza_knig_exeption);
+                                    }
+                                } else if (e.getClass() == NullPointerException.class) {
+                                    isEnd = true;
+                                } else {
+                                    getViewState().showToast(R.string.error_load_data);
+                                    page--;
+                                }
+                                onComplete();
+
                             }
 
                             @Override
-                            public void onNext(ArrayList<GenrePOJO> bookPOJOS) {
+                            public void onNext(@NotNull ArrayList<GenrePOJO> bookPOJOS) {
                                 if (isRefreshing) {
                                     genre.clear();
                                 }
@@ -631,15 +692,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             }
 
                             @Override
-                            public void onError(Throwable e) {
-                                if (e.getClass() == NullPointerException.class) {
-                                    isEnd = true;
-                                } else {
-                                    getViewState().showToast(R.string.error_load_data);
-                                    page--;
-                                }
-                                onComplete();
-
+                            public void onSubscribe(@NotNull Disposable d) {
                             }
 
                             @Override

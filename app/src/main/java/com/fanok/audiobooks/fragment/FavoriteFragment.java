@@ -67,16 +67,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
     private FragmentFavoriteBinding binding;
 
-    @ProvidePresenter
-    FavoritePresenter provide() {
-        Bundle arg = getArguments();
-        if (arg != null) {
-            table = arg.getInt(ARG_TABLE, 0);
-        }
-        return new FavoritePresenter(Objects.requireNonNull(getContext()).getApplicationContext(),
-                table);
-    }
-
     public static FavoriteFragment newInstance(int title, int table) {
         FavoriteFragment fragment = new FavoriteFragment();
         Bundle args = new Bundle();
@@ -98,18 +88,17 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
     }
 
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         binding = FragmentFavoriteBinding.inflate(inflater, container, false);
 
         if (titleId != 0) {
-            Objects.requireNonNull(getActivity()).setTitle(titleId);
+            requireActivity().setTitle(titleId);
         }
 
         SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(Objects.requireNonNull(getContext()));
+                .getDefaultSharedPreferences(requireContext());
 
         mAddapterBooks = new BooksListAddapter(pref.getBoolean("history_procent", true));
         binding.list.setAdapter(mAddapterBooks);
@@ -143,7 +132,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                     int actionState, boolean isCurrentlyActive) {
                 new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY,
                         actionState, isCurrentlyActive)
-                        .addBackgroundColor(getAttributeColor(getContext(), R.attr.deleteColor))
+                        .addBackgroundColor(getAttributeColor(requireContext(), R.attr.deleteColor))
                         .addActionIcon(R.drawable.ic_delete_swipe)
                         .setIconHorizontalMargin(TypedValue.COMPLEX_UNIT_DIP, 24)
                         .create()
@@ -176,6 +165,69 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
             }
         }
         return binding.getRoot();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.favorite_options_menu, menu);
+        MenuItem item = menu.findItem(R.id.action_search);
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(requireContext());
+
+        Consts.setColorPrimeriTextInIconItemMenu(item, requireContext());
+
+        if (pref.getBoolean("search_pref", false)) {
+            item.setActionView(null);
+            item.setOnMenuItemClickListener(menuItem -> {
+                Intent intent = new Intent(getContext(), SearchableActivity.class);
+                intent.putExtra(Consts.ARG_MODEL, Consts.MODEL_BOOKS);
+                startActivityForResult(intent, REQEST_CODE_SEARCH);
+                return true;
+            });
+        } else {
+            searchView = (SearchView) item.getActionView();
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextChange(String s) {
+                    getPresenter().onSearch(s);
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextSubmit(String s) {
+                    return false;
+                }
+            });
+        }
+
+        if (table == TABLE_FAVORITE) {
+            menu.findItem(R.id.order).setVisible(true);
+            menu.findItem(R.id.filter).setVisible(true);
+
+            setColorPrimeriTextInIconItemMenu(
+                    menu.findItem(R.id.filter), requireContext());
+
+            setColorPrimeriTextInIconItemMenu(
+                    menu.findItem(R.id.order), requireContext());
+
+            String sort = pref.getString("pref_sort_favorite", getString(R.string.sort_value_date));
+            if (getString(R.string.sort_value_name).equals(sort)) {
+                menu.findItem(R.id.name).setChecked(true);
+            } else if (getString(R.string.sort_value_genre).equals(sort)) {
+                menu.findItem(R.id.genre).setChecked(true);
+            } else if (getString(R.string.sort_value_autor).equals(sort)) {
+                menu.findItem(R.id.autor).setChecked(true);
+            } else if (getString(R.string.sort_value_artist).equals(sort)) {
+                menu.findItem(R.id.artist).setChecked(true);
+            } else if (getString(R.string.sort_value_series).equals(sort)) {
+                menu.findItem(R.id.series).setChecked(true);
+            } else {
+                menu.findItem(R.id.date).setChecked(true);
+            }
+
+        }
+
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
 
@@ -301,67 +353,8 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     }
 
     @Override
-    public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.favorite_options_menu, menu);
-        MenuItem item = menu.findItem(R.id.action_search);
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(Objects.requireNonNull(getContext()));
-
-        Consts.setColorPrimeriTextInIconItemMenu(item, getContext());
-
-
-        if (pref.getBoolean("search_pref", false)) {
-            item.setActionView(null);
-            item.setOnMenuItemClickListener(menuItem -> {
-                Intent intent = new Intent(getContext(), SearchableActivity.class);
-                intent.putExtra(Consts.ARG_MODEL, Consts.MODEL_BOOKS);
-                startActivityForResult(intent, REQEST_CODE_SEARCH);
-                return true;
-            });
-        } else {
-            searchView = (SearchView) item.getActionView();
-            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                @Override
-                public boolean onQueryTextSubmit(String s) {
-                    return false;
-                }
-
-                @Override
-                public boolean onQueryTextChange(String s) {
-                    getPresenter().onSearch(s);
-                    return false;
-                }
-            });
-        }
-
-        if (table == TABLE_FAVORITE) {
-            menu.findItem(R.id.order).setVisible(true);
-            menu.findItem(R.id.filter).setVisible(true);
-
-            setColorPrimeriTextInIconItemMenu(
-                    menu.findItem(R.id.filter), Objects.requireNonNull(getContext()));
-
-            setColorPrimeriTextInIconItemMenu(
-                    menu.findItem(R.id.order), Objects.requireNonNull(getContext()));
-
-            String sort = pref.getString("pref_sort_favorite", getString(R.string.sort_value_date));
-            if (getString(R.string.sort_value_name).equals(sort)) {
-                menu.findItem(R.id.name).setChecked(true);
-            } else if (getString(R.string.sort_value_genre).equals(sort)) {
-                menu.findItem(R.id.genre).setChecked(true);
-            } else if (getString(R.string.sort_value_autor).equals(sort)) {
-                menu.findItem(R.id.autor).setChecked(true);
-            } else if (getString(R.string.sort_value_artist).equals(sort)) {
-                menu.findItem(R.id.artist).setChecked(true);
-            } else if (getString(R.string.sort_value_series).equals(sort)) {
-                menu.findItem(R.id.series).setChecked(true);
-            } else {
-                menu.findItem(R.id.date).setChecked(true);
-            }
-
-        }
-
-        super.onCreateOptionsMenu(menu, inflater);
+    public void showBooksActivity(@NotNull @NonNull BookPOJO bookPOJO) {
+        BookActivity.startNewActivity(requireContext(), bookPOJO);
     }
 
     private void setItemDecoration(int count) {
@@ -370,9 +363,14 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         binding.list.addItemDecoration(new GridSpacingItemDecoration(count, spacing, includeEdge));
     }
 
-    @Override
-    public void showBooksActivity(@NotNull @NonNull BookPOJO bookPOJO) {
-        BookActivity.startNewActivity(Objects.requireNonNull(getContext()), bookPOJO);
+    @ProvidePresenter
+    FavoritePresenter provide() {
+        Bundle arg = getArguments();
+        if (arg != null) {
+            table = arg.getInt(ARG_TABLE, 0);
+        }
+        return new FavoritePresenter(requireContext().getApplicationContext(),
+                table);
     }
 
     @Override

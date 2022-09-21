@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.fanok.audiobooks">
+<manifest package="com.fanok.audiobooks"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
 
@@ -13,8 +13,12 @@
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -49,15 +53,25 @@
         android:name=".App"
         android:allowBackup="true"
         android:enabled="true"
+        android:extractNativeLibs="true"
         android:fullBackupContent="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:networkSecurityConfig="@xml/network_security_config"
+        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:requestLegacyExternalStorage="true"
-        tools:ignore="UnusedAttribute">
-
+        tools:ignore="UnusedAttribute"
+        tools:replace="android:extractNativeLibs">
+        <!--
+        android:hardwareAccelerated="false"
+        android:largeHeap="true"
+        -->
+        <activity
+            android:name=".activity.ActivityCookies"
+            android:configChanges="locale|uiMode"
+            android:label="@string/baza_knig"
+            android:theme="@style/AppTheme.SwipeOnClose" />
         <activity
             android:name=".activity.SleepTimerActivity"
             android:configChanges="locale|uiMode"
@@ -199,13 +213,22 @@
                     android:host="akniga.org"
                     android:scheme="https" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="baza-knig.ru"
+                    android:scheme="https" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".activity.PopupGetPlus"
             android:configChanges="locale|uiMode"
             android:launchMode="singleTop"
             android:theme="@style/LightAppTheme.Popup" />
-
         <activity
             android:name=".activity.PopupClearSaved"
             android:configChanges="locale|uiMode"
@@ -223,7 +246,6 @@
         <receiver
             android:name=".broadcasts.OnNotificationButtonClick"
             android:exported="false" />
-
         <receiver android:name="androidx.media.session.MediaButtonReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
@@ -243,11 +265,25 @@
             android:name=".service.Download"
             android:enabled="true"
             android:permission="audioBookDownload" />
-
         <service
             android:name=".service.DownloadABMP3"
             android:enabled="true"
             android:permission="audioBookDownload" />
+
+        <activity
+            android:name="de.blinkt.openvpn.DisconnectVPNActivity"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=".DisconnectVPN"
+            android:theme="@style/blinkt.dialog" />
+
+        <service
+            android:name="de.blinkt.openvpn.core.OpenVPNService"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

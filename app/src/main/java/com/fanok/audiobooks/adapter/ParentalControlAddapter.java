@@ -9,38 +9,52 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckedTextView;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.pojo.ParentControlPOJO;
 import java.util.ArrayList;
-import org.jetbrains.annotations.NotNull;
 
 public class ParentalControlAddapter extends
         RecyclerView.Adapter<ParentalControlAddapter.MyHolder> {
-
-    private ArrayList<String> mModel;
 
     class MyHolder extends RecyclerView.ViewHolder {
 
         private final CheckedTextView mCheckedTextView;
 
+        private final TextView mTextView;
+
         MyHolder(@NonNull final View itemView) {
             super(itemView);
             mCheckedTextView = itemView.findViewById(R.id.checkedTextView);
+            mTextView = itemView.findViewById(R.id.title);
         }
 
-        void bind(@NotNull String string) {
-            mCheckedTextView.setText(string);
-            mCheckedTextView.setChecked(mSharedPreferences.getBoolean(string, false));
+        void bind(int position) {
+            mTextView.setEnabled(enabled);
+            mTextView.setText(mModel.get(position).getSorceName());
+            if (position == 0) {
+                mTextView.setVisibility(View.VISIBLE);
+            } else if (!mModel.get(position).getSorceName().equals(mModel.get(position - 1).getSorceName())) {
+                mTextView.setVisibility(View.VISIBLE);
+            } else {
+                mTextView.setVisibility(View.GONE);
+            }
+
+            mCheckedTextView.setText(mModel.get(position).getName());
+            mCheckedTextView.setChecked(mSharedPreferences.getBoolean(mModel.get(position).getUrl(), false));
             mCheckedTextView.setEnabled(enabled);
             mCheckedTextView.setOnClickListener(view -> {
                 mCheckedTextView.toggle();
                 SharedPreferences.Editor editor = mSharedPreferences.edit();
-                editor.putBoolean(string, mCheckedTextView.isChecked());
+                editor.putBoolean(mModel.get(position).getUrl(), mCheckedTextView.isChecked());
                 editor.apply();
             });
         }
     }
+
+    private ArrayList<ParentControlPOJO> mModel;
 
     private final Context mContext;
 
@@ -58,11 +72,8 @@ public class ParentalControlAddapter extends
         notifyDataSetChanged();
     }
 
-    public void setItem(ArrayList<String> model) {
-        if (mModel != model) {
-            mModel = model;
-        }
-        notifyDataSetChanged();
+    public ParentControlPOJO getItem(int position) {
+        return mModel.get(position);
     }
 
     public void clearItem() {
@@ -70,8 +81,9 @@ public class ParentalControlAddapter extends
         notifyDataSetChanged();
     }
 
-    public String getItem(int position) {
-        return mModel.get(position);
+    @Override
+    public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
+        myHolder.bind(i);
     }
 
 
@@ -83,9 +95,11 @@ public class ParentalControlAddapter extends
         return new MyHolder(view);
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
-        myHolder.bind(mModel.get(i));
+    public void setItem(ArrayList<ParentControlPOJO> model) {
+        if (mModel != model) {
+            mModel = model;
+        }
+        notifyDataSetChanged();
     }
 
 

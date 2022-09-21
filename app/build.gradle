@@ -23,8 +23,8 @@ android {
         applicationId "com.fanok.audiobooks"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 58
-        versionName "4.4"
+        versionCode 63
+        versionName "4.10"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.release
@@ -54,7 +54,7 @@ dependencies {
         exclude group: 'androidx'
     }
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation('androidx.lifecycle:lifecycle-extensions:2.2.0') {
         exclude group: 'androidx'
     }
@@ -97,15 +97,15 @@ dependencies {
     implementation 'tech.schoolhelper:moxy-x-material:1.7.0'
     implementation 'com.android.support:preference-v7:30.0.0'
     implementation 'pub.devrel:easypermissions:0.2.0'
-    implementation 'com.github.codekidX:storage-chooser:2.0.4.4'
+    implementation 'com.github.mendhak:storage-chooser:2.0.4.4b'
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'
     implementation 'androidx.palette:palette:1.0.0'
     implementation('com.android.billingclient:billing:3.0.3') {
         exclude group: 'androidx'
     }
 
-    implementation 'com.github.bumptech.glide:glide:4.12.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
+    implementation 'com.github.bumptech.glide:glide:4.13.2'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.13.2'
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.6'
 
     implementation 'com.alimuzaffar.lib:pinentryedittext:2.0.6'
@@ -121,7 +121,15 @@ dependencies {
 
     implementation 'it.xabaras.android:recyclerview-swipedecorator:1.2.3'
 
-    implementation 'org.mozilla:rhino:1.7R4'
+    implementation 'org.mozilla:rhino:1.7.14'
+    implementation 'com.github.evgenyneu:js-evaluator-for-android:v5.0.0'
+
+
+
+    implementation project(':vpnLib')
+
+
+
 
 
 

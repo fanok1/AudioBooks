@@ -88,25 +88,23 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
 
             mText.setMaxLines(MAX_VALUE);
             mText.setText(comentsPOJO.getText());
-            mText.post(() -> {
-                if (mText.getLineCount() <= MAX_LINES) {
-                    mReadMore.setVisibility(View.GONE);
-                } else {
-                    mReadMore.setVisibility(View.VISIBLE);
-                }
-                mText.setMaxLines(MAX_LINES);
-                showMore = false;
+            if (mText.getLineCount() <= MAX_LINES) {
+                mReadMore.setVisibility(View.GONE);
+            } else {
+                mReadMore.setVisibility(View.VISIBLE);
+            }
+            mText.setMaxLines(MAX_LINES);
+            showMore = false;
 
-                mReadMore.setOnClickListener(view -> {
-                    if (!showMore) {
-                        mText.setMaxLines(MAX_VALUE);
-                        mReadMore.setText(R.string.show_less);
-                    } else {
-                        mText.setMaxLines(MAX_LINES);
-                        mReadMore.setText(R.string.show_more);
-                    }
-                    showMore = !showMore;
-                });
+            mReadMore.setOnClickListener(view -> {
+                if (!showMore) {
+                    mText.setMaxLines(MAX_VALUE);
+                    mReadMore.setText(R.string.show_less);
+                } else {
+                    mText.setMaxLines(MAX_LINES);
+                    mReadMore.setText(R.string.show_more);
+                }
+                showMore = !showMore;
             });
         }
     }

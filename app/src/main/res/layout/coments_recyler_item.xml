@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -64,7 +65,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/item_genre_title_top_margin"
             android:textColor="?attr/colorPrimaryText"
-            android:textIsSelectable="true"
             tools:text="Увлекательно и атмосферно, герои симпатичны, динамичны и слишком нереальные роботы. Девочка, попавшая непростую ситуацию, «Чем старше она становилась, тем становил" />
 
         <TextView
@@ -84,9 +84,9 @@
                 android:id="@+id/reting"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:drawableStart="@drawable/ic_reting"
                 android:textColor="?attr/subTextColor"
                 android:textSize="@dimen/subTextSize"
+                app:drawableStartCompat="@drawable/ic_reting"
                 tools:text="+7" />
 
             <TextView
@@ -94,9 +94,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/text_margin"
-                android:drawableStart="@drawable/ic_coments"
                 android:textColor="?attr/subTextColor"
                 android:textSize="@dimen/subTextSize"
+                app:drawableStartCompat="@drawable/ic_coments"
                 tools:text="78" />
         </LinearLayout>
 

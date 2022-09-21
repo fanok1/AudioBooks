@@ -1,7 +1,11 @@
 package com.fanok.audiobooks.model;
 
+
+import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
 import com.fanok.audiobooks.AutorsSearchABMP3;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.google.gson.JsonElement;
@@ -11,6 +15,7 @@ import io.reactivex.Observable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
+import org.jsoup.Connection;
 import org.jsoup.Connection.Method;
 import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
@@ -21,84 +26,11 @@ import org.jsoup.select.Elements;
 public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.GenreModel {
 
 
-    protected ArrayList<GenrePOJO> loadBooksList(String url, int page) throws IOException {
-        ArrayList<GenrePOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .get();
-
-        Elements items = doc.getElementsByClass("genre2_item");
-        for (Element item : items) {
-            GenrePOJO genrePOJO = new GenrePOJO();
-            Elements name = item.getElementsByClass("genre2_item_name");
-            if (name.size() != 0) {
-                genrePOJO.setUrl(Url.SERVER + name.first().attr("href"));
-                genrePOJO.setName(name.first().text());
-            }
-
-            Elements rating = item.getElementsByClass("subscribe_btn_label_count");
-            if (rating.size() != 0) {
-                genrePOJO.setReting(Integer.parseInt(rating.first().text()));
-            }
-
-            Elements description = item.getElementsByClass("genre2_item_description");
-            if (description.size() != 0) {
-                genrePOJO.setDescription(description.first().text());
-            }
-            if (!genrePOJO.isNull()) result.add(genrePOJO);
-        }
-        return result;
-    }
-
-    protected ArrayList<GenrePOJO> loadBooksListIzibuk(String url, int page) throws IOException {
-        ArrayList<GenrePOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url + page)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .get();
-
-        Elements items = doc.getElementsByClass("_e181af");
-        if (items != null && items.size() != 0) {
-            Elements list = items.first().children();
-            if (list != null) {
-                for (Element item : list) {
-                    GenrePOJO genrePOJO = new GenrePOJO();
-
-                    String src = item.attr("href");
-                    if (src != null) {
-                        genrePOJO.setUrl(Url.SERVER_IZIBUK + src + "?p=");
-                    }
-
-
-                    Elements children = item.children();
-                    if (children != null && children.size() == 2) {
-                        String name = children.first().text();
-                        if (name != null) {
-                            genrePOJO.setName(name);
-                        }
-
-                        String desc = children.last().text();
-                        if (desc != null) {
-                            genrePOJO.setDescription(desc);
-                        }
-                    }
-
-
-                    if (!genrePOJO.isNull()) result.add(genrePOJO);
-                }
-            }
-        }
-        return result;
-    }
-
     @Override
     public Observable<ArrayList<GenrePOJO>> getBooks(String url, int page) {
         int size = 4;
-
         return Observable.create(observableEmitter -> {
+            waitVpnConetion();
             ArrayList<GenrePOJO> articlesModels;
             try {
                 if (url.contains("akniga.org") && url.contains("ajax-search")) {
@@ -143,6 +75,8 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
                         }
                     } else if (url.contains("akniga.org")) {
                         articlesModels = loadBooksListAbook(url, page);
+                    } else if (url.contains("baza-knig")) {
+                        articlesModels = loadBooksListBazaKnig(url, page);
                     } else {
                         articlesModels = new ArrayList<>();
                     }
@@ -154,6 +88,118 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
                 observableEmitter.onComplete();
             }
         });
+    }
+
+    protected ArrayList<GenrePOJO> loadBooksList(String url, int page) throws IOException {
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Elements items = doc.getElementsByClass("genre2_item");
+        for (Element item : items) {
+            GenrePOJO genrePOJO = new GenrePOJO();
+            Elements name = item.getElementsByClass("genre2_item_name");
+            if (name.size() != 0) {
+                genrePOJO.setUrl(Url.SERVER + name.first().attr("href") + "<page>/");
+                genrePOJO.setName(name.first().text());
+            }
+
+            Elements rating = item.getElementsByClass("subscribe_btn_label_count");
+            if (rating.size() != 0) {
+                genrePOJO.setReting(Integer.parseInt(rating.first().text()));
+            }
+
+            Elements description = item.getElementsByClass("genre2_item_description");
+            if (description.size() != 0) {
+                genrePOJO.setDescription(description.first().text());
+            }
+            if (!genrePOJO.isNull()) {
+                result.add(genrePOJO);
+            }
+        }
+        return result;
+    }
+
+    protected ArrayList<GenrePOJO> loadBooksListIzibuk(String url, int page) throws IOException {
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url + page)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .get();
+
+        Elements items = doc.getElementsByClass("_e181af");
+        if (items != null && items.size() != 0) {
+            Elements list = items.first().children();
+            if (list != null) {
+                for (Element item : list) {
+                    GenrePOJO genrePOJO = new GenrePOJO();
+
+                    String src = item.attr("href");
+                    if (src != null) {
+                        genrePOJO.setUrl(Url.SERVER_IZIBUK + src + "?p=");
+                    }
+
+                    Elements children = item.children();
+                    if (children != null && children.size() == 2) {
+                        String name = children.first().text();
+                        if (name != null) {
+                            genrePOJO.setName(name);
+                        }
+
+                        String desc = children.last().text();
+                        if (desc != null) {
+                            genrePOJO.setDescription(desc);
+                        }
+                    }
+
+                    if (!genrePOJO.isNull()) {
+                        result.add(genrePOJO);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<GenrePOJO> loadBooksListBazaKnig(final String url, final int page) throws IOException {
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        Connection connection = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory());
+
+        if (!Consts.getBazaKnigCookies().isEmpty()) {
+            connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+        }
+
+        Document doc = connection.get();
+
+        if (doc.title().contains("Just a moment")) {
+            throw new CookesExeption(url);
+        }
+
+        Elements items = doc.getElementsByClass("reset left-menu-items");
+        if (items != null && items.size() != 0) {
+            Elements list = items.first().getElementsByTag("li");
+            if (list != null && list.size() > 0) {
+                for (Element item : list) {
+                    GenrePOJO genrePOJO = new GenrePOJO();
+                    Elements aGenre = item.getElementsByTag("a");
+                    if (aGenre != null && aGenre.size() != 0) {
+                        genrePOJO.setUrl(Url.SERVER_BAZA_KNIG + aGenre.first().attr("href") + "page/");
+                        genrePOJO.setName(item.text());
+                    }
+                    if (!genrePOJO.isNull()) {
+                        result.add(genrePOJO);
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     protected ArrayList<GenrePOJO> loadBooksListABMP3(String url, int page) throws IOException {

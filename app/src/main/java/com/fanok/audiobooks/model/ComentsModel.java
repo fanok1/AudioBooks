@@ -1,13 +1,19 @@
 package com.fanok.audiobooks.model;
 
 
+import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.pojo.ComentsPOJO;
 import com.fanok.audiobooks.pojo.SubComentsPOJO;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import io.reactivex.Observable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -121,6 +127,7 @@ public class ComentsModel implements
     public Observable<ArrayList<ComentsPOJO>> getComents(@NonNull String url) {
 
         return Observable.create(observableEmitter -> {
+            waitVpnConetion();
             ArrayList<ComentsPOJO> articlesModels;
             try {
                 if (url.contains("knigavuhe.org")) {
@@ -129,6 +136,8 @@ public class ComentsModel implements
                     articlesModels = loadComentsListABMP3(url);
                 } else if (url.contains("akniga.org")) {
                     articlesModels = loadComentsListAbook(url);
+                } else if (url.contains("baza-knig.ru")) {
+                    articlesModels = loadComentsListBazaKnig(url);
                 } else {
                     articlesModels = new ArrayList<>();
                 }
@@ -410,5 +419,101 @@ public class ComentsModel implements
         }
 
         return result;
+    }
+
+    private ArrayList<ComentsPOJO> loadComentsListBazaKnig(String url) throws IOException {
+        ArrayList<ComentsPOJO> result = new ArrayList<>();
+        int page = 0;
+        url = url.substring(url.lastIndexOf("/") + 1);
+        url = url.substring(0, url.indexOf("-"));
+        String id = url;
+        String baseUrl
+                = "https://baza-knig.ru/engine/ajax/controller.php?mod=comments&cstart=<page>&news_id=<bookId>&skin=knigi-pk&massact=disable";
+        while (true) {
+            page++;
+            Connection connection = Jsoup
+                    .connect(baseUrl.replace("<page>", String.valueOf(page)).replace("<bookId>", id))
+                    .userAgent(Consts.USER_AGENT)
+                    .referrer("http://www.google.com")
+                    .sslSocketFactory(Consts.socketFactory())
+                    .ignoreContentType(true);
+
+            if (!Consts.getBazaKnigCookies().isEmpty()) {
+                connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+            }
+
+            String text = connection.execute().body();
+            JsonElement json = JsonParser.parseString(text.replaceAll("\\n", "").replaceAll("\\t", ""));
+            if (json.isJsonObject()) {
+                String comentsList = json.getAsJsonObject().get("comments").getAsString();
+                if (comentsList.isEmpty()) {
+                    break;
+                } else {
+                    Document doc = Jsoup.parse(comentsList);
+                    Elements elements = doc.body().children();
+                    for (Element element : elements) {
+                        ComentsPOJO comentsPOJO = new ComentsPOJO();
+                        Elements imgConteiner = element.getElementsByClass("comm-ava");
+                        if (imgConteiner != null && imgConteiner.size() > 0) {
+                            Elements img = imgConteiner.first().getElementsByTag("img");
+                            if (img != null && img.size() > 0) {
+                                String src = img.first().attr("src");
+                                if (src != null && !src.isEmpty()) {
+                                    comentsPOJO.setImage(src);
+                                }
+                            }
+
+                            Elements commInfo = element.getElementsByClass("comm-info");
+                            if (commInfo != null && commInfo.size() > 0) {
+                                Elements b = commInfo.first().getElementsByTag("b");
+                                if (b != null && b.size() > 0) {
+                                    String name = b.first().ownText();
+                                    if (name != null && !name.isEmpty()) {
+                                        comentsPOJO.setName(name);
+                                    }
+                                }
+                                String date = commInfo.first().ownText();
+                                if (date != null && !date.isEmpty()) {
+                                    comentsPOJO.setDate(date);
+                                }
+                            }
+                        }
+                        Elements comText = element.getElementsByClass("comm-text");
+                        if (comText != null && comText.size() != 0) {
+                            Element parent = comText.first().child(0);
+                            if (parent != null) {
+                                String textComent = parent.ownText();
+                                if (textComent != null && !textComent.isEmpty()) {
+                                    comentsPOJO.setText(textComent);
+                                }
+                                Elements quoteTitle = parent.getElementsByClass("title_quote");
+                                if (quoteTitle != null && quoteTitle.size() > 0) {
+                                    String name = quoteTitle.first().text();
+                                    if (name != null && !name.isEmpty()) {
+                                        comentsPOJO.setQuoteName(name.replace("Цитата: ", ""));
+                                    }
+                                }
+                                Elements quote = parent.getElementsByClass("quote");
+                                if (quote != null && quote.size() > 0) {
+                                    String quoteText = quote.first().text();
+                                    if (quoteText != null && !quoteText.isEmpty()) {
+                                        comentsPOJO.setQuoteText(quoteText);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!comentsPOJO.isEmty()) {
+                            result.add(comentsPOJO);
+                        }
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+        Collections.reverse(result);
+        return result;
+
     }
 }

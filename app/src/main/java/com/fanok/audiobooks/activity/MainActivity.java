@@ -22,6 +22,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -53,7 +54,6 @@ import com.google.android.gms.ads.MobileAds;
 import com.google.android.material.navigation.NavigationView;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -183,9 +183,7 @@ public class MainActivity extends MvpAppCompatActivity
                                     })
                             .setNegativeButton(getString(R.string.cancel), null);
 
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(
-                            Objects.requireNonNull(this));
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle(getString(R.string.privacy))
                             .setMessage(getString(R.string.privacy_message))
                             .setIcon(R.drawable.ic_privacy)
@@ -346,6 +344,7 @@ public class MainActivity extends MvpAppCompatActivity
 
     }
 
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         mPresenter.onItemSelected(item.getItemId());
@@ -372,9 +371,16 @@ public class MainActivity extends MvpAppCompatActivity
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         transaction.replace(R.id.container, fragment, tag);
-        if (fragmentsTag.size() > 1) transaction.addToBackStack(tag);
+        if (fragmentsTag.size() > 1) {
+            transaction.addToBackStack(tag);
+        }
         transaction.commit();
 
+    }
+
+    @Override
+    public void showToast(final int id) {
+        Toast.makeText(this, id, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -384,7 +390,9 @@ public class MainActivity extends MvpAppCompatActivity
 
     private void addFragmentTag(@NonNull String tag) {
         for (int i = 0; i < fragmentsTag.size(); i++) {
-            if (fragmentsTag.get(i).getTag().equals(tag)) fragmentsTag.get(i).setSkip(true);
+            if (fragmentsTag.get(i).getTag().equals(tag)) {
+                fragmentsTag.get(i).setSkip(true);
+            }
         }
         fragmentsTag.add(new FragmentTagSteck(tag));
     }

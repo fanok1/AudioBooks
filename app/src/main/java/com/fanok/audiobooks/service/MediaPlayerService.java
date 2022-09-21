@@ -34,6 +34,8 @@ import android.media.session.MediaSessionManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
@@ -663,6 +665,179 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
         }
     }
 
+    private void addLastBookToDB(String name) {
+        if (mAudioDBModel == null) {
+            mAudioDBModel = new AudioDBModel(this);
+        }
+        if (mAudioDBModel.isset(urlBook)) {
+            mAudioDBModel.remove(urlBook);
+        }
+        mAudioDBModel.add(urlBook, name);
+    }
+
+    private void buildNotification(PlaybackStatus playbackStatus) {
+        stopForeground(false);
+
+        int notificationAction = R.drawable.ic_notification_pause;//needs to be initialized
+        PendingIntent play_pauseAction = null;
+        float playbackSpeed = 0f;
+
+        Intent broadcastIntent = new Intent(Broadcast_SET_IMAGE);
+        //Build a new notification according to the current state of the MediaPlayer
+        if (playbackStatus == PlaybackStatus.PLAYING) {
+            broadcastIntent.putExtra("id", R.drawable.ic_pause);
+            //create the pause action
+            play_pauseAction = playbackAction(1);
+            playbackSpeed = 1f;
+        } else if (playbackStatus == PlaybackStatus.PAUSED) {
+            notificationAction = R.drawable.ic_notification_play;
+            broadcastIntent.putExtra("id", R.drawable.ic_play);
+            //create the play action
+            play_pauseAction = playbackAction(0);
+        }
+
+        this.sendBroadcast(broadcastIntent);
+
+        // I removed one of the semi-colons in the next line of code
+        NotificationManager notificationManager = (NotificationManager) this.getSystemService(
+                Context.NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // I would suggest that you use IMPORTANCE_DEFAULT instead of IMPORTANCE_HIGH
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_LOW);
+            channel.enableVibration(true);
+            channel.setLightColor(Color.BLUE);
+            channel.enableLights(true);
+            channel.setShowBadge(true);
+            Objects.requireNonNull(notificationManager).createNotificationChannel(channel);
+        }
+
+        Intent intent = new Intent(this, LoadBook.class);
+        intent.putExtra("url", urlBook);
+        intent.putExtra("notificationClick", true);
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this,
+                CHANNEL_ID)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setShowWhen(false)
+                .setSmallIcon(android.R.drawable.stat_sys_headset)
+                .setContentText("")
+                .setContentTitle(activeAudio.getName())
+                .setContentInfo("")
+                .setGroup("GroupPlayer")
+                .setAutoCancel(true)
+                .setContentIntent(resultPendingIntent)
+                .setLargeIcon(image);
+
+        if (VERSION.SDK_INT < VERSION_CODES.Q) {
+            notificationBuilder.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                    .setMediaSession(mediaSession.getSessionToken())
+                    .setShowActionsInCompactView(0, 2, 4))
+                    .addAction(R.drawable.ic_notification_rewind_30, "rewind", playbackAction(4))
+                    .addAction(R.drawable.ic_notification_previous, "previous", playbackAction(3))
+                    .addAction(notificationAction, "pause", play_pauseAction)
+                    .addAction(R.drawable.ic_notification_next, "next", playbackAction(2))
+                    .addAction(R.drawable.ic_notification_fast_forward_30, "forward", playbackAction(5));
+        } else {
+            notificationBuilder.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                    .setMediaSession(mediaSession.getSessionToken())
+                    .setShowActionsInCompactView(0, 1, 2))
+                    .addAction(R.drawable.ic_notification_previous, "previous", playbackAction(3))
+                    .addAction(notificationAction, "pause", play_pauseAction)
+                    .addAction(R.drawable.ic_notification_next, "next", playbackAction(2))
+                    .addAction(android.R.drawable.ic_delete, "delete", playbackAction(6));
+            updateMetaData();
+            long position = 0;
+            if (mediaPlayer != null) {
+                position = mediaPlayer.getContentPosition();
+            }
+            mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                    .setState(PlaybackStateCompat.STATE_PLAYING, position, playbackSpeed)
+                    .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE |
+                            PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
+                            | PlaybackStateCompat.ACTION_PAUSE |
+                            PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                            | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                            PlaybackStateCompat.ACTION_FAST_FORWARD |
+                            PlaybackStateCompat.ACTION_SEEK_TO |
+                            PlaybackStateCompat.ACTION_REWIND | PlaybackStateCompat.ACTION_STOP)
+                    .build());
+        }
+
+        if (playbackStatus == PlaybackStatus.PLAYING) {
+            startForeground(NOTIFICATION_ID, notificationBuilder.build());
+        } else {
+            notificationBuilder.setOngoing(false);
+            Intent onCancelIntent = new Intent(this, OnCancelBroadcastReceiver.class);
+            PendingIntent onDismissPendingIntent = PendingIntent.getBroadcast(
+                    this.getApplicationContext(), 0, onCancelIntent, 0);
+            notificationBuilder.setDeleteIntent(onDismissPendingIntent);
+            stopForeground(false);
+            Objects.requireNonNull(notificationManager).notify(NOTIFICATION_ID,
+                    notificationBuilder.build());
+        }
+
+        if (image == null && !imageUrl.isEmpty()) {
+            Picasso.get().load(imageUrl).into(new Target() {
+                @Override
+                public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                    notificationBuilder.setLargeIcon(null);
+                    image = null;
+                    Objects.requireNonNull(notificationManager).notify(NOTIFICATION_ID,
+                            notificationBuilder.build());
+                }
+
+                @Override
+                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                    image = bitmap;
+                    notificationBuilder.setLargeIcon(bitmap);
+                    Objects.requireNonNull(notificationManager).notify(NOTIFICATION_ID,
+                            notificationBuilder.build());
+                }
+
+                @Override
+                public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                }
+            });
+        }
+
+    }
+
+    /**
+     * Handle PhoneState changes
+     */
+    private void callStateListener() {
+        // Get the telephony manager
+        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        //Starting listening for PhoneState changes
+        phoneStateListener = new PhoneStateListener() {
+            @Override
+            public void onCallStateChanged(int state, String incomingNumber) {
+                switch (state) {
+                    //if at least one call exists or the phone is ringing
+                    //pause the MediaPlayer
+                    case TelephonyManager.CALL_STATE_OFFHOOK:
+                    case TelephonyManager.CALL_STATE_RINGING:
+                        if (mediaPlayer != null) {
+                            pauseMedia();
+                        }
+                        break;
+                    case TelephonyManager.CALL_STATE_IDLE:
+                        requestAudioFocus();
+                        break;
+                }
+            }
+        };
+        // Register the listener with the telephony manager
+        // Listen for changes to the device call state.
+        telephonyManager.listen(phoneStateListener,
+                PhoneStateListener.LISTEN_CALL_STATE);
+    }
+
     /**
      * MediaPlayer actions
      */
@@ -682,7 +857,9 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                     File file = new File(
                             folder.getAbsolutePath() + "/" + activeAudio.getBookName() + "/"
                                     + activeAudio.getName() + ".mp3");
-                    if (file.exists()) return file;
+                    if (file.exists()) {
+                        return file;
+                    }
                 }
             }
 
@@ -708,6 +885,12 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
                     null);
             source.setDefaultRequestProperty("referer", "https://audiobook-mp3.com/");
+            dateSourceFactory = new DefaultDataSourceFactory(this, null, source);
+        } else if (urlBook.contains("baza-knig.ru") && file == null) {
+            DefaultHttpDataSourceFactory source = new DefaultHttpDataSourceFactory(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
+                    null);
+            source.setDefaultRequestProperty("referer", "https://baza-knig.ru/");
             dateSourceFactory = new DefaultDataSourceFactory(this, null, source);
         } else {
             dateSourceFactory = new DefaultDataSourceFactory(this,
@@ -892,155 +1075,13 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
         Log.d(TAG, "initMediaPlayer: calld");
     }
 
-    private void stopMedia() {
-        if (mediaPlayer == null) return;
-        resumePosition = (int) mediaPlayer.getCurrentPosition();
-        int time = resumePosition / 1000;
-        timeStart = time;
-        mAudioDBModel.setTime(urlBook, time);
-        stopMediaNotSave();
-        BookPresenter.resume = true;
-        BookPresenter.start = true;
-    }
-
-    private void stopMediaNotSave() {
-        removeAudioFocus();
-        if (mediaPlayer == null) return;
-        isPlay = false;
-        mediaPlayer.stop();
-        mediaPlayer.release();
-        mediaPlayer = null;
-        mediaSession.setActive(false);
-        BookPresenter.resume = false;
-        buildNotification(PlaybackStatus.PAUSED);
-    }
-
-    private void pauseMedia() {
-        if (isPlaying()) {
-            mediaPlayer.setPlayWhenReady(false);
-            pauseTime = System.currentTimeMillis();
-        }
-    }
-
-    private void resumeMedia() {
-        try {
-            if (!isPlaying() && isPrepared()) {
-                if (!requestAudioFocus()) {
-                    stopSelf();
-                }
-                isPlay = true;
-                if (!mPreferences.getBoolean("rewind_back", false)) {
-                    mediaPlayer.seekTo(resumePosition);
-                } else {
-                    int time = (int) ((System.currentTimeMillis() - pauseTime) / 1000);
-                    if (time < 10) {
-                        mediaPlayer.seekTo(resumePosition);
-                    } else if (resumePosition - 10000 <= 0) {
-                        mediaPlayer.seekTo(0);
-                    } else if (time < 30) {
-                        mediaPlayer.seekTo(resumePosition - 10000);
-                    } else {
-                        mediaPlayer.seekTo(resumePosition - 30000);
-                    }
-                }
-                mediaPlayer.setPlayWhenReady(true);
-            }
-        } catch (Exception ignored) {
-
-        }
-    }
-
-    private void skipToNext() {
-        if (mediaPlayer == null) return;
-        if (audioIndex == audioList.size() - 1) {
-            if (!buttonClick) {
-                stopMedia();
-            }
-        } else {
-            //get next in playlist
-            activeAudio = audioList.get(++audioIndex);
-            storage.storeAudioIndex(audioIndex);
-
-            stopMediaNotSave();
-            initMediaPlayer();
-            sendBroadcastItemSelected(audioIndex);
-            addLastBookToDB(audioList.get(audioIndex).getName());
-            Intent broadcastIntent = new Intent(Broadcast_SET_TITLE);
-            broadcastIntent.putExtra("title", audioList.get(audioIndex).getName());
-            this.sendBroadcast(broadcastIntent);
-            buildNotification(PlaybackStatus.PLAYING);
-            Log.d(TAG, "skipToNext: calld");
-        }
-
-    }
-
-    private void skipToPrevious() {
-        if (mediaPlayer == null) return;
-        if (audioIndex != 0) {
-            activeAudio = audioList.get(--audioIndex);
-            storage.storeAudioIndex(audioIndex);
-            stopMediaNotSave();
-            initMediaPlayer();
-            sendBroadcastItemSelected(audioIndex);
-            addLastBookToDB(audioList.get(audioIndex).getName());
-            Intent broadcastIntent = new Intent(Broadcast_SET_TITLE);
-            broadcastIntent.putExtra("title", audioList.get(audioIndex).getName());
-            this.sendBroadcast(broadcastIntent);
-            buildNotification(PlaybackStatus.PLAYING);
-        }
-    }
-
-    private void addLastBookToDB(String name) {
-        if (mAudioDBModel == null) mAudioDBModel = new AudioDBModel(this);
-        if (mAudioDBModel.isset(urlBook)) {
-            mAudioDBModel.remove(urlBook);
-        }
-        mAudioDBModel.add(urlBook, name);
-    }
-
-    private void registerBecomingNoisyReceiver() {
-        //register after getting audio focus
-        IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
-        registerReceiver(becomingNoisyReceiver, intentFilter);
-    }
-
-    /**
-     * Handle PhoneState changes
-     */
-    private void callStateListener() {
-        // Get the telephony manager
-        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        //Starting listening for PhoneState changes
-        phoneStateListener = new PhoneStateListener() {
-            @Override
-            public void onCallStateChanged(int state, String incomingNumber) {
-                switch (state) {
-                    //if at least one call exists or the phone is ringing
-                    //pause the MediaPlayer
-                    case TelephonyManager.CALL_STATE_OFFHOOK:
-                    case TelephonyManager.CALL_STATE_RINGING:
-                        if (mediaPlayer != null) {
-                            pauseMedia();
-                        }
-                        break;
-                    case TelephonyManager.CALL_STATE_IDLE:
-                        requestAudioFocus();
-                        break;
-                }
-            }
-        };
-        // Register the listener with the telephony manager
-        // Listen for changes to the device call state.
-        telephonyManager.listen(phoneStateListener,
-                PhoneStateListener.LISTEN_CALL_STATE);
-    }
-
-
     /**
      * MediaSession and Notification actions
      */
     private void initMediaSession() throws RemoteException {
-        if (mediaSessionManager != null) return; //mediaSessionManager exists
+        if (mediaSessionManager != null) {
+            return; //mediaSessionManager exists
+        }
 
         mediaSessionManager = (MediaSessionManager) getSystemService(Context.MEDIA_SESSION_SERVICE);
         // Create a new MediaSession
@@ -1068,7 +1109,7 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                                 | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
                                 PlaybackStateCompat.ACTION_FAST_FORWARD |
                                 PlaybackStateCompat.ACTION_SEEK_TO |
-                                PlaybackStateCompat.ACTION_REWIND)
+                                PlaybackStateCompat.ACTION_REWIND | PlaybackStateCompat.ACTION_STOP)
                 .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1, SystemClock.elapsedRealtime())
                 .build();
 
@@ -1125,6 +1166,9 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
             public void onStop() {
                 super.onStop();
                 //Stop the service
+                pauseMedia();
+                stopForeground(false);
+                removeNotification();
                 stopSelf();
             }
 
@@ -1148,119 +1192,11 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
         });
     }
 
-    private void updateMetaData() {
-        mediaSession.setMetadata(new MediaMetadataCompat.Builder()
-                //.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt)
-                //.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, activeAudio.getArtist())
-                //.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, activeAudio.getAlbum())
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, activeAudio.getName())
-                .build());
-    }
-
-    private void buildNotification(PlaybackStatus playbackStatus) {
-        stopForeground(false);
-
-        int notificationAction = R.drawable.ic_notification_pause;//needs to be initialized
-        PendingIntent play_pauseAction = null;
-
-        Intent broadcastIntent = new Intent(Broadcast_SET_IMAGE);
-        //Build a new notification according to the current state of the MediaPlayer
-        if (playbackStatus == PlaybackStatus.PLAYING) {
-            broadcastIntent.putExtra("id", R.drawable.ic_pause);
-            //create the pause action
-            play_pauseAction = playbackAction(1);
-        } else if (playbackStatus == PlaybackStatus.PAUSED) {
-            notificationAction = R.drawable.ic_notification_play;
-            broadcastIntent.putExtra("id", R.drawable.ic_play);
-            //create the play action
-            play_pauseAction = playbackAction(0);
+    private void pauseMedia() {
+        if (isPlaying()) {
+            mediaPlayer.setPlayWhenReady(false);
+            pauseTime = System.currentTimeMillis();
         }
-
-        this.sendBroadcast(broadcastIntent);
-
-
-        // I removed one of the semi-colons in the next line of code
-        NotificationManager notificationManager = (NotificationManager) this.getSystemService(
-                Context.NOTIFICATION_SERVICE);
-
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // I would suggest that you use IMPORTANCE_DEFAULT instead of IMPORTANCE_HIGH
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_LOW);
-            channel.enableVibration(true);
-            channel.setLightColor(Color.BLUE);
-            channel.enableLights(true);
-            channel.setShowBadge(true);
-            Objects.requireNonNull(notificationManager).createNotificationChannel(channel);
-        }
-
-        Intent intent = new Intent(this, LoadBook.class);
-        intent.putExtra("url", urlBook);
-        intent.putExtra("notificationClick", true);
-        PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
-
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this,
-                CHANNEL_ID)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setShowWhen(false)
-                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                        .setMediaSession(mediaSession.getSessionToken())
-                        .setShowActionsInCompactView(0, 2, 4))
-                .setSmallIcon(android.R.drawable.stat_sys_headset)
-                .setContentText("")
-                .setContentTitle(activeAudio.getName())
-                .setContentInfo("")
-                .setGroup("GroupPlayer")
-                .addAction(R.drawable.ic_notification_rewind_30, "rewind", playbackAction(4))
-                .addAction(R.drawable.ic_notification_previous, "previous", playbackAction(3))
-                .addAction(notificationAction, "pause", play_pauseAction)
-                .addAction(R.drawable.ic_notification_next, "next", playbackAction(2))
-                .addAction(R.drawable.ic_notification_fast_forward_30, "forward", playbackAction(5))
-                .setAutoCancel(true)
-                .setContentIntent(resultPendingIntent)
-                .setLargeIcon(image);
-
-        if (playbackStatus == PlaybackStatus.PLAYING) {
-            startForeground(NOTIFICATION_ID, notificationBuilder.build());
-        } else {
-            notificationBuilder.setOngoing(false);
-            Intent onCancelIntent = new Intent(this, OnCancelBroadcastReceiver.class);
-            PendingIntent onDismissPendingIntent = PendingIntent.getBroadcast(
-                    this.getApplicationContext(), 0, onCancelIntent, 0);
-            notificationBuilder.setDeleteIntent(onDismissPendingIntent);
-            stopForeground(false);
-            Objects.requireNonNull(notificationManager).notify(NOTIFICATION_ID,
-                    notificationBuilder.build());
-        }
-
-
-        if (image == null && !imageUrl.isEmpty()) {
-            Picasso.get().load(imageUrl).into(new Target() {
-                @Override
-                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                    image = bitmap;
-                    notificationBuilder.setLargeIcon(bitmap);
-                    Objects.requireNonNull(notificationManager).notify(NOTIFICATION_ID,
-                            notificationBuilder.build());
-                }
-
-                @Override
-                public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                    notificationBuilder.setLargeIcon(null);
-                    image = null;
-                    Objects.requireNonNull(notificationManager).notify(NOTIFICATION_ID,
-                            notificationBuilder.build());
-                }
-
-                @Override
-                public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-                }
-            });
-        }
-
     }
 
     private PendingIntent playbackAction(int actionNumber) {
@@ -1290,10 +1226,136 @@ public class MediaPlayerService extends Service implements AudioManager.OnAudioF
                 // Fast Froward track
                 playbackAction.setAction(ACTION_FORWARD);
                 return PendingIntent.getService(this, actionNumber, playbackAction, 0);
+            case 6:
+                //Stop
+                playbackAction.setAction(ACTION_STOP);
+                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
             default:
                 break;
         }
         return null;
+    }
+
+    private void registerBecomingNoisyReceiver() {
+        //register after getting audio focus
+        IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        registerReceiver(becomingNoisyReceiver, intentFilter);
+    }
+
+    private void resumeMedia() {
+        try {
+            if (!isPlaying() && isPrepared()) {
+                if (!requestAudioFocus()) {
+                    stopSelf();
+                }
+                isPlay = true;
+                if (!mPreferences.getBoolean("rewind_back", false)) {
+                    mediaPlayer.seekTo(resumePosition);
+                } else {
+                    int time = (int) ((System.currentTimeMillis() - pauseTime) / 1000);
+                    if (time < 10) {
+                        mediaPlayer.seekTo(resumePosition);
+                    } else if (resumePosition - 10000 <= 0) {
+                        mediaPlayer.seekTo(0);
+                    } else if (time < 30) {
+                        mediaPlayer.seekTo(resumePosition - 10000);
+                    } else {
+                        mediaPlayer.seekTo(resumePosition - 30000);
+                    }
+                }
+                mediaPlayer.setPlayWhenReady(true);
+            }
+        } catch (Exception ignored) {
+
+        }
+    }
+
+    private void skipToNext() {
+        if (mediaPlayer == null) {
+            return;
+        }
+        if (audioIndex == audioList.size() - 1) {
+            if (!buttonClick) {
+                stopMedia();
+            }
+        } else {
+            //get next in playlist
+            activeAudio = audioList.get(++audioIndex);
+            storage.storeAudioIndex(audioIndex);
+
+            stopMediaNotSave();
+            initMediaPlayer();
+            sendBroadcastItemSelected(audioIndex);
+            addLastBookToDB(audioList.get(audioIndex).getName());
+            Intent broadcastIntent = new Intent(Broadcast_SET_TITLE);
+            broadcastIntent.putExtra("title", audioList.get(audioIndex).getName());
+            this.sendBroadcast(broadcastIntent);
+            buildNotification(PlaybackStatus.PLAYING);
+            Log.d(TAG, "skipToNext: calld");
+        }
+
+    }
+
+    private void skipToPrevious() {
+        if (mediaPlayer == null) {
+            return;
+        }
+        if (audioIndex != 0) {
+            activeAudio = audioList.get(--audioIndex);
+            storage.storeAudioIndex(audioIndex);
+            stopMediaNotSave();
+            initMediaPlayer();
+            sendBroadcastItemSelected(audioIndex);
+            addLastBookToDB(audioList.get(audioIndex).getName());
+            Intent broadcastIntent = new Intent(Broadcast_SET_TITLE);
+            broadcastIntent.putExtra("title", audioList.get(audioIndex).getName());
+            this.sendBroadcast(broadcastIntent);
+            buildNotification(PlaybackStatus.PLAYING);
+        }
+    }
+
+    private void stopMedia() {
+        if (mediaPlayer == null) {
+            return;
+        }
+        resumePosition = (int) mediaPlayer.getCurrentPosition();
+        int time = resumePosition / 1000;
+        timeStart = time;
+        mAudioDBModel.setTime(urlBook, time);
+        stopMediaNotSave();
+        BookPresenter.resume = true;
+        BookPresenter.start = true;
+    }
+
+    private void stopMediaNotSave() {
+        removeAudioFocus();
+        if (mediaPlayer == null) {
+            return;
+        }
+        isPlay = false;
+        mediaPlayer.stop();
+        mediaPlayer.release();
+        mediaPlayer = null;
+        mediaSession.setActive(false);
+        BookPresenter.resume = false;
+        buildNotification(PlaybackStatus.PAUSED);
+    }
+
+    private void updateMetaData() {
+        if (VERSION.SDK_INT < VERSION_CODES.Q || mediaPlayer == null) {
+            mediaSession.setMetadata(new MediaMetadataCompat.Builder()
+                    //.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt)
+                    //.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, activeAudio.getArtist())
+                    //.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, activeAudio.getAlbum())
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, activeAudio.getName())
+                    .build());
+        } else {
+            mediaSession.setMetadata(new MediaMetadataCompat.Builder()
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, mediaPlayer.getDuration())
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, activeAudio.getName())
+                    .build());
+        }
+
     }
 
     private void removeNotification() {

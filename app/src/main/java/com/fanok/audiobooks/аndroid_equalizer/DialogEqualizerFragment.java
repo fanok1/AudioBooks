@@ -23,7 +23,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -42,7 +41,7 @@ import com.db.chart.view.LineChartView;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import java.util.ArrayList;
-import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 
 public class DialogEqualizerFragment extends DialogFragment {
@@ -116,13 +115,19 @@ public class DialogEqualizerFragment extends DialogFragment {
     }
 
     @Override
+    public void onAttach(@NotNull Context context) {
+        super.onAttach(context);
+        ctx = context;
+    }
+
+    @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        new StorageUtil(Objects.requireNonNull(getContext())).loadEqualizerSettings();
+        new StorageUtil(requireContext()).loadEqualizerSettings();
         Intent intent = new Intent(Broadcast_EqualizerEnabled);
         intent.putExtra("enabled", false);
-        getContext().sendBroadcast(intent);
+        requireContext().sendBroadcast(intent);
 
         Settings.isEqualizerEnabled = true;
         Settings.isEditing = true;
@@ -163,12 +168,6 @@ public class DialogEqualizerFragment extends DialogFragment {
     }
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        ctx = context;
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         return inflater.inflate(R.layout.dialog_fragment_equalizer, container, false);
@@ -180,12 +179,7 @@ public class DialogEqualizerFragment extends DialogFragment {
         super.onViewCreated(view, savedInstanceState);
 
         ImageView backBtn = view.findViewById(R.id.equalizer_back_btn);
-        backBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
+        backBtn.setOnClickListener(v -> dismiss());
         backBtn.setColorFilter(textColor);
         view.findViewById(R.id.equalizerLayout).setBackgroundColor(backgroundColor);
 
@@ -202,16 +196,12 @@ public class DialogEqualizerFragment extends DialogFragment {
         }
         SwitchCompat equalizerSwitch = view.findViewById(R.id.equalizer_switch);
         equalizerSwitch.setChecked(true);
-        equalizerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mEqualizer.setEnabled(isChecked);
-                bassBoost.setEnabled(isChecked);
-                presetReverb.setEnabled(isChecked);
-                Settings.isEqualizerEnabled = isChecked;
-            }
+        equalizerSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            mEqualizer.setEnabled(isChecked);
+            bassBoost.setEnabled(isChecked);
+            presetReverb.setEnabled(isChecked);
+            Settings.isEqualizerEnabled = isChecked;
         });
-
 
         presetSpinner = view.findViewById(R.id.equalizer_preset_spinner);
         presetSpinner.getBackground().setColorFilter(textColor, PorterDuff.Mode.SRC_ATOP);
@@ -280,32 +270,26 @@ public class DialogEqualizerFragment extends DialogFragment {
         }
 
         bassController.setOnProgressChangedListener(
-                new AnalogController.onProgressChangedListener() {
-                    @Override
-                    public void onProgressChanged(int progress) {
-                        Settings.bassStrength = (short) (((float) 1000 / 19) * (progress));
-                        try {
-                            bassBoost.setStrength(Settings.bassStrength);
-                            Settings.equalizerModel.setBassStrength(Settings.bassStrength);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                progress -> {
+                    Settings.bassStrength = (short) (((float) 1000 / 19) * (progress));
+                    try {
+                        bassBoost.setStrength(Settings.bassStrength);
+                        Settings.equalizerModel.setBassStrength(Settings.bassStrength);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 });
 
         reverbController.setOnProgressChangedListener(
-                new AnalogController.onProgressChangedListener() {
-                    @Override
-                    public void onProgressChanged(int progress) {
-                        Settings.reverbPreset = (short) ((progress * 6) / 19);
-                        try {
-                            presetReverb.setPreset(Settings.reverbPreset);
-                            Settings.equalizerModel.setReverbPreset(Settings.reverbPreset);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        y = progress;
+                progress -> {
+                    Settings.reverbPreset = (short) ((progress * 6) / 19);
+                    try {
+                        presetReverb.setPreset(Settings.reverbPreset);
+                        Settings.equalizerModel.setReverbPreset(Settings.reverbPreset);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
+                    y = progress;
                 });
 
         TextView equalizerHeading = new TextView(ctx);
@@ -539,10 +523,10 @@ public class DialogEqualizerFragment extends DialogFragment {
     @Override
     public void onDestroy() {
 
-        new StorageUtil(Objects.requireNonNull(getContext())).saveEqualizerSettings();
+        new StorageUtil(requireContext()).saveEqualizerSettings();
         Intent intent = new Intent(Broadcast_EqualizerEnabled);
         intent.putExtra("enabled", true);
-        getContext().sendBroadcast(intent);
+        requireContext().sendBroadcast(intent);
 
         if (mEqualizer != null) {
             mEqualizer.release();

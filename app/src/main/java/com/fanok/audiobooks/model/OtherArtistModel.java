@@ -1,6 +1,8 @@
 package com.fanok.audiobooks.model;
 
 
+import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
@@ -9,6 +11,7 @@ import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
 import java.util.ArrayList;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -166,10 +169,127 @@ public class OtherArtistModel implements
         return result;
     }
 
+    public static ArrayList<OtherArtistPOJO> loadOtherArtistBazaKnig(final String baseName, final String baseAutor,
+            final String baseUrl, final String baseArtist) throws IOException {
+        ArrayList<OtherArtistPOJO> result = new ArrayList<>();
+        Document doc;
+        Connection connection = Jsoup.connect("https://baza-knig.ru/index.php?do=search")
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .ignoreHttpErrors(true);
+
+        if (!Consts.getBazaKnigCookies().isEmpty()) {
+            connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+        }
+        doc = connection
+                .data("do", "search")
+                .data("subaction", "search")
+                .data("search_start", "0")
+                .data("full_search", "0")
+                .data("result_from", "0")
+                .data("story", baseName + " " + baseAutor)
+                .post();
+
+        Element conteiner = doc.getElementById("dle-content");
+        if (conteiner != null) {
+            Elements bookList = conteiner.getElementsByClass("short");
+            if (bookList != null && bookList.size() > 0) {
+                for (Element book : bookList) {
+                    String url = "";
+                    Elements imgConteiner = book.getElementsByClass("short-img");
+                    if (imgConteiner != null && imgConteiner.size() > 0) {
+                        Element element = imgConteiner.first();
+                        Elements aElement = element.getElementsByTag("a");
+                        if (aElement != null && aElement.size() > 0) {
+                            String aHref = aElement.first().attr("href");
+                            if (aHref != null && !aHref.isEmpty()) {
+                                url = aHref;
+                            } else {
+                                continue;
+                            }
+                        }
+                    }
+
+                    Elements cont = book.getElementsByClass("reset short-items");
+                    if (cont != null && cont.size() > 0) {
+                        Elements liElem = cont.first().getElementsByTag("li");
+                        if (liElem != null && liElem.size() > 0) {
+                            for (Element li : liElem) {
+                                String liText = li.text();
+                                if (liText != null) {
+
+                                    if (liText.contains("Читает")) {
+                                        Elements artistElements = li.getElementsByTag("b");
+                                        if (artistElements != null && artistElements.size() > 0) {
+                                            String artistName = liText.replace("Читает: ", "").trim();
+                                            if (!artistName.isEmpty()) {
+                                                if (artistName.contains("альтернативная озвучка")) {
+                                                    Connection conn = Jsoup.connect(url)
+                                                            .userAgent(Consts.USER_AGENT)
+                                                            .referrer("http://www.google.com")
+                                                            .sslSocketFactory(Consts.socketFactory())
+                                                            .ignoreHttpErrors(true);
+                                                    if (!Consts.getBazaKnigCookies().isEmpty()) {
+                                                        conn.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+                                                    }
+                                                    Document document = conn.get();
+
+                                                    Element otherReader1 = document.getElementById("content-tab2");
+                                                    Element otherReader2 = document.getElementById("content-tab3");
+                                                    if (otherReader1 != null) {
+                                                        String text = otherReader1.ownText();
+                                                        if (text != null && text.contains("Озвучивает:")) {
+                                                            String name = text.replace("Озвучивает:", "").trim();
+                                                            if (!name.equals(baseArtist)) {
+                                                                OtherArtistPOJO otherArtistPOJO
+                                                                        = new OtherArtistPOJO();
+                                                                otherArtistPOJO.setName(name);
+                                                                otherArtistPOJO.setUrl(url + "?sorce=2");
+                                                                result.add(otherArtistPOJO);
+                                                            }
+                                                        }
+                                                    }
+                                                    if (otherReader2 != null) {
+                                                        String text = otherReader2.ownText();
+                                                        if (text != null && text.contains("Озвучивает:")) {
+                                                            String name = text.replace("Озвучивает:", "").trim();
+                                                            if (!name.equals(baseArtist)) {
+                                                                OtherArtistPOJO otherArtistPOJO
+                                                                        = new OtherArtistPOJO();
+                                                                otherArtistPOJO.setName(name);
+                                                                otherArtistPOJO.setUrl(url + "?sorce=3");
+                                                                result.add(otherArtistPOJO);
+                                                            }
+                                                        }
+                                                    }
+
+                                                }
+
+                                                String name = artistElements.first().text();
+                                                if (name != null && !name.isEmpty() && !baseArtist.contains(name)) {
+                                                    OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+                                                    otherArtistPOJO.setName(name);
+                                                    otherArtistPOJO.setUrl(url);
+                                                    result.add(otherArtistPOJO);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
     @Override
     public Observable<ArrayList<OtherArtistPOJO>> getOtherArtist(@NonNull BookPOJO bookPOJO) {
-
         return Observable.create(observableEmitter -> {
+            waitVpnConetion();
             ArrayList<OtherArtistPOJO> articlesModels;
             try {
                 if (bookPOJO.getUrl().contains("knigavuhe.org")) {
@@ -181,6 +301,10 @@ public class OtherArtistModel implements
                             bookPOJO.getArtist());
                 } else if (bookPOJO.getUrl().contains("akniga.org")) {
                     articlesModels = loadOtherArtistAbook(bookPOJO.getName(), bookPOJO.getAutor(), bookPOJO.getUrl(),
+                            bookPOJO.getArtist());
+                } else if (bookPOJO.getUrl().contains("baza-knig.ru")) {
+                    articlesModels = loadOtherArtistBazaKnig(bookPOJO.getName(), bookPOJO.getAutor(),
+                            bookPOJO.getUrl(),
                             bookPOJO.getArtist());
                 } else {
                     articlesModels = new ArrayList<>();

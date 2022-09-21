@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -59,22 +60,22 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/text_margin_book_description"
-                        android:drawableStart="@drawable/ic_like"
                         android:maxLines="1"
                         android:singleLine="true"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/textSizeBookDescription"
+                        app:drawableStartCompat="@drawable/ic_like"
                         tools:text="10" />
 
                     <TextView
                         android:id="@+id/disLike"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:drawableStart="@drawable/ic_dislike"
                         android:maxLines="1"
                         android:singleLine="true"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/textSizeBookDescription"
+                        app:drawableStartCompat="@drawable/ic_dislike"
                         tools:text="10" />
 
                 </LinearLayout>
@@ -89,12 +90,12 @@
                     <TextView
                         android:layout_width="@dimen/text_width"
                         android:layout_height="wrap_content"
-                        android:drawableStart="@drawable/ic_autor"
                         android:maxLines="1"
                         android:singleLine="true"
                         android:text="@string/autor"
                         android:textColor="?attr/subTextColor"
-                        android:textSize="@dimen/textSizeBookDescription" />
+                        android:textSize="@dimen/textSizeBookDescription"
+                        app:drawableStartCompat="@drawable/ic_autor" />
 
                     <TextView
                         android:id="@+id/author"
@@ -118,12 +119,12 @@
                     <TextView
                         android:layout_width="@dimen/text_width"
                         android:layout_height="wrap_content"
-                        android:drawableStart="@drawable/ic_artist"
                         android:maxLines="1"
                         android:singleLine="true"
                         android:text="@string/artist"
                         android:textColor="?attr/subTextColor"
-                        android:textSize="@dimen/textSizeBookDescription" />
+                        android:textSize="@dimen/textSizeBookDescription"
+                        app:drawableStartCompat="@drawable/ic_artist" />
 
                     <TextView
                         android:id="@+id/artist"
@@ -148,12 +149,12 @@
                     <TextView
                         android:layout_width="@dimen/text_width"
                         android:layout_height="wrap_content"
-                        android:drawableStart="@drawable/ic_book"
                         android:maxLines="1"
                         android:singleLine="true"
                         android:text="@string/series"
                         android:textColor="?attr/subTextColor"
-                        android:textSize="@dimen/textSizeBookDescription" />
+                        android:textSize="@dimen/textSizeBookDescription"
+                        app:drawableStartCompat="@drawable/ic_book" />
 
                     <TextView
                         android:id="@+id/series"
@@ -172,11 +173,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/text_margin_book_description"
-                    android:drawableStart="@drawable/ic_clock"
                     android:maxLines="1"
                     android:singleLine="true"
                     android:textColor="?attr/subTextColor"
                     android:textSize="@dimen/textSizeBookDescription"
+                    app:drawableStartCompat="@drawable/ic_clock"
                     tools:text="13 часов 15 минут" />
 
                 <TextView
@@ -184,11 +185,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/text_margin_book_description"
-                    android:drawableStart="@drawable/ic_favorite_description"
                     android:maxLines="1"
                     android:singleLine="true"
                     android:textColor="?attr/subTextColor"
                     android:textSize="@dimen/textSizeBookDescription"
+                    app:drawableStartCompat="@drawable/ic_favorite_description"
                     tools:text="520" />
 
                 <TextView
@@ -196,11 +197,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/text_margin_book_description"
-                    android:drawableStart="@drawable/ic_reting"
                     android:maxLines="1"
                     android:singleLine="true"
                     android:textColor="?attr/subTextColor"
                     android:textSize="@dimen/textSizeBookDescription"
+                    app:drawableStartCompat="@drawable/ic_reting"
                     tools:text="+4972" />
 
                 <View
@@ -218,7 +219,6 @@
                     android:ellipsize="end"
                     android:textColor="?attr/subTextColor"
                     android:textSize="@dimen/textSizeBookDescription"
-                    android:textIsSelectable="true"
                     tools:text="Гарри Поттер с нетерпением ждет окончания каникул и начала пятого учебного года в Хогвартсе. Юный волшебник как никогда страдает от одиночества, а насмешки и придирки Дурслей стали совсем невыносимы. К тому же он уверен, что Волан-де-Морт возродился и скоро начнет действовать. Вас снова ждут опасные и захватывающие приключения, жестокая борьба, верные друзья и волшебный мир Гарри Поттера." />
 
                 <TextView

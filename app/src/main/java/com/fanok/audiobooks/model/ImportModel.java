@@ -1,6 +1,8 @@
 package com.fanok.audiobooks.model;
 
 
+import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
 import android.content.Context;
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
@@ -59,6 +61,7 @@ public class ImportModel {
 
     public Observable<Integer> importBooks(@NonNull String username, @NotNull String password) {
         return Observable.create(observableEmitter -> {
+            waitVpnConetion();
             try {
                 if (src == Consts.IMPORT_SITE_KNIGA_V_UHE) {
                     if (!login(username, password)) {

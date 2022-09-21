@@ -3,9 +3,7 @@ package com.fanok.audiobooks.interface_pacatge.book_content;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-
 import androidx.annotation.NonNull;
-
 import java.util.HashSet;
 
 public interface ActivityPresenter {
@@ -53,6 +51,8 @@ public interface ActivityPresenter {
     void dowland(HashSet<String> data);
 
     void delete(HashSet<String> data);
+
+    void addDecodeData(String string);
 
 
 }

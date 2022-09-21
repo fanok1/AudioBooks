@@ -78,28 +78,6 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     private String mUrl;
 
 
-    @ProvidePresenter
-    BooksPresenter provideBookPresenter() {
-        Bundle arg = getArguments();
-        String url = "";
-        if (arg != null) {
-            url = arg.getString(ARG_URL, "");
-            titleId = arg.getInt(ARG_TITLE, 0);
-            subTitleId = arg.getInt(ARG_SUB_TITLE, 0);
-            subTitleString = arg.getString(ARG_SUB_TITLE_STRING, "");
-            modelID = arg.getInt(ARG_MODEL, -1);
-        }
-        if (url.isEmpty()) throw new IllegalArgumentException("Variable 'url' contains not url");
-        if (modelID == -1) throw new IllegalArgumentException("Illegal model id");
-        mUrl = url;
-        String subTitle = "";
-        if (!subTitleString.isEmpty()) {
-            subTitle = subTitleString;
-        } else if (subTitleId != 0) subTitle = getResources().getString(subTitleId);
-        return new BooksPresenter(url, modelID, subTitle,
-                Objects.requireNonNull(getContext()).getApplicationContext());
-    }
-
     public static BooksFragment newInstance(@NonNull String url, int title, int modelID) {
         BooksFragment fragment = new BooksFragment();
         if (!Consts.REGEXP_URL.matcher(url).matches()) {
@@ -159,8 +137,12 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
             subTitleString = arg.getString(ARG_SUB_TITLE_STRING, "");
             modelID = arg.getInt(ARG_MODEL, -1);
         }
-        if (url.isEmpty()) throw new IllegalArgumentException("Variable 'url' contains not url");
-        if (modelID == -1) throw new IllegalArgumentException("Illegal model id");
+        if (url.isEmpty()) {
+            throw new IllegalArgumentException("Variable 'url' contains not url");
+        }
+        if (modelID == -1) {
+            throw new IllegalArgumentException("Illegal model id");
+        }
         mUrl = url;
     }
 
@@ -171,10 +153,9 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         binding = FragmentBooksBinding.inflate(inflater, container, false);
 
         if (titleId != 0) {
-            Objects.requireNonNull(getActivity()).setTitle(titleId);
+            requireActivity().setTitle(titleId);
         }
-        ActionBar toolbar = ((AppCompatActivity) Objects.requireNonNull(
-                getActivity())).getSupportActionBar();
+        ActionBar toolbar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
         if (toolbar != null) {
             if (!subTitleString.isEmpty()) {
                 toolbar.setSubtitle(subTitleString);
@@ -250,17 +231,6 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         return binding.getRoot();
     }
 
-
-    private int getCount() {
-        if (mAddapterBooks != null) {
-            return mAddapterBooks.getItemCount();
-        } else if (mAddapterGenre != null) {
-            return mAddapterGenre.getItemCount();
-        } else {
-            return 0;
-        }
-    }
-
     @Override
     public void onDestroyView() {
         getPresenter().onDestroy();
@@ -277,6 +247,8 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     public void onCreateOptionsMenu(@NotNull Menu menu, @NotNull MenuInflater inflater) {
         if (mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com")) {
             inflater.inflate(R.menu.books_izibuk_options_menu, menu);
+        } else if (mUrl.contains("baza-knig.ru")) {
+            inflater.inflate(R.menu.books_baza_knig_options_menu, menu);
         } else {
             inflater.inflate(R.menu.books_options_menu, menu);
         }
@@ -288,7 +260,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                 menu.findItem(R.id.source).setVisible(false);
             } else {
                 setColorPrimeriTextInIconItemMenu(
-                        menu.findItem(R.id.source), Objects.requireNonNull(getContext()));
+                        menu.findItem(R.id.source), requireContext());
                 MenuItem item;
                 switch (Consts.getSOURCE()) {
                     case Consts.SOURCE_KNIGA_V_UHE:
@@ -303,6 +275,9 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                     case Consts.SOURCE_ABOOK:
                         item = menu.findItem(R.id.source_abook);
                         break;
+                    case Consts.SOURCE_BAZA_KNIG:
+                        item = menu.findItem(R.id.source_baza_knig);
+                        break;
                     default:
                         item = null;
                         break;
@@ -314,20 +289,21 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
             }
 
             if (mUrl.contains("reader") || mUrl.contains("author") ||
-                    mUrl.contains("serie") ||
+                    mUrl.contains("serie") || mUrl.contains("cikl") ||
                     (mUrl.contains("audiobook-mp3.com") && mUrl.contains("genre")) ||
-                    (mUrl.contains("izib.uk") && mUrl.contains("genre"))) {
+                    (mUrl.contains("izib.uk") && mUrl.contains("genre")) ||
+                    (mUrl.contains("baza-knig.ru") && mUrl.contains("ispolnitel"))) {
                 menu.findItem(R.id.order).setVisible(false);
             } else {
                 setColorPrimeriTextInIconItemMenu(
-                        menu.findItem(R.id.order), Objects.requireNonNull(getContext()));
+                        menu.findItem(R.id.order), requireContext());
             }
         } else {
             menu.findItem(R.id.order).setVisible(false);
             menu.findItem(R.id.source).setVisible(false);
         }
         setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search),
-                Objects.requireNonNull(getContext()));
+                requireContext());
 
         super.onCreateOptionsMenu(menu, inflater);
     }
@@ -338,10 +314,43 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         int mPendingIntentId = 123456;
         PendingIntent mPendingIntent = PendingIntent.getActivity(getContext(), mPendingIntentId,
                 mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
-        AlarmManager mgr = (AlarmManager) Objects.requireNonNull(getContext())
+        AlarmManager mgr = (AlarmManager) requireContext()
                 .getSystemService(Context.ALARM_SERVICE);
         mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
         System.exit(0);
+    }
+
+    @Override
+    public void showBooksActivity(@NotNull @NonNull BookPOJO bookPOJO) {
+        BookActivity.startNewActivity(requireContext(), bookPOJO);
+    }
+
+    @ProvidePresenter
+    BooksPresenter provideBookPresenter() {
+        Bundle arg = getArguments();
+        String url = "";
+        if (arg != null) {
+            url = arg.getString(ARG_URL, "");
+            titleId = arg.getInt(ARG_TITLE, 0);
+            subTitleId = arg.getInt(ARG_SUB_TITLE, 0);
+            subTitleString = arg.getString(ARG_SUB_TITLE_STRING, "");
+            modelID = arg.getInt(ARG_MODEL, -1);
+        }
+        if (url.isEmpty()) {
+            throw new IllegalArgumentException("Variable 'url' contains not url");
+        }
+        if (modelID == -1) {
+            throw new IllegalArgumentException("Illegal model id");
+        }
+        mUrl = url;
+        String subTitle = "";
+        if (!subTitleString.isEmpty()) {
+            subTitle = subTitleString;
+        } else if (subTitleId != 0) {
+            subTitle = getResources().getString(subTitleId);
+        }
+        return new BooksPresenter(url, modelID, subTitle,
+                requireContext().getApplicationContext());
     }
 
     @Override
@@ -486,9 +495,14 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    @Override
-    public void showBooksActivity(@NotNull @NonNull BookPOJO bookPOJO) {
-        BookActivity.startNewActivity(Objects.requireNonNull(getContext()), bookPOJO);
+    private int getCount() {
+        if (mAddapterBooks != null) {
+            return mAddapterBooks.getItemCount();
+        } else if (mAddapterGenre != null) {
+            return mAddapterGenre.getItemCount();
+        } else {
+            return 0;
+        }
     }
 
     private void setItemDecoration(int count) {

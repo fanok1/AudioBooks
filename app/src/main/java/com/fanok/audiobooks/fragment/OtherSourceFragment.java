@@ -18,7 +18,6 @@ import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.util.ArrayList;
-import java.util.Objects;
 
 
 
@@ -48,7 +47,7 @@ public class OtherSourceFragment extends Fragment {
         binding = FragmentBookSeriasBinding.inflate(inflater, container, false);
 
         ArrayList<OtherArtistPOJO> bookPOJO = new Gson().fromJson(
-                Objects.requireNonNull(getArguments()).getString(ARG_URL),
+                requireArguments().getString(ARG_URL),
                 new TypeToken<ArrayList<OtherArtistPOJO>>() {
                 }.getType());
 
@@ -61,7 +60,7 @@ public class OtherSourceFragment extends Fragment {
             OtherArtistPOJO otherArtistPOJO = mOtherArtistListAddapter.getItem(position);
             Intent intent = new Intent(getContext(), LoadBook.class);
             intent.putExtra("url", otherArtistPOJO.getUrl());
-            Objects.requireNonNull(getContext()).startActivity(intent);
+            requireActivity().startActivity(intent);
         });
 
         if (bookPOJO.size() == 0) {

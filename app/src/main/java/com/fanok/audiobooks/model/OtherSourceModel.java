@@ -1,6 +1,8 @@
 package com.fanok.audiobooks.model;
 
 
+import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.fanok.audiobooks.Consts;
@@ -10,6 +12,7 @@ import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
 import java.util.ArrayList;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -21,8 +24,8 @@ public class OtherSourceModel implements
 
     @Override
     public Observable<ArrayList<OtherArtistPOJO>> getOtherArtist(@NonNull BookPOJO bookPOJO) {
-
         return Observable.create(observableEmitter -> {
+            waitVpnConetion();
             ArrayList<OtherArtistPOJO> articlesModels = new ArrayList<>();
             try {
 
@@ -53,6 +56,13 @@ public class OtherSourceModel implements
                     }
                 }
 
+                if (!bookPOJO.getUrl().contains("baza-knig.ru")) {
+                    OtherArtistPOJO artistPOJO = getBazaKnig(bookPOJO);
+                    if (artistPOJO != null) {
+                        articlesModels.add(artistPOJO);
+                    }
+                }
+
                 observableEmitter.onNext(articlesModels);
             } catch (Exception e) {
                 observableEmitter.onError(e);
@@ -60,6 +70,158 @@ public class OtherSourceModel implements
                 observableEmitter.onComplete();
             }
         });
+    }
+
+    private OtherArtistPOJO getBazaKnig(BookPOJO bookPOJO) throws IOException {
+        int page = 0;
+        while (true) {
+            page++;
+            Connection connection = Jsoup.connect("https://baza-knig.ru/index.php?do=search")
+                    .userAgent(Consts.USER_AGENT)
+                    .referrer("http://www.google.com")
+                    .sslSocketFactory(Consts.socketFactory())
+                    .data("do", "search")
+                    .data("subaction", "search")
+                    .data("search_start", String.valueOf(page))
+                    .data("full_search", "0")
+                    .data("result_from", "0")
+                    .data("story", bookPOJO.getName())
+                    .ignoreHttpErrors(true);
+
+            if (!Consts.getBazaKnigCookies().isEmpty()) {
+                connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+            }
+
+            Document doc = connection.post();
+
+            Elements navConteiner = doc.getElementsByClass("page-nav");
+            if (page > 1) {
+                if (navConteiner != null && navConteiner.size() > 0) {
+                    Elements navigainClass = navConteiner.first().getElementsByClass("navigation");
+                    if (navigainClass != null && navigainClass.size() > 0) {
+                        Elements children = navigainClass.first().children();
+                        if (children != null && children.size() > 0) {
+                            int last = Integer.parseInt(children.last().text());
+                            if (page > last) {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            Element conteiner = doc.getElementById("dle-content");
+            if (conteiner != null) {
+                Elements bookList = conteiner.getElementsByClass("short");
+                if (bookList != null && bookList.size() > 0) {
+                    for (Element book : bookList) {
+                        OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+                        String titleResult = "";
+                        String author = "";
+                        String reader = "";
+
+                        Elements imgConteiner = book.getElementsByClass("short-img");
+                        if (imgConteiner != null && imgConteiner.size() > 0) {
+                            Element element = imgConteiner.first();
+                            Elements aElement = element.getElementsByTag("a");
+                            if (aElement != null && aElement.size() > 0) {
+                                String aHref = aElement.first().attr("href");
+                                if (aHref != null && !aHref.isEmpty()) {
+                                    otherArtistPOJO.setUrl(aHref);
+                                    otherArtistPOJO.setName("baza-knig.ru");
+                                } else {
+                                    continue;
+                                }
+                            }
+                        }
+
+                        Elements nameConteiner = book.getElementsByClass("short-title");
+                        if (nameConteiner != null && nameConteiner.size() > 0) {
+                            Elements aTag = nameConteiner.first().getElementsByTag("a");
+                            if (aTag != null && aTag.size() > 0) {
+                                String name = aTag.first().text();
+                                if (name != null && !name.isEmpty()) {
+                                    titleResult = name;
+                                }
+                            }
+                        }
+
+                        Elements cont = book.getElementsByClass("reset short-items");
+                        if (cont != null && cont.size() > 0) {
+                            Elements liElem = cont.first().getElementsByTag("li");
+                            if (liElem != null && liElem.size() > 0) {
+                                for (Element li : liElem) {
+                                    String liText = li.text();
+                                    if (liText != null) {
+                                        if (liText.contains("Автор")) {
+                                            Elements autorElements = li.getElementsByTag("b");
+                                            if (autorElements != null && autorElements.size() > 0) {
+                                                String autorName = autorElements.first().text();
+                                                if (autorName != null && !autorName.isEmpty()) {
+                                                    author = autorName;
+                                                }
+                                            }
+                                        }
+
+                                        if (liText.contains("Читает")) {
+                                            Elements artistElements = li.getElementsByTag("b");
+                                            if (artistElements != null && artistElements.size() > 0) {
+                                                String artistName = artistElements.first().text();
+                                                if (artistName != null && !artistName.isEmpty()) {
+                                                    reader = artistName;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        String[] name = author.split(" ");
+                        boolean authorFlag = false;
+                        if (author.length() == bookPOJO.getAutor().length()) {
+                            authorFlag = true;
+                            for (final String s : name) {
+                                if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
+                                    authorFlag = false;
+                                    break;
+                                }
+
+                            }
+                        }
+
+                        String[] artist = reader.split(" ");
+                        boolean readerFlag = false;
+                        if (reader.length() == bookPOJO.getArtist().length()) {
+                            readerFlag = true;
+                            for (final String s : artist) {
+                                if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
+                                    readerFlag = false;
+                                    break;
+                                }
+
+                            }
+                        }
+
+                        if (!reader.isEmpty()
+                                && bookPOJO.getName().toLowerCase().equals(titleResult.toLowerCase()) &&
+                                authorFlag && readerFlag) {
+                            return otherArtistPOJO;
+                        }
+
+
+                    }
+
+                }
+            }
+        }
+        return null;
     }
 
     private OtherArtistPOJO getABMP3(BookPOJO bookPOJO) throws IOException {

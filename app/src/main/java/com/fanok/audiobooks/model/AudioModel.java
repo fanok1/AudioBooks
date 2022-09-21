@@ -1,9 +1,12 @@
 package com.fanok.audiobooks.model;
 
 
+import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
 import android.content.Context;
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.EncodingExeption;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -37,6 +40,7 @@ public class AudioModel implements
     private static final String TAG = "AudioModel";
 
     public static String runScript(Context context, String key) {
+        String resultStr = null;
         // Get the JavaScript in previous section
         try {
 
@@ -56,9 +60,7 @@ public class AudioModel implements
             if (obj instanceof Function) {
                 Function function = (Function) obj;
                 Object result = function.call(rhino, scope, scope, functionParams);
-                return org.mozilla.javascript.Context.toString(result);
-            } else {
-                return null;
+                resultStr = org.mozilla.javascript.Context.toString(result);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -67,15 +69,15 @@ public class AudioModel implements
             org.mozilla.javascript.Context.exit();
         }
 
-        return null;
+        return resultStr;
     }
 
     @Override
     public Observable<ArrayList<AudioPOJO>> getAudio(@NonNull String url) {
 
         return Observable.create(observableEmitter -> {
+            waitVpnConetion();
             ArrayList<AudioPOJO> articlesModels;
-
             try {
                 if (url.contains("knigavuhe.org")) {
                     articlesModels = loadSeriesList(url);
@@ -85,6 +87,8 @@ public class AudioModel implements
                     articlesModels = loadSeriesListADMP3(url);
                 } else if (url.contains("akniga.org")) {
                     articlesModels = loadSeriesListAbook(url);
+                } else if (url.contains("baza-knig.ru")) {
+                    articlesModels = loadSeriesListBazaKnig(url);
                 } else {
                     articlesModels = new ArrayList<>();
                 }
@@ -341,6 +345,117 @@ public class AudioModel implements
         return result;
     }
 
+    private ArrayList<AudioPOJO> getAudioSorceBazaKnig(Document doc, String id, String bookName) {
+        ArrayList<AudioPOJO> result = new ArrayList<>();
+        Elements sriptElements = doc.getElementsByTag("script");
+        for (Element script : sriptElements) {
+            String value = script.toString();
+            if (value.contains(id)) {
+                String key = value.substring(value.indexOf("["), value.indexOf("]")) + "]";
+                if (value.contains("strDecode")) {
+                    throw new EncodingExeption(key);
+                }
+                JsonElement jsonTree = JsonParser.parseString(key);
+                if (jsonTree.isJsonArray()) {
+                    JsonArray jsonArray = jsonTree.getAsJsonArray();
+                    for (JsonElement element : jsonArray) {
+                        if (element.isJsonObject()) {
+                            JsonObject jsonObject = element.getAsJsonObject();
+                            AudioPOJO audioPOJO = new AudioPOJO();
+                            audioPOJO.setName(jsonObject.get("title").getAsString());
+                            audioPOJO.setUrl(jsonObject.get("file").getAsString());
+                            audioPOJO.setBookName(bookName);
+                            result.add(audioPOJO);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<AudioPOJO> loadSeriesListBazaKnig(String url) throws IOException {
+
+        int indexSorce = url.indexOf("?sorce");
+        int sorce = 1;
+        if (indexSorce != -1) {
+            String substring = url.substring(indexSorce).replace("?sorce=", "");
+            sorce = Integer.parseInt(substring);
+        }
+
+        ArrayList<AudioPOJO> result = new ArrayList<>();
+
+        Connection connection = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .ignoreHttpErrors(true);
+
+        if (!Consts.getBazaKnigCookies().isEmpty()) {
+            connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+        }
+        Document doc = connection.get();
+
+        String bookName = "";
+        Elements title = doc.getElementsByTag("h1");
+        if (title != null && title.size() > 0) {
+            String text = title.first().ownText();
+            bookName = text.substring(0, text.indexOf(" - "));
+        }
+
+        Element div = doc.getElementById("fr");
+        if (div != null) {
+            String data = div.attr("data");
+            if (data != null) {
+                data = data.substring(data.indexOf("src="));
+                data = data.replace("src=\"", "");
+                data = data.substring(0, data.indexOf("\""));
+                Connection conPlaylist = Jsoup.connect(data)
+                        .userAgent(Consts.USER_AGENT)
+                        .referrer("http://www.google.com")
+                        .sslSocketFactory(Consts.socketFactory());
+                Document playlist = conPlaylist.get();
+                Elements player = playlist.getElementsByClass("js-play8-playlist");
+                if (player != null && player.size() > 0) {
+                    String value = player.first().attr("value");
+                    JsonElement jsonArray = JsonParser.parseString(value);
+                    if (jsonArray.isJsonArray()) {
+                        for (int i = 0; i < jsonArray.getAsJsonArray().size(); i++) {
+                            JsonElement element = jsonArray.getAsJsonArray().get(i);
+                            if (element.isJsonObject()) {
+                                JsonObject jsonObject = element.getAsJsonObject();
+                                AudioPOJO audioPOJO = new AudioPOJO();
+                                audioPOJO.setName(bookName + "_" + (i + 1));
+                                audioPOJO.setTime((int) jsonObject.get("duration").getAsDouble());
+                                audioPOJO.setBookName(bookName);
+                                JsonArray array = jsonObject.getAsJsonArray("sources");
+                                if (array != null) {
+                                    JsonElement element1 = array.get(0);
+                                    if (element1 != null && element1.isJsonObject()) {
+                                        JsonObject object = element1.getAsJsonObject();
+                                        audioPOJO.setUrl("https://archive.org" + object.get("file").getAsString());
+                                    }
+                                }
+
+                                result.add(audioPOJO);
+                            }
+                        }
+
+                    }
+
+                }
+            }
+        } else {
+            if (sorce == 1) {
+                result = getAudioSorceBazaKnig(doc, "id:\"player\"", bookName);
+            } else {
+                result = getAudioSorceBazaKnig(doc, "id:\"player" + sorce + "\"", bookName);
+            }
+        }
+
+        return result;
+    }
+
     private ArrayList<AudioPOJO> loadSeriesListIzibuk(String url) throws IOException {
         ArrayList<AudioPOJO> result = new ArrayList<>();
 
@@ -362,7 +477,7 @@ public class AudioModel implements
             if (value.contains("domReady")) {
                 value = deleteComnets(value);
                 value = value.substring(value.indexOf("var player = new XSPlayer("));
-                value = value.substring(0, value.indexOf("\n"));
+                // value = value.substring(0, value.indexOf("\n"));
                 String json = value.substring(value.indexOf("(") + 1, value.indexOf(");"));
                 JsonElement jsonTree = JsonParser.parseString(json);
                 if (jsonTree.isJsonObject()) {
