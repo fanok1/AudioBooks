@@ -2,13 +2,13 @@ package com.fanok.audiobooks.model;
 
 import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
 
-import android.content.SharedPreferences;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -116,7 +116,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
     }
 
     @Override
-    public Observable<ArrayList<BookPOJO>> getBooks(ArrayList<String> urls, int page, SharedPreferences preferences) {
+    public Observable<ArrayList<BookPOJO>> getBooks(String url, int page, boolean speedUp) {
         //for search
         genreName = null;
         genreSrc = null;
@@ -125,122 +125,37 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         return Observable.create(observableEmitter -> {
             waitVpnConetion();
             int size = 4;
-            int exit = 0;
-            boolean endKnigaVUhe = false;
-            boolean endIziBuk = false;
-            boolean endABMP3 = false;
-            boolean endAbook = false;
-            boolean endBazaKnig = false;
-            boolean searchKnigaVUhe = preferences.getBoolean("search_kniga_v_uhe", true);
-            boolean searchIzibuk = preferences.getBoolean("search_izibuc", true);
-            boolean searchABMP3 = preferences.getBoolean("search_abmp3", true);
-            boolean searchAbook = preferences.getBoolean("search_abook", true);
-            boolean searchBazaKnig = preferences.getBoolean("search_baza_knig", true);
-            boolean speedUpABMP3 = preferences.getBoolean("speed_up_search_abmp3", false);
-            boolean cookesExeption = false; //for BazaKnig
-
-            if (!searchKnigaVUhe) {
-                exit++;
-            }
-            if (!searchIzibuk) {
-                exit++;
-            }
-            if (!searchABMP3) {
-                exit++;
-            }
-
-            if (!searchAbook) {
-                exit++;
-            }
-
-            if (!searchBazaKnig) {
-                exit++;
-            }
-
             try {
                 for (int i = 1; i <= size; i++) {
                     ArrayList<BookPOJO> articlesModels = new ArrayList<>();
                     int temp = (page - 1) * size + i;
-                    try {
-                        if (!endKnigaVUhe && searchKnigaVUhe) {
-                            articlesModels.addAll(loadBooksList(
-                                    urls.get(1).replace(String.valueOf(page), String.valueOf(temp)),
-                                    temp));
-                        }
-                    } catch (NullPointerException e) {
-                        endKnigaVUhe = true;
-                        exit++;
-                        if (exit >= urls.size()) {
-                            observableEmitter.onError(e);
-                        }
-                    }
-
-                    try {
-                        if (!endIziBuk && searchIzibuk) {
-                            articlesModels.addAll(loadBooksListIzibuk(
-                                    urls.get(2).replace("p=" + page, "p=" + temp), temp));
-                        }
-                    } catch (NullPointerException e) {
-                        endIziBuk = true;
-                        exit++;
-                        if (exit >= urls.size()) {
-                            observableEmitter.onError(e);
-                        }
-                    }
-
-                    try {
-                        if (!endABMP3 && searchABMP3) {
-                            if (temp % size == 0) {
-                                if (!speedUpABMP3) {
-                                    articlesModels.addAll(loadBooksListSearchABMP3(urls.get(3), temp / size));
-                                } else {
-                                    articlesModels.addAll(loadBooksListSearchABMP3SpeedUp(urls.get(3), temp / size));
-                                }
+                    if (url.contains("knigavuhe.org")) {
+                        articlesModels = loadBooksList(url.replace(String.valueOf(page), String.valueOf(temp)), temp);
+                    } else if (url.contains("izib.uk/")) {
+                        articlesModels = loadBooksListIzibuk(url.replace("p=" + page, "p=" + temp), temp);
+                    } else if (url.contains("audiobook-mp3.com")) {
+                        if (temp % size == 0) {
+                            if (!speedUp) {
+                                articlesModels = loadBooksListSearchABMP3(url, temp / size);
+                            } else {
+                                articlesModels = loadBooksListSearchABMP3SpeedUp(url, temp / size);
                             }
                         }
-                    } catch (NullPointerException e) {
-                        endABMP3 = true;
-                        exit++;
-                        if (exit >= urls.size()) {
-                            observableEmitter.onError(e);
-                        }
+                    } else if (url.contains("akniga.org")) {
+                        articlesModels = loadBooksListAbook(url.replace("/page" + page + "/", "/page" + temp + "/"),
+                                temp);
+                    } else if (url.contains("baza-knig.ru")) {
+                        articlesModels = loadBooksListBazaKnig(url.replace("&page=" + page, ""), temp);
                     }
-
-                    try {
-                        if (!endAbook && searchAbook) {
-                            articlesModels.addAll(loadBooksListAbook(
-                                    urls.get(0).replace("/page" + page + "/", "/page" + temp + "/"), temp));
-                        }
-                    } catch (NullPointerException e) {
-                        endAbook = true;
-                        exit++;
-                        if (exit >= urls.size()) {
-                            observableEmitter.onError(e);
-                        }
-                    }
-
-                    try {
-                        if (!endBazaKnig && searchBazaKnig) {
-                            articlesModels.addAll(loadBooksListBazaKnig(
-                                    urls.get(4).replace("&page=" + page, ""), temp));
-                        }
-                    } catch (NullPointerException e) {
-                        endBazaKnig = true;
-                        exit++;
-                        if (exit >= urls.size()) {
-                            observableEmitter.onError(e);
-                        }
-                    } catch (CookesExeption e) {
-                        cookesExeption = true;
-                    }
-
                     observableEmitter.onNext(articlesModels);
                 }
-                if (cookesExeption) {
-                    throw new CookesExeption(Url.SERVER_BAZA_KNIG);
-                }
             } catch (Exception e) {
-                observableEmitter.onError(e);
+                if (e.getClass() == NullPointerException.class || (e.getClass() == SocketTimeoutException.class && url
+                        .contains("baza-knig.ru"))) {
+                    observableEmitter.onError(new NullPointerException(url));
+                } else {
+                    observableEmitter.onError(e);
+                }
             } finally {
                 observableEmitter.onComplete();
             }

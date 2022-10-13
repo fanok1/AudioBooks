@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
 import androidx.preference.PreferenceManager;
 import butterknife.BindView;
@@ -33,21 +34,38 @@ import java.util.Objects;
 public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTimerView {
 
     public static final String bradcast_UpdateTimer = "updateTimer";
+
     public static final String bradcast_FinishTimer = "finishTimer";
+
+    public static final String Broadcast_SET_TIME_LEFT = "SetTimeLefft";
+
+    public static final String Broadcast_GET_TIME_LEFT = "GetTimeLefft";
+
+    public static final String Broadcast_UPDATE_TIMER_START = "updateTimerStart";
+
     @BindView(R.id.hours)
     TextView mHours;
+
     @BindView(R.id.minutes)
     TextView mMinutes;
+
     @BindView(R.id.seconds)
     TextView mSeconds;
+
     @BindView(R.id.start)
     ImageButton mStart;
+
     @BindView(R.id.clear)
     ImageButton mClear;
+
     @InjectPresenter
     SleepTimerPresenter mPresenter;
+
     private BroadcastReceiver updateTimerBroadcast;
+
     private BroadcastReceiver finihTimer;
+
+    private BroadcastReceiver setProgress;
 
 
     @Override
@@ -79,6 +97,88 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
         initButtonsClick(numbers);
         mClear.setOnClickListener(view -> mPresenter.clear(view));
         mStart.setOnClickListener(view -> mPresenter.start());
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(updateTimerBroadcast);
+        unregisterReceiver(finihTimer);
+        unregisterReceiver(setProgress);
+    }
+
+    @Override
+    public void broadcastStartTimer(Intent intent) {
+        int hours = Integer.parseInt(mHours.getText().toString());
+        int min = Integer.parseInt(mMinutes.getText().toString());
+        int sec = Integer.parseInt(mSeconds.getText().toString());
+        long time = (hours * 60 * 60 + min * 60 + sec) * 1000;
+        intent.putExtra("time", time);
+        sendBroadcast(intent);
+    }
+
+    @Override
+    public void brodcastSend(final Intent intent) {
+        sendBroadcast(intent);
+    }
+
+    @Override
+    public void setSrcToStartButton(boolean started) {
+        if (started) {
+            mStart.setImageDrawable(getDrawable(R.drawable.ic_stop));
+        } else {
+            mStart.setImageDrawable(getDrawable(R.drawable.ic_play));
+        }
+    }
+
+    @Override
+    public void showToast(final int id) {
+        Toast.makeText(this, id, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void updateTime(ArrayList<Character> time) {
+        int size = time.size();
+        String hour = "00";
+        if (size > 5) {
+            hour = time.get(5).toString() + time.get(4).toString();
+        } else if (size > 4) {
+            hour = "0" + time.get(4).toString();
+        }
+        mHours.setText(hour);
+
+        String minets = "00";
+        if (size > 3) {
+            minets = time.get(3).toString() + time.get(2).toString();
+        } else if (size > 2) {
+            minets = "0" + time.get(2).toString();
+        }
+        mMinutes.setText(minets);
+
+        String sec = "00";
+        if (size > 1) {
+            sec = time.get(1).toString() + time.get(0).toString();
+        } else if (size > 0) {
+            sec = "0" + time.get(0).toString();
+        }
+        mSeconds.setText(sec);
+
+    }
+
+    private void initButtonsClick(ViewGroup viewGroup) {
+        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+            View view = viewGroup.getChildAt(i);
+            if (view instanceof Button) {
+                Button button = (Button) view;
+                if (button.getText().toString().equals(getString(R.string.end_сhapter))) {
+                    button.setOnClickListener(view1 -> mPresenter.endChapterClick(view1));
+                } else {
+                    button.setOnClickListener(view1 -> mPresenter.numberClick(view1));
+                }
+            } else if (view instanceof ViewGroup) {
+                initButtonsClick((ViewGroup) view);
+            }
+        }
     }
 
     private void registerdBradcast() {
@@ -132,7 +232,6 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
         IntentFilter updateTimerFilter = new IntentFilter(bradcast_UpdateTimer);
         registerReceiver(updateTimerBroadcast, updateTimerFilter);
 
-
         finihTimer = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -141,74 +240,17 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
         };
         IntentFilter finishTimerFilter = new IntentFilter(bradcast_FinishTimer);
         registerReceiver(finihTimer, finishTimerFilter);
-    }
 
-    private void initButtonsClick(ViewGroup viewGroup) {
-        for (int i = 0; i < viewGroup.getChildCount(); i++) {
-            View view = viewGroup.getChildAt(i);
-            if (view instanceof Button) {
-                Button button = (Button) view;
-                button.setOnClickListener(view1 -> mPresenter.numberClick(view1));
-            } else if (view instanceof ViewGroup) {
-                initButtonsClick((ViewGroup) view);
+        setProgress = new BroadcastReceiver() {
+            @Override
+            public void onReceive(final Context context, final Intent intent) {
+                long time = intent.getLongExtra("timeLet", 0);
+                mPresenter.setEndCapterTime(time);
             }
-        }
+        };
+        registerReceiver(setProgress, new IntentFilter(Broadcast_SET_TIME_LEFT));
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unregisterReceiver(updateTimerBroadcast);
-        unregisterReceiver(finihTimer);
-    }
-
-    @Override
-    public void updateTime(ArrayList<Character> time) {
-        int size = time.size();
-        String hour = "00";
-        if (size > 5) {
-            hour = time.get(5).toString() + time.get(4).toString();
-        } else if (size > 4) {
-            hour = "0" + time.get(4).toString();
-        }
-        mHours.setText(hour);
-
-        String minets = "00";
-        if (size > 3) {
-            minets = time.get(3).toString() + time.get(2).toString();
-        } else if (size > 2) {
-            minets = "0" + time.get(2).toString();
-        }
-        mMinutes.setText(minets);
-
-        String sec = "00";
-        if (size > 1) {
-            sec = time.get(1).toString() + time.get(0).toString();
-        } else if (size > 0) {
-            sec = "0" + time.get(0).toString();
-        }
-        mSeconds.setText(sec);
-
-    }
-
-    @Override
-    public void setSrcToStartButton(boolean started) {
-        if (started) {
-            mStart.setImageDrawable(getDrawable(R.drawable.ic_stop));
-        } else {
-            mStart.setImageDrawable(getDrawable(R.drawable.ic_play));
-        }
-    }
-
-    @Override
-    public void broadcastStartTimer(Intent intent) {
-        int hours = Integer.parseInt(mHours.getText().toString());
-        int min = Integer.parseInt(mMinutes.getText().toString());
-        int sec = Integer.parseInt(mSeconds.getText().toString());
-        long time = (hours * 60 * 60 + min * 60 + sec) * 1000;
-        intent.putExtra("time", time);
-        sendBroadcast(intent);
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

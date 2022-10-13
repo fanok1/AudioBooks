@@ -330,9 +330,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:background="@drawable/focusable"
+                    android:focusable="true"
+                    android:text="@string/end_сhapter"
                     android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size"
-                    android:visibility="invisible" />
+                    android:textSize="@dimen/titleSizeParentControl" />
             </LinearLayout>
 
 

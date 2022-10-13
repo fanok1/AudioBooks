@@ -31,10 +31,12 @@ import com.fanok.audiobooks.pojo.SearchebleArrayPOJO;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.squareup.picasso.Picasso;
 import io.reactivex.Observer;
+import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,8 +60,6 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
     private ArrayList<GenrePOJO> genre;
 
-    private com.fanok.audiobooks.interface_pacatge.books.BooksModel mModelBook;
-
     private final int mModelId;
 
     private com.fanok.audiobooks.interface_pacatge.books.GenreModel mModelGenre;
@@ -80,12 +80,17 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
     private final SharedPreferences mPreferences;
 
+    Hashtable<String, Boolean> hesSearchable;
+
+    private int exit = 0;
+
 
     private String mUrl;
 
     public SearchbalePresenter(int modelId, @NonNull Context context) {
 
         mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        hesSearchable = new Hashtable<>();
 
         mModelId = modelId;
         switch (modelId) {
@@ -123,7 +128,6 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         switch (mModelId) {
             case Consts.MODEL_BOOKS:
                 books = new ArrayList<>();
-                mModelBook = new BooksModel();
                 mSearcheblPOJO = new SearcheblPOJO();
                 mSearchableModel = new SearchebleModel();
                 break;
@@ -275,6 +279,14 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             }
 
             isEnd = false;
+
+            hesSearchable.clear();
+            hesSearchable.put("knigavuhe.org", mPreferences.getBoolean("search_kniga_v_uhe", true));
+            hesSearchable.put("izib.uk", mPreferences.getBoolean("search_izibuc", true));
+            hesSearchable.put("audiobook-mp3.com", mPreferences.getBoolean("search_abmp3", true));
+            hesSearchable.put("akniga.org", mPreferences.getBoolean("search_abook", true));
+            hesSearchable.put("baza-knig.ru", mPreferences.getBoolean("search_baza_knig", true));
+
             page = 0;
             loadNext();
         }
@@ -421,51 +433,106 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 "searchebleBooks");
     }
 
+    private void execute(boolean enabled, String url, boolean speedUp, Observer<ArrayList<BookPOJO>> observer,
+            Scheduler scheduler) {
+        if (!enabled) {
+            exit++;
+        } else {
+            new BooksModel().getBooks(url, page, speedUp)
+                    .subscribeOn(scheduler)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(observer);
+        }
+    }
+
     private void getData(ArrayList<String> url) {
+        exit = 0;
+        Observer<ArrayList<BookPOJO>> observer = new Observer<ArrayList<BookPOJO>>() {
+            @Override
+            public void onComplete() {
+                exit++;
+                Log.d(TAG, "onComplete");
+                if (exit == url.size()) {
+                    books = sort(url, books); //при добавлении источников изменять не надо
+                    filterBooks();
+                    getViewState().showProgres(false);
+                    isLoading = false;
+                    getViewState().setNotFoundVisibile(
+                            isLoadAutors && mSearcheblPOJO.getAutorsList().isEmpty() &&
+                                    mSearcheblPOJO.getSeriesList().isEmpty() &&
+                                    books.isEmpty());
+                }
+                boolean flag = false;
+                for (Hashtable.Entry<String, Boolean> entry : hesSearchable.entrySet()) {
+                    Boolean value = entry.getValue();
+                    if (value) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if (!flag) {
+                    isEnd = true;
+                }
+            }
+
+            @Override
+            public void onError(@NotNull Throwable e) {
+                if (e.getClass() == CookesExeption.class) {
+                    if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                        getViewState().showToast(R.string.cookes_baza_knig_exeption);
+                    }
+                } else if (e.getClass() == NullPointerException.class) {
+                    String url = e.getMessage();
+                    if (url != null) {
+                        for (Hashtable.Entry<String, Boolean> entry : hesSearchable.entrySet()) {
+                            String key = entry.getKey();
+                            if (url.contains(key)) {
+                                entry.setValue(false);
+                            }
+                        }
+                    }
+                }
+                onComplete();
+            }
+
+            @Override
+            public void onNext(@NotNull ArrayList<BookPOJO> bookPOJOS) {
+                books.addAll(bookPOJOS);
+            }
+
+            @Override
+            public void onSubscribe(@NotNull Disposable d) {
+            }
+        };
+
         if (!isLoading) {
             isLoading = true;
-            mModelBook.getBooks(url, page, mPreferences)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Observer<ArrayList<BookPOJO>>() {
-                        @Override
-                        public void onError(@NotNull Throwable e) {
-                            if (e.getClass() == CookesExeption.class) {
-                                if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
-                                    getViewState().showToast(R.string.cookes_baza_knig_exeption);
-                                }
-                            } else if (e.getClass() == NullPointerException.class) {
-                                isEnd = true;
-                            } else {
-                                page--;
-                            }
-                            onComplete();
-                        }
+            Scheduler scheduler;
+            if (mPreferences.getBoolean("search_multithreading", true)) {
+                scheduler = Schedulers.io();
+            } else {
+                scheduler = Schedulers.single();
+            }
 
-                        @Override
-                        public void onNext(@NotNull ArrayList<BookPOJO> bookPOJOS) {
-                            books.addAll(bookPOJOS);
+            for (Hashtable.Entry<String, Boolean> entry : hesSearchable.entrySet()) {
+                String key = entry.getKey();
+                Boolean value = entry.getValue();
+                for (int i = 0; i < url.size(); i++) {
+                    String s = url.get(i);
+                    if (s.contains(key)) {
+                        if (key.equals("audiobook-mp3.com")) {
+                            boolean speed = mPreferences.getBoolean("speed_up_search_abmp3", false);
+                            execute(value, s, speed, observer, scheduler);
+                        } else {
+                            execute(value, s, false, observer, scheduler);
                         }
+                    }
+                }
 
-                        @Override
-                        public void onSubscribe(@NotNull Disposable d) {
-                        }
-
-                        @Override
-                        public void onComplete() {
-                            Log.d(TAG, "onComplete");
-                            books = sort(url, books); //при добавлении источников изменять не надо
-                            filterBooks();
-                            getViewState().showProgres(false);
-                            isLoading = false;
-                            getViewState().setNotFoundVisibile(
-                                    isLoadAutors && mSearcheblPOJO.getAutorsList().isEmpty() &&
-                                            mSearcheblPOJO.getSeriesList().isEmpty() &&
-                                            books.isEmpty());
-                        }
-                    });
-
+            }
         }
+
+
     }
 
     private ArrayList<BookPOJO> sort(ArrayList<String> urls, ArrayList<BookPOJO> array) {
@@ -501,7 +568,6 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                                 isEnd = true;
                             } else {
                                 getViewState().showToast(R.string.error_load_data);
-                                page--;
                             }
                             onComplete();
 
@@ -548,7 +614,6 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
                     @Override
                     public void onError(@NotNull Throwable e) {
-                        getViewState().showToast(R.string.error_load_data);
                         onComplete();
                     }
 

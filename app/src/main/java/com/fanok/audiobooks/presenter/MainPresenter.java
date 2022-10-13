@@ -21,7 +21,7 @@ import com.fanok.audiobooks.fragment.SettingsFragment;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
-import java.util.Objects;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> implements
@@ -56,7 +56,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                 fragment = BooksFragment.newInstance(Url.INDEX_BAZA_KNIG,
                         R.string.menu_audiobooks, Consts.MODEL_BOOKS);
             }
-            getViewState().showFragment(Objects.requireNonNull(fragment), "audioBook");
+            if (fragment != null) {
+                getViewState().showFragment(fragment, "audioBook");
+            }
         } else if (id == R.id.nav_genre || id == R.id.layout_nav_genre) {
             Fragment fragment = null;
             if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
@@ -75,7 +77,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                 fragment = BooksFragment.newInstance(Url.SECTIONS_BAZA_KNIG,
                         R.string.menu_genre, Consts.MODEL_GENRE);
             }
-            getViewState().showFragment(Objects.requireNonNull(fragment), "genre");
+            if (fragment != null) {
+                getViewState().showFragment(fragment, "genre");
+            }
 
         } else if (id == R.id.nav_autor || id == R.id.layout_nav_autor) {
 
@@ -96,7 +100,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                     fragment = BooksFragment.newInstance(Url.AUTHORS_AKNIGA,
                             R.string.menu_autor, Consts.MODEL_AUTOR);
                 }
-                getViewState().showFragment(Objects.requireNonNull(fragment), "autor");
+                if (fragment != null) {
+                    getViewState().showFragment(fragment, "autor");
+                }
             }
 
         } else if (id == R.id.nav_artist || id == R.id.layout_nav_artist) {
@@ -118,7 +124,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                     fragment = BooksFragment.newInstance(
                             Url.PERFORMERS_AKNIGA, R.string.menu_artist, Consts.MODEL_ARTIST);
                 }
-                getViewState().showFragment(Objects.requireNonNull(fragment), "artist");
+                if (fragment != null) {
+                    getViewState().showFragment(fragment, "artist");
+                }
             }
         } else if (id == R.id.nav_favorite || id == R.id.layout_nav_favorite) {
             Fragment fragment = FavoriteFragment.newInstance(R.string.menu_favorite,
@@ -148,6 +156,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
     @Override
     public void startFragment(int fragmentID, String url) {
+        FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
+        crashlytics.setCustomKey("url", url);
+
         if (url == null || url.isEmpty()) {
             startFragment(fragmentID, false);
             return;
@@ -206,8 +217,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                         R.string.menu_audiobooks, Consts.MODEL_BOOKS);
             }
 
-
-            getViewState().showFragment(Objects.requireNonNull(fragment), "audioBook");
+            if (fragment != null) {
+                getViewState().showFragment(fragment, "audioBook");
+            }
         } else if (fragmentID == Consts.FRAGMENT_GENRE) {
             if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
                 fragment = BooksFragment.newInstance(Url.SECTIONS,
@@ -226,7 +238,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                         R.string.menu_genre, Consts.MODEL_GENRE);
             }
 
-            getViewState().showFragment(Objects.requireNonNull(fragment), "genre");
+            if (fragment != null) {
+                getViewState().showFragment(fragment, "genre");
+            }
 
         } else if (fragmentID == Consts.FRAGMENT_AUTOR) {
 
@@ -246,7 +260,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                     fragment = BooksFragment.newInstance(Url.AUTHORS_AKNIGA,
                             R.string.menu_autor, Consts.MODEL_AUTOR);
                 }
-                getViewState().showFragment(Objects.requireNonNull(fragment), "autor");
+                if (fragment != null) {
+                    getViewState().showFragment(fragment, "autor");
+                }
             }
         } else if (fragmentID == Consts.FRAGMENT_ARTIST) {
 
@@ -266,7 +282,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                     fragment = BooksFragment.newInstance(
                             Url.PERFORMERS_AKNIGA, R.string.menu_artist, Consts.MODEL_ARTIST);
                 }
-                getViewState().showFragment(Objects.requireNonNull(fragment), "artist");
+                if (fragment != null) {
+                    getViewState().showFragment(fragment, "artist");
+                }
             }
         } else if (fragmentID == Consts.FRAGMENT_FAVORITE) {
             fragment = FavoriteFragment.newInstance(R.string.menu_favorite,
@@ -291,7 +309,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                 fragment = BooksFragment.newInstance(Url.INDEX_AKNIGA,
                         R.string.menu_audiobooks, Consts.MODEL_BOOKS);
             }
-            getViewState().showFragment(Objects.requireNonNull(fragment), "audioBook");
+            if (fragment != null) {
+                getViewState().showFragment(fragment, "audioBook");
+            }
             if (!b) {
                 BooksDBModel booksDBModel = new BooksDBModel(mContext);
                 BookPOJO bookPOJO = booksDBModel.getHistory();

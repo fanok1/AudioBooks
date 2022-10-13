@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.Gravity;
@@ -70,29 +71,51 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     public static final String Broadcast_PLAY = "Play";
     public static final String Broadcast_SEEK_TO = "SeekTo";
     public static final String Broadcast_SEEK_NEXT_30 = "SeekToNext30";
+
     public static final String Broadcast_SEEK_PREVIOUS_10 = "SeekToPrevious10";
+
     public static final String Broadcast_SHOW_TITLE = "SHOW_TITLE";
+
     public static final String Broadcast_GET_POSITION = "GET_POSITION";
+
     public static final String Broadcast_SET_SPEED = "SET_SPEED";
+
     public static final String Broadcast_CloseNotPrepered = "CloseNotPrepered";
+
     public static final String Broadcast_Equalizer = "Equalizer";
+
     public static boolean start = false;
+
     public static boolean resume = false;
 
     private final BookPOJO mBookPOJO;
-    private final BooksDBModel mBooksDBModel;
-    private final AudioDBModel mAudioDBModel;
+
+    private AudioDBModel mAudioDBModel;
+
+    private AudioListDBModel mAudioListDBModel;
+
     private final OtherSourceModel mOtherSourceModel;
-    private final AudioListDBModel mAudioListDBModel;
+
+    private AudioModelInterfece mAudioModel;
+
     private ArrayList<AudioPOJO> mAudioPOJO;
+
     private String last = "";
-    private final Context mContext;
+
+    private BooksDBModel mBooksDBModel;
+
     private boolean serviceBound = false;
+
     private static float speed = 1;
+
     private ServiceConnection serviceConnection;
-    private final SharedPreferences pref;
+
+    private Context mContext;
+
     private boolean error = false;
-    private final AudioModelInterfece mAudioModel;
+
+    private SharedPreferences pref;
+
     private ArrayList<OtherArtistPOJO> mOtherArtistPOJOS;
 
     private int state = BottomSheetBehavior.STATE_COLLAPSED;
@@ -102,15 +125,16 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     }
 
     public BookPresenter(@NonNull BookPOJO bookPOJO, @NonNull Context context) {
-        mContext = context;
         mBookPOJO = bookPOJO;
         mBooksDBModel = new BooksDBModel(context);
-        mAudioListDBModel = new AudioListDBModel(context);
         mBooksDBModel.addHistory(mBookPOJO);
-        mAudioModel = new AudioModel(context);
-        mOtherSourceModel = new OtherSourceModel();
         mAudioDBModel = new AudioDBModel(context);
+        mAudioModel = new AudioModel(context);
+        mAudioListDBModel = new AudioListDBModel(context);
+        mOtherSourceModel = new OtherSourceModel();
         pref = PreferenceManager.getDefaultSharedPreferences(context);
+        mContext = context;
+
         serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
@@ -123,11 +147,8 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                 serviceBound = false;
             }
         };
-
         FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
-
         crashlytics.setCustomKey("urlBooks", bookPOJO.getUrl());
-
     }
 
     public ArrayList<OtherArtistPOJO> getOtherArtistPOJOS() {
@@ -194,14 +215,23 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     }
 
     @Override
-    public void onDestroy() {
-        mAudioDBModel.closeDB();
-        mBooksDBModel.closeDB();
-        if (mContext != null) {
-            Intent broadcastIntent = new Intent(Broadcast_CloseNotPrepered);
-            mContext.sendBroadcast(broadcastIntent);
+    public void onCreate(final Context context) {
+        if (mBooksDBModel == null || mContext == null) {
+            mBooksDBModel = new BooksDBModel(context);
         }
-        super.onDestroy();
+        if (mAudioDBModel == null || mContext == null) {
+            mAudioDBModel = new AudioDBModel(context);
+        }
+        if (mAudioModel == null || mContext == null) {
+            mAudioModel = new AudioModel(context);
+        }
+        if (mAudioListDBModel == null || mContext == null) {
+            mAudioListDBModel = new AudioListDBModel(context);
+        }
+        if (pref == null || mContext == null) {
+            pref = PreferenceManager.getDefaultSharedPreferences(context);
+        }
+        mContext = context;
     }
 
     public void setServiceBound(boolean serviceBound) {
@@ -265,38 +295,16 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         }
     }
 
-    private void playAudio(int audioIndex, int timeStart) {
-        StorageUtil storage = new StorageUtil(mContext.getApplicationContext());
-        storage.storeAudioIndex(audioIndex);
-        if (!serviceBound || !isServiceRunning(mContext, MediaPlayerService.class)) {
-            storage.storeAudio(mAudioPOJO);
-            storage.storeUrlBook(mBookPOJO.getUrl());
-            storage.storeImageUrl(mBookPOJO.getPhoto());
-            storage.storeTimeStart(timeStart);
-            Intent playerIntent = new Intent(mContext, MediaPlayerService.class);
-            playerIntent.setAction("start");
-            if (serviceConnection != null) {
-                mContext.startService(playerIntent);
-                mContext.bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-            } else {
-                serviceConnection = new ServiceConnection() {
-                    @Override
-                    public void onServiceConnected(ComponentName name, IBinder service) {
-                        serviceBound = true;
-                    }
-
-                    @Override
-                    public void onServiceDisconnected(ComponentName name) {
-                        serviceConnection = null;
-                        serviceBound = false;
-                    }
-                };
-                playAudio(audioIndex, timeStart);
-            }
-        } else {
-            Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
-            getViewState().broadcastSend(broadcastIntent);
+    @Override
+    public void onDestroy() {
+        mAudioDBModel.closeDB();
+        mAudioListDBModel.closeDB();
+        mBooksDBModel.closeDB();
+        if (mContext != null) {
+            Intent broadcastIntent = new Intent(Broadcast_CloseNotPrepered);
+            mContext.sendBroadcast(broadcastIntent);
         }
+        super.onDestroy();
     }
 
     @Override
@@ -321,6 +329,70 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         error = false;
         onCompleteAudio();
 
+    }
+
+    private void onCompleteAudio() {
+        if (mAudioPOJO != null && mAudioPOJO.size() > 0) {
+            Log.d(TAG, "onComplete");
+            int curentTrack = 0;
+            AudioPOJO pojo = null;
+            for (int i = 0; i < mAudioPOJO.size(); i++) {
+                if (mAudioPOJO.get(i).getName().equals(last)) {
+                    pojo = mAudioPOJO.get(i);
+                    curentTrack = i;
+                }
+            }
+            if (pojo == null) {
+                pojo = mAudioPOJO.get(0);
+                curentTrack = 0;
+                if (!MediaPlayerService.isPlay()) {
+                    getViewState().showTitle(pojo.getName());
+                }
+                mAudioDBModel.add(mBookPOJO.getUrl(), pojo.getName());
+            }
+
+            if (!error) {
+                if (mAudioListDBModel.isset(mBookPOJO.getUrl())) {
+                    mAudioListDBModel.remove(mBookPOJO.getUrl());
+                }
+                for (int i = 0; i < mAudioPOJO.size(); i++) {
+                    AudioListPOJO audioListPOJO = new AudioListPOJO();
+                    audioListPOJO.setBookUrl(mBookPOJO.getUrl());
+                    audioListPOJO.setBookName(mBookPOJO.getName());
+                    audioListPOJO.setAudioName(mAudioPOJO.get(i).getName());
+                    audioListPOJO.setAudioUrl(mAudioPOJO.get(i).getUrl());
+                    audioListPOJO.setTime(mAudioPOJO.get(i).getTime());
+                    mAudioListDBModel.add(audioListPOJO);
+                }
+            }
+
+            boolean b = pref.getBoolean("reproductionPref", true);
+            boolean autoStart = pref.getBoolean("autoPlayPref", false);
+
+            if (autoStart) {
+                if (!MediaPlayerService.isPlay()) {
+                    start = true;
+                    resume = true;
+                    playAudio(curentTrack,
+                            mAudioDBModel.getTime(mBookPOJO.getUrl()));
+                } else if (!b) {
+                    start = true;
+                    resume = true;
+                    playAudio(curentTrack,
+                            mAudioDBModel.getTime(mBookPOJO.getUrl()));
+                }
+
+            } else if (!MediaPlayerService.isPlay() || !b) {
+                start = false;
+                playAudio(curentTrack, mAudioDBModel.getTime(mBookPOJO.getUrl()));
+            } else {
+                start = true;
+            }
+            getViewState().setSelected(curentTrack,
+                    mAudioPOJO.get(curentTrack).getName());
+
+            getViewState().showProgres(false);
+        }
     }
 
     @Override
@@ -623,67 +695,41 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         }
     }
 
-    private void onCompleteAudio() {
-        if (mAudioPOJO.size() > 0) {
-            Log.d(TAG, "onComplete");
-            int curentTrack = 0;
-            AudioPOJO pojo = null;
-            for (int i = 0; i < mAudioPOJO.size(); i++) {
-                if (mAudioPOJO.get(i).getName().equals(last)) {
-                    pojo = mAudioPOJO.get(i);
-                    curentTrack = i;
+    private void playAudio(int audioIndex, int timeStart) {
+        StorageUtil storage = new StorageUtil(mContext.getApplicationContext());
+        storage.storeAudioIndex(audioIndex);
+        if (!serviceBound || !isServiceRunning(mContext, MediaPlayerService.class)) {
+            storage.storeAudio(mAudioPOJO);
+            storage.storeUrlBook(mBookPOJO.getUrl());
+            storage.storeImageUrl(mBookPOJO.getPhoto());
+            storage.storeTimeStart(timeStart);
+            Intent playerIntent = new Intent(mContext, MediaPlayerService.class);
+            playerIntent.setAction("start");
+            if (serviceConnection != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    mContext.startForegroundService(playerIntent);
+                } else {
+                    mContext.startService(playerIntent);
                 }
-            }
-            if (pojo == null) {
-                pojo = mAudioPOJO.get(0);
-                curentTrack = 0;
-                if (!MediaPlayerService.isPlay()) {
-                    getViewState().showTitle(pojo.getName());
-                }
-                mAudioDBModel.add(mBookPOJO.getUrl(), pojo.getName());
-            }
-
-            if (!error) {
-                if (mAudioListDBModel.isset(mBookPOJO.getUrl())) {
-                    mAudioListDBModel.remove(mBookPOJO.getUrl());
-                }
-                for (int i = 0; i < mAudioPOJO.size(); i++) {
-                    AudioListPOJO audioListPOJO = new AudioListPOJO();
-                    audioListPOJO.setBookUrl(mBookPOJO.getUrl());
-                    audioListPOJO.setBookName(mBookPOJO.getName());
-                    audioListPOJO.setAudioName(mAudioPOJO.get(i).getName());
-                    audioListPOJO.setAudioUrl(mAudioPOJO.get(i).getUrl());
-                    audioListPOJO.setTime(mAudioPOJO.get(i).getTime());
-                    mAudioListDBModel.add(audioListPOJO);
-                }
-            }
-
-            boolean b = pref.getBoolean("reproductionPref", true);
-            boolean autoStart = pref.getBoolean("autoPlayPref", false);
-
-            if (autoStart) {
-                if (!MediaPlayerService.isPlay()) {
-                    start = true;
-                    resume = true;
-                    playAudio(curentTrack,
-                            mAudioDBModel.getTime(mBookPOJO.getUrl()));
-                } else if (!b) {
-                    start = true;
-                    resume = true;
-                    playAudio(curentTrack,
-                            mAudioDBModel.getTime(mBookPOJO.getUrl()));
-                }
-
-            } else if (!MediaPlayerService.isPlay() || !b) {
-                start = false;
-                playAudio(curentTrack, mAudioDBModel.getTime(mBookPOJO.getUrl()));
+                mContext.bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
             } else {
-                start = true;
-            }
-            getViewState().setSelected(curentTrack,
-                    mAudioPOJO.get(curentTrack).getName());
+                serviceConnection = new ServiceConnection() {
+                    @Override
+                    public void onServiceConnected(ComponentName name, IBinder service) {
+                        serviceBound = true;
+                    }
 
-            getViewState().showProgres(false);
+                    @Override
+                    public void onServiceDisconnected(ComponentName name) {
+                        serviceConnection = null;
+                        serviceBound = false;
+                    }
+                };
+                playAudio(audioIndex, timeStart);
+            }
+        } else {
+            Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
+            getViewState().broadcastSend(broadcastIntent);
         }
     }
 }

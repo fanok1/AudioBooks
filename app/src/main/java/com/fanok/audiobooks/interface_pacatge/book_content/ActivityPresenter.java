@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.interface_pacatge.book_content;
 
+import android.content.Context;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -53,6 +54,8 @@ public interface ActivityPresenter {
     void delete(HashSet<String> data);
 
     void addDecodeData(String string);
+
+    void onCreate(Context context);
 
 
 }

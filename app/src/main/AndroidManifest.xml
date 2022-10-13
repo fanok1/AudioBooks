@@ -87,6 +87,10 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3595775191373219~2371571769" />
 
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
         <activity
             android:name=".activity.SelectDirectoryActivity"
             android:configChanges="locale|uiMode|orientation|screenSize"
@@ -255,7 +259,7 @@
         <service
             android:name=".service.MediaPlayerService"
             android:exported="true"
-            android:permission="audioBook">
+            tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
                 <action android:name="android.media.browse.MediaBrowserService" />

@@ -15,6 +15,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -318,6 +319,13 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                     name = "Заборона Европа";
                 }
                 if (!file.isEmpty()) {
+
+                    Intent intent = VpnService.prepare(getContext().getApplicationContext());
+                    if (intent != null) {
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        getContext().getApplicationContext().startActivity(intent);
+                    }
+
                     try {
                         // .ovpn file
                         InputStream conf = requireContext().getAssets().open(file);
@@ -343,7 +351,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                     }
                 }
             } else {
-                OpenVPNThread.stop();
+                try {
+                    OpenVPNThread.stop();
+                } catch (NullPointerException ignored) {
+                }
             }
             return true;
         });

@@ -59,6 +59,7 @@ public class ActivityCookies extends AppCompatActivity {
         binding.webView.setWebViewClient(new WebViewClient());
         binding.webView.getSettings().setLoadsImagesAutomatically(true);
         binding.webView.getSettings().setJavaScriptEnabled(true);
+        binding.webView.getSettings().setUserAgentString(Consts.USER_AGENT);
         binding.webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         binding.webView.loadUrl(Url.SERVER_BAZA_KNIG);
     }
@@ -104,16 +105,18 @@ public class ActivityCookies extends AppCompatActivity {
     }
 
     private String getCookie(String siteName, String cookieName) {
-        String CookieValue = null;
+        String CookieValue = "";
 
         CookieManager cookieManager = CookieManager.getInstance();
         String cookies = cookieManager.getCookie(siteName);
-        String[] temp = cookies.split(";");
-        for (String ar1 : temp) {
-            if (ar1.contains(cookieName)) {
-                String[] temp1 = ar1.split("=");
-                CookieValue = temp1[1];
-                break;
+        if (cookies != null) {
+            String[] temp = cookies.split(";");
+            for (String ar1 : temp) {
+                if (ar1.contains(cookieName)) {
+                    String[] temp1 = ar1.split("=");
+                    CookieValue = temp1[1];
+                    break;
+                }
             }
         }
         return CookieValue;

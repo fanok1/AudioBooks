@@ -1,13 +1,15 @@
 package com.fanok.audiobooks.interface_pacatge.favorite;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
-
 import org.jetbrains.annotations.NotNull;
 
 public interface FavoritePresenter {
 
     void loadBooks();
+
+    void onCreate(Context context);
 
     void onDestroy();
 

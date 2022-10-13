@@ -14,7 +14,6 @@ import static com.google.android.gms.ads.AdRequest.ERROR_CODE_NETWORK_ERROR;
 import android.Manifest;
 import android.app.PendingIntent;
 import android.app.UiModeManager;
-import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -418,9 +417,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
         int isTablet = getResources().getInteger(R.integer.isTablet);
         UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
-        if (pref.getBoolean("androidAutoPref", false) && isTablet != 0) {
-            setContentView(R.layout.activity_book_android_auto);
-        } else if (uiModeManager != null
+        if (uiModeManager != null
                 && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
             setContentView(R.layout.activity_book_television);
         } else {
@@ -1375,14 +1372,16 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     @Override
     public void onPositiveButtonClicked(int i, @NotNull String s) {
         new StorageUtil(this).storeShowRating(false);
-        String packageName = getPackageName();
+        startActivity(new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://4pda.to/forum/index.php?showtopic=978445")));
+        /*String packageName = getPackageName();
         try {
             startActivity(new Intent(Intent.ACTION_VIEW,
                     Uri.parse("market://details?id=" + packageName)));
         } catch (ActivityNotFoundException anfe) {
             startActivity(new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://4pda.ru/forum/index.php?showtopic=978445")));
-        }
+                    Uri.parse("https://4pda.to/forum/index.php?showtopic=978445")));
+        }*/
     }
 
     @Override

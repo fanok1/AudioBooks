@@ -41,21 +41,26 @@ public class Consts {
             "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 
     public static final Pattern REGEXP_PORT = Pattern.compile("\\d{1,5}");
+
     private static final String zeroTo255
             = "([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])";
+
     public static final Pattern REGEXP_IP = Pattern.compile(zeroTo255 + "\\." + zeroTo255 + "\\."
             + zeroTo255 + "\\." + zeroTo255);
 
-    public static final String USER_AGENT =
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 "
-                    + "(KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36";
+    public static final String USER_AGENT
+            = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36";
 
     public static final int MODEL_BOOKS = 0;
+
     public static final int MODEL_GENRE = 1;
+
     public static final int MODEL_AUTOR = 2;
+
     public static final int MODEL_ARTIST = 3;
 
     public static final int TABLE_FAVORITE = 1;
+
     public static final int TABLE_HISTORY = 2;
 
     public static final int REQEST_CODE_SEARCH = 157;

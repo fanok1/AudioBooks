@@ -85,6 +85,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
             titleId = arg.getInt(ARG_TITLE, 0);
             table = arg.getInt(ARG_TABLE, 0);
         }
+        mPresenter.onCreate(getContext().getApplicationContext());
 
     }
 
@@ -369,8 +370,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         if (arg != null) {
             table = arg.getInt(ARG_TABLE, 0);
         }
-        return new FavoritePresenter(requireContext().getApplicationContext(),
-                table);
+        return new FavoritePresenter(table);
     }
 
     @Override

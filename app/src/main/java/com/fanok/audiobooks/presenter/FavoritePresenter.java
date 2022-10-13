@@ -42,31 +42,41 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         com.fanok.audiobooks.interface_pacatge.favorite.FavoritePresenter {
 
     public static final int NOT_SAVED = -1;
+
     public static final int SAVED = 0;
+
     public static final int SAVED_ALL = 1;
 
 
     private ArrayList<BookPOJO> books;
+
     private ArrayList<BookPOJO> flter = null;
-    private final BooksDBModel mBooksDBModel;
-    private final AudioDBModel mAudioDBModel;
-    private final FavoriteModel mFavoriteModel;
+
+    private AudioDBModel mAudioDBModel;
+
+    private BooksDBModel mBooksDBModel;
+
+    private FavoriteModel mFavoriteModel;
+
     private final ArrayList<BookPOJO> filterSearch;
+
     private final int table;
+
     private boolean isLoading = false;
+
     private String mQuery = "";
+
     private Context mContext;
+
     private boolean firstOpen;
+
     private AudioListDBModel mAudioListDBModel;
+
     private boolean isFilterSaved;
 
 
-    public FavoritePresenter(@NotNull Context context, int table) {
-        mBooksDBModel = new BooksDBModel(context);
-        mAudioDBModel = new AudioDBModel(context);
-        mFavoriteModel = new FavoriteModel(context);
+    public FavoritePresenter(int table) {
         filterSearch = new ArrayList<>();
-        mContext = context;
         firstOpen = true;
         this.table = table;
     }
@@ -136,6 +146,14 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                     });
 
         }
+    }
+
+    @Override
+    public void onCreate(Context context) {
+        mContext = context;
+        mBooksDBModel = new BooksDBModel(context);
+        mAudioDBModel = new AudioDBModel(context);
+        mFavoriteModel = new FavoriteModel(context);
     }
 
 

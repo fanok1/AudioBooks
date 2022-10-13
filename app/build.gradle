@@ -23,8 +23,8 @@ android {
         applicationId "com.fanok.audiobooks"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 63
-        versionName "4.10"
+        versionCode 71
+        versionName "5.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.release
@@ -123,6 +123,9 @@ dependencies {
 
     implementation 'org.mozilla:rhino:1.7.14'
     implementation 'com.github.evgenyneu:js-evaluator-for-android:v5.0.0'
+    implementation "io.grpc:grpc-okhttp:1.32.2"
+
+
 
 
 

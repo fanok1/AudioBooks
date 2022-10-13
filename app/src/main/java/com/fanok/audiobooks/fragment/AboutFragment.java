@@ -151,7 +151,7 @@ public class AboutFragment extends PreferenceFragmentCompat {
 
         preferenceClickListner("open_4pda", preference -> {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://4pda.ru/forum/index.php?showtopic=978445"));
+                    Uri.parse("https://4pda.to/forum/index.php?showtopic=978445"));
             startActivity(browserIntent);
             return true;
         });

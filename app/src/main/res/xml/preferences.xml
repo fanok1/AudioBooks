@@ -60,11 +60,11 @@
 
     </PreferenceScreen>
 
-    <Preference
+    <!--<Preference
         android:icon="@drawable/ic_cookie"
         android:key="cookies"
         android:summary="@string/cookies_info_baza_knig"
-        android:title="@string/getCookies" />
+        android:title="@string/getCookies" />-->
 
     <ListPreference
         android:defaultValue="@string/vpn_no_value"
@@ -157,6 +157,13 @@
         android:summary="@string/scrollToSelectedDesc"
         android:title="@string/scrollToSelected" />
 
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:icon="@drawable/ic_waves"
+        android:key="search_multithreading"
+        android:summary="@string/search_multithreading"
+        android:title="@string/multithreading" />
+
     <EditTextPreference
         android:defaultValue="60"
         android:icon="@drawable/ic_buffer"
@@ -232,13 +239,6 @@
     </PreferenceScreen>
     -->
 
-
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:icon="@drawable/ic_car"
-        android:key="androidAutoPref"
-        android:summary="@string/android_auto_desc"
-        android:title="@string/android_auto" />
 
     <Preference
         android:icon="@drawable/ic_backup"

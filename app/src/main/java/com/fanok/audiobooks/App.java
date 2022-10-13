@@ -53,12 +53,6 @@ public class App extends Application {
 
         Consts.setSOURCE(this, source);
 
-        Intent intent = VpnService.prepare(getApplicationContext());
-        if (intent != null) {
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            getApplicationContext().startActivity(intent);
-        }
-
         String vpn = pref.getString("vpn", getString(R.string.vpn_no_value));
         if (!vpn.equals(getString(R.string.vpn_no_value))) {
             String file = "";
@@ -74,6 +68,11 @@ public class App extends Application {
                 name = "Заборона Европа";
             }
             if (!file.isEmpty()) {
+                Intent intent = VpnService.prepare(getApplicationContext());
+                if (intent != null) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    getApplicationContext().startActivity(intent);
+                }
                 startVpn(file, name);
             }
         }

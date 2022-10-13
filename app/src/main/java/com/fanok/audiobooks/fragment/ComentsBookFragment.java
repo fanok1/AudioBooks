@@ -144,6 +144,16 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
 
     }
 
+    @Override
+    public void onCreate(final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        String url = requireArguments().getString(ARG_URL);
+        if (url == null || url.isEmpty()) {
+            throw new NullPointerException();
+        }
+        this.url = url;
+    }
+
     @ProvidePresenter
     BookComentsPresenter provide() {
         String url = requireArguments().getString(ARG_URL);

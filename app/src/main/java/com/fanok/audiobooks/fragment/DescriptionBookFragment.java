@@ -130,13 +130,8 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(requireContext());
 
-        int isTablet = getResources().getInteger(R.integer.isTablet);
-        if (pref.getBoolean("androidAutoPref", false) && isTablet != 0) {
-            view = inflater.inflate(R.layout.fragment_book_description_auto, container, false);
-        } else if (uiModeManager != null
-                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            view = inflater.inflate(R.layout.fragment_book_description_television, container,
-                    false);
+        if (uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            view = inflater.inflate(R.layout.fragment_book_description_television, container, false);
         } else {
             view = inflater.inflate(R.layout.fragment_book_description, container, false);
         }

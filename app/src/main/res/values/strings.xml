@@ -379,12 +379,16 @@
     <string name="vpn_antizapret_value" translatable="false">antizapret</string>
     <string name="vpn_zaborona_value" translatable="false">zaborona</string>
     <string name="vpn_zaborona_europe_value" translatable="false">zaborona_europe</string>
-    <string name="cookes_baza_knig_exeption">Для доступа к источнику База Книг необходимо обновить cookies. Для этого необходимо перейти в настройки и нажать \"Получить Cookies\"</string>
+    <string name="cookes_baza_knig_exeption">У источника База Книг сработала защита от DDoS атак, для ее обхода перезагрузите или выберете другой сервер VPN</string>
     <string name="getCookies">Получить Cookies</string>
     <string name="cookies_info_baza_knig">Для доступа к источнику База Книг необходимо обновить Cookies</string>
     <string name="error_cookies_load">Не удалось обновить cookies</string>
     <string name="cookies_loaded">Cookies обновлены</string>
     <string name="wait_loading">Подождите пока страница закончится, а затем закройте окно</string>
+    <string name="end_сhapter">Конец главы</string>
+    <string name="sleep_timer_started">Таймер сна запущен, обратній отчет пойдет после того как книга будет снята с паузы</string>
+    <string name="multithreading">Многопоточность</string>
+    <string name="search_multithreading">Использовать многопоточность для поиска</string>
 
 
 </resources>

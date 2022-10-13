@@ -643,7 +643,7 @@ public class BookPOJO {
 
         Elements desc = document.getElementsByClass("short-text");
         if (desc != null && desc.size() > 0) {
-            String text = desc.first().text();
+            String text = desc.first().ownText();
             bookPOJO.setDesc(text);
         }
 
