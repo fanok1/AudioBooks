@@ -48,6 +48,12 @@
     <uses-feature
         android:name="android.hardware.sensor"
         android:required="false" />
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="false" />
 
     <application
         android:name=".App"
@@ -62,6 +68,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         tools:ignore="UnusedAttribute"
+        android:banner="@mipmap/ic_banner"
         tools:replace="android:extractNativeLibs">
         <!--
         android:hardwareAccelerated="false"
@@ -130,8 +137,8 @@
             android:theme="@style/AppTheme.Launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
