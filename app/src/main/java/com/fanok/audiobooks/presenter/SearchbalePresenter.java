@@ -17,6 +17,7 @@ import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchableModel;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchablePresenter;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchableView;
@@ -53,6 +54,8 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
     private int page = 0;
 
     private final BooksDBModel mBooksDBModel;
+
+    private BooksModel mBooksModel;
 
     private ArrayList<BookPOJO> books;
 
@@ -96,30 +99,30 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         switch (modelId) {
             case Consts.MODEL_BOOKS:
                 mUrls = new ArrayList<>();
-                mUrls.add("https://akniga.org/search/books/page<page>/?q=<qery>");
-                mUrls.add("https://knigavuhe.org/search/?q=<qery>&page=<page>");
-                mUrls.add("https://izib.uk/search?q=<qery>&p=<page>");
-                mUrls.add("https://audiobook-mp3.com/search?text=<qery>");
-                mUrls.add("https://baza-knig.ru/index.php?do=search///qery=<qery>&page=<page>");
+                mUrls.add(Url.SERVER_AKNIGA + "/search/books/page<page>/?q=<qery>");
+                mUrls.add(Url.SERVER + "/search/?q=<qery>&page=<page>");
+                mUrls.add(Url.SERVER_IZIBUK + "/search?q=<qery>&p=<page>");
+                mUrls.add(Url.SERVER_ABMP3 + "/search?text=<qery>");
+                mUrls.add(Url.SERVER_BAZA_KNIG + "/index.php?do=search///qery=<qery>&page=<page>");
                 break;
             case Consts.MODEL_AUTOR:
                 if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
-                    mUrl = "https://knigavuhe.org/search/authors/?q=<qery>&page=<page>";
+                    mUrl = Url.SERVER + "/search/authors/?q=<qery>&page=<page>";
                 } else if (Consts.SOURCE_AUDIO_BOOK_MP3 == Consts.getSOURCE()) {
-                    mUrl = "https://audiobook-mp3.com/search?text=<qery>";
+                    mUrl = Url.SERVER_ABMP3 + "/search?text=<qery>";
                 } else if (Consts.SOURCE_ABOOK == Consts.getSOURCE()) {
-                    mUrl = "https://akniga.org/authors/ajax-search/";
+                    mUrl = Url.SERVER_AKNIGA + "/authors/ajax-search/";
                 } else {
-                    mUrl = "https://izib.uk/authors?p=<page>&q=<qery>";
+                    mUrl = Url.SERVER_IZIBUK + "/authors?p=<page>&q=<qery>";
                 }
                 break;
             case Consts.MODEL_ARTIST:
                 if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
-                    mUrl = "https://knigavuhe.org/search/readers/?q=<qery>&page=<page>";
+                    mUrl = Url.SERVER + "/search/readers/?q=<qery>&page=<page>";
                 } else if (Consts.SOURCE_ABOOK == Consts.getSOURCE()) {
-                    mUrl = "https://akniga.org/performers/ajax-search/";
+                    mUrl = Url.SERVER_AKNIGA + "/performers/ajax-search/";
                 } else {
-                    mUrl = "https://izib.uk/readers?p=<page>&q=<qery>";
+                    mUrl = Url.SERVER_IZIBUK + "/readers?p=<page>&q=<qery>";
                 }
                 break;
         }
@@ -130,6 +133,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 books = new ArrayList<>();
                 mSearcheblPOJO = new SearcheblPOJO();
                 mSearchableModel = new SearchebleModel();
+                mBooksModel = new BooksModel();
                 break;
             case Consts.MODEL_AUTOR:
             case Consts.MODEL_ARTIST:
@@ -183,7 +187,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             setBooksFilter("knigavuhe.org");
             getViewState().showData(books_filter);
         } else if (filter == Consts.SOURCE_IZI_BUK) {
-            setBooksFilter("izib.uk");
+            setBooksFilter("izibuk.ru");
             getViewState().showData(books_filter);
         } else if (filter == Consts.SOURCE_AUDIO_BOOK_MP3) {
             setBooksFilter("audiobook-mp3.com");
@@ -229,30 +233,6 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
     }
 
     @Override
-    public void loadNext() {
-        if (query != null) {
-            if (!isEnd && !isLoading) {
-                getViewState().showProgres(true);
-                page++;
-                if (mUrls != null && mUrls.size() != 0) {
-                    ArrayList<String> temp = new ArrayList<>();
-                    for (String url : mUrls) {
-                        temp.add(url.replace("<qery>", query).replace("<page>",
-                                String.valueOf(page)));
-                    }
-                    getData(temp);
-                } else if (mUrl != null) {
-                    if (mUrl.contains("akniga.org")) {
-                        getData(mUrl + "?q=" + query);
-                    } else {
-                        getData(mUrl.replace("<qery>", query).replace("<page>", String.valueOf(page)));
-                    }
-                }
-            }
-        }
-    }
-
-    @Override
     public void loadBoks() {
         if (query != null) {
             if (books != null) {
@@ -282,13 +262,37 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
             hesSearchable.clear();
             hesSearchable.put("knigavuhe.org", mPreferences.getBoolean("search_kniga_v_uhe", true));
-            hesSearchable.put("izib.uk", mPreferences.getBoolean("search_izibuc", true));
+            hesSearchable.put("izibuk.ru", mPreferences.getBoolean("search_izibuc", true));
             hesSearchable.put("audiobook-mp3.com", mPreferences.getBoolean("search_abmp3", true));
             hesSearchable.put("akniga.org", mPreferences.getBoolean("search_abook", true));
             hesSearchable.put("baza-knig.ru", mPreferences.getBoolean("search_baza_knig", true));
 
             page = 0;
             loadNext();
+        }
+    }
+
+    @Override
+    public void loadNext() {
+        if (query != null) {
+            if (!isEnd && !isLoading) {
+                getViewState().showProgres(true);
+                page++;
+                if (mUrls != null && mUrls.size() != 0) {
+                    ArrayList<String> temp = new ArrayList<>();
+                    for (String url : mUrls) {
+                        temp.add(url.replace("<qery>", query).replace("<page>",
+                                String.valueOf(page)));
+                    }
+                    getData(temp);
+                } else if (mUrl != null) {
+                    if (mUrl.contains(Url.SERVER_AKNIGA)) {
+                        getData(mUrl + "?q=" + query);
+                    } else {
+                        getData(mUrl.replace("<qery>", query).replace("<page>", String.valueOf(page)));
+                    }
+                }
+            }
         }
     }
 
@@ -438,7 +442,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         if (!enabled) {
             exit++;
         } else {
-            new BooksModel().getBooks(url, page, speedUp)
+            mBooksModel.getBooks(url, page, speedUp)
                     .subscribeOn(scheduler)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(observer);

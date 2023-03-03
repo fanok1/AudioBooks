@@ -21,12 +21,40 @@ public class SeriesModel implements
         com.fanok.audiobooks.interface_pacatge.book_content.SeriesModel {
 
 
+    @Override
+    public Observable<ArrayList<SeriesPOJO>> getSeries(@NonNull String url) {
+
+        return Observable.create(observableEmitter -> {
+            waitVpnConetion();
+            ArrayList<SeriesPOJO> articlesModels;
+            try {
+                if (url.contains(Url.SERVER)) {
+                    articlesModels = loadSeriesList(url);
+                } else if (url.contains(Url.SERVER_IZIBUK)) {
+                    articlesModels = loadSeriesListIzibuk(url);
+                } else if (url.contains(Url.SERVER_AKNIGA)) {
+                    articlesModels = loadSeriesListAbook(url);
+                } else if (url.contains(Url.SERVER_BAZA_KNIG)) {
+                    articlesModels = loadSeriesListBazaKnig(url);
+                } else {
+                    articlesModels = new ArrayList<>();
+                }
+                observableEmitter.onNext(articlesModels);
+            } catch (Exception e) {
+                observableEmitter.onError(e);
+            } finally {
+                observableEmitter.onComplete();
+            }
+        });
+    }
+
     private ArrayList<SeriesPOJO> loadSeriesList(String url) throws IOException {
         ArrayList<SeriesPOJO> result = new ArrayList<>();
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Elements seriesConteiner = doc.getElementsByClass("book_blue_block book_serie_block");
@@ -62,89 +90,13 @@ public class SeriesModel implements
         return result;
     }
 
-    private ArrayList<SeriesPOJO> loadSeriesListIzibuk(String url) throws IOException {
-        ArrayList<SeriesPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .get();
-
-        Elements parents = doc.getElementsByClass("_b264b2 _49d1b4");
-        if (parents != null && parents.size() != 0) {
-            Elements series = parents.first().getElementsByClass("_f61db9");
-            if (series != null) {
-                for (Element serie : series) {
-                    SeriesPOJO seriesPOJO = new SeriesPOJO();
-                    Elements namberConteiner = serie.getElementsByClass("_bb8bca");
-                    if (namberConteiner != null && namberConteiner.size() != 0) {
-                        String number = namberConteiner.first().text();
-                        if (number != null) {
-                            seriesPOJO.setNumber(number);
-                        }
-                    }
-                    Elements aTag = serie.getElementsByTag("a");
-                    if (aTag != null && aTag.size() != 0) {
-                        Element a = aTag.first();
-                        String href = a.attr("href");
-                        if (href != null) {
-                            seriesPOJO.setUrl(Url.SERVER_IZIBUK + href);
-                        }
-                        String text = serie.text();
-                        if (text != null) {
-                            seriesPOJO.setName(text.replace(seriesPOJO.getNumber(), ""));
-                        }
-                    } else {
-                        Elements stringTag = serie.getElementsByTag("strong");
-                        if (stringTag != null && stringTag.size() != 0) {
-                            String text = stringTag.first().text();
-                            if (text != null) {
-                                seriesPOJO.setName(text);
-                            }
-                        }
-                    }
-                    result.add(seriesPOJO);
-                }
-            }
-        }
-
-        return result;
-    }
-
-
-    @Override
-    public Observable<ArrayList<SeriesPOJO>> getSeries(@NonNull String url) {
-
-        return Observable.create(observableEmitter -> {
-            waitVpnConetion();
-            ArrayList<SeriesPOJO> articlesModels;
-            try {
-                if (url.contains("knigavuhe.org")) {
-                    articlesModels = loadSeriesList(url);
-                } else if (url.contains("izib.uk")) {
-                    articlesModels = loadSeriesListIzibuk(url);
-                } else if (url.contains("akniga.org")) {
-                    articlesModels = loadSeriesListAbook(url);
-                } else if (url.contains("baza-knig.ru")) {
-                    articlesModels = loadSeriesListBazaKnig(url);
-                } else {
-                    articlesModels = new ArrayList<>();
-                }
-                observableEmitter.onNext(articlesModels);
-            } catch (Exception e) {
-                observableEmitter.onError(e);
-            } finally {
-                observableEmitter.onComplete();
-            }
-        });
-    }
-
     private ArrayList<SeriesPOJO> loadSeriesListAbook(String url) throws IOException {
         ArrayList<SeriesPOJO> result = new ArrayList<>();
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Elements parents = doc.getElementsByClass("content__main__book--item--series-list");
@@ -186,6 +138,7 @@ public class SeriesModel implements
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .ignoreHttpErrors(true);
 
         if (!Consts.getBazaKnigCookies().isEmpty()) {
@@ -227,6 +180,7 @@ public class SeriesModel implements
                     .referrer("http://www.google.com")
                     .sslSocketFactory(Consts.socketFactory())
                     .ignoreHttpErrors(true)
+                    .maxBodySize(0)
                     .get();
 
             Elements navConteiner = doc.getElementsByClass("page-nav");
@@ -317,6 +271,56 @@ public class SeriesModel implements
         }
 
         Collections.reverse(result);
+        return result;
+    }
+
+    private ArrayList<SeriesPOJO> loadSeriesListIzibuk(String url) throws IOException {
+        ArrayList<SeriesPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
+                .get();
+
+        Elements parents = doc.getElementsByClass("_b264b2 _49d1b4");
+        if (parents != null && parents.size() != 0) {
+            Elements series = parents.first().getElementsByClass("_f61db9");
+            if (series != null) {
+                for (Element serie : series) {
+                    SeriesPOJO seriesPOJO = new SeriesPOJO();
+                    Elements namberConteiner = serie.getElementsByClass("_bb8bca");
+                    if (namberConteiner != null && namberConteiner.size() != 0) {
+                        String number = namberConteiner.first().text();
+                        if (number != null) {
+                            seriesPOJO.setNumber(number);
+                        }
+                    }
+                    Elements aTag = serie.getElementsByTag("a");
+                    if (aTag != null && aTag.size() != 0) {
+                        Element a = aTag.first();
+                        String href = a.attr("href");
+                        if (href != null) {
+                            seriesPOJO.setUrl(Url.SERVER_IZIBUK + href);
+                        }
+                        String text = serie.text();
+                        if (text != null) {
+                            seriesPOJO.setName(text.replace(seriesPOJO.getNumber(), ""));
+                        }
+                    } else {
+                        Elements stringTag = serie.getElementsByTag("strong");
+                        if (stringTag != null && stringTag.size() != 0) {
+                            String text = stringTag.first().text();
+                            if (text != null) {
+                                seriesPOJO.setName(text);
+                            }
+                        }
+                    }
+                    result.add(seriesPOJO);
+                }
+            }
+        }
+
         return result;
     }
 }

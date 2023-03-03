@@ -20,6 +20,7 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.AudioListDBModel;
 import com.fanok.audiobooks.pojo.AudioListPOJO;
@@ -129,19 +130,19 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 }
             }
 
-            if (book.getUrl().contains("knigavuhe.org")) {
+            if (book.getUrl().contains(Url.SERVER)) {
                 mSource.setText(R.string.kniga_v_uhe);
                 mSource.setVisibility(View.VISIBLE);
-            } else if (book.getUrl().contains("izib.uk")) {
+            } else if (book.getUrl().contains(Url.SERVER_IZIBUK)) {
                 mSource.setText(R.string.izibuc);
                 mSource.setVisibility(View.VISIBLE);
-            } else if (book.getUrl().contains("audiobook-mp3.com")) {
+            } else if (book.getUrl().contains(Url.SERVER_ABMP3)) {
                 mSource.setText(R.string.audionook_mp3);
                 mSource.setVisibility(View.VISIBLE);
-            } else if (book.getUrl().contains("akniga.org")) {
+            } else if (book.getUrl().contains(Url.SERVER_AKNIGA)) {
                 mSource.setText(R.string.abook);
                 mSource.setVisibility(View.VISIBLE);
-            } else if (book.getUrl().contains("baza-knig.ru")) {
+            } else if (book.getUrl().contains(Url.SERVER_BAZA_KNIG)) {
                 mSource.setText(R.string.baza_knig);
                 mSource.setVisibility(View.VISIBLE);
             } else {

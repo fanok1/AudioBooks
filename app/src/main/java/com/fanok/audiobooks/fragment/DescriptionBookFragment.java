@@ -274,8 +274,8 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
 
 
             if (mFavorite != null) {
-                if (description.getFavorite() != 0) {
-                    mFavorite.setText(String.valueOf(description.getFavorite()));
+                if (!description.getFavorite().equals("0")) {
+                    mFavorite.setText(description.getFavorite());
                     mFavorite.setVisibility(View.VISIBLE);
                 } else {
                     mFavorite.setVisibility(View.GONE);
@@ -288,7 +288,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 mDisLike.setText(String.valueOf(description.getDisLike()));
             }
 
-            if (description.getDisLike() == 0 && description.getLike() == 0) {
+            if (description.getDisLike().equals("0") && description.getLike().equals("0")) {
                 mDisLike.setVisibility(View.GONE);
                 mLike.setVisibility(View.GONE);
             } else {

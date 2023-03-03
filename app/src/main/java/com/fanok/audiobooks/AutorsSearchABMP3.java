@@ -17,6 +17,7 @@ public class AutorsSearchABMP3 {
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Elements elements = doc.getElementsByClass("b-statictop-search");

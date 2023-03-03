@@ -65,6 +65,7 @@ import com.fanok.audiobooks.Hourglass;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.PlaybackStatus;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.broadcasts.OnCancelBroadcastReceiver;
@@ -962,11 +963,11 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             uri = Uri.fromFile(file);
         }
 
-        if (urlBook.contains("audiobook-mp3.com") && file == null) {
+        if (urlBook.contains(Url.SERVER_ABMP3) && file == null) {
             DefaultHttpDataSourceFactory source = new DefaultHttpDataSourceFactory(
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
                     null);
-            source.setDefaultRequestProperty("referer", "https://audiobook-mp3.com/");
+            source.setDefaultRequestProperty("referer", Url.SERVER_ABMP3 + "/");
             dateSourceFactory = new DefaultDataSourceFactory(this, null, source);
         } else if (urlBook.contains("baza-knig.ru") && file == null) {
             DefaultHttpDataSourceFactory source = new DefaultHttpDataSourceFactory(

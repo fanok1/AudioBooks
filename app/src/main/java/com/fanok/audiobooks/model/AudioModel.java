@@ -7,6 +7,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.EncodingExeption;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -79,15 +80,15 @@ public class AudioModel implements
             waitVpnConetion();
             ArrayList<AudioPOJO> articlesModels;
             try {
-                if (url.contains("knigavuhe.org")) {
+                if (url.contains(Url.SERVER)) {
                     articlesModels = loadSeriesList(url);
-                } else if (url.contains("izib.uk")) {
+                } else if (url.contains(Url.SERVER_IZIBUK)) {
                     articlesModels = loadSeriesListIzibuk(url);
-                } else if (url.contains("audiobook-mp3.com")) {
+                } else if (url.contains(Url.SERVER_ABMP3)) {
                     articlesModels = loadSeriesListADMP3(url);
-                } else if (url.contains("akniga.org")) {
+                } else if (url.contains(Url.SERVER_AKNIGA)) {
                     articlesModels = loadSeriesListAbook(url);
-                } else if (url.contains("baza-knig.ru")) {
+                } else if (url.contains(Url.SERVER_BAZA_KNIG)) {
                     articlesModels = loadSeriesListBazaKnig(url);
                 } else {
                     articlesModels = new ArrayList<>();
@@ -120,6 +121,7 @@ public class AudioModel implements
         Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .maxBodySize(0)
                 .sslSocketFactory(Consts.socketFactory());
 
         Document doc = connection.get();
@@ -167,8 +169,9 @@ public class AudioModel implements
         Connection.Response res = Jsoup.connect(url)
                 .method(Connection.Method.GET)
                 .userAgent(Consts.USER_AGENT)
-                .referrer("https://audiobook-mp3.com")
+                .referrer(Url.SERVER_ABMP3 + "/")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .execute();
 
         Document doc = res.parse();
@@ -204,9 +207,10 @@ public class AudioModel implements
 
                 Document document = Jsoup.connect(urlJson)
                         .userAgent(Consts.USER_AGENT)
-                        .referrer("https://audiobook-mp3.com/")
+                        .referrer(Url.SERVER_ABMP3 + "/")
                         .sslSocketFactory(Consts.socketFactory())
-                        .cookies(res.cookies())
+                        //.cookies(res.cookies())
+                        .maxBodySize(0)
                         .get();
 
                 String json = document.body().text();
@@ -239,8 +243,9 @@ public class AudioModel implements
 
         Response response = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
-                .referrer("https://akniga.org/performers/")
+                .referrer(Url.SERVER_AKNIGA + "/performers/")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .execute();
         Map<String, String> cookies = response.cookies();
 
@@ -284,7 +289,7 @@ public class AudioModel implements
 
         String hash = runScript(mContext, key);
 
-        String text = Jsoup.connect("https://akniga.org/ajax/b/" + id)
+        String text = Jsoup.connect(Url.SERVER_AKNIGA + "/ajax/b/" + id)
                 .userAgent(Consts.USER_AGENT)
                 .method(Method.POST)
                 .referrer(url)
@@ -302,9 +307,36 @@ public class AudioModel implements
             JsonObject jsonObject = json.getAsJsonObject();
             String key2 = jsonObject.get("key").getAsString();
             String srv = jsonObject.get("srv").getAsString();
-            String titleName = jsonObject.get("title").getAsString();
+            String filename = jsonObject.get("slug").getAsString();
+            AudioPOJO audioPOJO = new AudioPOJO();
+            audioPOJO.setBookName(title);
+            audioPOJO.setName(title);
+            String audioUrl = srv + "b/" + id + "/" + key2 + "/" + filename + ".mp3";
+            audioPOJO.setUrl(audioUrl);
 
+            int duration = 0;
             JsonElement jElement = jsonObject.get("items");
+            String titleName = jsonObject.get("title").getAsString();
+            if (jElement.isJsonPrimitive()) {
+                String array = jElement.getAsString();
+                jElement = JsonParser.parseString(array);
+            }
+            if (jElement.isJsonArray()) {
+                JsonArray jarray = jElement.getAsJsonArray();
+                for (int i = 0; i < jarray.size(); i++) {
+                    JsonElement jsonElement = jarray.get(i);
+                    if (jsonElement.isJsonObject()) {
+                        duration += jsonElement.getAsJsonObject().get("duration").getAsInt();
+                    }
+                }
+            }
+            audioPOJO.setTime(duration);
+            result.add(audioPOJO);
+
+            /*
+            устаревшый вариант
+            JsonElement jElement = jsonObject.get("items");
+            String titleName = jsonObject.get("title").getAsString();
             if (jElement.isJsonPrimitive()) {
                 String array = jElement.getAsString();
                 jElement = JsonParser.parseString(array);
@@ -340,7 +372,7 @@ public class AudioModel implements
                         lastFIle = file;
                     }
                 }
-            }
+            }*/
         }
         return result;
     }
@@ -389,6 +421,7 @@ public class AudioModel implements
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .ignoreHttpErrors(true);
 
         if (!Consts.getBazaKnigCookies().isEmpty()) {
@@ -413,6 +446,7 @@ public class AudioModel implements
                 Connection conPlaylist = Jsoup.connect(data)
                         .userAgent(Consts.USER_AGENT)
                         .referrer("http://www.google.com")
+                        .maxBodySize(0)
                         .sslSocketFactory(Consts.socketFactory());
                 Document playlist = conPlaylist.get();
                 Elements player = playlist.getElementsByClass("js-play8-playlist");
@@ -462,6 +496,7 @@ public class AudioModel implements
         Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .maxBodySize(0)
                 .sslSocketFactory(Consts.socketFactory());
 
         Document doc = connection.get();

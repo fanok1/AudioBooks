@@ -29,6 +29,7 @@ import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.EncodingExeption;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.activity.SleepTimerActivity;
 import com.fanok.audiobooks.interface_pacatge.book_content.Activity;
 import com.fanok.audiobooks.interface_pacatge.book_content.ActivityPresenter;
@@ -687,7 +688,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     public void loadBooks(HashSet<String> data) {
         for (String url : data) {
-            if (mBookPOJO.getUrl().contains("audiobook-mp3.com")) {
+            if (mBookPOJO.getUrl().contains(Url.SERVER_ABMP3)) {
                 getViewState().downloadFileABMP3(url, mBookPOJO.getName());
             } else {
                 getViewState().downloadFile(url, mBookPOJO.getName());

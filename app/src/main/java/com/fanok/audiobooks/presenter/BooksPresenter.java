@@ -104,9 +104,10 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showProgres(true);
             page++;
             if (mModelId != Consts.MODEL_GENRE) {
-                if ((!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com") || mUrl
-                        .contains("baza-knig.ru"))
-                        && !mUrl.contains("akniga.org")) {
+                if ((!mUrl.contains("genre") || mUrl.contains(Url.SERVER_IZIBUK) || mUrl.contains(Url.SERVER_ABMP3)
+                        || mUrl
+                        .contains(Url.SERVER_BAZA_KNIG))
+                        && !mUrl.contains(Url.SERVER_AKNIGA)) {
                     getData(mUrl + page + "/");
                 } else {
                     getData(mUrl.replace("<page>", Integer.toString(page)));
@@ -269,7 +270,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().recreate();
         }
 
-        if (mUrl.contains("knigavuhe.org")) {
+        if (mUrl.contains(Url.SERVER)) {
             if (!mUrl.contains("genre")) {
                 switch (itemId) {
                     case R.id.new_data:
@@ -332,41 +333,41 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         break;
                 }
             }
-        } else if (mUrl.contains("izib.uk")) {
+        } else if (mUrl.contains(Url.SERVER_IZIBUK)) {
             if (itemId == R.id.order) {
                 Consts.izibuk_reiting = !Consts.izibuk_reiting;
                 if (Consts.izibuk_reiting) {
                     getViewState().showFragment(BooksFragment.newInstance(
-                            Url.INDEX_IZIBUK,
-                            R.string.menu_audiobooks,
-                            subTitle + " " + getStringById(R.string.order_popular),
-                            Consts.MODEL_BOOKS),
+                                    Url.INDEX_IZIBUK,
+                                    R.string.menu_audiobooks,
+                                    subTitle + " " + getStringById(R.string.order_popular),
+                                    Consts.MODEL_BOOKS),
                             "audioBooksOrederDiscussedAllTime");
                 } else {
                     getViewState().showFragment(BooksFragment.newInstance(
-                            Url.INDEX_IZIBUK, R.string.menu_audiobooks,
-                            subTitle + " " + getStringById(R.string.order_new), Consts.MODEL_BOOKS),
+                                    Url.INDEX_IZIBUK, R.string.menu_audiobooks,
+                                    subTitle + " " + getStringById(R.string.order_new), Consts.MODEL_BOOKS),
                             "audioBooksOrederNew");
                 }
             }
-        } else if (mUrl.contains("audiobook-mp3.com")) {
+        } else if (mUrl.contains(Url.SERVER_ABMP3)) {
             if (itemId == R.id.order) {
                 Consts.izibuk_reiting = !Consts.izibuk_reiting;
                 if (Consts.izibuk_reiting) {
                     getViewState().showFragment(BooksFragment.newInstance(
-                            Url.SERVER_ABMP3 + "/top?page=",
-                            R.string.menu_audiobooks,
-                            subTitle + " " + getStringById(R.string.order_popular),
-                            Consts.MODEL_BOOKS),
+                                    Url.SERVER_ABMP3 + "/top?page=",
+                                    R.string.menu_audiobooks,
+                                    subTitle + " " + getStringById(R.string.order_popular),
+                                    Consts.MODEL_BOOKS),
                             "audioBooksOrederDiscussedAllTime");
                 } else {
                     getViewState().showFragment(BooksFragment.newInstance(
-                            Url.INDEX_ABMP3, R.string.menu_audiobooks,
-                            subTitle + " " + getStringById(R.string.order_new), Consts.MODEL_BOOKS),
+                                    Url.INDEX_ABMP3, R.string.menu_audiobooks,
+                                    subTitle + " " + getStringById(R.string.order_new), Consts.MODEL_BOOKS),
                             "audioBooksOrederNew");
                 }
             }
-        } else if (mUrl.contains("akniga.org")) {
+        } else if (mUrl.contains(Url.SERVER_AKNIGA)) {
             if (!mUrl.contains("section")) {
                 switch (itemId) {
                     case R.id.new_data:
@@ -429,7 +430,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                         break;
                 }
             }
-        } else if (mUrl.contains("baza-knig.ru")) {
+        } else if (mUrl.contains(Url.SERVER_BAZA_KNIG)) {
             switch (itemId) {
                 case R.id.new_data:
                     url = Url.NEW_BOOK_BAZA_KNIG;
@@ -451,7 +452,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
         switch (itemId) {
             case R.id.app_bar_search:
-                if (mUrl.contains("audiobook-mp3.com")) {
+                if (mUrl.contains(Url.SERVER_ABMP3)) {
                     if (mModelId == Consts.MODEL_AUTOR) {
                         getViewState().showSearchActivity(Consts.MODEL_AUTOR);
                     } else {
@@ -590,9 +591,10 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showRefreshing(true);
             page = 1;
             if (mModelId != Consts.MODEL_GENRE) {
-                if ((!mUrl.contains("genre") || mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com") || mUrl
-                        .contains("baza-knig.ru"))
-                        && !mUrl.contains("akniga.org")) {
+                if ((!mUrl.contains("genre") || mUrl.contains(Url.SERVER_IZIBUK) || mUrl.contains(Url.SERVER_ABMP3)
+                        || mUrl
+                        .contains(Url.SERVER_BAZA_KNIG))
+                        && !mUrl.contains(Url.SERVER_AKNIGA)) {
                     getData(mUrl + page + "/");
                 } else {
                     getData(mUrl.replace("<page>", Integer.toString(page)));

@@ -12,6 +12,7 @@ import androidx.preference.PreferenceManager;
 import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -54,14 +55,14 @@ public class LoadBook extends AppCompatActivity {
         mUrl = intent.getStringExtra("url");
         if (mUrl == null && intent.getData() != null) {
             mUrl = intent.getData().toString();
-            if (mUrl.contains("knigavuhe.org")) {
+            if (mUrl.contains(Url.SERVER)) {
                 if (!mUrl.contains("/book/")) {
                     startActivity(new Intent(this, MainActivity.class));
                     finish();
                 } else {
                     mUrl = mUrl.replace("https://m.", "https://");
                 }
-            } else if (mUrl.contains("izib.uk")) {
+            } else if (mUrl.contains(Url.SERVER_IZIBUK)) {
                 if (!mUrl.contains("/book")) {
                     startActivity(new Intent(this, MainActivity.class));
                     finish();
@@ -69,20 +70,20 @@ public class LoadBook extends AppCompatActivity {
                     mUrl = mUrl.replace("https://pda.", "https://");
                 }
 
-            } else if (mUrl.contains("audiobook-mp3.com")) {
+            } else if (mUrl.contains(Url.SERVER_ABMP3)) {
                 if (!mUrl.contains("/audio-")) {
                     startActivity(new Intent(this, MainActivity.class));
                     finish();
                 }
-            } else if (mUrl.contains("akniga.org")) {
+            } else if (mUrl.contains(Url.SERVER_AKNIGA)) {
                 if (mUrl.contains("/index/") || mUrl.contains("/sections/") || mUrl.contains("/authors/")
                         || mUrl.contains("/performers/") || mUrl.contains("/search/") || mUrl
-                        .equals("https://akniga.org/")) {
+                        .equals(Url.SERVER_AKNIGA + "/")) {
                     startActivity(new Intent(this, MainActivity.class));
                     finish();
                 }
 
-            } else if (mUrl.contains("baza-knig.ru")) {
+            } else if (mUrl.contains(Url.SERVER_BAZA_KNIG)) {
                 if (!mUrl.contains(".html")) {
                     startActivity(new Intent(this, MainActivity.class));
                     finish();
@@ -106,7 +107,7 @@ public class LoadBook extends AppCompatActivity {
                     @Override
                     public void onError(@NotNull Throwable e) {
                         if (e.getClass() == CookesExeption.class) {
-                            if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                            if (Objects.requireNonNull(e.getMessage()).contains(Url.SERVER_BAZA_KNIG)) {
                                 Toast.makeText(mContext, getResources().getText(R.string.cookes_baza_knig_exeption),
                                         Toast.LENGTH_LONG).show();
                             }

@@ -30,6 +30,7 @@ import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.adapter.BooksListAddapter;
 import com.fanok.audiobooks.adapter.FilterAdapter;
 import com.fanok.audiobooks.adapter.GenreListAddapter;
@@ -217,10 +218,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 int y = recyclerView.computeVerticalScrollOffset();
-                boolean b = false;
-                if (mAdapterAutors != null && mAdapterAutors.getItemCount() != 0) {
-                    b = true;
-                }
+                boolean b = mAdapterAutors != null && mAdapterAutors.getItemCount() != 0;
                 if (mAdapterSeries != null && mAdapterSeries.getItemCount() != 0) {
                     b = true;
                 }
@@ -426,7 +424,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     @Override
     public void startBookActivity(@NotNull @NonNull BookPOJO bookPOJO) {
 
-        if (bookPOJO.getUrl().contains("audiobook-mp3.com")) {
+        if (bookPOJO.getUrl().contains(Url.SERVER_ABMP3)) {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
             if (preferences.getBoolean("speed_up_search_abmp3", false)) {
                 Intent intent = new Intent(this, LoadBook.class);

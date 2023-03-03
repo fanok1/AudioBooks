@@ -5,6 +5,7 @@ import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
 
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.ComentsPOJO;
 import com.fanok.audiobooks.pojo.SubComentsPOJO;
 import com.google.gson.JsonElement;
@@ -23,12 +24,84 @@ public class ComentsModel implements
         com.fanok.audiobooks.interface_pacatge.book_content.ComentsModel {
 
 
+    @Override
+    public Observable<ArrayList<ComentsPOJO>> getComents(@NonNull String url) {
+
+        return Observable.create(observableEmitter -> {
+            waitVpnConetion();
+            ArrayList<ComentsPOJO> articlesModels;
+            try {
+                if (url.contains(Url.SERVER)) {
+                    articlesModels = loadComentsList(url);
+                } else if (url.contains(Url.SERVER_ABMP3)) {
+                    articlesModels = loadComentsListABMP3(url);
+                } else if (url.contains(Url.SERVER_AKNIGA)) {
+                    articlesModels = loadComentsListAbook(url);
+                } else if (url.contains(Url.SERVER_BAZA_KNIG)) {
+                    articlesModels = loadComentsListBazaKnig(url);
+                } else {
+                    articlesModels = new ArrayList<>();
+                }
+                observableEmitter.onNext(articlesModels);
+            } catch (Exception e) {
+                observableEmitter.onError(e);
+            } finally {
+                observableEmitter.onComplete();
+            }
+        });
+    }
+
+    private ArrayList<SubComentsPOJO> getChildCOments(Element child, String parent) {
+        ArrayList<SubComentsPOJO> result = new ArrayList<>();
+        SubComentsPOJO subComentsPOJO = new SubComentsPOJO();
+        Elements imageConteiner = child.getElementsByTag("img");
+        if (imageConteiner.size() != 0) {
+            subComentsPOJO.setImage(imageConteiner.first().attr("src"));
+        }
+        subComentsPOJO.setParentName(parent);
+
+        Elements nameConteiner = child.getElementsByClass("comment_head_user");
+        if (nameConteiner.size() != 0) {
+            subComentsPOJO.setName(nameConteiner.first().text());
+        }
+
+        Elements reting = child.getElementsByClass("comment_head_votes_count");
+        if (reting.size() != 0) {
+            subComentsPOJO.setReting(reting.first().text());
+        }
+
+        Elements time = child.getElementsByClass("comment_head_time");
+        if (time.size() != 0) {
+            subComentsPOJO.setDate(time.first().text());
+        }
+
+        Elements text = child.getElementsByClass("comment_body");
+        if (text.size() != 0) {
+            subComentsPOJO.setText(text.first().text());
+        }
+
+        if (!subComentsPOJO.isEmty()) {
+            result.add(subComentsPOJO);
+        }
+
+        Elements elements = child.children();
+
+        for (int i = 1; i < elements.size(); i++) {
+            if (elements.get(i).attr("class").contains("comments_list")) {
+                result.addAll(getChildCOments(elements.get(i), subComentsPOJO.getName()));
+            }
+        }
+
+        return result;
+    }
+
     private ArrayList<ComentsPOJO> loadComentsList(String url) throws IOException {
         ArrayList<ComentsPOJO> result = new ArrayList<>();
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Element comentsElement = doc.getElementById("comments_list");
@@ -78,78 +151,6 @@ public class ComentsModel implements
         return result;
     }
 
-    private ArrayList<SubComentsPOJO> getChildCOments(Element child, String parent) {
-        ArrayList<SubComentsPOJO> result = new ArrayList<>();
-        SubComentsPOJO subComentsPOJO = new SubComentsPOJO();
-        Elements imageConteiner = child.getElementsByTag("img");
-        if (imageConteiner.size() != 0) {
-            subComentsPOJO.setImage(imageConteiner.first().attr("src"));
-        }
-        subComentsPOJO.setParentName(parent);
-
-        Elements nameConteiner = child.getElementsByClass("comment_head_user");
-        if (nameConteiner.size() != 0) {
-            subComentsPOJO.setName(nameConteiner.first().text());
-        }
-
-        Elements reting = child.getElementsByClass("comment_head_votes_count");
-        if (reting.size() != 0) {
-            subComentsPOJO.setReting(reting.first().text());
-        }
-
-        Elements time = child.getElementsByClass("comment_head_time");
-        if (time.size() != 0) {
-            subComentsPOJO.setDate(time.first().text());
-        }
-
-        Elements text = child.getElementsByClass("comment_body");
-        if (text.size() != 0) {
-            subComentsPOJO.setText(text.first().text());
-        }
-
-        if (!subComentsPOJO.isEmty()) {
-            result.add(subComentsPOJO);
-        }
-
-        Elements elements = child.children();
-
-        for (int i = 1; i < elements.size(); i++) {
-            if (elements.get(i).attr("class").contains("comments_list")) {
-                result.addAll(getChildCOments(elements.get(i), subComentsPOJO.getName()));
-            }
-        }
-
-        return result;
-    }
-
-
-    @Override
-    public Observable<ArrayList<ComentsPOJO>> getComents(@NonNull String url) {
-
-        return Observable.create(observableEmitter -> {
-            waitVpnConetion();
-            ArrayList<ComentsPOJO> articlesModels;
-            try {
-                if (url.contains("knigavuhe.org")) {
-                    articlesModels = loadComentsList(url);
-                } else if (url.contains("audiobook-mp3.com")) {
-                    articlesModels = loadComentsListABMP3(url);
-                } else if (url.contains("akniga.org")) {
-                    articlesModels = loadComentsListAbook(url);
-                } else if (url.contains("baza-knig.ru")) {
-                    articlesModels = loadComentsListBazaKnig(url);
-                } else {
-                    articlesModels = new ArrayList<>();
-                }
-                observableEmitter.onNext(articlesModels);
-            } catch (Exception e) {
-                observableEmitter.onError(e);
-            } finally {
-                observableEmitter.onComplete();
-            }
-        });
-    }
-
     private SubComentsPOJO getChildCOmentsABMP3(Element comentConteiner, String parent) {
 
         SubComentsPOJO comentsPOJO = new SubComentsPOJO();
@@ -188,6 +189,7 @@ public class ComentsModel implements
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Element comentsElement = doc.getElementById("w0");
@@ -255,6 +257,7 @@ public class ComentsModel implements
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Element comentsElement = doc.getElementById("comments");
@@ -428,7 +431,8 @@ public class ComentsModel implements
         url = url.substring(0, url.indexOf("-"));
         String id = url;
         String baseUrl
-                = "https://baza-knig.ru/engine/ajax/controller.php?mod=comments&cstart=<page>&news_id=<bookId>&skin=knigi-pk&massact=disable";
+                = Url.SERVER_BAZA_KNIG
+                + "/engine/ajax/controller.php?mod=comments&cstart=<page>&news_id=<bookId>&skin=knigi-pk&massact=disable";
         while (true) {
             page++;
             Connection connection = Jsoup
@@ -436,6 +440,7 @@ public class ComentsModel implements
                     .userAgent(Consts.USER_AGENT)
                     .referrer("http://www.google.com")
                     .sslSocketFactory(Consts.socketFactory())
+                    .maxBodySize(0)
                     .ignoreContentType(true);
 
             if (!Consts.getBazaKnigCookies().isEmpty()) {

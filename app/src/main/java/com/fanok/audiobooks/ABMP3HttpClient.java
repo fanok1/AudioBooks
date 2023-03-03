@@ -42,7 +42,7 @@ public class ABMP3HttpClient implements HttpClient {
         connection.addRequestProperty(Constants.RANGE,
                 "bytes=" + bytes + "-" + bytes + (DownloadABMP3.fragmentSize - 1));
         connection.addRequestProperty(Constants.USER_AGENT, request.getUserAgent());
-        connection.addRequestProperty("referer", "https://audiobook-mp3.com/");
+        connection.addRequestProperty("referer", Url.SERVER_ABMP3 + "/");
         addHeaders(request);
         connection.connect();
     }

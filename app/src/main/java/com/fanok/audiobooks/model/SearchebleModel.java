@@ -23,12 +23,50 @@ import org.jsoup.select.Elements;
 public class SearchebleModel implements SearchableModel {
 
 
+    @Override
+    public Observable<SearcheblPOJO> dowland(SharedPreferences preferences, ArrayList<String> urls, String query) {
+        return Observable.create(observableEmitter -> {
+            waitVpnConetion();
+            boolean searchKnigaVUhe = preferences.getBoolean("search_kniga_v_uhe", true);
+            boolean searchABMP3 = preferences.getBoolean("search_abmp3", true);
+
+            SearcheblPOJO searcheblPOJO = new SearcheblPOJO();
+            try {
+
+                for (String url : urls) {
+                    if (url.contains(Url.SERVER) && searchKnigaVUhe) {
+                        searcheblPOJO = searcheblPOJO
+                                .concat(searcheblPOJO, getSearcheblPOJO(url.replace("<qery>", query).replace("<page>",
+                                        "1")));
+                    } else if (url.contains(Url.SERVER_ABMP3) && searchABMP3) {
+                        SearcheblPOJO pojo = new SearcheblPOJO();
+                        ArrayList<GenrePOJO> genrePOJOs = new AutorsSearchABMP3()
+                                .getAutors(url.replace("<qery>", query), 1);
+                        ArrayList<SearchebleArrayPOJO> searchebleArrayPOJOS = new ArrayList<>();
+                        for (GenrePOJO genrePOJO : genrePOJOs) {
+                            searchebleArrayPOJOS
+                                    .add(new SearchebleArrayPOJO(genrePOJO.getName(), genrePOJO.getUrl()));
+                        }
+                        pojo.setAutorsList(searchebleArrayPOJOS);
+                        searcheblPOJO = searcheblPOJO.concat(searcheblPOJO, pojo);
+                    }
+                }
+                observableEmitter.onNext(searcheblPOJO);
+            } catch (Exception e) {
+                observableEmitter.onError(e);
+            } finally {
+                observableEmitter.onComplete();
+            }
+        });
+    }
+
     public SearcheblPOJO getSearcheblPOJO(@NonNull String url) throws IOException {
         SearcheblPOJO searcheblPOJO = new SearcheblPOJO();
         Document doc = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
 
@@ -62,6 +100,7 @@ public class SearchebleModel implements SearchableModel {
                                 .userAgent(Consts.USER_AGENT)
                                 .referrer("http://www.google.com")
                                 .sslSocketFactory(Consts.socketFactory())
+                                .maxBodySize(0)
                                 .get();
                         Elements itemsConteiner = searchDoc.getElementsByClass("common_list");
                         if (itemsConteiner.size() != 0) {
@@ -93,42 +132,5 @@ public class SearchebleModel implements SearchableModel {
             }
         }
         return searcheblPOJO;
-    }
-
-    @Override
-    public Observable<SearcheblPOJO> dowland(SharedPreferences preferences, ArrayList<String> urls, String query) {
-        return Observable.create(observableEmitter -> {
-            waitVpnConetion();
-            boolean searchKnigaVUhe = preferences.getBoolean("search_kniga_v_uhe", true);
-            boolean searchABMP3 = preferences.getBoolean("search_abmp3", true);
-
-            SearcheblPOJO searcheblPOJO = new SearcheblPOJO();
-            try {
-
-                for (String url : urls) {
-                    if (url.contains("knigavuhe.org") && searchKnigaVUhe) {
-                        searcheblPOJO = searcheblPOJO
-                                .concat(searcheblPOJO, getSearcheblPOJO(url.replace("<qery>", query).replace("<page>",
-                                        "1")));
-                    } else if (url.contains("audiobook-mp3.com") && searchABMP3) {
-                        SearcheblPOJO pojo = new SearcheblPOJO();
-                        ArrayList<GenrePOJO> genrePOJOs = new AutorsSearchABMP3()
-                                .getAutors(url.replace("<qery>", query), 1);
-                        ArrayList<SearchebleArrayPOJO> searchebleArrayPOJOS = new ArrayList<>();
-                        for (GenrePOJO genrePOJO : genrePOJOs) {
-                            searchebleArrayPOJOS
-                                    .add(new SearchebleArrayPOJO(genrePOJO.getName(), genrePOJO.getUrl()));
-                        }
-                        pojo.setAutorsList(searchebleArrayPOJOS);
-                        searcheblPOJO = searcheblPOJO.concat(searcheblPOJO, pojo);
-                    }
-                }
-                observableEmitter.onNext(searcheblPOJO);
-            } catch (Exception e) {
-                observableEmitter.onError(e);
-            } finally {
-                observableEmitter.onComplete();
-            }
-        });
     }
 }

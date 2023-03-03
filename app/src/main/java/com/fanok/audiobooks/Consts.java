@@ -49,7 +49,7 @@ public class Consts {
             + zeroTo255 + "\\." + zeroTo255);
 
     public static final String USER_AGENT
-            = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36";
+            = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36";
 
     public static final int MODEL_BOOKS = 0;
 

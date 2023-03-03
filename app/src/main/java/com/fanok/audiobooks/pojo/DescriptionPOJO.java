@@ -27,10 +27,15 @@ public class DescriptionPOJO {
     private String artistUrl = "";
 
     private String genre = "";
+
     private String genreUrl = "";
-    private int favorite = 0;
-    private int like = 0;
-    private int disLike = 0;
+
+    private String disLike = "0";
+
+    private String favorite = "0";
+
+    private String like = "0";
+
     private boolean otherReader = false;
 
     public boolean isOtherReader() {
@@ -41,28 +46,34 @@ public class DescriptionPOJO {
         this.otherReader = otherReader;
     }
 
-    public int getLike() {
-        return like;
-    }
-
-    public void setLike(int like) {
-        if (like >= 0) this.like = like;
-    }
-
-    public int getDisLike() {
+    public String getDisLike() {
         return disLike;
     }
 
-    public void setDisLike(int disLike) {
-        if (disLike >= 0) this.disLike = disLike;
+    public void setDisLike(String disLike) {
+        if (disLike != null && !disLike.equals("0") && !disLike.isEmpty()) {
+            this.disLike = disLike;
+        }
     }
 
-    public int getFavorite() {
+    public String getFavorite() {
         return favorite;
     }
 
-    public void setFavorite(int favorite) {
-        if (favorite >= 0) this.favorite = favorite;
+    public void setFavorite(String favorite) {
+        if (favorite != null && !favorite.equals(0) && !favorite.isEmpty()) {
+            this.favorite = favorite;
+        }
+    }
+
+    public String getLike() {
+        return like;
+    }
+
+    public void setLike(String like) {
+        if (like != null && !like.equals("0") && !like.isEmpty()) {
+            this.like = like;
+        }
     }
 
     public String getTitle() {

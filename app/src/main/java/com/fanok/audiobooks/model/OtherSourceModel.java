@@ -29,34 +29,34 @@ public class OtherSourceModel implements
             ArrayList<OtherArtistPOJO> articlesModels = new ArrayList<>();
             try {
 
-                if (!bookPOJO.getUrl().contains("akniga.org")) {
+                if (!bookPOJO.getUrl().contains(Url.SERVER_AKNIGA)) {
                     OtherArtistPOJO artistPOJO = getAbook(bookPOJO);
                     if (artistPOJO != null) {
                         articlesModels.add(artistPOJO);
                     }
                 }
 
-                if (!bookPOJO.getUrl().contains("knigavuhe.org")) {
+                if (!bookPOJO.getUrl().contains(Url.SERVER)) {
                     OtherArtistPOJO artistPOJO = getKnigaVuhe(bookPOJO);
                     if (artistPOJO != null) {
                         articlesModels.add(artistPOJO);
                     }
                 }
-                if (!bookPOJO.getUrl().contains("izib.uk")) {
+                if (!bookPOJO.getUrl().contains(Url.SERVER_IZIBUK)) {
                     OtherArtistPOJO artistPOJO = getIzibuk(bookPOJO);
                     if (artistPOJO != null) {
                         articlesModels.add(artistPOJO);
                     }
                 }
 
-                if (!bookPOJO.getUrl().contains("audiobook-mp3.com")) {
+                if (!bookPOJO.getUrl().contains(Url.SERVER_ABMP3)) {
                     OtherArtistPOJO artistPOJO = getABMP3(bookPOJO);
                     if (artistPOJO != null) {
                         articlesModels.add(artistPOJO);
                     }
                 }
 
-                if (!bookPOJO.getUrl().contains("baza-knig.ru")) {
+                if (!bookPOJO.getUrl().contains(Url.SERVER_BAZA_KNIG)) {
                     OtherArtistPOJO artistPOJO = getBazaKnig(bookPOJO);
                     if (artistPOJO != null) {
                         articlesModels.add(artistPOJO);
@@ -72,11 +72,228 @@ public class OtherSourceModel implements
         });
     }
 
+    private OtherArtistPOJO getABMP3(BookPOJO bookPOJO) throws IOException {
+        Document doc = Jsoup.connect(
+                        Url.SERVER_ABMP3 + "/search?text=" + bookPOJO.getName())
+                .userAgent(Consts.USER_AGENT)
+                .referrer(Url.SERVER_ABMP3 + "/")
+                .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
+                .get();
+
+        Elements elements = doc.getElementsByClass("b-statictop-search");
+        if (elements != null) {
+            for (Element item : elements) {
+                Elements title = item.getElementsByClass("b-statictop__title");
+                if (title != null && title.size() != 0) {
+                    if (title.first().text().contains("в книгах")) {
+                        Elements parent = item.getElementsByClass("b-statictop__items");
+                        if (parent != null && parent.size() != 0) {
+                            Elements books = parent.first().children();
+                            for (int i = 0; i < books.size(); i++) {
+                                String autorName = "";
+                                String readerName = "";
+                                String bookTitle = "";
+                                if (i >= books.size()) {
+                                    break;
+                                }
+                                Element book = books.get(i);
+                                OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+                                Elements aTag = book.getElementsByTag("a");
+                                if (aTag != null && aTag.size() != 0) {
+                                    String href = aTag.first().attr("href");
+                                    if (href != null && !href.isEmpty()) {
+                                        otherArtistPOJO.setUrl(Url.SERVER_ABMP3 + href);
+                                    }
+                                    String fullText = aTag.first().text();
+                                    if (fullText != null && !fullText.isEmpty()) {
+                                        String text = fullText.substring(0, fullText.indexOf(" ("));
+                                        if (!text.isEmpty()) {
+                                            bookTitle = text.trim();
+                                        }
+                                    }
+
+                                    Elements info = aTag.first().getElementsByClass("add_info");
+                                    if (info != null && info.size() != 0) {
+                                        String infoText = info.first().text();
+                                        autorName = infoText
+                                                .substring(infoText.indexOf("(") + 1, infoText.indexOf(")")).trim();
+                                        readerName = infoText
+                                                .substring(infoText.lastIndexOf("(") + 1, infoText.lastIndexOf(")"))
+                                                .trim();
+                                        if (autorName.equals(readerName)) {
+                                            readerName = "";
+                                        }
+                                        otherArtistPOJO.setName("audiobook-mp3.com");
+
+
+                                    }
+
+                                }
+
+                                String[] name = autorName.split(" ");
+                                boolean authorFlag = false;
+                                if (autorName.length() == bookPOJO.getAutor().length()) {
+                                    authorFlag = true;
+                                    for (final String s : name) {
+                                        if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
+                                            authorFlag = false;
+                                            break;
+                                        }
+
+                                    }
+                                }
+
+                                String[] artist = readerName.split(" ");
+                                boolean readerFlag = false;
+                                if (readerName.length() == bookPOJO.getArtist().length()) {
+                                    readerFlag = true;
+                                    for (final String s : artist) {
+                                        if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
+                                            readerFlag = false;
+                                            break;
+                                        }
+
+                                    }
+                                }
+
+                                if (!readerName.isEmpty()
+                                        && bookPOJO.getName().equalsIgnoreCase(bookTitle) &&
+                                        authorFlag && readerFlag) {
+                                    return otherArtistPOJO;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private OtherArtistPOJO getAbook(BookPOJO bookPOJO) throws IOException {
+
+        Document doc = Jsoup.connect(Url.SERVER_AKNIGA + "/search/books?q=" + bookPOJO.getName() + " "
+                        + bookPOJO.getAutor() + " " + bookPOJO.getArtist())
+                .userAgent(Consts.USER_AGENT)
+                .referrer(Url.SERVER_AKNIGA)
+                .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
+                .get();
+
+        Elements listElements = doc.getElementsByClass("content__main__articles--item");
+        if (listElements != null && listElements.size() != 0) {
+            for (Element book : listElements) {
+                Elements paid = book.getElementsByAttributeValue("href", Url.SERVER_AKNIGA + "/paid/");
+                if (paid != null && paid.size() != 0) {
+                    continue;
+                }
+
+                Elements fragment = book.getElementsByClass("caption__article-preview");
+                if (fragment != null && fragment.size() != 0) {
+                    String text = fragment.first().text();
+                    if (text != null && text.equals("Фрагмент")) {
+                        continue;
+                    }
+                }
+
+                String url = "";
+                String titleResulr = "";
+                String author = "";
+                String reader = "";
+
+                Elements elements = book.getElementsByClass("link__action link__action--author");
+                if (elements != null) {
+                    for (Element element : elements) {
+                        Elements use = element.getElementsByTag("use");
+                        if (use != null && use.size() != 0) {
+                            String useHref = use.first().attr("xlink:href");
+                            if (useHref != null) {
+                                Elements aTag = element.getElementsByTag("a");
+                                if (aTag != null && aTag.size() != 0) {
+                                    Element a = aTag.first();
+                                    String name = a.text();
+
+                                    if (name != null && !name.isEmpty()) {
+                                        switch (useHref) {
+                                            case "#author":
+                                                author = name;
+                                                break;
+                                            case "#performer":
+                                                reader = name;
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Elements titleElements = book.getElementsByClass("caption__article-main");
+                if (titleElements != null && titleElements.size() != 0) {
+                    String title = titleElements.first().text();
+                    if (title != null && !title.isEmpty()) {
+                        titleResulr = title.replace(author + " - ", "");
+                    }
+                }
+
+                Elements link = book.getElementsByClass("content__article-main-link");
+                if (link != null && link.size() != 0) {
+                    String src = link.first().attr("href");
+                    if (src != null && !src.isEmpty()) {
+                        url = src;
+                    }
+                }
+
+                String[] name = author.split(" ");
+                boolean authorFlag = false;
+                if (author.length() == bookPOJO.getAutor().length()) {
+                    authorFlag = true;
+                    for (final String s : name) {
+                        if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
+                            authorFlag = false;
+                            break;
+                        }
+
+                    }
+                }
+
+                String[] artist = reader.split(" ");
+                boolean readerFlag = false;
+                if (reader.length() == bookPOJO.getArtist().length()) {
+                    readerFlag = true;
+                    for (final String s : artist) {
+                        if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
+                            readerFlag = false;
+                            break;
+                        }
+
+                    }
+                }
+
+                if (!titleResulr.isEmpty() && !url.isEmpty() &&
+                        titleResulr.equalsIgnoreCase(bookPOJO.getName()) &&
+                        authorFlag && readerFlag) {
+                    OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+                    otherArtistPOJO.setName("akniga.org");
+                    otherArtistPOJO.setUrl(url);
+                    return otherArtistPOJO;
+                }
+
+            }
+
+        }
+
+        return null;
+    }
+
     private OtherArtistPOJO getBazaKnig(BookPOJO bookPOJO) throws IOException {
         int page = 0;
         while (true) {
             page++;
-            Connection connection = Jsoup.connect("https://baza-knig.ru/index.php?do=search")
+            Connection connection = Jsoup.connect(Url.SERVER_BAZA_KNIG + "/index.php?do=search")
                     .userAgent(Consts.USER_AGENT)
                     .referrer("http://www.google.com")
                     .sslSocketFactory(Consts.socketFactory())
@@ -86,6 +303,7 @@ public class OtherSourceModel implements
                     .data("full_search", "0")
                     .data("result_from", "0")
                     .data("story", bookPOJO.getName())
+                    .maxBodySize(0)
                     .ignoreHttpErrors(true);
 
             if (!Consts.getBazaKnigCookies().isEmpty()) {
@@ -210,7 +428,7 @@ public class OtherSourceModel implements
                         }
 
                         if (!reader.isEmpty()
-                                && bookPOJO.getName().toLowerCase().equals(titleResult.toLowerCase()) &&
+                                && bookPOJO.getName().equalsIgnoreCase(titleResult) &&
                                 authorFlag && readerFlag) {
                             return otherArtistPOJO;
                         }
@@ -224,229 +442,15 @@ public class OtherSourceModel implements
         return null;
     }
 
-    private OtherArtistPOJO getABMP3(BookPOJO bookPOJO) throws IOException {
-        Document doc = Jsoup.connect(
-                "https://audiobook-mp3.com/search?text=" + bookPOJO.getName())
-                .userAgent(Consts.USER_AGENT)
-                .referrer("https://audiobook-mp3.com/")
-                .sslSocketFactory(Consts.socketFactory())
-                .get();
-
-        Elements elements = doc.getElementsByClass("b-statictop-search");
-        if (elements != null) {
-            for (Element item : elements) {
-                Elements title = item.getElementsByClass("b-statictop__title");
-                if (title != null && title.size() != 0) {
-                    if (title.first().text().contains("в книгах")) {
-                        Elements parent = item.getElementsByClass("b-statictop__items");
-                        if (parent != null && parent.size() != 0) {
-                            Elements books = parent.first().children();
-                            for (int i = 0; i < books.size(); i++) {
-                                String autorName = "";
-                                String readerName = "";
-                                String bookTitle = "";
-                                if (i >= books.size()) {
-                                    break;
-                                }
-                                Element book = books.get(i);
-                                OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
-                                Elements aTag = book.getElementsByTag("a");
-                                if (aTag != null && aTag.size() != 0) {
-                                    String href = aTag.first().attr("href");
-                                    if (href != null && !href.isEmpty()) {
-                                        otherArtistPOJO.setUrl(Url.SERVER_ABMP3 + href);
-                                    }
-                                    String fullText = aTag.first().text();
-                                    if (fullText != null && !fullText.isEmpty()) {
-                                        String text = fullText.substring(0, fullText.indexOf(" ("));
-                                        if (!text.isEmpty()) {
-                                            bookTitle = text.trim();
-                                        }
-                                    }
-
-                                    Elements info = aTag.first().getElementsByClass("add_info");
-                                    if (info != null && info.size() != 0) {
-                                        String infoText = info.first().text();
-                                        autorName = infoText
-                                                .substring(infoText.indexOf("(") + 1, infoText.indexOf(")")).trim();
-                                        readerName = infoText
-                                                .substring(infoText.lastIndexOf("(") + 1, infoText.lastIndexOf(")"))
-                                                .trim();
-                                        if (autorName.equals(readerName)) {
-                                            readerName = "";
-                                        }
-                                        otherArtistPOJO.setName("audiobook-mp3.com");
-
-
-                                    }
-
-                                }
-
-                                String[] name = autorName.split(" ");
-                                boolean authorFlag = false;
-                                if (autorName.length() == bookPOJO.getAutor().length()) {
-                                    authorFlag = true;
-                                    for (final String s : name) {
-                                        if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
-                                            authorFlag = false;
-                                            break;
-                                        }
-
-                                    }
-                                }
-
-                                String[] artist = readerName.split(" ");
-                                boolean readerFlag = false;
-                                if (readerName.length() == bookPOJO.getArtist().length()) {
-                                    readerFlag = true;
-                                    for (final String s : artist) {
-                                        if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
-                                            readerFlag = false;
-                                            break;
-                                        }
-
-                                    }
-                                }
-
-                                if (!readerName.isEmpty()
-                                        && bookPOJO.getName().toLowerCase().equals(bookTitle.toLowerCase()) &&
-                                        authorFlag && readerFlag) {
-                                    return otherArtistPOJO;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    private OtherArtistPOJO getAbook(BookPOJO bookPOJO) throws IOException {
-
-        Document doc = Jsoup.connect("https://akniga.org/search/books?q=" + bookPOJO.getName() + " "
-                + bookPOJO.getAutor() + " " + bookPOJO.getArtist())
-                .userAgent(Consts.USER_AGENT)
-                .referrer("https://akniga.org/")
-                .sslSocketFactory(Consts.socketFactory())
-                .get();
-
-        Elements listElements = doc.getElementsByClass("content__main__articles--item");
-        if (listElements != null && listElements.size() != 0) {
-            for (Element book : listElements) {
-                Elements paid = book.getElementsByAttributeValue("href", "https://akniga.org/paid/");
-                if (paid != null && paid.size() != 0) {
-                    continue;
-                }
-
-                Elements fragment = book.getElementsByClass("caption__article-preview");
-                if (fragment != null && fragment.size() != 0) {
-                    String text = fragment.first().text();
-                    if (text != null && text.equals("Фрагмент")) {
-                        continue;
-                    }
-                }
-
-                String url = "";
-                String titleResulr = "";
-                String author = "";
-                String reader = "";
-
-                Elements elements = book.getElementsByClass("link__action link__action--author");
-                if (elements != null) {
-                    for (Element element : elements) {
-                        Elements use = element.getElementsByTag("use");
-                        if (use != null && use.size() != 0) {
-                            String useHref = use.first().attr("xlink:href");
-                            if (useHref != null) {
-                                Elements aTag = element.getElementsByTag("a");
-                                if (aTag != null && aTag.size() != 0) {
-                                    Element a = aTag.first();
-                                    String name = a.text();
-
-                                    if (name != null && !name.isEmpty()) {
-                                        switch (useHref) {
-                                            case "#author":
-                                                author = name;
-                                                break;
-                                            case "#performer":
-                                                reader = name;
-                                                break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Elements titleElements = book.getElementsByClass("caption__article-main");
-                if (titleElements != null && titleElements.size() != 0) {
-                    String title = titleElements.first().text();
-                    if (title != null && !title.isEmpty()) {
-                        titleResulr = title.replace(author + " - ", "");
-                    }
-                }
-
-                Elements link = book.getElementsByClass("content__article-main-link");
-                if (link != null && link.size() != 0) {
-                    String src = link.first().attr("href");
-                    if (src != null && !src.isEmpty()) {
-                        url = src;
-                    }
-                }
-
-                String[] name = author.split(" ");
-                boolean authorFlag = false;
-                if (author.length() == bookPOJO.getAutor().length()) {
-                    authorFlag = true;
-                    for (final String s : name) {
-                        if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
-                            authorFlag = false;
-                            break;
-                        }
-
-                    }
-                }
-
-                String[] artist = reader.split(" ");
-                boolean readerFlag = false;
-                if (reader.length() == bookPOJO.getArtist().length()) {
-                    readerFlag = true;
-                    for (final String s : artist) {
-                        if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
-                            readerFlag = false;
-                            break;
-                        }
-
-                    }
-                }
-
-                if (!titleResulr.isEmpty() && !url.isEmpty() &&
-                        titleResulr.toLowerCase().equals(bookPOJO.getName().toLowerCase()) &&
-                        authorFlag && readerFlag) {
-                    OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
-                    otherArtistPOJO.setName("akniga.org");
-                    otherArtistPOJO.setUrl(url);
-                    return otherArtistPOJO;
-                }
-
-            }
-
-        }
-
-        return null;
-    }
-
     @Nullable
     private OtherArtistPOJO getIzibuk(BookPOJO bookPOJO) throws IOException {
 
-        Document doc = Jsoup.connect("https://izib.uk/search?q=" + bookPOJO.getName() + " "
-                + bookPOJO.getAutor() + " " + bookPOJO.getArtist())
+        Document doc = Jsoup.connect(Url.SERVER_IZIBUK + "/search?q=" + bookPOJO.getName() + " "
+                        + bookPOJO.getAutor() + " " + bookPOJO.getArtist())
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Element listParent = doc.getElementById("books_list");
@@ -535,11 +539,11 @@ public class OtherSourceModel implements
                     }
 
                     if (!titleResulr.isEmpty() && !url.isEmpty() &&
-                            titleResulr.toLowerCase().equals(bookPOJO.getName().toLowerCase()) &&
+                            titleResulr.equalsIgnoreCase(bookPOJO.getName()) &&
                             authorFlag && readerFlag) {
 
                         OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
-                        otherArtistPOJO.setName("izib.uk");
+                        otherArtistPOJO.setName("izibuk.ru");
                         otherArtistPOJO.setUrl(url);
                         return otherArtistPOJO;
                     }
@@ -555,11 +559,12 @@ public class OtherSourceModel implements
     @Nullable
     private OtherArtistPOJO getKnigaVuhe(BookPOJO bookPOJO) throws IOException {
 
-        Document doc = Jsoup.connect("https://knigavuhe.org/search/?q=" + bookPOJO.getName()
-                + " " + bookPOJO.getAutor())
+        Document doc = Jsoup.connect(Url.SERVER + "/search/?q=" + bookPOJO.getName()
+                        + " " + bookPOJO.getAutor())
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Element bookList = doc.getElementById("books_updates_list");
@@ -635,7 +640,7 @@ public class OtherSourceModel implements
                 }
 
                 if (!title.isEmpty() && !url.isEmpty() &&
-                        title.toLowerCase().equals(bookPOJO.getName().toLowerCase()) &&
+                        title.equalsIgnoreCase(bookPOJO.getName()) &&
                         authorFlag && readerFlag) {
 
                     OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();

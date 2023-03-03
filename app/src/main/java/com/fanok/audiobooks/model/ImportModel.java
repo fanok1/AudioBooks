@@ -43,20 +43,32 @@ public class ImportModel {
         this.src = src;
     }
 
-    private void setCookes() throws IOException {
-        Connection.Response res = Jsoup.connect("https://knigavuhe.org/login/")
-                .method(Connection.Method.GET)
+    private boolean importBooks() throws IOException {
+        Document document = Jsoup.connect(getUserUrl() + "fav/")
+                .cookies(getCookiesAuth())
                 .userAgent(Consts.USER_AGENT)
-                .referrer("https://knigavuhe.org")
                 .sslSocketFactory(Consts.socketFactory())
-                .execute();
-        Document doc = res.parse();
-        cookies = res.cookies();
-        Element form = doc.selectFirst("form[name='login_form']>input[name='token']");
-        if (form != null) {
-            token = form.attr("value");
-        }
+                .referrer(getUserUrl())
+                .maxBodySize(0)
+                .get();
+        Element booksListParent = document.getElementById("books_list");
+        if (booksListParent != null) {
+            Elements booksList = booksListParent.getElementsByClass("books_carousel");
+            if (booksList.size() != 0) {
+                Elements aList = booksList.first().getElementsByTag("a");
+                BooksDBModel booksDBModel = new BooksDBModel(mContext);
+                for (Element a : aList) {
+                    String url = Url.SERVER + a.attr("href");
+                    if (!booksDBModel.inFavorite(url)) {
+                        booksDBModel.addFavorite(BookPOJO.getBookByUrl(url));
+                    }
 
+                }
+                booksDBModel.closeDB();
+            }
+            return true;
+        }
+        return false;
     }
 
     public Observable<Integer> importBooks(@NonNull String username, @NotNull String password) {
@@ -110,66 +122,6 @@ public class ImportModel {
         return userUrl;
     }
 
-    private boolean login(@NotNull String username, @NotNull String password) throws IOException {
-        if (getCookies() == null || getToken() == null) setCookes();
-        Connection.Response res = Jsoup.connect("https://knigavuhe.org/login/")
-                .cookies(getCookies())
-                .data("email", username)
-                .data("password", password)
-                .data("token", getToken())
-                .method(Connection.Method.POST)
-                .sslSocketFactory(Consts.socketFactory())
-                .ignoreContentType(true)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("https://knigavuhe.org/login/")
-                .execute();
-        if (res.url().toString().contains("error")) {
-            return false;
-        } else {
-            cookiesAuth = res.cookies();
-            String json = res.body();
-            JsonElement root = JsonParser.parseString(json);
-            if (root.isJsonArray()) {
-                JsonArray jsonArray = root.getAsJsonArray();
-                for (int i = 0; i < jsonArray.size(); i++) {
-                    if (jsonArray.get(i).isJsonObject()) {
-                        JsonObject jsonObject = jsonArray.get(i).getAsJsonObject();
-                        userUrl = "https://knigavuhe.org" + jsonObject.get("url").getAsString();
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-    }
-
-    private boolean importBooks() throws IOException {
-        Document document = Jsoup.connect(getUserUrl() + "fav/")
-                .cookies(getCookiesAuth())
-                .userAgent(Consts.USER_AGENT)
-                .sslSocketFactory(Consts.socketFactory())
-                .referrer(getUserUrl())
-                .get();
-        Element booksListParent = document.getElementById("books_list");
-        if (booksListParent != null) {
-            Elements booksList = booksListParent.getElementsByClass("books_carousel");
-            if (booksList.size() != 0) {
-                Elements aList = booksList.first().getElementsByTag("a");
-                BooksDBModel booksDBModel = new BooksDBModel(mContext);
-                for (Element a : aList) {
-                    String url = Url.SERVER + a.attr("href");
-                    if (!booksDBModel.inFavorite(url)) {
-                        booksDBModel.addFavorite(BookPOJO.getBookByUrl(url));
-                    }
-
-                }
-                booksDBModel.closeDB();
-            }
-            return true;
-        }
-        return false;
-    }
-
     private boolean importBooksAbook() throws IOException {
         int page = 1;
         BooksDBModel booksDBModel = new BooksDBModel(mContext);
@@ -179,7 +131,8 @@ public class ImportModel {
                     .cookies(getCookiesAuth())
                     .userAgent(Consts.USER_AGENT)
                     .sslSocketFactory(Consts.socketFactory())
-                    .referrer("https://akniga.org/")
+                    .referrer(Url.SERVER_AKNIGA)
+                    .maxBodySize(0)
                     .get();
             Elements bootom = document.getElementsByClass("page__nav");
             if (bootom != null && bootom.size() != 0) {
@@ -197,7 +150,7 @@ public class ImportModel {
             Elements listElements = document.getElementsByClass("content__main__articles--item");
             if (listElements != null && listElements.size() != 0) {
                 for (Element book : listElements) {
-                    Elements paid = book.getElementsByAttributeValue("href", "https://akniga.org/paid/");
+                    Elements paid = book.getElementsByAttributeValue("href", Url.SERVER_AKNIGA + "/paid/");
                     if (paid != null && paid.size() != 0) {
                         continue;
                     }
@@ -224,24 +177,61 @@ public class ImportModel {
         }
     }
 
+    private boolean login(@NotNull String username, @NotNull String password) throws IOException {
+        if (getCookies() == null || getToken() == null) {
+            setCookes();
+        }
+        Connection.Response res = Jsoup.connect(Url.SERVER + "/login/")
+                .cookies(getCookies())
+                .data("email", username)
+                .data("password", password)
+                .data("token", getToken())
+                .method(Connection.Method.POST)
+                .sslSocketFactory(Consts.socketFactory())
+                .ignoreContentType(true)
+                .userAgent(Consts.USER_AGENT)
+                .referrer(Url.SERVER + "/login/")
+                .maxBodySize(0)
+                .execute();
+        if (res.url().toString().contains("error")) {
+            return false;
+        } else {
+            cookiesAuth = res.cookies();
+            String json = res.body();
+            JsonElement root = JsonParser.parseString(json);
+            if (root.isJsonArray()) {
+                JsonArray jsonArray = root.getAsJsonArray();
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    if (jsonArray.get(i).isJsonObject()) {
+                        JsonObject jsonObject = jsonArray.get(i).getAsJsonObject();
+                        userUrl = Url.SERVER + jsonObject.get("url").getAsString();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
     private boolean loginAbook(@NotNull String username, @NotNull String password) throws IOException {
         if (getCookies() == null || getToken() == null) {
             setCookesAbook();
         }
 
-        Connection.Response res = Jsoup.connect("https://akniga.org/auth/ajax-login")
+        Connection.Response res = Jsoup.connect(Url.SERVER_AKNIGA + "/auth/ajax-login")
                 .cookies(getCookies())
                 .data("login", username)
                 .data("password", password)
                 .data("security_ls_key", getToken())
                 .data("remember", "1")
-                .data("return-path", "https://akniga.org/")
+                .data("return-path", Url.SERVER_AKNIGA + "/")
                 .method(Connection.Method.POST)
                 .sslSocketFactory(Consts.socketFactory())
                 .ignoreContentType(true)
                 .followRedirects(true)
                 .userAgent(Consts.USER_AGENT)
-                .referrer("https://akniga.org/")
+                .referrer(Url.SERVER_AKNIGA)
+                .maxBodySize(0)
                 .execute();
 
         String json = res.body();
@@ -255,11 +245,12 @@ public class ImportModel {
                     return false;
                 } else {
                     cookiesAuth = res.cookies();
-                    Document document = Jsoup.connect("https://akniga.org/")
+                    Document document = Jsoup.connect(Url.SERVER_AKNIGA)
                             .userAgent(Consts.USER_AGENT)
                             .referrer("http://www.google.com")
                             .sslSocketFactory(Consts.socketFactory())
                             .cookies(cookiesAuth)
+                            .maxBodySize(0)
                             .get();
                     Elements elements = document.getElementsByClass("menu__user--wrapper--wrapper");
                     if (elements != null && elements.size() != 0) {
@@ -278,12 +269,30 @@ public class ImportModel {
         return false;
     }
 
+    private void setCookes() throws IOException {
+        Connection.Response res = Jsoup.connect(Url.SERVER + "/login/")
+                .method(Connection.Method.GET)
+                .userAgent(Consts.USER_AGENT)
+                .referrer(Url.SERVER)
+                .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
+                .execute();
+        Document doc = res.parse();
+        cookies = res.cookies();
+        Element form = doc.selectFirst("form[name='login_form']>input[name='token']");
+        if (form != null) {
+            token = form.attr("value");
+        }
+
+    }
+
     private void setCookesAbook() throws IOException {
-        Connection.Response res = Jsoup.connect("https://akniga.org/")
+        Connection.Response res = Jsoup.connect(Url.SERVER_AKNIGA)
                 .method(Connection.Method.GET)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("https://www.google.com.ua/")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .execute();
         Document doc = res.parse();
         cookies = res.cookies();

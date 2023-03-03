@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.adapter.AnswerListAddapter;
 import com.fanok.audiobooks.adapter.ComentsListAddapter;
 import com.fanok.audiobooks.adapter.ComentsListBazaKnigAddapter;
@@ -68,7 +69,7 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         binding.list.setLayoutManager(linearLayoutManager);
-        if (!url.contains("baza-knig.ru")) {
+        if (!url.contains(Url.SERVER_BAZA_KNIG)) {
             mComentsListAddapter = new ComentsListAddapter(getContext());
             mAnswerListAddapter = new AnswerListAddapter(getContext());
             mComentsListAddapter.setListener((view12, position) -> {
@@ -136,7 +137,7 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
         } else {
             binding.placeholder.setVisibility(View.GONE);
         }
-        if (!url.contains("baza-knig.ru")) {
+        if (!url.contains(Url.SERVER_BAZA_KNIG)) {
             mComentsListAddapter.setItem(data);
         } else {
             mComentsListBazaKnigAddapter.setItem(data);

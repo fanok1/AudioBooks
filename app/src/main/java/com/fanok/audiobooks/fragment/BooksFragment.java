@@ -37,6 +37,7 @@ import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.activity.SearchableActivity;
@@ -245,9 +246,9 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
 
     @Override
     public void onCreateOptionsMenu(@NotNull Menu menu, @NotNull MenuInflater inflater) {
-        if (mUrl.contains("izib.uk") || mUrl.contains("audiobook-mp3.com")) {
+        if (mUrl.contains(Url.SERVER_IZIBUK) || mUrl.contains(Url.SERVER_ABMP3)) {
             inflater.inflate(R.menu.books_izibuk_options_menu, menu);
-        } else if (mUrl.contains("baza-knig.ru")) {
+        } else if (mUrl.contains(Url.SERVER_BAZA_KNIG)) {
             inflater.inflate(R.menu.books_baza_knig_options_menu, menu);
         } else {
             inflater.inflate(R.menu.books_options_menu, menu);
@@ -290,9 +291,9 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
 
             if (mUrl.contains("reader") || mUrl.contains("author") ||
                     mUrl.contains("serie") || mUrl.contains("cikl") ||
-                    (mUrl.contains("audiobook-mp3.com") && mUrl.contains("genre")) ||
-                    (mUrl.contains("izib.uk") && mUrl.contains("genre")) ||
-                    (mUrl.contains("baza-knig.ru") && mUrl.contains("ispolnitel"))) {
+                    (mUrl.contains(Url.SERVER_ABMP3) && mUrl.contains("genre")) ||
+                    (mUrl.contains(Url.SERVER_IZIBUK) && mUrl.contains("genre")) ||
+                    (mUrl.contains(Url.SERVER_BAZA_KNIG) && mUrl.contains("ispolnitel"))) {
                 menu.findItem(R.id.order).setVisible(false);
             } else {
                 setColorPrimeriTextInIconItemMenu(

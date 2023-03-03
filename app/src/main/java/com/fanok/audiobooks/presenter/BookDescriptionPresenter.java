@@ -7,6 +7,7 @@ import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.interface_pacatge.book_content.Description;
 import com.fanok.audiobooks.interface_pacatge.book_content.DescriptionModel;
 import com.fanok.audiobooks.interface_pacatge.book_content.DescriptionPresenter;
@@ -72,7 +73,7 @@ public class BookDescriptionPresenter extends MvpPresenter<Description> implemen
                         @Override
                         public void onError(@NotNull Throwable e) {
                             if (e.getClass() == CookesExeption.class) {
-                                if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                                if (Objects.requireNonNull(e.getMessage()).contains(Url.SERVER_BAZA_KNIG)) {
                                     getViewState().showToast(R.string.cookes_baza_knig_exeption);
                                 }
                             }

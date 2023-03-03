@@ -58,6 +58,7 @@ public class ParentalControlModel {
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Elements items = doc.getElementsByClass("genre2_item");
@@ -79,6 +80,7 @@ public class ParentalControlModel {
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Elements items = doc.getElementsByClass("b-posts");
@@ -111,6 +113,7 @@ public class ParentalControlModel {
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Elements items = doc.getElementsByClass("table-authors");
@@ -146,6 +149,7 @@ public class ParentalControlModel {
         Connection connection = Jsoup.connect(Url.SECTIONS_BAZA_KNIG)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
+                .maxBodySize(0)
                 .sslSocketFactory(Consts.socketFactory());
 
         if (!Consts.getBazaKnigCookies().isEmpty()) {
@@ -181,6 +185,7 @@ public class ParentalControlModel {
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
                 .get();
 
         Elements items = doc.getElementsByClass("_e181af");
