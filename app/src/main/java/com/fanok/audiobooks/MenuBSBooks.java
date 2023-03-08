@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import butterknife.BindView;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.books.BooksView;
 import com.fanok.audiobooks.model.BooksDBModel;
@@ -18,20 +17,13 @@ import org.jetbrains.annotations.NotNull;
 public class MenuBSBooks extends BottomSheetDialogFragment {
 
 
-    @BindView(R.id.open)
-    TextView mOpen;
-    @BindView(R.id.addFavorite)
-    TextView mAddFavorite;
-    @BindView(R.id.removeFavorite)
-    TextView mRemoveFavorite;
-    @BindView(R.id.genre)
-    TextView mGenre;
-    @BindView(R.id.author)
-    TextView mAuthor;
-    @BindView(R.id.artist)
-    TextView mArtist;
-    @BindView(R.id.series)
-    TextView mSeries;
+    private TextView mOpen;
+    private TextView mAddFavorite;
+    private TextView mRemoveFavorite;
+    private TextView mGenre;
+    private TextView mAuthor;
+    private TextView mArtist;
+    private TextView mSeries;
 
     private BooksDBModel mBooksDBModel;
 
@@ -62,6 +54,14 @@ public class MenuBSBooks extends BottomSheetDialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        mOpen = view.findViewById(R.id.open);
+        mAddFavorite = view.findViewById(R.id.addFavorite);
+        mRemoveFavorite = view.findViewById(R.id.removeFavorite);
+        mGenre = view.findViewById(R.id.genre);
+        mAuthor = view.findViewById(R.id.author);
+        mArtist = view.findViewById(R.id.artist);
+        mSeries = view.findViewById(R.id.series);
 
         if (mBook != null) {
 

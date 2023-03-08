@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import androidx.annotation.NonNull;
 
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBAbstract;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBHelperInterfase;
 import com.fanok.audiobooks.pojo.BookPOJO;
@@ -34,6 +35,11 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     }
 
     @Override
+    public boolean inSaved(@NonNull final BookPOJO book) {
+        return booksInTable(book, "saved");
+    }
+
+    @Override
     public boolean inFavorite(@NonNull String url) {
         return booksInTable(url, "favorite");
     }
@@ -41,6 +47,11 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     @Override
     public boolean inHistory(@NonNull String url) {
         return booksInTable(url, "history");
+    }
+
+    @Override
+    public boolean inSaved(final String url) {
+        return booksInTable(url, "saved");
     }
 
     private boolean booksInTable(@NonNull BookPOJO book, @NonNull String table) {
@@ -90,6 +101,23 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     }
 
     @Override
+    public void addSaved(final BookPOJO book) {
+        if (!inSaved(book)) {
+            add(book, "saved");
+        }
+    }
+
+    @Override
+    public void removeSaved(final BookPOJO book) {
+        remove(book, "saved");
+    }
+
+    @Override
+    public void clearSaved() {
+        clearAll("saved");
+    }
+
+    @Override
     public int getHistoryCount() {
         return getCount("history");
     }
@@ -97,6 +125,11 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     @Override
     public int getFavoriteCount() {
         return getCount("favorite");
+    }
+
+    @Override
+    public int getSavedCount() {
+        return getCount("saved");
     }
 
     @Override
@@ -110,42 +143,88 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     }
 
     @Override
+    public ArrayList<BookPOJO> getAllSaved() {
+        return getAll("saved");
+    }
+
+    @Override
     public BookPOJO getHistory() {
         return getLast("history");
     }
 
     @Override
-    public BookPOJO getFavorite() {
-        return getLast("favorite");
+    public BookPOJO getSaved(@NonNull String url) {
+        return getByUrl(url, "saved");
+    }
+
+    private BookPOJO getByUrl(@NonNull final String url, @NonNull final String table) {
+        SQLiteDatabase db = getDBHelper().getWritableDatabase();
+
+        String selectQuery = "SELECT * FROM " + table + " WHERE "
+                + "url_book = '" + url + "'";
+
+        BookPOJO book = null;
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        if (cursor.moveToLast()) {
+            book = new BookPOJO();
+            book.setName(cursor.getString(1));
+            book.setUrl(cursor.getString(2));
+            book.setPhoto(cursor.getString(3));
+            book.setGenre(cursor.getString(4));
+            book.setUrlGenre(cursor.getString(5));
+            book.setAutor(cursor.getString(6));
+            book.setUrlAutor(cursor.getString(7));
+            book.setArtist(cursor.getString(8));
+            book.setUrlArtist(cursor.getString(9));
+            book.setSeries(cursor.getString(10));
+            book.setUrlSeries(cursor.getString(11));
+            book.setTime(cursor.getString(12));
+            book.setReting(cursor.getString(13));
+            book.setComents(cursor.getString(14));
+            book.setDesc(cursor.getString(15));
+        }
+        cursor.close();
+        db.close();
+        return book;
     }
 
     @Override
-    public ArrayList<String> getGenre() {
-        return getStringRow("genre");
+    public ArrayList<String> getGenre(int table) {
+        return getStringRow("genre", table);
     }
 
 
     @Override
-    public ArrayList<String> getAutors() {
-        return getStringRow("author");
+    public ArrayList<String> getAutors(int table) {
+        return getStringRow("author", table);
     }
 
     @Override
-    public ArrayList<String> getArtists() {
-        return getStringRow("artist");
+    public ArrayList<String> getArtists(int table) {
+        return getStringRow("artist", table);
     }
 
     @Override
-    public ArrayList<String> getSeries() {
-        return getStringRow("series");
+    public ArrayList<String> getSeries(int table) {
+        return getStringRow("series", table);
     }
 
-    private ArrayList<String> getStringRow(@NotNull String row) {
+    private ArrayList<String> getStringRow(@NotNull String row, int table) {
+        String tableName;
+        if(table == Consts.TABLE_FAVORITE){
+            tableName = "favorite";
+        }else if (table == Consts.TABLE_HISTORY){
+            tableName = "history";
+        }else if (table == Consts.TABLE_SAVED){
+            tableName = "saved";
+        }else {
+            throw new IllegalArgumentException("Incorect table id");
+        }
         ArrayList<String> list = new ArrayList<>();
 
         SQLiteDatabase db = getDBHelper().getWritableDatabase();
         Cursor cursor = db.rawQuery(
-                "SELECT " + row + " FROM favorite WHERE " + row + "<>\"\" GROUP BY " + row
+                "SELECT " + row + " FROM "+tableName+" WHERE " + row + "<>\"\" GROUP BY " + row
                         + " ORDER BY " + row + " ASC", null);
 
         if (cursor.moveToFirst()) {

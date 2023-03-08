@@ -103,7 +103,8 @@
             android:configChanges="locale|uiMode|orientation|screenSize"
             android:label="@string/select_folder"
             android:launchMode="singleTop"
-            android:theme="@style/AppTheme.SwipeOnClose">
+            android:theme="@style/AppTheme.SwipeOnClose"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.fanok.audiobooks.activity.SelectDirectoryActivity" />
 
@@ -133,8 +134,8 @@
         <activity
             android:name=".activity.MainActivity"
             android:configChanges="locale|uiMode"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme.Launcher">
+            android:theme="@style/AppTheme.Launcher"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -144,9 +145,9 @@
         <activity
             android:name=".activity.SearchableActivity"
             android:configChanges="locale|uiMode"
-            android:label=""
             android:launchMode="singleTop"
-            android:theme="@style/AppTheme.SwipeOnClose">
+            android:theme="@style/AppTheme.SwipeOnClose"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
@@ -163,7 +164,8 @@
             android:configChanges="locale|uiMode"
             android:noHistory="true"
             android:screenOrientation="locked"
-            android:theme="@style/AppTheme.NoAnimTheme">
+            android:theme="@style/AppTheme.NoAnimTheme"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -257,7 +259,8 @@
         <receiver
             android:name=".broadcasts.OnNotificationButtonClick"
             android:exported="false" />
-        <receiver android:name="androidx.media.session.MediaButtonReceiver">
+        <receiver android:name="androidx.media.session.MediaButtonReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
@@ -290,7 +293,8 @@
 
         <service
             android:name="de.blinkt.openvpn.core.OpenVPNService"
-            android:permission="android.permission.BIND_VPN_SERVICE">
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>

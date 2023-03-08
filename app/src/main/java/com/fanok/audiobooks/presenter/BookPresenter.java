@@ -30,6 +30,7 @@ import com.fanok.audiobooks.EncodingExeption;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.activity.PopupClearSaved;
 import com.fanok.audiobooks.activity.SleepTimerActivity;
 import com.fanok.audiobooks.interface_pacatge.book_content.Activity;
 import com.fanok.audiobooks.interface_pacatge.book_content.ActivityPresenter;
@@ -326,7 +327,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             }
         }
         mAudioPOJO = result;
-        getViewState().showData(mAudioPOJO);
+        getViewState().showData(mAudioPOJO, mBookPOJO.getUrl());
         error = false;
         onCompleteAudio();
 
@@ -363,6 +364,8 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                     audioListPOJO.setAudioName(mAudioPOJO.get(i).getName());
                     audioListPOJO.setAudioUrl(mAudioPOJO.get(i).getUrl());
                     audioListPOJO.setTime(mAudioPOJO.get(i).getTime());
+                    audioListPOJO.setTimeStart(mAudioPOJO.get(i).getTimeStart());
+                    audioListPOJO.setTimeEnd(mAudioPOJO.get(i).getTimeFinish());
                     mAudioListDBModel.add(audioListPOJO);
                 }
             }
@@ -562,7 +565,12 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         File[] folders = mContext.getExternalFilesDirs(null);
         for (File folder : folders) {
             if (folder != null) {
-                File dir = new File(folder.getAbsolutePath() + "/" + mBookPOJO.getName());
+                    String source = Consts.getSorceName(mContext, mBookPOJO.getUrl());
+                    String filePath = folder.getAbsolutePath() + "/" + source
+                            + "/" + mBookPOJO.getAutor()
+                            + "/" + mBookPOJO.getArtist()
+                            + "/" + mBookPOJO.getName();
+                File dir = new File(filePath);
                 if (dir.exists() && dir.isDirectory()) {
                     for (String url : data) {
                         File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
@@ -583,6 +591,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                     }
 
                 }
+                PopupClearSaved.deleteEmtyFolder(folder);
             }
         }
         getViewState().updateAdapter(null);
@@ -620,10 +629,14 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                                 for (File folder : folders) {
                                     File file = null;
                                     if (folder != null) {
+                                        String source = Consts.getSorceName(mContext, mBookPOJO.getUrl());
+                                        String filePath = folder.getAbsolutePath() + "/" + source
+                                                + "/" + mBookPOJO.getAutor()
+                                                + "/" + mBookPOJO.getArtist()
+                                                + "/" + mBookPOJO.getName();
                                         file = new File(
-                                                folder.getAbsolutePath() + "/"
-                                                        + audioListPOJO.getBookName()
-                                                        + "/" + audioListPOJO.getAudioUrl().substring(
+                                                filePath + "/"
+                                                        + audioListPOJO.getAudioUrl().substring(
                                                         audioListPOJO.getAudioUrl().lastIndexOf("/")
                                                                 + 1));
                                     }
@@ -633,13 +646,15 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                                         audioPOJO.setBookName(audioListPOJO.getBookName());
                                         audioPOJO.setUrl(audioListPOJO.getAudioUrl());
                                         audioPOJO.setTime(audioListPOJO.getTime());
+                                        audioPOJO.setTimeStart(audioListPOJO.getTimeStart());
+                                        audioPOJO.setTimeFinish(audioListPOJO.getTimeEnd());
                                         audioPOJOS.add(audioPOJO);
                                         break;
                                     }
                                 }
                             }
                             mAudioPOJO = audioPOJOS;
-                            getViewState().showData(mAudioPOJO);
+                            getViewState().showData(mAudioPOJO, mBookPOJO.getUrl());
                             getViewState().showToast(mContext.getString(R.string.error_load_data)
                                     + "\n" + mContext.getString(R.string.go_offline));
                             error = true;
@@ -650,7 +665,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                     @Override
                     public void onNext(@NotNull ArrayList<AudioPOJO> bookPOJOS) {
                         mAudioPOJO = bookPOJOS;
-                        getViewState().showData(mAudioPOJO);
+                        getViewState().showData(mAudioPOJO, mBookPOJO.getUrl());
                         error = false;
                     }
 
@@ -689,9 +704,9 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     public void loadBooks(HashSet<String> data) {
         for (String url : data) {
             if (mBookPOJO.getUrl().contains(Url.SERVER_ABMP3)) {
-                getViewState().downloadFileABMP3(url, mBookPOJO.getName());
+                getViewState().downloadFileABMP3(url, mBookPOJO);
             } else {
-                getViewState().downloadFile(url, mBookPOJO.getName());
+                getViewState().downloadFile(url, mBookPOJO);
             }
         }
     }

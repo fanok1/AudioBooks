@@ -27,6 +27,8 @@ public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelp
         contentValues.put("name_audio", pojo.getAudioName());
         contentValues.put("url_audio", pojo.getAudioUrl());
         contentValues.put("time", pojo.getTime());
+        contentValues.put("time_start", pojo.getTimeStart());
+        contentValues.put("time_end", pojo.getTimeEnd());
         return contentValues;
     }
 
@@ -50,6 +52,8 @@ public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelp
         values.put("name_audio", audioListPOJO.getAudioName());
         values.put("url_audio", audioListPOJO.getAudioUrl());
         values.put("time", audioListPOJO.getTime());
+        values.put("time_start", audioListPOJO.getTimeStart());
+        values.put("time_end", audioListPOJO.getTimeEnd());
         SQLiteDatabase db = getDBHelper().getWritableDatabase();
         long i = db.insert("books_audio", null, values);
         db.close();
@@ -84,6 +88,8 @@ public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelp
                 audio.setAudioName(cursor.getString(3));
                 audio.setAudioUrl(cursor.getString(4));
                 audio.setTime(cursor.getInt(5));
+                audio.setTimeStart(cursor.getInt(6));
+                audio.setTimeEnd(cursor.getInt(7));
                 list.add(audio);
             } while (cursor.moveToNext());
         }
@@ -107,6 +113,8 @@ public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelp
                 audio.setAudioName(cursor.getString(3));
                 audio.setAudioUrl(cursor.getString(4));
                 audio.setTime(cursor.getInt(5));
+                audio.setTimeStart(cursor.getInt(6));
+                audio.setTimeEnd(cursor.getInt(7));
                 list.add(audio);
             } while (cursor.moveToNext());
         }

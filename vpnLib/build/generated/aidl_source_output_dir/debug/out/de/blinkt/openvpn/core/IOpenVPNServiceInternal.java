@@ -289,7 +289,13 @@ public interface IOpenVPNServiceInternal extends android.os.IInterface
     static final int TRANSACTION_isAllowedExternalApp = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
     static final int TRANSACTION_challengeResponse = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
     public static boolean setDefaultImpl(de.blinkt.openvpn.core.IOpenVPNServiceInternal impl) {
-      if (Stub.Proxy.sDefaultImpl == null && impl != null) {
+      // Only one user of this interface can use this function
+      // at a time. This is a heuristic to detect if two different
+      // users in the same process use this function.
+      if (Stub.Proxy.sDefaultImpl != null) {
+        throw new IllegalStateException("setDefaultImpl() called twice");
+      }
+      if (impl != null) {
         Stub.Proxy.sDefaultImpl = impl;
         return true;
       }

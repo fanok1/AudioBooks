@@ -1,8 +1,10 @@
 package com.fanok.audiobooks.fragment;
 
+import static com.fanok.audiobooks.Consts.FRAGMENT_SAVED;
 import static com.fanok.audiobooks.Consts.REQEST_CODE_SEARCH;
 import static com.fanok.audiobooks.Consts.TABLE_FAVORITE;
 import static com.fanok.audiobooks.Consts.TABLE_HISTORY;
+import static com.fanok.audiobooks.Consts.TABLE_SAVED;
 import static com.fanok.audiobooks.Consts.getAttributeColor;
 import static com.fanok.audiobooks.Consts.setColorPrimeriTextInIconItemMenu;
 
@@ -201,17 +203,21 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
             });
         }
 
-        if (table == TABLE_FAVORITE) {
+
+        if(table==TABLE_SAVED){
+            menu.findItem(R.id.saved).setVisible(false);
+            menu.findItem(R.id.saved_filter).setVisible(false);
+        }
+
+        if (table == TABLE_FAVORITE || table == TABLE_SAVED) {
             menu.findItem(R.id.order).setVisible(true);
             menu.findItem(R.id.filter).setVisible(true);
-
+            setColorPrimeriTextInIconItemMenu(
+                    menu.findItem(R.id.order), requireContext());
+            String sort = pref.getString("pref_sort_favorite", getString(R.string.sort_value_date));
             setColorPrimeriTextInIconItemMenu(
                     menu.findItem(R.id.filter), requireContext());
 
-            setColorPrimeriTextInIconItemMenu(
-                    menu.findItem(R.id.order), requireContext());
-
-            String sort = pref.getString("pref_sort_favorite", getString(R.string.sort_value_date));
             if (getString(R.string.sort_value_name).equals(sort)) {
                 menu.findItem(R.id.name).setChecked(true);
             } else if (getString(R.string.sort_value_genre).equals(sort)) {
@@ -222,10 +228,11 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                 menu.findItem(R.id.artist).setChecked(true);
             } else if (getString(R.string.sort_value_series).equals(sort)) {
                 menu.findItem(R.id.series).setChecked(true);
-            } else {
+            } else if (getString(R.string.sort_value_saved).equals(sort)&&table!=TABLE_SAVED){
+                menu.findItem(R.id.saved).setChecked(true);
+            }else {
                 menu.findItem(R.id.date).setChecked(true);
             }
-
         }
 
         super.onCreateOptionsMenu(menu, inflater);
@@ -346,6 +353,13 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                         navigationView.setCheckedItem(R.id.nav_history);
                     } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 5) {
                         mTextViewArrayList.get(5).setBackgroundResource(SelectedValue.resourceId);
+                    }
+                    break;
+                case TABLE_SAVED:
+                    if (navigationView != null) {
+                        navigationView.setCheckedItem(R.id.nav_saved);
+                    } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 6) {
+                        mTextViewArrayList.get(6).setBackgroundResource(SelectedValue.resourceId);
                     }
                     break;
             }

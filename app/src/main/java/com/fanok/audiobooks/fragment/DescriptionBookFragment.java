@@ -21,9 +21,6 @@ import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
@@ -49,64 +46,30 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     private static final String ARG_BOOK_POJO = "arg_book_pojo";
     private static final int MAX_LINES = 4;
 
-    @BindView(R.id.title)
-    TextView mTitle;
-    @BindView(R.id.imageView)
-    ImageView mImageView;
-    @BindView(R.id.reting)
-    TextView mReting;
-    @BindView(R.id.genre)
-    TextView mGenre;
-    @BindView(R.id.time)
-    TextView mTime;
-    @BindView(R.id.author)
-    TextView mAuthor;
-
-    @BindView(R.id.autorConteiner)
-    LinearLayout mAutorConteiner;
-
-    @BindView(R.id.artist)
-    TextView mArtist;
-
-    @BindView(R.id.artistConteiner)
-    LinearLayout mArtistConteiner;
-
-    @BindView(R.id.series)
-    TextView mSeries;
-
-    @BindView(R.id.seriesConteiner)
-    LinearLayout mSeriesConteiner;
-
-    @Nullable
-    @BindView(R.id.desc)
-    TextView mDesc;
-
-    @BindView(R.id.showMore)
-    TextView mShowMore;
-
-    @BindView(R.id.recommendedBooks)
-    RecyclerView mRecommendedBooks;
-
-    @BindView(R.id.recommendedBooksTitle)
-    TextView mRecommendedBooksTitle;
-
-    @BindView(R.id.scrollView)
-    ScrollView mScrollView;
-    @BindView(R.id.progressBar)
-    ProgressBar mProgressBar;
-    Unbinder unbinder;
+    private TextView mTitle;
+    private ImageView mImageView;
+    private TextView mReting;
+    private TextView mGenre;
+    private TextView mTime;
+    private TextView mAuthor;
+    private LinearLayout mAutorConteiner;
+    private TextView mArtist;
+    private LinearLayout mArtistConteiner;
+    private TextView mSeries;
+    private LinearLayout mSeriesConteiner;
+    private TextView mDesc;
+    private TextView mShowMore;
+    private RecyclerView mRecommendedBooks;
+    private TextView mRecommendedBooksTitle;
+    private ScrollView mScrollView;
+    private ProgressBar mProgressBar;
+    private TextView mFavorite;
+    private TextView mLike;
+    private TextView mDisLike;
+    private View mDescLine;
+    private View mOtherBookLine;
     @InjectPresenter
     BookDescriptionPresenter mPresenter;
-    @BindView(R.id.favorite)
-    TextView mFavorite;
-    @BindView(R.id.like)
-    TextView mLike;
-    @BindView(R.id.disLike)
-    TextView mDisLike;
-    @BindView(R.id.descLine)
-    View mDescLine;
-    @BindView(R.id.otherBookLine)
-    View mOtherBookLine;
     private BooksOtherAdapter mAdapterBooksRecomended;
     private boolean showMore;
 
@@ -135,7 +98,30 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         } else {
             view = inflater.inflate(R.layout.fragment_book_description, container, false);
         }
-        unbinder = ButterKnife.bind(this, view);
+
+        mTitle = view.findViewById(R.id.title);
+        mImageView = view.findViewById(R.id.imageView);
+        mReting = view.findViewById(R.id.reting);
+        mGenre = view.findViewById(R.id.genre);
+        mTime = view.findViewById(R.id.time);
+        mAuthor = view.findViewById(R.id.author);
+        mAutorConteiner = view.findViewById(R.id.autorConteiner);
+        mArtist = view.findViewById(R.id.artist);
+        mArtistConteiner = view.findViewById(R.id.artistConteiner);
+        mSeries = view.findViewById(R.id.series);
+        mSeriesConteiner = view.findViewById(R.id.seriesConteiner);
+        mDesc = view.findViewById(R.id.desc);
+        mShowMore = view.findViewById(R.id.showMore);
+        mRecommendedBooks = view.findViewById(R.id.recommendedBooks);
+        mRecommendedBooksTitle = view.findViewById(R.id.recommendedBooksTitle);
+        mScrollView = view.findViewById(R.id.scrollView);
+        mProgressBar = view.findViewById(R.id.progressBar);
+        mFavorite = view.findViewById(R.id.favorite);
+        mLike = view.findViewById(R.id.like);
+        mDisLike = view.findViewById(R.id.disLike);
+        mDescLine = view.findViewById(R.id.descLine);
+        mOtherBookLine = view.findViewById(R.id.otherBookLine);
+
         mAdapterBooksRecomended = new BooksOtherAdapter();
         mRecommendedBooks.setAdapter(mAdapterBooksRecomended);
         mRecommendedBooks.setLayoutManager(
@@ -149,7 +135,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     public void onDestroyView() {
         mPresenter.onDestroy();
         super.onDestroyView();
-        unbinder.unbind();
     }
 
     @Override

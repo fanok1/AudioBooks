@@ -30,7 +30,7 @@ public interface Activity extends MvpView {
     void showProgres(boolean b);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
-    void showData(ArrayList<AudioPOJO> data);
+    void showData(ArrayList<AudioPOJO> data, String url);
 
     void showTitle(@NonNull String name);
 
@@ -74,10 +74,10 @@ public interface Activity extends MvpView {
     void setIsFavorite(boolean b);
 
     @StateStrategyType(SkipStrategy.class)
-    void downloadFile(String url, String fileName);
+    void downloadFile(String url, BookPOJO bookPOJO);
 
     @StateStrategyType(SkipStrategy.class)
-    void downloadFileABMP3(String url, String fileName);
+    void downloadFileABMP3(String url, BookPOJO bookPOJO);
 
     @StateStrategyType(SkipStrategy.class)
     void showGetPlus();

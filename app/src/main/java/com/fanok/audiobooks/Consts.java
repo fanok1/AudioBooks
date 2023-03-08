@@ -63,6 +63,8 @@ public class Consts {
 
     public static final int TABLE_HISTORY = 2;
 
+    public static final int TABLE_SAVED = 3;
+
     public static final int REQEST_CODE_SEARCH = 157;
 
     public static final String ARG_MODEL = "ARG_MODEL";
@@ -88,6 +90,8 @@ public class Consts {
     public static final int LAST_BOOK = 6;
 
     public static final int FRAGMENT_SETTINGS = 7;
+
+    public static final int FRAGMENT_SAVED = 8;
 
     public static final int IMPORT_SITE_KNIGA_V_UHE = 0;
 
@@ -235,5 +239,15 @@ public class Consts {
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             throw new RuntimeException("Failed to create a SSL socket factory", e);
         }
+    }
+
+    public static String getSorceName(@NonNull Context context, @NonNull String url){
+        if (url.contains(Url.SERVER)) return context.getString(R.string.kniga_v_uhe);
+        if (url.contains(Url.SERVER_ABMP3)) return context.getString(R.string.audionook_mp3);
+        if (url.contains(Url.SERVER_AKNIGA)) return context.getString(R.string.abook);
+        if (url.contains(Url.SERVER_IZIBUK)) return context.getString(R.string.izibuc);
+        if (url.contains(Url.SERVER_BAZA_KNIG)) return context.getString(R.string.baza_knig);
+        return "Unknown";
+
     }
 }

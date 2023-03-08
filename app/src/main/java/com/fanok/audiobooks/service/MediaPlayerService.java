@@ -61,6 +61,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.media.MediaBrowserServiceCompat;
 import androidx.media.session.MediaButtonReceiver;
 import androidx.preference.PreferenceManager;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Hourglass;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.PlaybackStatus;
@@ -70,7 +71,9 @@ import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.broadcasts.OnCancelBroadcastReceiver;
 import com.fanok.audiobooks.model.AudioDBModel;
+import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.AudioPOJO;
+import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
@@ -86,6 +89,7 @@ import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.AudioAttributes;
+import com.google.android.exoplayer2.source.ClippingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
@@ -543,6 +547,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     @Override
     public void onDestroy() {
         super.onDestroy();
+        SleepTimerPresenter.setTimerStarted(false);
         stopMedia();
         removeNotification();
         removeAudioFocus();
@@ -551,29 +556,34 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         if (phoneStateListener != null) {
             telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
         }
-
+        if(mAudioDBModel!=null){
+            mAudioDBModel.closeDB();
+        }
 
         //unregister BroadcastReceivers
-        unregisterReceiver(becomingNoisyReceiver);
-        unregisterReceiver(playNewAudio);
-        unregisterReceiver(playPriveos);
-        unregisterReceiver(playNext);
-        unregisterReceiver(play);
-        unregisterReceiver(seekTo);
-        unregisterReceiver(seekToNext30Sec);
-        unregisterReceiver(seekToPrevious10Sec);
-        unregisterReceiver(showTitle);
-        unregisterReceiver(getPosition);
-        unregisterReceiver(setSpeed);
-        unregisterReceiver(closeNotPrerepred);
-        unregisterReceiver(closeIfPause);
-        unregisterReceiver(sleepTimer);
-        unregisterReceiver(equalizer);
-        unregisterReceiver(equalizerEnabled);
-        unregisterReceiver(getTimeLeft);
-        unregisterReceiver(updateTimer);
-        mAudioDBModel.closeDB();
-        SleepTimerPresenter.setTimerStarted(false);
+        try{
+            unregisterReceiver(becomingNoisyReceiver);
+            unregisterReceiver(playNewAudio);
+            unregisterReceiver(playPriveos);
+            unregisterReceiver(playNext);
+            unregisterReceiver(play);
+            unregisterReceiver(seekTo);
+            unregisterReceiver(seekToNext30Sec);
+            unregisterReceiver(seekToPrevious10Sec);
+            unregisterReceiver(showTitle);
+            unregisterReceiver(getPosition);
+            unregisterReceiver(setSpeed);
+            unregisterReceiver(closeNotPrerepred);
+            unregisterReceiver(closeIfPause);
+            unregisterReceiver(sleepTimer);
+            unregisterReceiver(equalizer);
+            unregisterReceiver(equalizerEnabled);
+            unregisterReceiver(getTimeLeft);
+            unregisterReceiver(updateTimer);
+        } catch (Exception ignored){
+
+        }
+
     }
 
     public boolean isPlaying() {
@@ -767,7 +777,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             broadcastIntent.putExtra("id", R.drawable.ic_pause);
             //create the pause action
             play_pauseAction = playbackAction(1);
-            playbackSpeed = 1f;
+            playbackSpeed = BookPresenter.getSpeed();
         } else if (playbackStatus == PlaybackStatus.PAUSED) {
             notificationAction = R.drawable.ic_notification_play;
             broadcastIntent.putExtra("id", R.drawable.ic_play);
@@ -813,8 +823,8 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
 
         if (VERSION.SDK_INT < VERSION_CODES.Q) {
             notificationBuilder.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                    .setMediaSession(mediaSession.getSessionToken())
-                    .setShowActionsInCompactView(0, 2, 4))
+                            .setMediaSession(mediaSession.getSessionToken())
+                            .setShowActionsInCompactView(0, 2, 4))
                     .addAction(R.drawable.ic_notification_rewind_30, "rewind", playbackAction(4))
                     .addAction(R.drawable.ic_notification_previous, "previous", playbackAction(3))
                     .addAction(notificationAction, "pause", play_pauseAction)
@@ -822,8 +832,8 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                     .addAction(R.drawable.ic_notification_fast_forward_30, "forward", playbackAction(5));
         } else {
             notificationBuilder.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                    .setMediaSession(mediaSession.getSessionToken())
-                    .setShowActionsInCompactView(0, 1, 2))
+                            .setMediaSession(mediaSession.getSessionToken())
+                            .setShowActionsInCompactView(0, 1, 2))
                     .addAction(R.drawable.ic_notification_previous, "previous", playbackAction(3))
                     .addAction(notificationAction, "pause", play_pauseAction)
                     .addAction(R.drawable.ic_notification_next, "next", playbackAction(2))
@@ -925,21 +935,29 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         for (File folder : folders) {
             if (folder != null) {
                 String url = activeAudio.getUrl();
-                if (url != null && !url.isEmpty()) {
-                    File file = new File(folder.getAbsolutePath() + "/"
-                            + activeAudio.getBookName() + "/"
-                            + url.substring(url.lastIndexOf("/") + 1));
-                    if (file.exists()) {
-                        return file;
-                    }
-                } else {
-                    File file = new File(
-                            folder.getAbsolutePath() + "/" + activeAudio.getBookName() + "/"
-                                    + activeAudio.getName() + ".mp3");
-                    if (file.exists()) {
-                        return file;
+                BooksDBModel dbModel = new BooksDBModel(this);
+                if(dbModel.inSaved(urlBook)) {
+                    BookPOJO bookPOJO = dbModel.getSaved(urlBook);
+                    String source = Consts.getSorceName(this, urlBook);
+                    String filePath = folder.getAbsolutePath() + "/" + source
+                            + "/" + bookPOJO.getAutor()
+                            + "/" + bookPOJO.getArtist()
+                            + "/" + bookPOJO.getName();
+                    if (url != null && !url.isEmpty()) {
+                        File file = new File(filePath + "/" + url.substring(url.lastIndexOf("/") + 1));
+                        if (file.exists()) {
+                            return file;
+                        }
+
+                    } else {
+                        File file = new File(
+                                filePath+ "/" + activeAudio.getName() + ".mp3");
+                        if (file.exists()) {
+                            return file;
+                        }
                     }
                 }
+                dbModel.closeDB();
             }
 
         }
@@ -973,7 +991,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             DefaultHttpDataSourceFactory source = new DefaultHttpDataSourceFactory(
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
                     null);
-            source.setDefaultRequestProperty("referer", "https://baza-knig.ru/");
+            source.setDefaultRequestProperty("referer", Url.SERVER_BAZA_KNIG+"/");
             dateSourceFactory = new DefaultDataSourceFactory(this, null, source);
         } else {
             dateSourceFactory = new DefaultDataSourceFactory(this,
@@ -982,6 +1000,15 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
 
         MediaSource mediaSource = new ProgressiveMediaSource.Factory(
                 dateSourceFactory).createMediaSource(uri);
+
+        ClippingMediaSource clippingMediaSource = null;
+
+        if(activeAudio.getTimeStart()>=0 && activeAudio.getTimeFinish()>=0){
+            long timeStart = activeAudio.getTimeStart()* 1000000L;
+            long timeFinish = activeAudio.getTimeFinish()* 1000000L;
+            clippingMediaSource = new ClippingMediaSource(mediaSource, timeStart, timeFinish);
+        }
+
 
         buttonClick = false;
 
@@ -1131,7 +1158,11 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             mCountDownTimer.resumeTimer();
         }
 
-        mediaPlayer.prepare(mediaSource);
+        if(clippingMediaSource!=null){
+            mediaPlayer.prepare(clippingMediaSource);
+        }else {
+            mediaPlayer.prepare(mediaSource);
+        }
 
         if (!StorageAds.idDisableAds()) {
 

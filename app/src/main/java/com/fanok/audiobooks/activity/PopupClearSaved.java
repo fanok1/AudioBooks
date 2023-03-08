@@ -7,15 +7,19 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.GridSpacingItemDecoration;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.ClearSavedAdapter;
 import com.fanok.audiobooks.databinding.ActivityClearSavedPopupBinding;
+import com.fanok.audiobooks.model.BooksDBModel;
+import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.ClearSavedPOJO;
 import java.io.File;
 import java.util.ArrayList;
@@ -67,29 +71,13 @@ public class PopupClearSaved extends AppCompatActivity {
         for (int i = 0; i < folders.length; i++) {
             if (folders[i] != null) {
                 File file = new File(folders[i].getAbsolutePath());
-                if (file.exists() && file.isDirectory()) {
-                    File[] dirs = file.listFiles();
-                    if (dirs != null) {
-                        for (File dir : dirs) {
-                            if (dir.exists() && file.isDirectory()) {
-                                String[] files = dir.list();
-                                if (files != null) {
-                                    if (files.length == 0) {
-                                        dir.delete();
-                                    } else {
-                                        String storege = getString(R.string.dir_title_emulated);
-                                        if (i == 0) {
-                                            storege = getString(R.string.dir_title_emulated);
-                                        } else if (i == 1) {
-                                            storege = getString(R.string.dir_title_sdcrd);
-                                        }
-                                        list.add(new ClearSavedPOJO(dir, storege));
-                                    }
-                                }
-                            }
-                        }
-                    }
+                String storege = getString(R.string.dir_title_emulated);
+                if (i == 0) {
+                    storege = getString(R.string.dir_title_emulated);
+                } else if (i == 1) {
+                    storege = getString(R.string.dir_title_sdcrd);
                 }
+                readFile(file, storege, list);
             }
 
         }
@@ -122,16 +110,65 @@ public class PopupClearSaved extends AppCompatActivity {
                 Toast.makeText(this, R.string.no_selecetd, Toast.LENGTH_SHORT).show();
                 return;
             }
+            BooksDBModel booksDBModel = new BooksDBModel(this);
+            ArrayList<BookPOJO> arrayList =booksDBModel.getAllSaved();
             for (File file : files) {
+                for (BookPOJO bookPOJO: arrayList) {
+                    String source = Consts.getSorceName(this, bookPOJO.getUrl());
+                    String path = source
+                            + "/" + bookPOJO.getAutor()
+                            + "/" + bookPOJO.getArtist()
+                            + "/" + bookPOJO.getName();
+                    String f = file.getAbsolutePath();
+                    if(f.contains(path)){
+                        booksDBModel.removeSaved(bookPOJO);
+                    }
+
+                }
                 if (file.exists()) {
                     delete(file);
+                }
+            }
+            booksDBModel.closeDB();
+            File[] filesDirs = getExternalFilesDirs(null);
+            for (final File filesDir : filesDirs) {
+                if (filesDir != null) {
+                    File file = new File(filesDir.getAbsolutePath());
+                    deleteEmtyFolder(file);
                 }
             }
             recreate();
         });
     }
 
-    private void delete(File file) {
+    private void readFile(@NonNull File file, @NonNull String storege, @NonNull ArrayList<ClearSavedPOJO> list){
+        if (file.exists() && file.isDirectory()) {
+            File[] dirs = file.listFiles();
+            if (dirs != null) {
+                for (File dir : dirs) {
+                    if (dir.exists() && file.isDirectory()) {
+                        File[] files = dir.listFiles();
+                        if (files != null) {
+                            if (files.length == 0) {
+                                dir.delete();
+                            } else {
+                                for (int i=0; i<files.length; i++){
+                                    File file1 = files[i];
+                                    if(file1.isDirectory()){
+                                        readFile(file1, storege, list);
+                                    }else {
+                                        list.add(new ClearSavedPOJO(dir, storege));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static void delete(File file) {
         if (file.exists() && file.isDirectory()) {
             File[] files = file.listFiles();
             if (files != null) {
@@ -151,6 +188,31 @@ public class PopupClearSaved extends AppCompatActivity {
                 Log.d(TAG, "delete: true");
             } else {
                 Log.d(TAG, "delete: false");
+            }
+        }
+    }
+
+    public static void deleteEmtyFolder(@NonNull File file) {
+        if (!file.exists()) {
+            return;
+        }
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            if (files == null || files.length == 0) {
+                // Удаляем пустую папку
+                file.delete();
+                System.out.println("Удалена пустая папка: " + file.getAbsolutePath());
+                return;
+            }
+            // Рекурсивный вызов для всех файлов и папок в текущей папке
+            for (File subFile : files) {
+                deleteEmtyFolder(new File(subFile.getAbsolutePath()));
+            }
+            // Проверяем еще раз, если папка пуста, то удаляем
+            files = file.listFiles();
+            if (files == null || files.length == 0) {
+                file.delete();
+                System.out.println("Удалена пустая папка: " + file.getAbsolutePath());
             }
         }
     }

@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.model.AudioDBModel;
@@ -245,7 +246,12 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(book.getUrl());
                 for (File folder : folders) {
                     if (folder != null) {
-                        File dir = new File(folder.getAbsolutePath() + "/" + book.getName());
+                        String source = Consts.getSorceName(mIsDownload.getContext(), book.getUrl());
+                        String filePath = folder.getAbsolutePath() + "/" + source
+                                + "/" + book.getAutor()
+                                + "/" + book.getArtist()
+                                + "/" + book.getName();
+                        File dir = new File(filePath);
                         if (dir.exists() && dir.isDirectory()) {
                             for (AudioListPOJO pojo : arrayList) {
                                 String url = pojo.getAudioUrl();

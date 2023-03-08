@@ -11,6 +11,7 @@ import com.downloader.PRDownloader;
 import com.downloader.PRDownloaderConfig;
 import com.downloader.httpclient.HttpClient;
 import com.fanok.audiobooks.ABMP3HttpClient;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import java.io.File;
@@ -44,8 +45,13 @@ public class DownloadABMP3 extends Download {
                 .setHttpClient(httpClient)
                 .build();
         PRDownloader.initialize(getApplicationContext(), config);
+        String source = Consts.getSorceName(this, mBookPOJO.get(postion).getUrl());
+        String filePath = path+"/"+source
+                +"/"+mBookPOJO.get(postion).getAutor()
+                +"/"+mBookPOJO.get(postion).getArtist()
+                +"/"+mBookPOJO.get(postion).getName();
         downloadId = PRDownloader
-                .download(urlPath, path + "/" + dirName.get(postion), fileName + ".temp" + bytes / fragmentSize)
+                .download(urlPath, filePath, fileName + ".temp" + bytes / fragmentSize)
                 .build()
                 .setOnStartOrResumeListener(() -> {
                     pause = false;
@@ -70,7 +76,7 @@ public class DownloadABMP3 extends Download {
                 .start(new OnDownloadListener() {
                     @Override
                     public void onDownloadComplete() {
-
+                        addSaveFile(postion);
                         downloadFragment(postion, bytes + fragmentSize);
                     }
 
@@ -85,17 +91,22 @@ public class DownloadABMP3 extends Download {
                                     getString(R.string.error_load_file) + " " + fileName,
                                     Toast.LENGTH_SHORT).show();
                             FirebaseCrashlytics.getInstance().setCustomKey("fileUrl", urlPath);
-                            FirebaseCrashlytics.getInstance().setCustomKey("bookName", dirName.get(postion));
+                            FirebaseCrashlytics.getInstance().setCustomKey("bookName", mBookPOJO.get(postion).getName());
                             FirebaseCrashlytics.getInstance().recordException(error.getConnectionException());
                         }
                         int i = 0;
                         ArrayList<File> files = new ArrayList<>();
                         while (true) {
-                            File file = new File(path + "/" + dirName.get(postion), fileName + ".temp" + i);
+                            String source = Consts.getSorceName(getApplicationContext(), urlPath);
+                            String filePath = path+"/"+source
+                                    +"/"+mBookPOJO.get(postion).getAutor()
+                                    +"/"+mBookPOJO.get(postion).getArtist()
+                                    +"/"+mBookPOJO.get(postion).getName();
+                            File file = new File(filePath, fileName + ".temp" + i);
                             if (file.exists()) {
                                 files.add(file);
                             } else {
-                                File file1 = new File(path + "/" + dirName.get(postion),
+                                File file1 = new File(filePath,
                                         fileName + ".temp" + i + ".temp");
                                 if (file1.exists()) {
                                     files.add(file1);

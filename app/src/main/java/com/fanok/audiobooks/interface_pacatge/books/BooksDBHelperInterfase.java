@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.interface_pacatge.books;
 
+import androidx.annotation.NonNull;
 import com.fanok.audiobooks.pojo.BookPOJO;
 
 import java.util.ArrayList;
@@ -9,9 +10,13 @@ public interface BooksDBHelperInterfase {
 
     boolean inHistory(BookPOJO book);
 
+    boolean inSaved(BookPOJO book);
+
     boolean inFavorite(String url);
 
     boolean inHistory(String url);
+
+    boolean inSaved(String url);
 
     void addFavorite(BookPOJO book);
 
@@ -25,25 +30,35 @@ public interface BooksDBHelperInterfase {
 
     void clearHistory();
 
+    void addSaved(BookPOJO book);
+
+    void removeSaved(BookPOJO book);
+
+    void clearSaved();
+
     int getHistoryCount();
 
     int getFavoriteCount();
+
+    int getSavedCount();
 
     ArrayList<BookPOJO> getAllFavorite();
 
     ArrayList<BookPOJO> getAllHistory();
 
+    ArrayList<BookPOJO> getAllSaved();
+
     BookPOJO getHistory();
 
-    BookPOJO getFavorite();
+    BookPOJO getSaved(@NonNull String url);
 
-    ArrayList<String> getGenre();
+    ArrayList<String> getGenre(int table);
 
-    ArrayList<String> getAutors();
+    ArrayList<String> getAutors(int table);
 
-    ArrayList<String> getArtists();
+    ArrayList<String> getArtists(int table);
 
-    ArrayList<String> getSeries();
+    ArrayList<String> getSeries(int table);
 
 
 

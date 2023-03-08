@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(@NonNull Context context) {
-        super(context, DBName, null, 12);
+        super(context, DBName, null, 15);
     }
 
     @Override
@@ -53,6 +53,24 @@ public class DBHelper extends SQLiteOpenHelper {
                 + "coments integer,"
                 + "description text" + ");");
 
+        sqLiteDatabase.execSQL("create table saved ("
+                + "id integer primary key autoincrement,"
+                + "name text not null,"
+                + "url_book text not null UNIQUE,"
+                + "photo text,"
+                + "genre text,"
+                + "url_genre text,"
+                + "author text,"
+                + "url_author text,"
+                + "artist text,"
+                + "url_artist text,"
+                + "series text,"
+                + "url_series text,"
+                + "time text,"
+                + "reting text,"
+                + "coments integer,"
+                + "description text" + ");");
+
         sqLiteDatabase.execSQL("create table audio ("
                 + "id integer primary key autoincrement,"
                 + "url_book text not null UNIQUE,"
@@ -65,7 +83,9 @@ public class DBHelper extends SQLiteOpenHelper {
                 + "books_name text not null,"
                 + "name_audio text,"
                 + "url_audio text,"
-                + "time integer DEFAULT 0" + ");");
+                + "time integer DEFAULT 0,"
+                + "time_start integer DEFAULT -1,"
+                + "time_end integer DEFAULT -1" + ");");
     }
 
     @Override
@@ -89,7 +109,32 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
 
+        if (i == 12){
+            try {
+                sqLiteDatabase.execSQL("ALTER TABLE books_audio ADD time_start integer DEFAULT -1");
+                sqLiteDatabase.execSQL("ALTER TABLE books_audio ADD time_end integer DEFAULT -1");
+            } catch (SQLiteException ignored) {
+            }
+        }
 
-
+        if (i == 14){
+            sqLiteDatabase.execSQL("create table saved ("
+                    + "id integer primary key autoincrement,"
+                    + "name text not null,"
+                    + "url_book text not null UNIQUE,"
+                    + "photo text,"
+                    + "genre text,"
+                    + "url_genre text,"
+                    + "author text,"
+                    + "url_author text,"
+                    + "artist text,"
+                    + "url_artist text,"
+                    + "series text,"
+                    + "url_series text,"
+                    + "time text,"
+                    + "reting text,"
+                    + "coments integer,"
+                    + "description text" + ");");
+        }
     }
 }

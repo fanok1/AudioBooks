@@ -21,7 +21,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.AudioPOJO;
+import com.fanok.audiobooks.pojo.BookPOJO;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -34,6 +37,8 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
     private int indexSelected = -1;
 
     private ArrayList<AudioPOJO> mData;
+
+    private String mUrlBook;
 
     private AudioAdapter.OnListItemSelectedInterface mListener;
 
@@ -105,8 +110,9 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         return mSelectedItems.size();
     }
 
-    public void setData(@NonNull ArrayList<AudioPOJO> data) {
+    public void setData(@NonNull ArrayList<AudioPOJO> data, @NonNull String urlBook) {
         mData = data;
+        mUrlBook = urlBook;
         notifyDataSetChanged();
     }
 
@@ -166,6 +172,8 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         notifyDataSetChanged();
     }
 
+
+
     @Override
     public int getItemCount() {
         return mData.size();
@@ -209,15 +217,25 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         boolean b = false;
         for (File folder : folders) {
             if (folder != null) {
-                File dir = new File(folder.getAbsolutePath() + "/" + mData.get(i).getBookName());
-                if (dir.exists() && dir.isDirectory()) {
-                    String url = mData.get(i).getUrl();
-                    File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
-                    if (file.exists()) {
-                        b = true;
-                        break;
+                BooksDBModel dbModel = new BooksDBModel(viewHolder.mImageView.getContext());
+                if(dbModel.inSaved(mUrlBook)) {
+                    BookPOJO bookPOJO = dbModel.getSaved(mUrlBook);
+                    String source = Consts.getSorceName(viewHolder.mImageView.getContext(), mUrlBook);
+                    String filePath = folder.getAbsolutePath() + "/" + source
+                            + "/" + bookPOJO.getAutor()
+                            + "/" + bookPOJO.getArtist()
+                            + "/" + bookPOJO.getName();
+                    File dir = new File(filePath);
+                    if (dir.exists() && dir.isDirectory()) {
+                        String url = mData.get(i).getUrl();
+                        File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
+                        if (file.exists()) {
+                            b = true;
+                            break;
+                        }
                     }
                 }
+                dbModel.closeDB();
             }
         }
         if (b) {
@@ -235,7 +253,12 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
 
 
         viewHolder.mView.setOnLongClickListener(view -> {
-            selectedItemsAdd(mData.get(i).getUrl());
+            String url = mData.get(i).getUrl();
+            if(url.contains(Url.SERVER_AKNIGA)){
+                selectedItemsAddAll();
+            }else {
+                selectedItemsAdd(url);
+            }
             return true;
         });
 

@@ -34,8 +34,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
@@ -66,8 +64,7 @@ public class MainActivity extends MvpAppCompatActivity
     private static final String EXSTRA_FRAGMENT = "startFragment";
     private static final String EXSTRA_URL = "url";
     private static boolean closeApp = false;
-    @BindView(R.id.adView)
-    AdView mAdView;
+    private AdView mAdView;
     private boolean isSavedInstanceState = false;
 
     public static boolean isCloseApp() {
@@ -271,7 +268,7 @@ public class MainActivity extends MvpAppCompatActivity
         } else {
             setContentView(R.layout.activity_main);
         }
-        ButterKnife.bind(this);
+        mAdView = findViewById(R.id.adView);
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);

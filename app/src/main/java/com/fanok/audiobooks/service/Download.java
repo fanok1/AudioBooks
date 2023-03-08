@@ -26,9 +26,20 @@ import com.downloader.PRDownloader;
 import com.downloader.PRDownloaderConfig;
 import com.downloader.httpclient.DefaultHttpClient;
 import com.downloader.httpclient.HttpClient;
+import com.fanok.audiobooks.BazaKnigHttpClient;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.broadcasts.OnNotificationButtonClick;
+import com.fanok.audiobooks.model.AudioListDBModel;
+import com.fanok.audiobooks.model.BooksDBModel;
+import com.fanok.audiobooks.pojo.AudioListPOJO;
+import com.fanok.audiobooks.pojo.AudioPOJO;
+import com.fanok.audiobooks.pojo.BookPOJO;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +59,7 @@ public class Download extends Service {
 
     protected static final String chanalName = "Download";
 
-    protected ArrayList<String> dirName;
+    protected ArrayList<BookPOJO> mBookPOJO;
 
     protected int downloadId;
 
@@ -69,7 +80,7 @@ public class Download extends Service {
     public void onCreate() {
         super.onCreate();
         mList = new ArrayList<>();
-        dirName = new ArrayList<>();
+        mBookPOJO = new ArrayList<>();
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
@@ -103,19 +114,24 @@ public class Download extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
-            String bookName = intent.getStringExtra("fileName");
-            String url = intent.getStringExtra("url");
-            if (url != null && !mList.contains(url)) {
-                boolean start = mList.isEmpty();
-                mList.add(url);
-                if (bookName != null) {
-                    dirName.add(bookName);
+            String json = intent.getStringExtra("book");
+            if(json!=null&&!json.isEmpty()){
+                Gson gson = new Gson();
+                Type type = new TypeToken<BookPOJO>() {
+                }.getType();
+                BookPOJO bookPOJO = gson.fromJson(json, type);
+                String url = intent.getStringExtra("url");
+                if (url != null && bookPOJO!=null) {
+                    if(!mList.contains(url)) {
+                        boolean start = mList.isEmpty();
+                        mList.add(url);
+                        mBookPOJO.add(bookPOJO);
+                        if (start)
+                            start();
+                    }
                 } else {
-                    dirName.add("");
+                    Log.d(TAG, "onHandleIntent: url or bookPojo is null");
                 }
-                if (start) start();
-            } else {
-                Log.d(TAG, "onHandleIntent: url is null");
             }
         } else {
             Log.d(TAG, "onHandleIntent: intent is null");
@@ -159,7 +175,12 @@ public class Download extends Service {
     protected void download(int postion) {
         String urlPath = mList.get(postion);
         String fileName = urlPath.substring(urlPath.lastIndexOf("/") + 1);
-        HttpClient httpClient = new DefaultHttpClient();
+        HttpClient httpClient;
+        if(mBookPOJO.get(postion).getUrl().contains(Url.SERVER_BAZA_KNIG)){
+            httpClient = new BazaKnigHttpClient(Url.SERVER_BAZA_KNIG+"/");
+        }else {
+            httpClient = new DefaultHttpClient();
+        }
 
         PRDownloaderConfig config = PRDownloaderConfig.newBuilder()
                 .setReadTimeout(30_000)
@@ -169,7 +190,12 @@ public class Download extends Service {
                 .setHttpClient(httpClient)
                 .build();
         PRDownloader.initialize(getApplicationContext(), config);
-        downloadId = PRDownloader.download(urlPath, path + "/" + dirName.get(postion), fileName)
+        String source = Consts.getSorceName(this, mBookPOJO.get(postion).getUrl());
+        String filePath = path+"/"+source
+                +"/"+mBookPOJO.get(postion).getAutor()
+                +"/"+mBookPOJO.get(postion).getArtist()
+                +"/"+mBookPOJO.get(postion).getName();
+        downloadId = PRDownloader.download(urlPath, filePath, fileName)
                 .build()
                 .setOnStartOrResumeListener(() -> {
                     pause = false;
@@ -194,6 +220,7 @@ public class Download extends Service {
                 .start(new OnDownloadListener() {
                     @Override
                     public void onDownloadComplete() {
+                        addSaveFile(postion);
                         downloadNext(postion + 1);
                     }
 
@@ -208,6 +235,12 @@ public class Download extends Service {
                 });
 
 
+    }
+
+    protected void addSaveFile(final int postion) {
+        BooksDBModel dbModel = new BooksDBModel(this);
+        dbModel.addSaved(mBookPOJO.get(postion));
+        dbModel.closeDB();
     }
 
     protected void downloadNext(int positionNext) {
@@ -268,7 +301,7 @@ public class Download extends Service {
         String fileName = urlPath.substring(urlPath.lastIndexOf("/") + 1);
         playbackAction.setAction(action);
         playbackAction.putExtra("downloadId", downloadId);
-        playbackAction.putExtra("path", path + "/" + dirName.get(postion));
+        playbackAction.putExtra("path", path + "/" + mBookPOJO.get(postion).getName());
         playbackAction.putExtra("fileName", fileName);
         return PendingIntent.getBroadcast(getApplicationContext(), 0, playbackAction,
                 PendingIntent.FLAG_UPDATE_CURRENT);

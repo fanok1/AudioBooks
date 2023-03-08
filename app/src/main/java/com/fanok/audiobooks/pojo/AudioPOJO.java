@@ -10,6 +10,8 @@ public class AudioPOJO {
     private String name = "";
     String url = "";
     private int time = 0;
+    private int timeStart = -1;
+    private int timeFinish = -1;
 
     public String getBookName() {
         return bookName;
@@ -48,5 +50,23 @@ public class AudioPOJO {
     public void setTime(int time) {
         if (time < 0) throw new IllegalArgumentException("Value must be > 0");
         this.time = time;
+    }
+
+    public int getTimeStart() {
+        return timeStart;
+    }
+
+    public void setTimeStart(final int timeStart) {
+        if (timeStart < -1) throw new IllegalArgumentException("Value must be > 0");
+        this.timeStart = timeStart;
+    }
+
+    public int getTimeFinish() {
+        return timeFinish;
+    }
+
+    public void setTimeFinish(final int timeFinish) {
+        if (timeFinish < -1) throw new IllegalArgumentException("Value must be > 0");
+        this.timeFinish = timeFinish;
     }
 }

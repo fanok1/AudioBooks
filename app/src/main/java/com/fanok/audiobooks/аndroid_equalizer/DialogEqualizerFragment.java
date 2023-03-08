@@ -40,6 +40,7 @@ import com.db.chart.view.ChartView;
 import com.db.chart.view.LineChartView;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.StorageUtil;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import java.util.ArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -163,7 +164,17 @@ public class DialogEqualizerFragment extends DialogFragment {
                 mEqualizer.setBandLevel(bandIdx, (short) Settings.seekbarpos[bandIdx]);
             }
         } else {
-            mEqualizer.usePreset((short) Settings.presetPos);
+            try {
+                mEqualizer.usePreset((short) (Settings.presetPos-1));
+            }catch (IllegalArgumentException e){
+                FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
+                crashlytics.setCustomKey("presetPos", Settings.presetPos);
+                crashlytics.recordException(e);
+                Settings.presetPos = 0;
+                for (short bandIdx = 0; bandIdx < mEqualizer.getNumberOfBands(); bandIdx++) {
+                    mEqualizer.setBandLevel(bandIdx, (short) Settings.seekbarpos[bandIdx]);
+                }
+            }
         }
     }
 

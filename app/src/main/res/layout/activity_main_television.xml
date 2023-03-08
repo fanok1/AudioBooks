@@ -132,7 +132,6 @@
                 android:paddingEnd="16dp"
                 android:text="@string/menu_saved"
                 android:textColor="?attr/prefIconColor"
-                android:visibility="gone"
                 tools:textColor="" />
 
 

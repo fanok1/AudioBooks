@@ -193,8 +193,8 @@ public class AboutFragment extends PreferenceFragmentCompat {
                     true);
             if (navigationView != null) {
                 navigationView.setCheckedItem(R.id.nav_about);
-            } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 8) {
-                mTextViewArrayList.get(8).setBackgroundResource(SelectedValue.resourceId);
+            } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 9) {
+                mTextViewArrayList.get(9).setBackgroundResource(SelectedValue.resourceId);
             }
         }
     }

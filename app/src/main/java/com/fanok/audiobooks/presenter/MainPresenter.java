@@ -145,7 +145,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
         } else if (id == R.id.nav_about || id == R.id.layout_nav_about) {
             getViewState().showFragment(new AboutFragment(), "about");
         } else if (id == R.id.nav_saved || id == R.id.layout_nav_saved) {
-
+            Fragment fragment = FavoriteFragment.newInstance(R.string.menu_saved,
+                    Consts.TABLE_SAVED);
+            getViewState().showFragment(fragment, "saved");
         }
     }
 
@@ -190,6 +192,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             case Consts.FRAGMENT_FAVORITE:
             case Consts.FRAGMENT_HISTORY:
             case Consts.FRAGMENT_SETTINGS:
+            case Consts.FRAGMENT_SAVED:
                 startFragment(fragmentID, false);
                 break;
         }
@@ -295,6 +298,10 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             fragment = FavoriteFragment.newInstance(R.string.menu_history,
                     Consts.TABLE_HISTORY);
             getViewState().showFragment(fragment, "history");
+        } else if (fragmentID == Consts.FRAGMENT_SAVED) {
+            fragment = FavoriteFragment.newInstance(R.string.menu_saved,
+                    Consts.TABLE_SAVED);
+            getViewState().showFragment(fragment, "saved");
         } else if (fragmentID == Consts.LAST_BOOK) {
             if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
                 fragment = BooksFragment.newInstance(Url.INDEX,

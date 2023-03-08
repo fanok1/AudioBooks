@@ -4,7 +4,9 @@ package com.fanok.audiobooks.model;
 import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.EncodingExeption;
 import com.fanok.audiobooks.Url;
@@ -308,71 +310,51 @@ public class AudioModel implements
             String key2 = jsonObject.get("key").getAsString();
             String srv = jsonObject.get("srv").getAsString();
             String filename = jsonObject.get("slug").getAsString();
-            AudioPOJO audioPOJO = new AudioPOJO();
-            audioPOJO.setBookName(title);
-            audioPOJO.setName(title);
+
             String audioUrl = srv + "b/" + id + "/" + key2 + "/" + filename + ".mp3";
-            audioPOJO.setUrl(audioUrl);
-
-            int duration = 0;
             JsonElement jElement = jsonObject.get("items");
-            String titleName = jsonObject.get("title").getAsString();
             if (jElement.isJsonPrimitive()) {
                 String array = jElement.getAsString();
                 jElement = JsonParser.parseString(array);
             }
             if (jElement.isJsonArray()) {
                 JsonArray jarray = jElement.getAsJsonArray();
-                for (int i = 0; i < jarray.size(); i++) {
-                    JsonElement jsonElement = jarray.get(i);
-                    if (jsonElement.isJsonObject()) {
-                        duration += jsonElement.getAsJsonObject().get("duration").getAsInt();
-                    }
-                }
-            }
-            audioPOJO.setTime(duration);
-            result.add(audioPOJO);
 
-            /*
-            устаревшый вариант
-            JsonElement jElement = jsonObject.get("items");
-            String titleName = jsonObject.get("title").getAsString();
-            if (jElement.isJsonPrimitive()) {
-                String array = jElement.getAsString();
-                jElement = JsonParser.parseString(array);
-            }
-
-            if (jElement.isJsonArray()) {
-                JsonArray jarray = jElement.getAsJsonArray();
-
-                String lastFIle = "";
-
-                for (int i = 0; i < jarray.size(); i++) {
-                    AudioPOJO audioPOJO = new AudioPOJO();
-                    JsonElement jsonElement = jarray.get(i);
-                    if (jsonElement.isJsonObject()) {
-                        String file = jsonElement.getAsJsonObject().get("file").getAsString();
-                        if (Integer.parseInt(file) < 10) {
-                            file = "0" + file;
-                        }
-                        int duration = jsonElement.getAsJsonObject().get("duration").getAsInt();
-
-                        if (!file.equals(lastFIle)) {
-                            audioPOJO.setBookName(title.replace(autor + " - ", ""));
-                            audioPOJO.setName(file + " " + title);
-
-                            //replaceAll("\\?","").replaceAll("!","").replaceAll("\"", "")
-                            String audioUrl = srv + "b/" + id + "/" + key2 + "/" + file + ". " + titleName + ".mp3";
-                            audioPOJO.setUrl(audioUrl);
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+                if (preferences.getBoolean("cutting_file", true)) {
+                    for (int i = 0; i < jarray.size(); i++) {
+                        AudioPOJO audioPOJO = new AudioPOJO();
+                        audioPOJO.setUrl(audioUrl);
+                        audioPOJO.setBookName(jsonObject.get("titleonly").getAsString());
+                        JsonElement jsonElement = jarray.get(i);
+                        if (jsonElement.isJsonObject()) {
+                            String name = jsonElement.getAsJsonObject().get("title").getAsString();
+                            audioPOJO.setName(name);
+                            int duration = jsonElement.getAsJsonObject().get("duration").getAsInt();
+                            int timeStart = jsonElement.getAsJsonObject().get("time_from_start").getAsInt();
+                            int timeFinish = jsonElement.getAsJsonObject().get("time_finish").getAsInt();
                             audioPOJO.setTime(duration);
-                            result.add(audioPOJO);
-                        } else {
-                            result.get(result.size() - 1).setTime(result.get(result.size() - 1).getTime() + duration);
+                            audioPOJO.setTimeStart(timeStart);
+                            audioPOJO.setTimeFinish(timeFinish);
                         }
-                        lastFIle = file;
+                        result.add(audioPOJO);
                     }
+                }else {
+                    AudioPOJO audioPOJO = new AudioPOJO();
+                    audioPOJO.setUrl(audioUrl);
+                    audioPOJO.setBookName(jsonObject.get("titleonly").getAsString());
+                    audioPOJO.setName(jsonObject.get("titleonly").getAsString());
+                    int duration = 0;
+                    for (int i = 0; i < jarray.size(); i++) {
+                        JsonElement jsonElement = jarray.get(i);
+                        if (jsonElement.isJsonObject()) {
+                            duration += jsonElement.getAsJsonObject().get("duration").getAsInt();
+                        }
+                        audioPOJO.setTime(duration);
+                    }
+                    result.add(audioPOJO);
                 }
-            }*/
+            }
         }
         return result;
     }

@@ -114,7 +114,7 @@ public class ClearSavedAdapter extends RecyclerView.Adapter<ClearSavedAdapter.Vi
             notifyDataSetChanged();
         });
 
-        String text = mData.get(i).getFile().getName() + " (" + mData.get(i).getStorege() + ")";
+        String text = mData.get(i).getFile().getPath() + " (" + mData.get(i).getStorege() + ")";
         viewHolder.mTitle.setText(text);
         viewHolder.mCheckBox.setChecked(mSelectedItems.contains(mData.get(i).getFile()));
         viewHolder.mCheckBox.setClickable(false);

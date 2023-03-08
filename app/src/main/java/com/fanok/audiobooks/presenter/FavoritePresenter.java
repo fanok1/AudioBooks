@@ -17,6 +17,7 @@ import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.activity.PopupClearSaved;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
 import com.fanok.audiobooks.model.AudioDBModel;
@@ -108,6 +109,43 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
                         @Override
                         public void onComplete() {
+                            File[] folders = mContext.getExternalFilesDirs(null);
+                            if (mAudioListDBModel == null) {
+                                mAudioListDBModel = new AudioListDBModel(mContext);
+                            }
+                            for (int i=0; i<books.size(); i++) {
+                                BookPOJO bookPOJO = books.get(i);
+                                ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(
+                                        bookPOJO.getUrl());
+                                boolean temp = false;
+                                for (File folder : folders) {
+                                    if (folder != null) {
+                                        String source = Consts.getSorceName(mContext, bookPOJO.getUrl());
+                                        String filePath = folder.getAbsolutePath() + "/" + source
+                                                + "/" + bookPOJO.getAutor()
+                                                + "/" + bookPOJO.getArtist()
+                                                + "/" + bookPOJO.getName();
+                                        File dir = new File(filePath);
+                                        if (dir.exists() && dir.isDirectory()) {
+                                            for (AudioListPOJO pojo : arrayList) {
+                                                String url = pojo.getAudioUrl();
+                                                File file = new File(dir,
+                                                        url.substring(url.lastIndexOf("/") + 1));
+                                                if (file.exists()) {
+                                                    temp = true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if(!temp){
+                                    if(table==Consts.TABLE_SAVED){
+                                        books.remove(bookPOJO);
+                                        i--;
+                                    }
+                                    deleteSavedBook(bookPOJO);
+                                }
+                            }
                             if (flter == null) {
                                 if (firstOpen) {
                                     firstOpen = false;
@@ -115,6 +153,10 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                                             .getDefaultSharedPreferences(mContext);
                                     String sort = pref.getString("pref_sort_favorite",
                                             mContext.getString(R.string.sort_value_date));
+                                    String sortDate = mContext.getString(R.string.sort_value_date);
+                                    if(table==Consts.TABLE_SAVED&&sortDate.equals(sort)){
+                                        sort = sortDate;
+                                    }
                                     Comparator<BookPOJO> comparator = getComparator(sort);
                                     if (!sort.equals(
                                             mContext.getString(R.string.sort_value_date))) {
@@ -145,6 +187,19 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                         }
                     });
 
+        }
+    }
+
+    private void deleteSavedBook(final BookPOJO bookPOJO) {
+        if(mBooksDBModel.inSaved(bookPOJO)){
+            mBooksDBModel.removeSaved(bookPOJO);
+        }
+        File[] filesDirs = mContext.getExternalFilesDirs(null);
+        for (final File filesDir : filesDirs) {
+            if (filesDir != null) {
+                File file = new File(filesDir.getAbsolutePath());
+                PopupClearSaved.deleteEmtyFolder(file);
+            }
         }
     }
 
@@ -307,6 +362,27 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         } else if (table == Consts.TABLE_HISTORY) {
             mBooksDBModel.removeHistory(book);
             mAudioDBModel.remove(book.getUrl());
+        } else if (table == Consts.TABLE_SAVED){
+            mBooksDBModel.removeSaved(book);
+            File[] folders = mContext.getExternalFilesDirs(null);
+            for (File folder : folders) {
+                if (folder != null) {
+                    String source = Consts.getSorceName(mContext, book.getUrl());
+                    String filePath = folder.getAbsolutePath() + "/" + source
+                            + "/" + book.getAutor()
+                            + "/" + book.getArtist()
+                            + "/" + book.getName();
+                    File dir = new File(filePath);
+                    PopupClearSaved.delete(dir);
+                }
+            }
+            for (final File filesDir : folders) {
+                if (filesDir != null) {
+                    File file = new File(filesDir.getAbsolutePath());
+                    PopupClearSaved.deleteEmtyFolder(file);
+                }
+            }
+
         }
         if (filterSearch.isEmpty()) {
             books.remove(position);
@@ -366,8 +442,12 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                                 bookPOJO.getUrl());
                         for (File folder : folders) {
                             if (folder != null) {
-                                File dir = new File(
-                                        folder.getAbsolutePath() + "/" + bookPOJO.getName());
+                                String source = Consts.getSorceName(mContext, bookPOJO.getUrl());
+                                String filePath = folder.getAbsolutePath() + "/" + source
+                                        + "/" + bookPOJO.getAutor()
+                                        + "/" + bookPOJO.getArtist()
+                                        + "/" + bookPOJO.getName();
+                                File dir = new File(filePath);
                                 if (dir.exists() && dir.isDirectory()) {
                                     for (AudioListPOJO pojo : arrayList) {
                                         String url = pojo.getAudioUrl();
@@ -413,18 +493,19 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
     private void showPopupMenu(@NotNull View view, int id) {
         ArrayList<String> arrayList;
+
         switch (id) {
             case R.id.genre_filter:
-                arrayList = mBooksDBModel.getGenre();
+                arrayList = mBooksDBModel.getGenre(table);
                 break;
             case R.id.autor_filter:
-                arrayList = mBooksDBModel.getAutors();
+                arrayList = mBooksDBModel.getAutors(table);
                 break;
             case R.id.artist_filter:
-                arrayList = mBooksDBModel.getArtists();
+                arrayList = mBooksDBModel.getArtists(table);
                 break;
             case R.id.series_filter:
-                arrayList = mBooksDBModel.getSeries();
+                arrayList = mBooksDBModel.getSeries(table);
                 break;
             default:
                 arrayList = new ArrayList<>();
@@ -621,7 +702,12 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(book.getUrl());
         for (File folder : folders) {
             if (folder != null) {
-                File dir = new File(folder.getAbsolutePath() + "/" + book.getName());
+                String source = Consts.getSorceName(mContext, book.getUrl());
+                String filePath = folder.getAbsolutePath() + "/" + source
+                        + "/" + book.getAutor()
+                        + "/" + book.getArtist()
+                        + "/" + book.getName();
+                File dir = new File(filePath);
                 if (dir.exists() && dir.isDirectory()) {
                     for (AudioListPOJO pojo : arrayList) {
                         String url = pojo.getAudioUrl();

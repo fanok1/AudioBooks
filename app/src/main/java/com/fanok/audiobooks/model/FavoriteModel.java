@@ -27,6 +27,9 @@ public class FavoriteModel implements
                     case Consts.TABLE_HISTORY:
                         books = mBooksDBModel.getAllHistory();
                         break;
+                    case Consts.TABLE_SAVED:
+                        books = mBooksDBModel.getAllSaved();
+                        break;
                     default:
                         books = new ArrayList<>();
                         break;

@@ -8,6 +8,10 @@ public class AudioListPOJO {
     private String audioUrl;
     private int time = 0;
 
+    private int timeStart = -1;
+
+    private int timeEnd = -1;
+
     public String getBookUrl() {
         return bookUrl;
     }
@@ -65,6 +69,26 @@ public class AudioListPOJO {
             this.time = 0;
         } else {
             this.time = time;
+        }
+    }
+
+    public int getTimeStart() {
+        return timeStart;
+    }
+
+    public void setTimeStart(final int timeStart) {
+        if (timeStart>=0){
+            this.timeStart = timeStart;
+        }
+    }
+
+    public int getTimeEnd() {
+        return timeEnd;
+    }
+
+    public void setTimeEnd(final int timeEnd) {
+        if(timeEnd>=0){
+            this.timeEnd = timeEnd;
         }
     }
 }

@@ -26,6 +26,13 @@
         android:key="sorce_books"
         android:title="@string/sorce_books" />
 
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:icon="@drawable/ic_content_cut"
+        android:key="cutting_file"
+        android:summary="@string/cutting_file_desc"
+        android:title="@string/cutting_file" />
+
     <PreferenceScreen
         android:icon="@drawable/ic_layers_search"
         android:key="source_search"

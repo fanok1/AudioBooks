@@ -64,8 +64,6 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import com.alimuzaffar.lib.pin.PinEntryEditText;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
@@ -94,6 +92,7 @@ import com.google.android.gms.ads.rewarded.RewardedAdCallback;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.tabs.TabLayout;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
@@ -125,20 +124,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     private static final int REQUEST_WRITE_STORAGE = 145;
 
     private static String showingView;
-    @Nullable
-    @BindView(R.id.buttonCollapse)
-    ImageButton mButtonCollapse;
-    @Nullable
-    @BindView(R.id.topButtonsControls)
-    LinearLayout mTopButtonsControls;
-    @BindView(R.id.player)
-    LinearLayout mPlayer;
-    @BindView(R.id.radioAll)
-    RadioButton mRadioAll;
-    @BindView(R.id.dowland)
-    ImageButton mDowland;
-    @BindView(R.id.delete)
-    ImageButton mDelete;
+
+
+    private ImageButton mButtonCollapse;
+    private LinearLayout mTopButtonsControls;
+    private LinearLayout mPlayer;
+    private RadioButton mRadioAll;
+    private ImageButton mDelete;
+    private ImageButton mDowland;
 
     public static String getShowingView() {
         return showingView;
@@ -147,41 +140,21 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     private static final String ARG_BOOK = "arg_book";
     @InjectPresenter
     BookPresenter mPresenter;
-    @BindView(R.id.list)
-    RecyclerView mList;
-    @BindView(R.id.name_curent)
-    TextView mNameCurent;
-
-    @Nullable
-    @BindView(R.id.progressBar)
-    ProgressBar mProgressBar;
-    @Nullable
-    @BindView(R.id.previousTop)
-    ImageButton mPreviousTop;
-    @Nullable
-    @BindView(R.id.playTop)
-    ImageButton mPlayTop;
-    @Nullable
-    @BindView(R.id.nextTop)
-    ImageButton mNextTop;
-    @BindView(R.id.timeStart)
-    TextView mTimeStart;
-    @BindView(R.id.seekBar)
-    SeekBar mSeekBar;
-    @BindView(R.id.timeEnd)
-    TextView mTimeEnd;
-    @BindView(R.id.rewind)
-    ImageButton mRewind;
-    @BindView(R.id.previousBottom)
-    ImageButton mPreviousBottom;
-    @BindView(R.id.playBottom)
-    ImageButton mPlayBottom;
-    @BindView(R.id.nextBottom)
-    ImageButton mNextBottom;
-    @BindView(R.id.forward)
-    ImageButton mForward;
-    @BindView(R.id.speed)
-    ImageButton mSpeed;
+    private ImageButton mSpeed;
+    private RecyclerView mList;
+    private TextView mNameCurent;
+    private ProgressBar mProgressBar;
+    private ImageButton mPreviousTop;
+    private ImageButton mPlayTop;
+    private ImageButton mNextTop;
+    private TextView mTimeStart;
+    private SeekBar mSeekBar;
+    private TextView mTimeEnd;
+    private ImageButton mRewind;
+    private ImageButton mPreviousBottom;
+    private ImageButton mPlayBottom;
+    private ImageButton mNextBottom;
+    private ImageButton mForward;
     private TabLayout tabs;
     private SectionsPagerAdapter sectionsPagerAdapter;
     private BookPOJO mBookPOJO;
@@ -423,7 +396,27 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         } else {
             setContentView(R.layout.activity_book);
         }
-        ButterKnife.bind(this);
+        mButtonCollapse = findViewById(R.id.buttonCollapse);
+        mTopButtonsControls = findViewById(R.id.topButtonsControls);
+        mPlayer = findViewById(R.id.player);
+        mRadioAll = findViewById(R.id.radioAll);
+        mDelete = findViewById(R.id.delete);
+        mDowland = findViewById(R.id.dowland);
+        mSpeed = findViewById(R.id.speed);
+        mList = findViewById(R.id.list);
+        mNameCurent = findViewById(R.id.name_curent);
+        mProgressBar = findViewById(R.id.progressBar);
+        mPreviousTop = findViewById(R.id.previousTop);
+        mPlayTop = findViewById(R.id.playTop);
+        mNextTop = findViewById(R.id.nextTop);
+        mTimeStart = findViewById(R.id.timeStart);
+        mSeekBar = findViewById(R.id.seekBar);
+        mTimeEnd = findViewById(R.id.timeEnd);
+        mRewind = findViewById(R.id.rewind);
+        mPreviousBottom = findViewById(R.id.previousBottom);
+        mPlayBottom = findViewById(R.id.playBottom);
+        mNextBottom = findViewById(R.id.nextBottom);
+        mForward = findViewById(R.id.forward);
 
         MainActivity.setCloseApp(false);
 
@@ -1194,9 +1187,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     }
 
     @Override
-    public void showData(@NonNull ArrayList<AudioPOJO> data) {
+    public void showData(@NonNull ArrayList<AudioPOJO> data, @NonNull String bookUrl) {
         if (mAudioAdapter != null) {
-            mAudioAdapter.setData(data);
+            mAudioAdapter.setData(data, bookUrl);
         }
     }
 
@@ -1327,20 +1320,24 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
     }
 
     @Override
-    public void downloadFile(String url, String fileName) {
+    public void downloadFile(String url, BookPOJO bookPOJO) {
         mAudioAdapter.addDownloadingItem(url);
         Intent intent = new Intent(this, Download.class);
         intent.putExtra("url", url);
-        intent.putExtra("fileName", fileName);
+        Gson gson = new Gson();
+        String json = gson.toJson(bookPOJO);
+        intent.putExtra("book", json);
         startService(intent);
     }
 
     @Override
-    public void downloadFileABMP3(final String url, final String fileName) {
+    public void downloadFileABMP3(final String url, final BookPOJO bookPOJO) {
         mAudioAdapter.addDownloadingItem(url);
         Intent intent = new Intent(this, DownloadABMP3.class);
         intent.putExtra("url", url);
-        intent.putExtra("fileName", fileName);
+        Gson gson = new Gson();
+        String json = gson.toJson(bookPOJO);
+        intent.putExtra("book", json);
         startService(intent);
     }
 

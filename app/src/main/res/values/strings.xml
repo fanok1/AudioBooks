@@ -389,6 +389,8 @@
     <string name="sleep_timer_started">Таймер сна запущен, обратній отчет пойдет после того как книга будет снята с паузы</string>
     <string name="multithreading">Многопоточность</string>
     <string name="search_multithreading">Использовать многопоточность для поиска</string>
+    <string name="cutting_file">Разделить файл на разделы</string>
+    <string name="cutting_file_desc">Разделять книги источника, в котором данные залиты одним файлом, на главы</string>
 
 
 </resources>

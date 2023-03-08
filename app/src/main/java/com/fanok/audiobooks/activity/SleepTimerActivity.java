@@ -19,8 +19,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
 import androidx.preference.PreferenceManager;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.fanok.audiobooks.LocaleManager;
@@ -43,20 +41,11 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
 
     public static final String Broadcast_UPDATE_TIMER_START = "updateTimerStart";
 
-    @BindView(R.id.hours)
-    TextView mHours;
-
-    @BindView(R.id.minutes)
-    TextView mMinutes;
-
-    @BindView(R.id.seconds)
-    TextView mSeconds;
-
-    @BindView(R.id.start)
-    ImageButton mStart;
-
-    @BindView(R.id.clear)
-    ImageButton mClear;
+    private TextView mHours;
+    private TextView mMinutes;
+    private TextView mSeconds;
+    private ImageButton mStart;
+    private ImageButton mClear;
 
     @InjectPresenter
     SleepTimerPresenter mPresenter;
@@ -83,7 +72,13 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
         } else {
             setContentView(R.layout.activity_sleep_timer);
         }
-        ButterKnife.bind(this);
+
+        mHours = findViewById(R.id.hours);
+        mMinutes = findViewById(R.id.minutes);
+        mSeconds = findViewById(R.id.seconds);
+        mStart = findViewById(R.id.start);
+        mClear = findViewById(R.id.clear);
+
         Slidr.attach(this);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

@@ -227,8 +227,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                     true);
             if (navigationView != null) {
                 navigationView.setCheckedItem(R.id.nav_settings);
-            } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 7) {
-                mTextViewArrayList.get(7).setBackgroundResource(SelectedValue.resourceId);
+            } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 8) {
+                mTextViewArrayList.get(8).setBackgroundResource(SelectedValue.resourceId);
             }
         }
     }
