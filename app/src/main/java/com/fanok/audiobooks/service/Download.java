@@ -244,7 +244,9 @@ public class Download extends Service {
     }
 
     protected void downloadNext(int positionNext) {
-        sendBroadcast(new Intent(Broadcast_UPDATE_ADAPTER));
+        Intent intent = new Intent(Broadcast_UPDATE_ADAPTER);
+        intent.putExtra("url", mList.get(positionNext-1));
+        sendBroadcast(intent);
         if (positionNext == mList.size()) {
             stopForeground(false);
             showNotification(positionNext, 0, false);

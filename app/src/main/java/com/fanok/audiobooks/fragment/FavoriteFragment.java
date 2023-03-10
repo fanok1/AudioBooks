@@ -87,7 +87,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
             titleId = arg.getInt(ARG_TITLE, 0);
             table = arg.getInt(ARG_TABLE, 0);
         }
-        mPresenter.onCreate(getContext().getApplicationContext());
+        mPresenter.onCreate(requireContext().getApplicationContext());
 
     }
 

@@ -88,6 +88,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         if (!isLoading) {
             filterSearch.clear();
             isLoading = true;
+            getViewState().showProgres(true);
             mFavoriteModel.getBooks(table)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
@@ -109,65 +110,31 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
                         @Override
                         public void onComplete() {
-                            File[] folders = mContext.getExternalFilesDirs(null);
-                            if (mAudioListDBModel == null) {
-                                mAudioListDBModel = new AudioListDBModel(mContext);
-                            }
-                            for (int i=0; i<books.size(); i++) {
-                                BookPOJO bookPOJO = books.get(i);
-                                ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(
-                                        bookPOJO.getUrl());
-                                boolean temp = false;
-                                for (File folder : folders) {
-                                    if (folder != null) {
-                                        String source = Consts.getSorceName(mContext, bookPOJO.getUrl());
-                                        String filePath = folder.getAbsolutePath() + "/" + source
-                                                + "/" + bookPOJO.getAutor()
-                                                + "/" + bookPOJO.getArtist()
-                                                + "/" + bookPOJO.getName();
-                                        File dir = new File(filePath);
-                                        if (dir.exists() && dir.isDirectory()) {
-                                            for (AudioListPOJO pojo : arrayList) {
-                                                String url = pojo.getAudioUrl();
-                                                File file = new File(dir,
-                                                        url.substring(url.lastIndexOf("/") + 1));
-                                                if (file.exists()) {
-                                                    temp = true;
+                            if (flter == null) {
+                                if (firstOpen) {
+                                    firstOpen = false;
+                                    if(mContext!=null) {
+                                        if(table != Consts.TABLE_HISTORY) {
+                                            SharedPreferences pref = PreferenceManager
+                                                    .getDefaultSharedPreferences(mContext);
+                                            String sort = pref.getString("pref_sort_favorite",
+                                                    mContext.getString(R.string.sort_value_date));
+                                            String sortSaved = mContext.getString(R.string.sort_value_saved);
+                                            if (table == Consts.TABLE_SAVED && sortSaved.equals(sort)) {
+                                                sort = mContext.getString(R.string.sort_value_date);
+                                            }
+                                            Comparator<BookPOJO> comparator = getComparator(sort);
+                                            if (!sort.equals(
+                                                    mContext.getString(R.string.sort_value_date))) {
+                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                                    books.sort(comparator);
+                                                } else {
+                                                    Collections.sort(books, comparator);
                                                 }
                                             }
                                         }
                                     }
                                 }
-                                if(!temp){
-                                    if(table==Consts.TABLE_SAVED){
-                                        books.remove(bookPOJO);
-                                        i--;
-                                    }
-                                    deleteSavedBook(bookPOJO);
-                                }
-                            }
-                            if (flter == null) {
-                                if (firstOpen) {
-                                    firstOpen = false;
-                                    SharedPreferences pref = PreferenceManager
-                                            .getDefaultSharedPreferences(mContext);
-                                    String sort = pref.getString("pref_sort_favorite",
-                                            mContext.getString(R.string.sort_value_date));
-                                    String sortDate = mContext.getString(R.string.sort_value_date);
-                                    if(table==Consts.TABLE_SAVED&&sortDate.equals(sort)){
-                                        sort = sortDate;
-                                    }
-                                    Comparator<BookPOJO> comparator = getComparator(sort);
-                                    if (!sort.equals(
-                                            mContext.getString(R.string.sort_value_date))) {
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                            books.sort(comparator);
-                                        } else {
-                                            Collections.sort(books, comparator);
-                                        }
-                                    }
-                                }
-
                                 getViewState().showData(books);
                             } else {
                                 ArrayList<BookPOJO> newFilter = new ArrayList<>();
@@ -189,20 +156,6 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
         }
     }
-
-    private void deleteSavedBook(final BookPOJO bookPOJO) {
-        if(mBooksDBModel.inSaved(bookPOJO)){
-            mBooksDBModel.removeSaved(bookPOJO);
-        }
-        File[] filesDirs = mContext.getExternalFilesDirs(null);
-        for (final File filesDir : filesDirs) {
-            if (filesDir != null) {
-                File file = new File(filesDir.getAbsolutePath());
-                PopupClearSaved.deleteEmtyFolder(file);
-            }
-        }
-    }
-
     @Override
     public void onCreate(Context context) {
         mContext = context;
@@ -494,22 +447,18 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
     private void showPopupMenu(@NotNull View view, int id) {
         ArrayList<String> arrayList;
 
-        switch (id) {
-            case R.id.genre_filter:
-                arrayList = mBooksDBModel.getGenre(table);
-                break;
-            case R.id.autor_filter:
-                arrayList = mBooksDBModel.getAutors(table);
-                break;
-            case R.id.artist_filter:
-                arrayList = mBooksDBModel.getArtists(table);
-                break;
-            case R.id.series_filter:
-                arrayList = mBooksDBModel.getSeries(table);
-                break;
-            default:
-                arrayList = new ArrayList<>();
+        if (id == R.id.genre_filter) {
+            arrayList = mBooksDBModel.getGenre(table);
+        } else if (id == R.id.autor_filter){
+            arrayList = mBooksDBModel.getAutors(table);
+        } else if (id == R.id.artist_filter) {
+            arrayList = mBooksDBModel.getArtists(table);
+        } else if (id == R.id.series_filter) {
+            arrayList = mBooksDBModel.getSeries(table);
+        } else {
+            arrayList = new ArrayList<>();
         }
+
         if (arrayList.isEmpty()) {
             return;
         } else {
@@ -533,21 +482,16 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                 ArrayList<BookPOJO> filter = new ArrayList<>();
                 for (BookPOJO book : books) {
                     String text;
-                    switch (id) {
-                        case R.id.genre_filter:
-                            text = book.getGenre();
-                            break;
-                        case R.id.autor_filter:
-                            text = book.getAutor();
-                            break;
-                        case R.id.artist_filter:
-                            text = book.getArtist();
-                            break;
-                        case R.id.series_filter:
-                            text = book.getSeries();
-                            break;
-                        default:
-                            return false;
+                    if (id == R.id.genre_filter) {
+                        text = book.getGenre();
+                    } else if (id == R.id.autor_filter) {
+                        text = book.getAutor();
+                    } else if (id == R.id.artist_filter) {
+                        text = book.getArtist();
+                    } else if (id == R.id.series_filter) {
+                        text = book.getSeries();
+                    } else {
+                        return false;
                     }
                     if (item.getTitle().equals(text)) {
                         filter.add(book);

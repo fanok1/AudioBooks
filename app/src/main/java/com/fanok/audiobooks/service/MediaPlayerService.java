@@ -933,7 +933,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     private File getSaveFile() {
         File[] folders = getExternalFilesDirs(null);
         for (File folder : folders) {
-            if (folder != null) {
+            if (folder != null && activeAudio!=null) {
                 String url = activeAudio.getUrl();
                 BooksDBModel dbModel = new BooksDBModel(this);
                 if(dbModel.inSaved(urlBook)) {

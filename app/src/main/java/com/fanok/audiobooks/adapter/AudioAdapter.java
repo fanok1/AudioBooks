@@ -215,12 +215,12 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
 
         File[] folders = viewHolder.mImageView.getContext().getExternalFilesDirs(null);
         boolean b = false;
-        for (File folder : folders) {
-            if (folder != null) {
-                BooksDBModel dbModel = new BooksDBModel(viewHolder.mImageView.getContext());
-                if(dbModel.inSaved(mUrlBook)) {
-                    BookPOJO bookPOJO = dbModel.getSaved(mUrlBook);
-                    String source = Consts.getSorceName(viewHolder.mImageView.getContext(), mUrlBook);
+        BooksDBModel dbModel = new BooksDBModel(viewHolder.mImageView.getContext());
+        if(dbModel.inSaved(mUrlBook)) {
+            BookPOJO bookPOJO = dbModel.getSaved(mUrlBook);
+            String source = Consts.getSorceName(viewHolder.mImageView.getContext(), mUrlBook);
+            for (File folder : folders) {
+                if (folder != null) {
                     String filePath = folder.getAbsolutePath() + "/" + source
                             + "/" + bookPOJO.getAutor()
                             + "/" + bookPOJO.getArtist()
@@ -235,9 +235,9 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
                         }
                     }
                 }
-                dbModel.closeDB();
             }
         }
+        dbModel.closeDB();
         if (b) {
             viewHolder.mImageView.setVisibility(View.VISIBLE);
             viewHolder.mProgressBar.setVisibility(View.GONE);

@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(@NonNull Context context) {
-        super(context, DBName, null, 15);
+        super(context, DBName, null, 16);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-        if (i == 8) {
+        if (i <= 8) {
             sqLiteDatabase.execSQL("ALTER TABLE history ADD description text");
             sqLiteDatabase.execSQL("ALTER TABLE favorite ADD description text");
             sqLiteDatabase.execSQL("create table books_audio ("
@@ -102,14 +102,14 @@ public class DBHelper extends SQLiteOpenHelper {
                     + "time integer DEFAULT 0" + ");");
         }
 
-        if (i == 11) {
+        if (i <= 11) {
             try {
                 sqLiteDatabase.execSQL("ALTER TABLE books_audio ADD time integer DEFAULT 0");
             } catch (SQLiteException ignored) {
             }
         }
 
-        if (i == 12){
+        if (i <= 12){
             try {
                 sqLiteDatabase.execSQL("ALTER TABLE books_audio ADD time_start integer DEFAULT -1");
                 sqLiteDatabase.execSQL("ALTER TABLE books_audio ADD time_end integer DEFAULT -1");
@@ -117,8 +117,8 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
 
-        if (i == 14){
-            sqLiteDatabase.execSQL("create table saved ("
+        if (i<=15){
+            sqLiteDatabase.execSQL("create table if not exists saved ("
                     + "id integer primary key autoincrement,"
                     + "name text not null,"
                     + "url_book text not null UNIQUE,"
