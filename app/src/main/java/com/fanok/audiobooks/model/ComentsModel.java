@@ -1,9 +1,13 @@
 package com.fanok.audiobooks.model;
 
 
-import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
+
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
 import androidx.annotation.NonNull;
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.ComentsPOJO;
@@ -12,6 +16,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.reactivex.Observable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.jsoup.Connection;
@@ -28,7 +35,7 @@ public class ComentsModel implements
     public Observable<ArrayList<ComentsPOJO>> getComents(@NonNull String url) {
 
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             ArrayList<ComentsPOJO> articlesModels;
             try {
                 if (url.contains(Url.SERVER)) {
@@ -185,12 +192,19 @@ public class ComentsModel implements
 
     private ArrayList<ComentsPOJO> loadComentsListABMP3(String url) throws IOException {
         ArrayList<ComentsPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
+        Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Element comentsElement = doc.getElementById("w0");
         if (comentsElement == null) {
@@ -442,6 +456,12 @@ public class ComentsModel implements
                     .sslSocketFactory(Consts.socketFactory())
                     .maxBodySize(0)
                     .ignoreContentType(true);
+
+            if(App.useProxy) {
+                Proxy proxy = new Proxy(Type.SOCKS,
+                        new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+                connection.proxy(proxy);
+            }
 
             if (!Consts.getBazaKnigCookies().isEmpty()) {
                 connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());

@@ -729,14 +729,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         mNextBottom.setOnClickListener(view -> mPresenter.buttomNextClick(view));
         mRewind.setOnClickListener(view -> mPresenter.buttomRewindClick(view));
         mForward.setOnClickListener(view -> mPresenter.buttomForwardClick(view));
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mSpeed.setOnClickListener(v -> mPresenter.buttonSpeedClick(v));
-            mSpeed.setVisibility(View.VISIBLE);
-        } else {
-            mSpeed.setVisibility(View.GONE);
-        }
-
+        mSpeed.setOnClickListener(v -> mPresenter.buttonSpeedClick(v));
         getSystemService(AUDIO_SERVICE);
 
 

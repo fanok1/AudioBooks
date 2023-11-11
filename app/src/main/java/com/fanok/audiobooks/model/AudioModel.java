@@ -1,12 +1,17 @@
 package com.fanok.audiobooks.model;
 
 
-import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
+
+import static com.fanok.audiobooks.App.useProxy;
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.EncodingExeption;
 import com.fanok.audiobooks.Url;
@@ -18,6 +23,9 @@ import com.google.gson.JsonParser;
 import io.reactivex.Observable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.util.ArrayList;
 import java.util.Map;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +50,7 @@ public class AudioModel implements
 
     private static final String TAG = "AudioModel";
 
-    public static String runScript(Context context, String key) {
+    public static String runScript(Context context, String key, String functionName) {
         String resultStr = null;
         // Get the JavaScript in previous section
         try {
@@ -58,7 +66,7 @@ public class AudioModel implements
             rhino.setOptimizationLevel(-1);
             Scriptable scope = rhino.initStandardObjects();
             rhino.evaluateString(scope, data, "JavaScript", 0, null);
-            Object obj = scope.get("getHash", scope);
+            Object obj = scope.get(functionName, scope);
 
             if (obj instanceof Function) {
                 Function function = (Function) obj;
@@ -79,7 +87,7 @@ public class AudioModel implements
     public Observable<ArrayList<AudioPOJO>> getAudio(@NonNull String url) {
 
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             ArrayList<AudioPOJO> articlesModels;
             try {
                 if (url.contains(Url.SERVER)) {
@@ -168,13 +176,20 @@ public class AudioModel implements
         String autor = "";
         String bookName = "";
 
-        Connection.Response res = Jsoup.connect(url)
+        Connection connection = Jsoup.connect(url)
                 .method(Connection.Method.GET)
                 .userAgent(Consts.USER_AGENT)
                 .referrer(Url.SERVER_ABMP3 + "/")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .execute();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Connection.Response res = connection.execute();
 
         Document doc = res.parse();
 
@@ -207,13 +222,22 @@ public class AudioModel implements
                 value = value.substring(value.indexOf("file:"));
                 String urlJson = value.substring(value.indexOf("\"") + 1, value.lastIndexOf("\""));
 
-                Document document = Jsoup.connect(urlJson)
+
+
+                Connection connection1 = Jsoup.connect(urlJson)
                         .userAgent(Consts.USER_AGENT)
                         .referrer(Url.SERVER_ABMP3 + "/")
                         .sslSocketFactory(Consts.socketFactory())
                         //.cookies(res.cookies())
-                        .maxBodySize(0)
-                        .get();
+                        .maxBodySize(0);
+
+                if(App.useProxy) {
+                    Proxy proxy = new Proxy(Type.SOCKS,
+                            new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+                    connection.proxy(proxy);
+                }
+
+                Document document = connection1.get();
 
                 String json = document.body().text();
 
@@ -289,7 +313,7 @@ public class AudioModel implements
             }
         }
 
-        String hash = runScript(mContext, key);
+        String hash = runScript(mContext, key, "getHash");
 
         String text = Jsoup.connect(Url.SERVER_AKNIGA + "/ajax/b/" + id)
                 .userAgent(Consts.USER_AGENT)
@@ -307,11 +331,20 @@ public class AudioModel implements
         JsonElement json = JsonParser.parseString(text.replaceAll("\\n", ""));
         if (json.isJsonObject()) {
             JsonObject jsonObject = json.getAsJsonObject();
-            String key2 = jsonObject.get("key").getAsString();
             String srv = jsonObject.get("srv").getAsString();
-            String filename = jsonObject.get("slug").getAsString();
+            JsonElement keyElement = jsonObject.get("key");
+            String audioUrl;
+            if(keyElement!=null) {
+                String key2 = keyElement.getAsString();
+                String filename = jsonObject.get("slug").getAsString();
+                audioUrl = srv + "b/" + id + "/" + key2 + "/" + filename + ".mp3";
+            }else {
 
-            String audioUrl = srv + "b/" + id + "/" + key2 + "/" + filename + ".mp3";
+                String hres = jsonObject.get("hres").getAsString();
+                audioUrl = runScript(mContext, hres, "myDecrypt");
+            }
+
+
             JsonElement jElement = jsonObject.get("items");
             if (jElement.isJsonPrimitive()) {
                 String array = jElement.getAsString();
@@ -409,6 +442,13 @@ public class AudioModel implements
         if (!Consts.getBazaKnigCookies().isEmpty()) {
             connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
         }
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+
         Document doc = connection.get();
 
         String bookName = "";
@@ -480,6 +520,12 @@ public class AudioModel implements
                 .referrer("http://www.google.com")
                 .maxBodySize(0)
                 .sslSocketFactory(Consts.socketFactory());
+
+        if(useProxy){
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
 
         Document doc = connection.get();
 

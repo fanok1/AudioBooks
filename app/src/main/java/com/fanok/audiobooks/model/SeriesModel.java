@@ -1,14 +1,21 @@
 package com.fanok.audiobooks.model;
 
 
-import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
+
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
 import androidx.annotation.NonNull;
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.jsoup.Connection;
@@ -25,7 +32,7 @@ public class SeriesModel implements
     public Observable<ArrayList<SeriesPOJO>> getSeries(@NonNull String url) {
 
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             ArrayList<SeriesPOJO> articlesModels;
             try {
                 if (url.contains(Url.SERVER)) {
@@ -140,6 +147,13 @@ public class SeriesModel implements
                 .sslSocketFactory(Consts.socketFactory())
                 .maxBodySize(0)
                 .ignoreHttpErrors(true);
+
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
 
         if (!Consts.getBazaKnigCookies().isEmpty()) {
             connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
@@ -276,12 +290,20 @@ public class SeriesModel implements
 
     private ArrayList<SeriesPOJO> loadSeriesListIzibuk(String url) throws IOException {
         ArrayList<SeriesPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
+        Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements parents = doc.getElementsByClass("_b264b2 _49d1b4");
         if (parents != null && parents.size() != 0) {

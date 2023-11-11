@@ -86,9 +86,9 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
     @Override
     public void loadBooks() {
         if (!isLoading) {
-            filterSearch.clear();
-            isLoading = true;
             getViewState().showProgres(true);
+            isLoading = true;
+            filterSearch.clear();
             mFavoriteModel.getBooks(table)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())

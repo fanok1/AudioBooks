@@ -159,6 +159,7 @@ public class AboutFragment extends PreferenceFragmentCompat {
         preferenceClickListner("monoUAH", clickToCopy);
         preferenceClickListner("monoUSD", clickToCopy);
         preferenceClickListner("monoEUR", clickToCopy);
+        preferenceClickListner("psb", clickToCopy);
         preferenceClickListner("privat", clickToCopy);
         preferenceClickListner("alpha", clickToCopy);
         //preferenceClickListner("paypal", clickToCopy);

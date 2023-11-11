@@ -1,16 +1,21 @@
 package com.fanok.audiobooks.model;
 
 
-import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.util.ArrayList;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -25,7 +30,7 @@ public class OtherSourceModel implements
     @Override
     public Observable<ArrayList<OtherArtistPOJO>> getOtherArtist(@NonNull BookPOJO bookPOJO) {
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             ArrayList<OtherArtistPOJO> articlesModels = new ArrayList<>();
             try {
 
@@ -73,13 +78,20 @@ public class OtherSourceModel implements
     }
 
     private OtherArtistPOJO getABMP3(BookPOJO bookPOJO) throws IOException {
-        Document doc = Jsoup.connect(
+        Connection connection = Jsoup.connect(
                         Url.SERVER_ABMP3 + "/search?text=" + bookPOJO.getName())
                 .userAgent(Consts.USER_AGENT)
                 .referrer(Url.SERVER_ABMP3 + "/")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements elements = doc.getElementsByClass("b-statictop-search");
         if (elements != null) {
@@ -306,6 +318,13 @@ public class OtherSourceModel implements
                     .maxBodySize(0)
                     .ignoreHttpErrors(true);
 
+
+            if(App.useProxy) {
+                Proxy proxy = new Proxy(Type.SOCKS,
+                        new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+                connection.proxy(proxy);
+            }
+
             if (!Consts.getBazaKnigCookies().isEmpty()) {
                 connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
             }
@@ -352,7 +371,7 @@ public class OtherSourceModel implements
                                 String aHref = aElement.first().attr("href");
                                 if (aHref != null && !aHref.isEmpty()) {
                                     otherArtistPOJO.setUrl(aHref);
-                                    otherArtistPOJO.setName("baza-knig.ru");
+                                    otherArtistPOJO.setName("baza-knig.ink");
                                 } else {
                                     continue;
                                 }
@@ -445,13 +464,20 @@ public class OtherSourceModel implements
     @Nullable
     private OtherArtistPOJO getIzibuk(BookPOJO bookPOJO) throws IOException {
 
-        Document doc = Jsoup.connect(Url.SERVER_IZIBUK + "/search?q=" + bookPOJO.getName() + " "
+        Connection connection = Jsoup.connect(Url.SERVER_IZIBUK + "/search?q=" + bookPOJO.getName() + " "
                         + bookPOJO.getAutor() + " " + bookPOJO.getArtist())
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Element listParent = doc.getElementById("books_list");
         if (listParent == null) {

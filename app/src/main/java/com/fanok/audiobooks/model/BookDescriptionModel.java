@@ -1,8 +1,13 @@
 package com.fanok.audiobooks.model;
 
 
-import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
 
+
+import static com.fanok.audiobooks.App.useProxy;
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
+
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.Url;
@@ -12,6 +17,9 @@ import com.fanok.audiobooks.pojo.DescriptionPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.util.ArrayList;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -37,7 +45,7 @@ public class BookDescriptionModel implements DescriptionModel {
     @Override
     public Observable<ArrayList<BookPOJO>> getBooks() {
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             ArrayList<BookPOJO> bookPOJOArrayList;
             try {
                 if (mUrl.contains(Url.SERVER)) {
@@ -64,7 +72,7 @@ public class BookDescriptionModel implements DescriptionModel {
     public Observable<DescriptionPOJO> getDescription() {
         return Observable.create(observableEmitter -> {
             DescriptionPOJO articlesModels;
-            waitVpnConetion();
+            //waitVpnConetion();
             try {
                 if (mUrl.contains(Url.SERVER)) {
                     articlesModels = loadDescription();
@@ -110,8 +118,12 @@ public class BookDescriptionModel implements DescriptionModel {
                     Elements img = book.getElementsByTag("img");
                     if (img != null && img.size() > 0) {
                         String src = img.first().attr("src");
-                        if (src != null) {
-                            bookPOJO.setPhoto(src);
+                        if (src != null&&!src.isEmpty()) {
+                            if(src.contains(Url.SERVER_BAZA_KNIG)){
+                                bookPOJO.setPhoto(src);
+                            }else {
+                                bookPOJO.setPhoto(Url.SERVER_BAZA_KNIG+src);
+                            }
                         }
                         String name = img.first().attr("alt");
                         if (name != null && !name.isEmpty()) {
@@ -699,8 +711,12 @@ public class BookDescriptionModel implements DescriptionModel {
             Elements img = element.getElementsByTag("img");
             if (img != null && img.size() > 0) {
                 String src = img.first().attr("src");
-                if (src != null) {
-                    descriptionPOJO.setPoster(src);
+                if (src != null&&!src.isEmpty()) {
+                    if(src.contains(Url.SERVER_BAZA_KNIG)){
+                        descriptionPOJO.setPoster(src);
+                    }else {
+                        descriptionPOJO.setPoster(Url.SERVER_BAZA_KNIG+src);
+                    }
                 }
             }
         }
@@ -854,14 +870,24 @@ public class BookDescriptionModel implements DescriptionModel {
 
 
         try {
-            Document doc = Jsoup.connect(
+
+
+
+            Connection connection = Jsoup.connect(
                             Url.SERVER_IZIBUK + "/search?q=" + descriptionPOJO.getTitle() + " "
                                     + descriptionPOJO.getAutor())
                     .userAgent(Consts.USER_AGENT)
                     .referrer("http://www.google.com")
                     .sslSocketFactory(Consts.socketFactory())
-                    .maxBodySize(0)
-                    .get();
+                    .maxBodySize(0);
+
+            if(App.useProxy) {
+                Proxy proxy = new Proxy(Type.SOCKS,
+                        new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+                connection.proxy(proxy);
+            }
+
+            Document doc = connection.get();
 
             Element element = doc.getElementById("books_list");
             if (element != null) {
@@ -886,6 +912,12 @@ public class BookDescriptionModel implements DescriptionModel {
                 .ignoreHttpErrors(true);
         if (!Consts.getBazaKnigCookies().isEmpty() && mUrl.contains(Url.SERVER_BAZA_KNIG)) {
             connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+        }
+
+        if(useProxy && (mUrl.contains(Url.SERVER_IZIBUK)||mUrl.contains(Url.SERVER_ABMP3))||mUrl.contains(Url.SERVER_BAZA_KNIG)){
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
         }
         mDocument = connection.get();
     }

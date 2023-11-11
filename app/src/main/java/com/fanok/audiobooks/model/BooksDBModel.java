@@ -4,17 +4,13 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-
 import androidx.annotation.NonNull;
-
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBAbstract;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBHelperInterfase;
 import com.fanok.audiobooks.pojo.BookPOJO;
-
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
 
 public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterfase {
     private static final String TAG = "BookDBModel";

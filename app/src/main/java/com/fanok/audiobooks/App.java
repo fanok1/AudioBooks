@@ -1,23 +1,22 @@
 package com.fanok.audiobooks;
 
+import static com.fanok.audiobooks.Consts.PROXY_PASSWORD;
+import static com.fanok.audiobooks.Consts.PROXY_USERNAME;
+
 import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.VpnService;
-import android.os.RemoteException;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.PreferenceManager;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.google.android.gms.ads.MobileAds;
-import de.blinkt.openvpn.OpenVpnApi;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 
 public class App extends Application {
+
+    public static boolean useProxy;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -31,6 +30,7 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
@@ -53,7 +53,18 @@ public class App extends Application {
 
         Consts.setSOURCE(this, source);
 
-        String vpn = pref.getString("vpn", getString(R.string.vpn_no_value));
+        useProxy = pref.getBoolean("pref_proxy", false);
+        if(useProxy){
+            Authenticator authenticator = new Authenticator() {
+                public PasswordAuthentication getPasswordAuthentication() {
+                    return (new PasswordAuthentication(PROXY_USERNAME,
+                            PROXY_PASSWORD.toCharArray()));
+                }
+            };
+            Authenticator.setDefault(authenticator);
+        }
+
+        /*String vpn = pref.getString("vpn", getString(R.string.vpn_no_value));
         if (!vpn.equals(getString(R.string.vpn_no_value))) {
             String file = "";
             String name = "";
@@ -66,6 +77,9 @@ public class App extends Application {
             } else if (vpn.equals(getString(R.string.vpn_zaborona_europe_value))) {
                 file = "srv0.zaborona-help-UDP-no-encryption_maxroutes.ovpn";
                 name = "Заборона Европа";
+            } else if (vpn.equals(getString(R.string.vpn_ukrane_value))) {
+                file = "ukrane.ovpn";
+                name = "VPN Украина";
             }
             if (!file.isEmpty()) {
                 Intent intent = VpnService.prepare(getApplicationContext());
@@ -75,12 +89,12 @@ public class App extends Application {
                 }
                 startVpn(file, name);
             }
-        }
+        }*/
 
         //Billing.initBilding(getBaseContext());
     }
 
-    private void startVpn(String file, String name) {
+    /*private void startVpn(String file, String name) {
         try {
             // .ovpn file
             InputStream conf = getAssets().open(file);
@@ -103,5 +117,5 @@ public class App extends Application {
         } catch (IOException | RemoteException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 }

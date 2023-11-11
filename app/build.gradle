@@ -24,8 +24,8 @@ android {
         minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 30
-        versionCode 83
-        versionName "5.9"
+        versionCode 88
+        versionName "5.14"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.release
@@ -60,6 +60,7 @@ dependencies {
     implementation('androidx.lifecycle:lifecycle-extensions:2.2.0') {
         exclude group: 'androidx'
     }
+    implementation 'com.google.firebase:firebase-crashlytics-buildtools:2.9.4'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.5.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -77,10 +78,7 @@ dependencies {
     //noinspection GradleDependency
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
     //noinspection GradleDependency
-    implementation 'com.google.android.exoplayer:exoplayer:2.10.4'
-    //noinspection GradleDependency
-    implementation 'com.google.android.exoplayer:extension-okhttp:2.10.4'
-
+    implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
     implementation platform('com.google.firebase:firebase-bom:26.7.0')
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-core'
@@ -124,13 +122,12 @@ dependencies {
     implementation 'org.mozilla:rhino:1.7R4'
     implementation 'com.github.evgenyneu:js-evaluator-for-android:v5.0.0'
     implementation "io.grpc:grpc-okhttp:1.32.2"
+    implementation 'com.theo:exdownloader:1.1.0'
 
 
 
 
-
-
-    implementation project(':vpnLib')
+    //implementation project(':vpnLib')
 
 
 

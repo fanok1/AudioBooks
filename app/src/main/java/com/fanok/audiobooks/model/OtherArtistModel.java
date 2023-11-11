@@ -1,15 +1,22 @@
 package com.fanok.audiobooks.model;
 
 
-import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
+
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
 import androidx.annotation.NonNull;
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.util.ArrayList;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -23,13 +30,20 @@ public class OtherArtistModel implements
     public static ArrayList<OtherArtistPOJO> loadOtherArtistABMP3(String bookName, String bookAuthor, String bookUrl,
             String bookReader) throws IOException {
         ArrayList<OtherArtistPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(
+        Connection connection = Jsoup.connect(
                         Url.SERVER_ABMP3 + "/search?text=" + bookName)
                 .userAgent(Consts.USER_AGENT)
                 .referrer(Url.SERVER_ABMP3 + "/")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements elements = doc.getElementsByClass("b-statictop-search");
         if (elements != null) {
@@ -181,6 +195,12 @@ public class OtherArtistModel implements
                 .maxBodySize(0)
                 .ignoreHttpErrors(true);
 
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
         if (!Consts.getBazaKnigCookies().isEmpty()) {
             connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
         }
@@ -233,6 +253,12 @@ public class OtherArtistModel implements
                                                             .sslSocketFactory(Consts.socketFactory())
                                                             .maxBodySize(0)
                                                             .ignoreHttpErrors(true);
+
+                                                    if(App.useProxy) {
+                                                        Proxy proxy = new Proxy(Type.SOCKS,
+                                                                new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+                                                        conn.proxy(proxy);
+                                                    }
                                                     if (!Consts.getBazaKnigCookies().isEmpty()) {
                                                         conn.cookie("PHPSESSID", Consts.getBazaKnigCookies());
                                                     }
@@ -292,7 +318,7 @@ public class OtherArtistModel implements
     @Override
     public Observable<ArrayList<OtherArtistPOJO>> getOtherArtist(@NonNull BookPOJO bookPOJO) {
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             ArrayList<OtherArtistPOJO> articlesModels;
             try {
                 if (bookPOJO.getUrl().contains(Url.SERVER)) {
@@ -323,13 +349,20 @@ public class OtherArtistModel implements
 
     private ArrayList<OtherArtistPOJO> loadOtherArtistIzibuk(BookPOJO bookPOJO) throws IOException {
         ArrayList<OtherArtistPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(
+        Connection connection = Jsoup.connect(
                         Url.SERVER_IZIBUK + "/search?q=" + bookPOJO.getName() + " " + bookPOJO.getAutor())
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Element element = doc.getElementById("books_list");
         if (element != null) {

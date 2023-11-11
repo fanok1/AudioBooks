@@ -144,7 +144,7 @@ public class ActivitySendEmail extends MvpAppCompatActivity {
 
                 String message;
 
-                String sunject;
+                String subject;
 
 
                 @Override
@@ -182,16 +182,17 @@ public class ActivitySendEmail extends MvpAppCompatActivity {
                     builder.append(binding.messageInput.getText().toString().replaceAll("\n", "<br/>"));
 
                     email = binding.emailInput.getText().toString();
-                    sunject = binding.spinner.getSelectedItem().toString();
+                    subject = binding.spinner.getSelectedItem().toString();
                     message = builder.toString();
                 }
 
                 @Override
                 protected Boolean doInBackground(Void... voids) {
+
                     JSONObject json = new JSONObject();
                     try {
                         json.put("email", email);
-                        json.put("subject", sunject);
+                        json.put("subject", subject);
                         json.put("message", message);
 
 

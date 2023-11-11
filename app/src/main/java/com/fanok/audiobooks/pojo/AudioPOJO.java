@@ -1,7 +1,6 @@
 package com.fanok.audiobooks.pojo;
 
 import androidx.annotation.NonNull;
-
 import com.fanok.audiobooks.Consts;
 
 public class AudioPOJO {
@@ -36,7 +35,7 @@ public class AudioPOJO {
     }
 
     public void setUrl(@NonNull String url) {
-        if (!Consts.REGEXP_URL_MP3.matcher(url).matches()) {
+        if (!Consts.REGEXP_URL.matcher(url).matches()) {
             throw new IllegalArgumentException(
                     "Value must be url");
         }

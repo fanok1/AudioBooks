@@ -110,26 +110,12 @@ public class PopupClearSaved extends AppCompatActivity {
                 Toast.makeText(this, R.string.no_selecetd, Toast.LENGTH_SHORT).show();
                 return;
             }
-            BooksDBModel booksDBModel = new BooksDBModel(this);
-            ArrayList<BookPOJO> arrayList =booksDBModel.getAllSaved();
             for (File file : files) {
-                for (BookPOJO bookPOJO: arrayList) {
-                    String source = Consts.getSorceName(this, bookPOJO.getUrl());
-                    String path = source
-                            + "/" + bookPOJO.getAutor()
-                            + "/" + bookPOJO.getArtist()
-                            + "/" + bookPOJO.getName();
-                    String f = file.getAbsolutePath();
-                    if(f.contains(path)){
-                        booksDBModel.removeSaved(bookPOJO);
-                    }
-
-                }
                 if (file.exists()) {
                     delete(file);
                 }
             }
-            booksDBModel.closeDB();
+
             File[] filesDirs = getExternalFilesDirs(null);
             for (final File filesDir : filesDirs) {
                 if (filesDir != null) {
@@ -137,6 +123,31 @@ public class PopupClearSaved extends AppCompatActivity {
                     deleteEmtyFolder(file);
                 }
             }
+
+
+            BooksDBModel booksDBModel = new BooksDBModel(this);
+            ArrayList<BookPOJO> arrayList =booksDBModel.getAllSaved();
+            for (BookPOJO bookPOJO: arrayList) {
+                String source = Consts.getSorceName(this, bookPOJO.getUrl());
+                String path = source
+                        + "/" + bookPOJO.getAutor()
+                        + "/" + bookPOJO.getArtist()
+                        + "/" + bookPOJO.getName();
+
+
+
+                boolean contains = false;
+                for (ClearSavedPOJO pojo:list){
+                    if(pojo.getFile().getAbsolutePath().contains(path)){
+                        contains = true;
+                    }
+                }
+                if(!contains){
+                    booksDBModel.removeSaved(bookPOJO);
+                }
+
+            }
+            booksDBModel.closeDB();
             recreate();
         });
     }
@@ -146,20 +157,25 @@ public class PopupClearSaved extends AppCompatActivity {
             File[] dirs = file.listFiles();
             if (dirs != null) {
                 for (File dir : dirs) {
-                    if (dir.exists() && file.isDirectory()) {
-                        File[] files = dir.listFiles();
-                        if (files != null) {
-                            if (files.length == 0) {
-                                dir.delete();
-                            } else {
-                                for (int i=0; i<files.length; i++){
-                                    File file1 = files[i];
-                                    if(file1.isDirectory()){
-                                        readFile(file1, storege, list);
-                                    }else {
-                                        list.add(new ClearSavedPOJO(dir, storege));
-                                    }
+                    if (dir.exists()) {
+                        if(dir.isDirectory()) {
+                            File[] files = dir.listFiles();
+                            if (files != null) {
+                                if (files.length == 0) {
+                                    dir.delete();
+                                } else {
+                                    readFile(dir, storege, list);
                                 }
+                            }
+                        }else {
+                            if(dir.getAbsolutePath().contains(this.getString(R.string.abook))){
+                                String temp = dir.getAbsolutePath();
+                                temp = temp.substring(0, temp.lastIndexOf("/"));
+                                File file1 = new File(temp);
+                                list.add(new ClearSavedPOJO(file1, storege));
+                                break;
+                            }else {
+                                list.add(new ClearSavedPOJO(dir, storege));
                             }
                         }
                     }

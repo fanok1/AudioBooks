@@ -23,6 +23,12 @@
         android:summary="@string/donate_summary"
         android:title="@string/donate">
 
+        <Preference
+            android:icon="@drawable/ic_mir"
+            android:key="psb"
+            android:summary="@string/psbNumber"
+            android:title="@string/psb" />
+
         <PreferenceScreen
             android:icon="@drawable/ic_mastercard"
             android:key="mono"
@@ -70,10 +76,10 @@
             android:summary="@string/ydNumb"
             android:title="@string/yd" />
 
-        <Preference
+        <!--<Preference
             android:icon="@drawable/ic_yd"
             android:key="yandexForm"
-            android:title="@string/yandex_form" />
+            android:title="@string/yandex_form" />-->
 
         <Preference
             android:icon="@drawable/ic_qiwi"

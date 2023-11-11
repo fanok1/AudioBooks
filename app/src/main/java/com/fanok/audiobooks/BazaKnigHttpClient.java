@@ -1,5 +1,9 @@
 package com.fanok.audiobooks;
 
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
+
+import androidx.annotation.NonNull;
 import com.downloader.httpclient.HttpClient;
 
 /*
@@ -24,6 +28,9 @@ import com.downloader.request.DownloadRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
@@ -57,14 +64,15 @@ public class BazaKnigHttpClient implements HttpClient {
         this.referer = referer;
     }
 
-    @SuppressWarnings("CloneDoesntCallSuperClone")
+    @NonNull
     @Override
     public HttpClient clone() {
-        return new com.downloader.httpclient.DefaultHttpClient();
+        return new BazaKnigHttpClient(referer);
     }
 
     @Override
     public void connect(DownloadRequest request) throws IOException {
+
         connection = new URL(request.getUrl()).openConnection();
         connection.setReadTimeout(request.getReadTimeout());
         connection.setConnectTimeout(request.getConnectTimeout());
@@ -76,6 +84,8 @@ public class BazaKnigHttpClient implements HttpClient {
             connection.addRequestProperty("referer", referer);
         }
         addHeaders(request);
+
+
         connection.connect();
     }
 

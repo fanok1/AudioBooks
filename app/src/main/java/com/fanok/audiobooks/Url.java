@@ -23,6 +23,7 @@ public class Url {
     public static final String AUTHORS_IZIBUK = SERVER_IZIBUK + "/authors?p=";
     public static final String PERFORMERS_IZIBUK = SERVER_IZIBUK + "/readers?p=";
 
+
     public static final String SERVER_ABMP3 = "https://audiobook-mp3.com";
     public static final String INDEX_ABMP3 = SERVER_ABMP3 + "/?page=";
     public static final String SECTIONS_ABMP3 = SERVER_ABMP3 + "/genres";
@@ -48,7 +49,7 @@ public class Url {
     public static final String RATING_ALL_TIME_AKNIGA = SERVER_AKNIGA + "/index/discussed/page<page>/?period=all";
 
 
-    public static final String SERVER_BAZA_KNIG = "https://baza-knig.ru";
+    public static final String SERVER_BAZA_KNIG = "https://baza-knig.ink";
     public static final String INDEX_BAZA_KNIG = SERVER_BAZA_KNIG + "/page/";
     public static final String SECTIONS_BAZA_KNIG = SERVER_BAZA_KNIG;
     public static final String NEW_BOOK_BAZA_KNIG = SERVER_BAZA_KNIG + "/page/";

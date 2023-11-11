@@ -3,6 +3,8 @@ package com.fanok.audiobooks.fragment;
 import static android.content.Context.UI_MODE_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS;
+import static com.fanok.audiobooks.Consts.PROXY_PASSWORD;
+import static com.fanok.audiobooks.Consts.PROXY_USERNAME;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -15,12 +17,10 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
-import android.os.RemoteException;
 import android.provider.SearchRecentSuggestions;
 import android.provider.Settings;
 import android.util.TypedValue;
@@ -41,6 +41,7 @@ import androidx.preference.PreferenceManager;
 import androidx.preference.PreferenceScreen;
 import com.codekidlabs.storagechooser.Content;
 import com.codekidlabs.storagechooser.StorageChooser;
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
@@ -57,16 +58,15 @@ import com.fanok.audiobooks.pojo.StorageUtil;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.blinkt.openvpn.OpenVpnApi;
-import de.blinkt.openvpn.core.OpenVPNThread;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -272,6 +272,22 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 false);
         initSummary(getPreferenceScreen());
 
+        preferenceChangeListner("pref_proxy",
+                (preference, newValue) -> {
+                    App.useProxy = (boolean) newValue;
+                    if((boolean)newValue){
+                        Authenticator authenticator = new Authenticator() {
+                            public PasswordAuthentication getPasswordAuthentication() {
+                                return (new PasswordAuthentication(PROXY_USERNAME,
+                                        PROXY_PASSWORD.toCharArray()));
+                            }
+                        };
+                        Authenticator.setDefault(authenticator);
+                    }
+
+                    return true;
+                });
+
         /*preferenceChangeListner("pref_proxy",
                 (preference, newValue) -> {
                     if(!validateIP((String) newValue)){
@@ -303,7 +319,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
 */
 
-        preferenceChangeListner("vpn", (preference, newValue) -> {
+        /*preferenceChangeListner("vpn", (preference, newValue) -> {
 
             if (!newValue.equals(getString(R.string.vpn_no_value))) {
                 String file = "";
@@ -317,6 +333,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 } else if (newValue.equals(getString(R.string.vpn_zaborona_europe_value))) {
                     file = "srv0.zaborona-help-UDP-no-encryption_maxroutes.ovpn";
                     name = "Заборона Европа";
+                } else if (newValue.equals(getString(R.string.vpn_ukrane_value))) {
+                    file = "ukrane.ovpn";
+                    name = "VPN Украина";
                 }
                 if (!file.isEmpty()) {
 
@@ -357,7 +376,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 }
             }
             return true;
-        });
+        });*/
 
         preferenceChangeListner("pref_theme", (preference, newValue) -> {
             if (newValue.equals(getString(R.string.theme_dark_value)) || newValue

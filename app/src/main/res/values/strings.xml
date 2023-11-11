@@ -200,8 +200,10 @@
     <string name="MonobanckNumberEUR" translatable="false">5375 4199 0104 6886</string>
     <string name="privat">ПриватБанк</string>
     <string name="privatNumber" translatable="false">5168 7573 6995 1399</string>
-    <string name="alpha">АльфаБанк</string>
-    <string name="alphaNumber" translatable="false">5355 5711 0636 3922</string>
+    <string name="alpha">АльфаБанк UA</string>
+    <string name="alphaNumber" translatable="false">5355 5712 8204 2217</string>
+    <string name="psb">Промсвязьбанк</string>
+    <string name="psbNumber" translatable="false">2200 0303 2768 4834</string>
     <string name="paypal" translatable="false">PayPal</string>
     <string name="paypalEmail" translatable="false">fanok.inc@gmail.com</string>
     <string name="qiwi" translatable="false">QIWI</string>
@@ -285,7 +287,7 @@
     <string name="seconds">с.</string>
     <string name="zero_time" translatable="false">00</string>
     <string name="equalizer">Эквалайзер</string>
-    <string name="yd">Яндекс Деньги</string>
+    <string name="yd">ЮMoney</string>
     <string name="ydNumb" translatable="false">410014301337309</string>
     <string name="yandex_form">Яндекс форма</string>
     <string name="exit">Выход</string>
@@ -347,11 +349,8 @@
     <string name="confirm_clear_audio_list">Вы уверены что хотите очистить список аудио файлов</string>
     <string name="history_procent">Отобразить процент прослушанного</string>
     <string name="history_procent_desc">Отображать процент прослушанного в избранном и в истории</string>
-    <string name="proxy_desc">Настроить прокси</string>
+    <string name="proxy_desc">Использовать прокси для обхода блокировок</string>
     <string name="proxy">Прокси</string>
-    <string name="proxy_enabled">Активировать прокси</string>
-    <string name="port">Порт (Не обязательно)</string>
-    <string name="proxy_server">Сервер</string>
     <string name="incorect_fomat_proxy_server">Неверный формат IP адреса</string>
     <string name="incorect_fomat_port">Неверный порт</string>
     <string name="rewind">Перемотка</string>
@@ -375,10 +374,12 @@
     <string name="antizapret">Антизапрет (Россия)</string>
     <string name="zaborona">Заборона (Украина)</string>
     <string name="zaborona_europe">Заборона Европа (для тех у кого не работает Заборона)</string>
+    <string name="vpn_ukrane">VPN с сервером в Украине</string>
     <string name="vpn_no_value" translatable="false">no_vpn</string>
     <string name="vpn_antizapret_value" translatable="false">antizapret</string>
     <string name="vpn_zaborona_value" translatable="false">zaborona</string>
     <string name="vpn_zaborona_europe_value" translatable="false">zaborona_europe</string>
+    <string name="vpn_ukrane_value" translatable="false">vpn_ukrane</string>
     <string name="cookes_baza_knig_exeption">У источника База Книг сработала защита от DDoS атак, для ее обхода перезагрузите или выберете другой сервер VPN</string>
     <string name="getCookies">Получить Cookies</string>
     <string name="cookies_info_baza_knig">Для доступа к источнику База Книг необходимо обновить Cookies</string>
