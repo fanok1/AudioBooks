@@ -97,6 +97,7 @@
         <item>@string/izibuc</item>
         <item>@string/audionook_mp3</item>
         <item>@string/baza_knig</item>
+        <item>@string/knigoblud</item>
     </string-array>
 
     <string-array name="sorce_books_values">
@@ -105,6 +106,7 @@
         <item>@string/izibuc_value</item>
         <item>@string/audiobook_mp3_value</item>
         <item>@string/baza_knig_value</item>
+        <item>@string/knigoblud_value</item>
     </string-array>
 
     <string-array name="vpn_titles">
@@ -157,4 +159,5 @@
         <item>#2c9633</item> <!-- fab multiselect color -->
         <item>#151515</item> <!-- address bar bg -->
     </array>
+    <string name="knigoblud">Книгоблуд</string>
 </resources>

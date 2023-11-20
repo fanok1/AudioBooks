@@ -107,6 +107,8 @@ public class Consts {
 
     public static final int SOURCE_BAZA_KNIG = 4;
 
+    public static final int SOURCE_KNIGOBLUD = 5;
+
     public static boolean izibuk_reiting = false;
 
     private static int SOURCE;
@@ -151,6 +153,8 @@ public class Consts {
             Consts.SOURCE = Consts.SOURCE_ABOOK;
         } else if (value.equals(context.getString(R.string.baza_knig_value))) {
             Consts.SOURCE = Consts.SOURCE_BAZA_KNIG;
+        } else if (value.equals(context.getString(R.string.knigoblud_value))){
+            Consts.SOURCE = Consts.SOURCE_KNIGOBLUD;
         }
     }
 
@@ -255,6 +259,7 @@ public class Consts {
         if (url.contains(Url.SERVER_AKNIGA)) return context.getString(R.string.abook);
         if (url.contains(Url.SERVER_IZIBUK)) return context.getString(R.string.izibuc);
         if (url.contains(Url.SERVER_BAZA_KNIG)) return context.getString(R.string.baza_knig);
+        if (url.contains(Url.SERVER_KNIGOBLUD)) return context.getString(R.string.knigoblud);
         return "Unknown";
 
     }

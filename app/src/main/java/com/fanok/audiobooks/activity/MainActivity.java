@@ -12,9 +12,11 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
@@ -338,7 +340,6 @@ public class MainActivity extends MvpAppCompatActivity
                 (dialogInterface, i) -> setBattaryOptimizeDisenbled(true));
         alert.setPositiveButton("OK",
                 (dialogInterface, i) -> mPresenter.openSettingsOptimizeBattery(dialogInterface));
-
     }
 
 

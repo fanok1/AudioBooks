@@ -5,6 +5,10 @@
 
     <permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
 
+    <uses-sdk tools:overrideLibrary="ru.rustore.sdk.review, ru.rustore.sdk.analytics,
+    ru.rustore.sdk.activitylauncher, ru.rustore.sdk.core" />
+
+
     <supports-screens
         android:anyDensity="true"
         android:largeScreens="true"
@@ -78,28 +82,7 @@
             android:name=".activity.ActivityCookies"
             android:configChanges="locale|uiMode"
             android:label="@string/baza_knig"
-            android:theme="@style/AppTheme.SwipeOnClose">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="izibuk.ru" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="pda.izibuk.ru" />
-            </intent-filter>
-        </activity>
+            android:theme="@style/AppTheme.SwipeOnClose"></activity>
         <activity
             android:name=".activity.SleepTimerActivity"
             android:configChanges="locale|uiMode"
@@ -187,58 +170,7 @@
             android:noHistory="true"
             android:screenOrientation="locked"
             android:theme="@style/AppTheme.NoAnimTheme"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="m.knigavuhe.org"
-                    android:scheme="https" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="knigavuhe.org"
-                    android:scheme="https" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="audiobook-mp3.com"
-                    android:scheme="https" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="akniga.org"
-                    android:scheme="https" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="baza-knig.ink"
-                    android:scheme="https" />
-            </intent-filter>
-        </activity>
+            android:exported="true"></activity>
         <activity
             android:name=".activity.PopupGetPlus"
             android:configChanges="locale|uiMode"

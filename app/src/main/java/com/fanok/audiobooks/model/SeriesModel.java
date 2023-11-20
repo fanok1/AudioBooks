@@ -43,6 +43,8 @@ public class SeriesModel implements
                     articlesModels = loadSeriesListAbook(url);
                 } else if (url.contains(Url.SERVER_BAZA_KNIG)) {
                     articlesModels = loadSeriesListBazaKnig(url);
+                } else if (url.contains(Url.SERVER_KNIGOBLUD)) {
+                    articlesModels = loadSeriesListKnigoblud(url);
                 } else {
                     articlesModels = new ArrayList<>();
                 }
@@ -343,6 +345,45 @@ public class SeriesModel implements
             }
         }
 
+        return result;
+    }
+
+    private ArrayList<SeriesPOJO> loadSeriesListKnigoblud(String url) throws IOException {
+        ArrayList<SeriesPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
+                .ignoreHttpErrors(true)
+                .get();
+
+        Elements elements = doc.getElementsByClass("BookDescription BookSeries");
+        if(elements!=null&&elements.size()>0){
+            Elements seriesConteiner = elements.first().getElementsByClass("BookDescriptionSeriesItem");
+            if(seriesConteiner!=null){
+                for (Element series:seriesConteiner){
+                    SeriesPOJO seriesPOJO = new SeriesPOJO();
+                    Elements indexElements = series.getElementsByClass("BookDescriptionSeriesItemIndex");
+                    if (indexElements!=null&&indexElements.size() != 0) {
+                        seriesPOJO.setNumber(indexElements.first().text());
+                    }
+
+                    String text = series.text();
+                    if (text!=null&&!text.isEmpty()){
+                        seriesPOJO.setName(text.replace(seriesPOJO.getNumber(), "").trim());
+                    }
+
+                    Elements aElements = series.getElementsByTag("a");
+                    if (aElements!=null&&aElements.size() != 0) {
+                        seriesPOJO.setUrl(Url.SERVER + aElements.first().attr("href"));
+                    }
+
+                    result.add(seriesPOJO);
+
+                }
+            }
+        }
         return result;
     }
 }

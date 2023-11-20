@@ -135,7 +135,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     private static final String CHANNEL_ID = "124";
     private static final String CHANNEL_NAME = "Player";
     private static boolean isPlay = false;
-    public static final int countAudioWereShowingRatingPopUp = 50;
+    public static final int countAudioWereShowingRatingPopUp = 15;
     private static final int REWIND = 30000;
     private static final int FAST_FORWARD = 30000;
 

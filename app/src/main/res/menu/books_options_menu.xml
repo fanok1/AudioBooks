@@ -72,6 +72,9 @@
                 <item
                     android:id="@+id/source_baza_knig"
                     android:title="@string/baza_knig" />
+                <item
+                    android:id="@+id/source_knigoblud"
+                    android:title="@string/knigoblud" />
             </group>
         </menu>
     </item>

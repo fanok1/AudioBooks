@@ -57,4 +57,9 @@ public class Url {
     public static final String RATING_BAZA_KNIG = SERVER_BAZA_KNIG + "/fi/sort=rating/order=desc/page/";
     public static final String COMENTS_BAZA_KNIG = SERVER_BAZA_KNIG + "/fi/sort=comm_num/order=desc/page/";
     public static final String YEARS_BAZA_KNIG = SERVER_BAZA_KNIG + "/fi/sort=d.god/order=desc/page/";
+
+
+    public static final String SERVER_KNIGOBLUD = "https://www.knigoblud.club";
+    public static final String INDEX_KNIGOBLUD = SERVER_KNIGOBLUD;
+    public static final String SECTIONS_KNIGOBLUD = SERVER_KNIGOBLUD + "/genres";
 }

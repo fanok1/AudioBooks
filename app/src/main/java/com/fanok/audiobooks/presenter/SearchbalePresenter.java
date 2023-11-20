@@ -104,6 +104,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 mUrls.add(Url.SERVER_IZIBUK + "/search?q=<qery>&p=<page>");
                 mUrls.add(Url.SERVER_ABMP3 + "/search?text=<qery>");
                 mUrls.add(Url.SERVER_BAZA_KNIG + "/index.php?do=search///qery=<qery>&page=<page>");
+                mUrls.add(Url.SERVER_KNIGOBLUD + "/search?q=<qery>&page=<page>");
                 break;
             case Consts.MODEL_AUTOR:
                 if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
@@ -173,6 +174,8 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 mSearcheblPOJOFilter = new SearcheblPOJO();
             } else if (filter == Consts.SOURCE_BAZA_KNIG) {
                 mSearcheblPOJOFilter = new SearcheblPOJO();
+            } else if (filter == Consts.SOURCE_KNIGOBLUD) {
+                mSearcheblPOJOFilter = new SearcheblPOJO();
             }
             getViewState().showSeriesAndAutors(mSearcheblPOJOFilter);
         }
@@ -197,6 +200,9 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             getViewState().showData(books_filter);
         } else if (filter == Consts.SOURCE_BAZA_KNIG) {
             setBooksFilter("baza-knig.ink");
+            getViewState().showData(books_filter);
+        } else if (filter == Consts.SOURCE_KNIGOBLUD) {
+            setBooksFilter("knigoblud.club");
             getViewState().showData(books_filter);
         }
 
@@ -266,6 +272,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             hesSearchable.put(Url.SERVER_ABMP3, mPreferences.getBoolean("search_abmp3", true));
             hesSearchable.put(Url.SERVER_AKNIGA, mPreferences.getBoolean("search_abook", true));
             hesSearchable.put(Url.SERVER_BAZA_KNIG, mPreferences.getBoolean("search_baza_knig", true));
+            hesSearchable.put(Url.SERVER_KNIGOBLUD, mPreferences.getBoolean("search_knigoblud", true));
 
             page = 0;
             loadNext();

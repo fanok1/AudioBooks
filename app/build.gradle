@@ -24,8 +24,8 @@ android {
         minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 30
-        versionCode 88
-        versionName "5.14"
+        versionCode 90
+        versionName "6.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.release
@@ -123,6 +123,7 @@ dependencies {
     implementation 'com.github.evgenyneu:js-evaluator-for-android:v5.0.0'
     implementation "io.grpc:grpc-okhttp:1.32.2"
     implementation 'com.theo:exdownloader:1.1.0'
+    implementation "ru.rustore.sdk:review:1.0.0"
 
 
 

@@ -325,7 +325,7 @@ public class Download extends Service {
                     public void onStart(final Task task) {
                         System.out.println("Task[" + task.getIndex() + "] onStart");
                         pause = false;
-                        showNotification(postion, mProgress, false);
+                        showNotification(postion, mProgress, true);
                     }
 
                     @Override
@@ -337,20 +337,20 @@ public class Download extends Service {
 
                     @Override
                     public void onProgress(final Task task, final long total, final long down) {
-                        int progessProcent = (int) (down * 100 / total);
-                        if (progessProcent % 5 == 0 && progessProcent != mProgress) {
-                            mProgress = progessProcent;
-                            showNotification(postion, mProgress, false);
-                        }
+                        mProgress = (int) (down * 100 / total);
+                        showNotification(postion, mProgress, false);
                     }
 
                     @Override
                     public void onError(final Task task, final int error, final String msg) {
-                        System.out.println("Task[" + task.getIndex() + "] onError [" + error + "," + msg + "]");
-                        Toast.makeText(Download.this,
-                                getString(R.string.error_load_file),
-                                Toast.LENGTH_SHORT).show();
-                        downloadNext(postion + 1);
+
+                        if (downloader != null) {
+                            System.out.println("Task[" + task.getIndex() + "] onError [" + error + "," + msg + "]");
+                            Toast.makeText(getApplicationContext(),
+                                    getString(R.string.error_load_file),
+                                    Toast.LENGTH_SHORT).show();
+                            downloadNext(postion + 1);
+                        }
                     }
 
                     @Override
@@ -407,7 +407,7 @@ public class Download extends Service {
                                                     }
                                                 }
 
-                                                Toast.makeText(Download.this,
+                                                Toast.makeText(getApplicationContext(),
                                                         getString(R.string.error_load_file),
                                                         Toast.LENGTH_SHORT).show();
                                             }
@@ -425,7 +425,7 @@ public class Download extends Service {
                                                 }
                                             }
 
-                                            Toast.makeText(Download.this,
+                                            Toast.makeText(getApplicationContext(),
                                                     getString(R.string.error_load_file),
                                                     Toast.LENGTH_SHORT).show();
                                             downloadNext(postion + 1);
@@ -441,7 +441,7 @@ public class Download extends Service {
                                 }
                             }
 
-                            Toast.makeText(Download.this,
+                            Toast.makeText(getApplicationContext(),
                                     getString(R.string.error_load_file),
                                     Toast.LENGTH_SHORT).show();
                             downloadNext(postion + 1);

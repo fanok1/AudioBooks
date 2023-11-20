@@ -156,6 +156,13 @@ public class AboutFragment extends PreferenceFragmentCompat {
             return true;
         });
 
+        preferenceClickListner("open_rustore", preference -> {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://apps.rustore.ru/app/com.fanok.audiobooks"));
+            startActivity(browserIntent);
+            return true;
+        });
+
         preferenceClickListner("monoUAH", clickToCopy);
         preferenceClickListner("monoUSD", clickToCopy);
         preferenceClickListner("monoEUR", clickToCopy);

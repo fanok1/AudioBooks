@@ -103,8 +103,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.xmlpull.v1.XmlPullParser;
+import ru.rustore.sdk.core.tasks.OnCompleteListener;
+import ru.rustore.sdk.review.RuStoreReviewManager;
+import ru.rustore.sdk.review.RuStoreReviewManagerFactory;
+import ru.rustore.sdk.review.model.ReviewInfo;
 
 public class BookActivity extends MvpAppCompatActivity implements Activity, RatingDialogListener {
 
@@ -1106,6 +1111,38 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
 
     @Override
     public void showRatingDialog() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            RuStoreReviewManager manager = RuStoreReviewManagerFactory.INSTANCE.create(this);
+            manager.requestReviewFlow().addOnCompleteListener(new OnCompleteListener<ReviewInfo>() {
+                @Override
+                public void onFailure(@NonNull final Throwable throwable) {
+                    showRatingSDK21();
+                }
+
+                @Override
+                public void onSuccess(final ReviewInfo reviewInfo) {
+
+                    manager.launchReviewFlow(reviewInfo).addOnCompleteListener(new OnCompleteListener<Unit>() {
+                        @Override
+                        public void onFailure(@NonNull final Throwable throwable) {
+                            showRatingSDK21();
+                        }
+
+                        @Override
+                        public void onSuccess(final Unit unit) {
+                            new StorageUtil(getApplicationContext()).storeShowRating(false);
+                        }
+                    });
+                }
+            });
+
+
+        }else {
+            showRatingSDK21();
+        }
+    }
+
+    private void showRatingSDK21(){
         AppRatingDialog builder = new AppRatingDialog.Builder()
                 .setPositiveButtonText(R.string.submit)
                 .setNegativeButtonText(R.string.cancel)
@@ -1124,7 +1161,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         try {
             builder.show();
         } catch (IllegalStateException e) {
-            new StorageUtil(this).storeCountAudioListneredForRating(
+            new StorageUtil(getApplicationContext()).storeCountAudioListneredForRating(
                     countAudioWereShowingRatingPopUp - 1);
         }
     }

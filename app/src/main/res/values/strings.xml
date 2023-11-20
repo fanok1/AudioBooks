@@ -344,6 +344,7 @@
     <string name="audiobook_mp3_value" translatable="false">audiobook_mp3</string>
     <string name="baza_knig">База Книг</string>
     <string name="baza_knig_value" translatable="false">baza_knig</string>
+    <string name="knigoblud_value" translatable="false">knigoblud</string>
     <string name="menu_saved">Скачанные</string>
     <string name="clear_audio_list">Очистить список аудио файлов</string>
     <string name="confirm_clear_audio_list">Вы уверены что хотите очистить список аудио файлов</string>
@@ -392,6 +393,8 @@
     <string name="search_multithreading">Использовать многопоточность для поиска</string>
     <string name="cutting_file">Разделить файл на разделы</string>
     <string name="cutting_file_desc">Разделять книги источника, в котором данные залиты одним файлом, на главы</string>
+    <string name="thanks">Спасибо!</string>
+    <string name="open_rustore">Открыть в магазине</string>
 
 
 </resources>

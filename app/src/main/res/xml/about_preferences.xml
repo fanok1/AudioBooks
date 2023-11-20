@@ -129,6 +129,11 @@
         android:title="@string/battary_optimize" />
 
     <Preference
+        android:icon="@drawable/ic_rustore"
+        android:key="open_rustore"
+        android:title="@string/open_rustore" />
+
+    <Preference
         android:key="open_4pda"
         android:title="@string/open_4pda" />
 

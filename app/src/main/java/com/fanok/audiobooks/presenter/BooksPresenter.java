@@ -104,9 +104,11 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showProgres(true);
             page++;
             if (mModelId != Consts.MODEL_GENRE) {
-                if ((!mUrl.contains("genre") || mUrl.contains(Url.SERVER_IZIBUK) || mUrl.contains(Url.SERVER_ABMP3)
-                        || mUrl
-                        .contains(Url.SERVER_BAZA_KNIG))
+                if (mUrl.contains(Url.SERVER_KNIGOBLUD)){
+                    getData(mUrl + "/" +page);
+                } else if ((!mUrl.contains("genre") || mUrl.contains(Url.SERVER_IZIBUK)
+                        || mUrl.contains(Url.SERVER_ABMP3)
+                        || mUrl.contains(Url.SERVER_BAZA_KNIG))
                         && !mUrl.contains(Url.SERVER_AKNIGA)) {
                     getData(mUrl + page + "/");
                 } else {
@@ -252,7 +254,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
         if (itemId == R.id.source_izi_book || itemId == R.id.source_kniga_v_uhe
                 || itemId == R.id.source_audio_book_mp3 || itemId == R.id.source_abook
-                || itemId == R.id.source_baza_knig) {
+                || itemId == R.id.source_baza_knig||itemId == R.id.source_knigoblud) {
             SharedPreferences pref = getDefaultSharedPreferences(Objects.requireNonNull(mContext));
             SharedPreferences.Editor editor = pref.edit();
             if (itemId == R.id.source_kniga_v_uhe) {
@@ -265,6 +267,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                 editor.putString("sorce_books", getStringById(R.string.abook_value));
             } else if (itemId == R.id.source_baza_knig) {
                 editor.putString("sorce_books", getStringById(R.string.baza_knig_value));
+            } else if (itemId == R.id.source_knigoblud){
+                editor.putString("sorce_books", getStringById(R.string.knigoblud_value));
             }
             editor.commit();
             getViewState().recreate();
@@ -591,9 +595,10 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             getViewState().showRefreshing(true);
             page = 1;
             if (mModelId != Consts.MODEL_GENRE) {
-                if ((!mUrl.contains("genre") || mUrl.contains(Url.SERVER_IZIBUK) || mUrl.contains(Url.SERVER_ABMP3)
-                        || mUrl
-                        .contains(Url.SERVER_BAZA_KNIG))
+                if (mUrl.contains(Url.SERVER_KNIGOBLUD)) {
+                    getData(mUrl + "/" +page);
+                } else if ((!mUrl.contains("genre") || mUrl.contains(Url.SERVER_IZIBUK) || mUrl.contains(Url.SERVER_ABMP3)
+                        || mUrl.contains(Url.SERVER_BAZA_KNIG))
                         && !mUrl.contains(Url.SERVER_AKNIGA)) {
                     getData(mUrl + page + "/");
                 } else {

@@ -315,6 +315,101 @@ public class OtherArtistModel implements
         return result;
     }
 
+    public static ArrayList<OtherArtistPOJO> loadOtherArtistKnigoblud(String bookName, String bookAuthor, String bookUrl,
+            String bookReader) throws IOException {
+        ArrayList<OtherArtistPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(
+                        Url.SERVER_KNIGOBLUD + "/search?q=" + bookAuthor + " - " + bookName)
+                .userAgent(Consts.USER_AGENT)
+                .referrer(Url.SERVER_KNIGOBLUD)
+                .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
+                .ignoreHttpErrors(true)
+                .get();
+
+
+
+        Element listParent = doc.getElementById("BL");
+        if (listParent != null) {
+            Elements listElements = listParent.getElementsByClass("bookListItem");
+            if (listElements != null && listElements.size() != 0) {
+                for (Element book : listElements) {
+                    OtherArtistPOJO pojo = new OtherArtistPOJO();
+                    String autorName = "";
+                    String readerName = "";
+                    String title = "";
+
+
+                    Elements urlConteiner = book.getElementsByClass("bookListItemCover");
+                    if (urlConteiner != null && urlConteiner.size() != 0) {
+                        String href = urlConteiner.first().attr("href");
+                        if (href != null && !href.isEmpty()) {
+                            pojo.setUrl(Url.SERVER_KNIGOBLUD + href);
+                        }
+                    }
+
+                    Elements metaBloks = book.getElementsByClass("bookListItemMetaBlock");
+                    if (metaBloks != null) {
+                        for (Element metaBlock : metaBloks) {
+                            String metaBlocktext = metaBlock.text();
+                            if (metaBlocktext.contains("✍") && metaBlocktext.contains("\uD83C\uDF99")) {
+                                Element element = metaBlock.child(1);
+                                if (element != null) {
+                                    String text = element.text();
+                                    if (text != null && !text.isEmpty()) {
+                                        autorName = text;
+                                    }
+                                }
+                                element = metaBlock.child(3);
+                                if (element != null) {
+                                    String text = element.text();
+                                    if (text != null && !text.isEmpty()) {
+                                        readerName = text;
+                                    }
+                                }
+                            } else if (metaBlocktext.contains("✍")) {
+                                Element element = metaBlock.child(1);
+                                if (element != null) {
+                                    String text = element.text();
+                                    if (text != null && !text.isEmpty()) {
+                                        autorName = text;
+                                    }
+                                }
+                            } else if (metaBlocktext.contains("\uD83C\uDF99")) {
+                                Element element = metaBlock.child(1);
+                                if (element != null) {
+                                    String text = element.text();
+                                    if (text != null && !text.isEmpty()) {
+                                        readerName = text;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Elements nameConteiner = book.getElementsByClass("bookListItemCoverNameText");
+                    if(nameConteiner!=null&&nameConteiner.size()!=0){
+                        String text = nameConteiner.first().text();
+                        if(text!=null&&!text.isEmpty()){
+                            title = text;
+                        }
+                    }
+
+                    pojo.setName("Исполнитель " + readerName);
+                    if (!readerName.isEmpty()
+                            && bookName.equals(title)
+                            && bookAuthor.equals(autorName)
+                            && !bookUrl.equals(pojo.getUrl())
+                            && !bookReader.equals(readerName)) {
+                        result.add(pojo);
+                    }
+
+                }
+            }
+        }
+        return result;
+    }
+
     @Override
     public Observable<ArrayList<OtherArtistPOJO>> getOtherArtist(@NonNull BookPOJO bookPOJO) {
         return Observable.create(observableEmitter -> {
@@ -333,6 +428,10 @@ public class OtherArtistModel implements
                             bookPOJO.getArtist());
                 } else if (bookPOJO.getUrl().contains(Url.SERVER_BAZA_KNIG)) {
                     articlesModels = loadOtherArtistBazaKnig(bookPOJO.getName(), bookPOJO.getAutor(),
+                            bookPOJO.getUrl(),
+                            bookPOJO.getArtist());
+                } else if (bookPOJO.getUrl().contains(Url.SERVER_KNIGOBLUD)){
+                    articlesModels = loadOtherArtistKnigoblud(bookPOJO.getName(), bookPOJO.getAutor(),
                             bookPOJO.getUrl(),
                             bookPOJO.getArtist());
                 } else {
@@ -414,7 +513,8 @@ public class OtherArtistModel implements
         Elements elements = doc.getElementsByClass("book_serie_block");
         for (Element element : elements) {
             Elements title = element.getElementsByClass("book_serie_block_title");
-            if (title.size() != 0 && title.first().text().contains("Другие варианты озвучки")) {
+            if (title.size() != 0 && title.first().text().contains("Другие варианты озвучки")
+                    ||title.first().text().contains("Другие озвучки")) {
                 Elements items = element.getElementsByClass("book_serie_block_item");
                 for (Element item : items) {
                     OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();

@@ -78,7 +78,7 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
         Log.d(TAG, "onBindViewHolder: called");
 
-        if(App.useProxy&&mData.get(i).getPhoto().contains(Url.SERVER_BAZA_KNIG)){
+        if(App.useProxy&&mData.get(i).getPhoto()!=null&&mData.get(i).getPhoto().contains(Url.SERVER_BAZA_KNIG)){
 
             final Bitmap[] bmp = {null};
             ExecutorService executor = Executors.newSingleThreadExecutor();

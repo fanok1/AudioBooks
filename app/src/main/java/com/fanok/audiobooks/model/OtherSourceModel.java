@@ -68,6 +68,13 @@ public class OtherSourceModel implements
                     }
                 }
 
+                if (!bookPOJO.getUrl().contains(Url.SERVER_KNIGOBLUD)) {
+                    OtherArtistPOJO artistPOJO = getKnigoblud(bookPOJO);
+                    if (artistPOJO != null) {
+                        articlesModels.add(artistPOJO);
+                    }
+                }
+
                 observableEmitter.onNext(articlesModels);
             } catch (Exception e) {
                 observableEmitter.onError(e);
@@ -671,6 +678,125 @@ public class OtherSourceModel implements
 
                     OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
                     otherArtistPOJO.setName("knigavuhe.org");
+                    otherArtistPOJO.setUrl(url);
+                    return otherArtistPOJO;
+                }
+            }
+        }
+
+        return null;
+
+    }
+
+
+
+
+    @Nullable
+    private OtherArtistPOJO getKnigoblud(BookPOJO bookPOJO) throws IOException {
+
+        Document doc = Jsoup.connect(Url.SERVER_KNIGOBLUD + "/search?q=" + bookPOJO.getName()
+                        + " " + bookPOJO.getAutor())
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
+                .ignoreHttpErrors(true)
+                .get();
+
+        Element bookList = doc.getElementById("BL");
+        if (bookList != null) {
+            Elements books = bookList.getElementsByClass("bookListItem");
+            if (books==null||books.size() == 0) {
+                return null;
+            }
+            for (Element book : books) {
+
+                String title = "";
+                String author = "";
+                String reader = "";
+                String url = "";
+
+                Elements aTags = book.getElementsByClass("bookListItemCover");
+                if (aTags!=null&&aTags.size() != 0) {
+                    url = Url.SERVER_KNIGOBLUD + aTags.first().attr("href");
+                }
+
+                Elements nameConteiner = book.getElementsByClass("bookListItemCoverNameText");
+                if (nameConteiner!=null&&nameConteiner.size() != 0) {
+                    title = nameConteiner.first().text();
+                }
+
+                Elements metaBloks = book.getElementsByClass("bookListItemMetaBlock");
+                if(metaBloks!=null){
+                    for(Element metaBlock:metaBloks){
+                        String metaBlocktext = metaBlock.text();
+                        if (metaBlocktext.contains("✍")&&metaBlocktext.contains("\uD83C\uDF99")){
+                            Element element = metaBlock.child(1);
+                            if(element!=null){
+                                String text = element.text();
+                                if(text!=null&&!text.isEmpty()){
+                                    author = text;
+                                }
+                            }
+                            element = metaBlock.child(3);
+                            if(element!=null){
+                                String text = element.text();
+                                if(text!=null&&!text.isEmpty()){
+                                    reader = text;
+                                }
+                            }
+                        }else if (metaBlocktext.contains("✍")){
+                            Element element = metaBlock.child(1);
+                            if(element!=null){
+                                String text = element.text();
+                                if(text!=null&&!text.isEmpty()){
+                                    author = text;
+                                }
+                            }
+                        }else if (metaBlocktext.contains("\uD83C\uDF99")){
+                            Element element = metaBlock.child(1);
+                            if(element!=null){
+                                String text = element.text();
+                                if(text!=null&&!text.isEmpty()){
+                                    reader = text;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                String[] name = author.split(" ");
+                boolean authorFlag = false;
+                if (author.length() == bookPOJO.getAutor().length()) {
+                    authorFlag = true;
+                    for (final String s : name) {
+                        if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
+                            authorFlag = false;
+                            break;
+                        }
+
+                    }
+                }
+
+                String[] artist = reader.split(" ");
+                boolean readerFlag = false;
+                if (reader.length() == bookPOJO.getArtist().length()) {
+                    readerFlag = true;
+                    for (final String s : artist) {
+                        if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
+                            readerFlag = false;
+                            break;
+                        }
+
+                    }
+                }
+
+                if (!title.isEmpty() && !url.isEmpty() &&
+                        title.equalsIgnoreCase(bookPOJO.getName()) &&
+                        authorFlag && readerFlag) {
+
+                    OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+                    otherArtistPOJO.setName("Книгоблуд");
                     otherArtistPOJO.setUrl(url);
                     return otherArtistPOJO;
                 }

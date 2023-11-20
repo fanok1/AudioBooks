@@ -183,6 +183,9 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             } else if (book.getUrl().contains(Url.SERVER_BAZA_KNIG)) {
                 mSource.setText(R.string.baza_knig);
                 mSource.setVisibility(View.VISIBLE);
+            } else if (book.getUrl().contains(Url.SERVER_KNIGOBLUD)) {
+                mSource.setText(R.string.knigoblud);
+                mSource.setVisibility(View.VISIBLE);
             } else {
                 mSource.setVisibility(View.GONE);
             }
