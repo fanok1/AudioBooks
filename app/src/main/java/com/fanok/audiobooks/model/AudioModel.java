@@ -100,6 +100,8 @@ public class AudioModel implements
                     articlesModels = loadSeriesListAbook(url);
                 } else if (url.contains(Url.SERVER_BAZA_KNIG)) {
                     articlesModels = loadSeriesListBazaKnig(url);
+                } else if (url.contains(Url.SERVER_KNIGOBLUD)) {
+                    articlesModels = loadSeriesKnigoblud(url);
                 } else {
                     articlesModels = new ArrayList<>();
                 }
@@ -421,6 +423,7 @@ public class AudioModel implements
         return result;
     }
 
+
     private ArrayList<AudioPOJO> loadSeriesListBazaKnig(String url) throws IOException {
 
         int indexSorce = url.indexOf("?sorce");
@@ -558,6 +561,68 @@ public class AudioModel implements
                             audioPOJO.setBookName(bookName);
                             result.add(audioPOJO);
                         }
+                    }
+                }
+
+            }
+        }
+
+        return result;
+    }
+
+    private ArrayList<AudioPOJO> loadSeriesKnigoblud(String url) throws IOException {
+        ArrayList<AudioPOJO> result = new ArrayList<>();
+
+        Connection connection = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .maxBodySize(0)
+                .ignoreHttpErrors(true)
+                .sslSocketFactory(Consts.socketFactory());
+
+
+        Document doc = connection.get();
+
+        String bookName = "";
+        Elements titleElement = doc.getElementsByTag("h1");
+        if (titleElement!=null&&titleElement.size() != 0) {
+            String name = titleElement.first().text().trim();
+            bookName = name;
+        }
+
+        Elements sriptElements = doc.getElementsByTag("script");
+        for (Element script : sriptElements) {
+            String value = script.toString();
+            if (value.contains("KB.playerInit")) {
+                value = deleteComnets(value);
+                value = value.substring(value.indexOf("KB.playerInit("));
+                String json = value.substring(value.indexOf("(") + 1, value.indexOf(");"));
+                JsonElement jsonTree = JsonParser.parseString(json);
+                if (jsonTree.isJsonObject()) {
+                    JsonObject jsonObject = jsonTree.getAsJsonObject();
+                    JsonArray array = jsonObject.getAsJsonArray("playlist");
+                    for (int i = 0; i < array.size(); i++) {
+                        AudioPOJO audioPOJO = new AudioPOJO();
+                        JsonObject object = array.get(i).getAsJsonObject();
+                        if(object!=null){
+                            JsonElement element = object.get("title");
+                            if(element!=null){
+                                audioPOJO.setName(element.getAsString());
+                            }
+
+                            element = object.get("duration");
+                            if(element!=null){
+                                audioPOJO.setTime(element.getAsInt());
+                            }
+
+                            element = object.get("src");
+                            if(element!=null){
+                                audioPOJO.setUrl(element.getAsString());
+                            }
+
+                        }
+                        audioPOJO.setBookName(bookName);
+                        result.add(audioPOJO);
                     }
                 }
 

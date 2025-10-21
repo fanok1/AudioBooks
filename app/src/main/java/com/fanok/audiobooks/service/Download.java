@@ -2,6 +2,7 @@ package com.fanok.audiobooks.service;
 
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_CLEAR_DOWNLOADING;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_UPDATE_ADAPTER;
+import static com.fanok.audiobooks.activity.PopupClearSaved.deleteEmtyFolder;
 
 import android.app.DownloadManager;
 import android.app.Notification;
@@ -9,7 +10,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
@@ -30,12 +34,23 @@ import com.fanok.audiobooks.BazaKnigHttpClient;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.activity.BookActivity;
+import com.fanok.audiobooks.activity.PopupClearSaved;
 import com.fanok.audiobooks.broadcasts.OnNotificationButtonClick;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.theo.downloader.DownloaderFactory;
+import com.theo.downloader.IDownloader;
+import com.theo.downloader.IDownloader.DownloadListener;
+import com.theo.downloader.Task;
+import com.theo.downloader.info.SnifferInfo;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +87,8 @@ public class Download extends Service {
 
     protected String val;
 
+    private IDownloader downloader;
+
 
     @Override
     public void onCreate() {
@@ -106,6 +123,62 @@ public class Download extends Service {
         notificationClickIntent = PendingIntent.getActivity(this, 0, resultIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
+        registerReceiver(pauseDownload, new IntentFilter(ACTION_PAUSE));
+        registerReceiver(resumeDownload, new IntentFilter(ACTION_RESUME));
+        registerReceiver(stopDownload, new IntentFilter(ACTION_STOP));
+
+    }
+
+    private final BroadcastReceiver pauseDownload = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+            if(downloader!=null&&!pause){
+                downloader.pause();
+            }
+        }
+    };
+
+    private final BroadcastReceiver resumeDownload = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+            if(downloader!=null&&pause){
+                downloader.start();
+            }
+        }
+    };
+
+    private final BroadcastReceiver stopDownload = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+            if(downloader!=null&&!pause){
+                downloader.pause();
+            }
+
+            downloader=null;
+            String path = intent.getStringExtra("path");
+            if(path!=null){
+                PopupClearSaved.delete(new File(path));
+                File[] filesDirs = getExternalFilesDirs(null);
+                for (final File filesDir : filesDirs) {
+                    if (filesDir != null) {
+                        File file = new File(filesDir.getAbsolutePath());
+                        deleteEmtyFolder(file);
+                    }
+                }
+            }
+
+            sendBroadcast(new Intent(Broadcast_CLEAR_DOWNLOADING));
+            stopForeground(true);
+            stopSelf();
+        }
+    };
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(resumeDownload);
+        unregisterReceiver(pauseDownload);
+        unregisterReceiver(stopDownload);
     }
 
     @Override
@@ -171,65 +244,219 @@ public class Download extends Service {
 
     protected void download(int postion) {
         String urlPath = mList.get(postion);
-        String fileName = urlPath.substring(urlPath.lastIndexOf("/") + 1);
-        HttpClient httpClient;
-        if(mBookPOJO.get(postion).getUrl().contains(Url.SERVER_BAZA_KNIG)){
-            httpClient = new BazaKnigHttpClient(Url.SERVER_BAZA_KNIG+"/");
-        }else {
-            httpClient = new DefaultHttpClient();
-        }
-
-        PRDownloaderConfig config = PRDownloaderConfig.newBuilder()
-                .setReadTimeout(30_000)
-                .setConnectTimeout(30_000)
-                .setUserAgent(
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36")
-                .setHttpClient(httpClient)
-                .build();
-        PRDownloader.initialize(getApplicationContext(), config);
         String source = Consts.getSorceName(this, mBookPOJO.get(postion).getUrl());
-        String filePath = path+"/"+source
-                +"/"+mBookPOJO.get(postion).getAutor()
-                +"/"+mBookPOJO.get(postion).getArtist()
-                +"/"+mBookPOJO.get(postion).getName();
-        downloadId = PRDownloader.download(urlPath, filePath, fileName)
-                .build()
-                .setOnStartOrResumeListener(() -> {
-                    pause = false;
-                    showNotification(postion, mProgress, false);
-                })
-                .setOnPauseListener(() -> {
-                    pause = true;
-                    showNotification(postion, mProgress, false);
-                })
-                .setOnCancelListener(() -> {
-                    sendBroadcast(new Intent(Broadcast_CLEAR_DOWNLOADING));
-                    stopForeground(true);
-                    stopSelf();
-                })
-                .setOnProgressListener(progress -> {
-                    int progessProcent = (int) (progress.currentBytes * 100 / progress.totalBytes);
-                    if (progessProcent % 5 == 0 && progessProcent != mProgress) {
-                        mProgress = progessProcent;
+        String filePath = path + "/" + source
+                + "/" + mBookPOJO.get(postion).getAutor()
+                + "/" + mBookPOJO.get(postion).getArtist()
+                + "/" + mBookPOJO.get(postion).getName();
+
+        if(!urlPath.contains(".m3u8")) {
+            String fileName = urlPath.substring(urlPath.lastIndexOf("/") + 1);
+            HttpClient httpClient;
+            if (mBookPOJO.get(postion).getUrl().contains(Url.SERVER_BAZA_KNIG)) {
+                httpClient = new BazaKnigHttpClient(Url.SERVER_BAZA_KNIG + "/");
+            } else {
+                httpClient = new DefaultHttpClient();
+            }
+
+            PRDownloaderConfig config = PRDownloaderConfig.newBuilder()
+                    .setReadTimeout(30_000)
+                    .setConnectTimeout(30_000)
+                    .setUserAgent(
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
+                    .setHttpClient(httpClient)
+                    .build();
+
+            PRDownloader.initialize(getApplicationContext(), config);
+            downloadId = PRDownloader.download(urlPath, filePath, fileName)
+                    .build()
+                    .setOnStartOrResumeListener(() -> {
+                        pause = false;
+                        showNotification(postion, mProgress, false);
+                    })
+                    .setOnPauseListener(() -> {
+                        pause = true;
+                        showNotification(postion, mProgress, false);
+                    })
+                    .setOnCancelListener(() -> {
+                        sendBroadcast(new Intent(Broadcast_CLEAR_DOWNLOADING));
+                        stopForeground(true);
+                        stopSelf();
+                    })
+                    .setOnProgressListener(progress -> {
+                        int progessProcent = (int) (progress.currentBytes * 100 / progress.totalBytes);
+                        if (progessProcent % 5 == 0 && progessProcent != mProgress) {
+                            mProgress = progessProcent;
+                            showNotification(postion, mProgress, false);
+                        }
+                    })
+                    .start(new OnDownloadListener() {
+                        @Override
+                        public void onDownloadComplete() {
+                            addSaveFile(postion);
+                            downloadNext(postion + 1);
+                        }
+
+                        @Override
+                        public void onError(Error error) {
+                            Toast.makeText(Download.this,
+                                    getString(R.string.error_load_file) + " " + fileName,
+                                    Toast.LENGTH_SHORT).show();
+                            downloadNext(postion + 1);
+                        }
+
+                    });
+
+        }else {
+                Task task = new Task(urlPath, urlPath, filePath);
+                downloadId = task.getIndex();
+                downloader = DownloaderFactory.create(IDownloader.Type.HLS, task);
+                downloader.setListener(new DownloadListener() {
+                    @Override
+                    public void onCreated(final Task task, final SnifferInfo snifferInfo) {
+                        System.out.println("Task[" + task.getIndex() + "] onCreated realUrl:" + snifferInfo.realUrl);
+                        System.out.println("Task[" + task.getIndex() + "] onCreated contentLength:" + snifferInfo.contentLength);
+                        if(downloader!=null){
+                            downloader.start();
+                        }
+                    }
+
+                    @Override
+                    public void onStart(final Task task) {
+                        System.out.println("Task[" + task.getIndex() + "] onStart");
+                        pause = false;
+                        showNotification(postion, mProgress, true);
+                    }
+
+                    @Override
+                    public void onPause(final Task task) {
+                        System.out.println("Task[" + task.getIndex() + "] onPause");
+                        pause = true;
                         showNotification(postion, mProgress, false);
                     }
-                })
-                .start(new OnDownloadListener() {
+
                     @Override
-                    public void onDownloadComplete() {
-                        addSaveFile(postion);
-                        downloadNext(postion + 1);
+                    public void onProgress(final Task task, final long total, final long down) {
+                        mProgress = (int) (down * 100 / total);
+                        showNotification(postion, mProgress, false);
                     }
 
                     @Override
-                    public void onError(Error error) {
-                        Toast.makeText(Download.this,
-                                getString(R.string.error_load_file) + " " + fileName,
-                                Toast.LENGTH_SHORT).show();
-                        downloadNext(postion + 1);
+                    public void onError(final Task task, final int error, final String msg) {
+
+                        if (downloader != null) {
+                            System.out.println("Task[" + task.getIndex() + "] onError [" + error + "," + msg + "]");
+                            Toast.makeText(getApplicationContext(),
+                                    getString(R.string.error_load_file),
+                                    Toast.LENGTH_SHORT).show();
+                            downloadNext(postion + 1);
+                        }
                     }
 
+                    @Override
+                    public void onComplete(final Task task, final long total) {
+                        System.out.println("Task[" + task.getIndex() + "] onComplete [" + total + "]");
+
+                        StringBuilder text = new StringBuilder();
+                        try {
+                            File file = new File(filePath+"/pl","pl.m3u8");
+                            BufferedReader br = new BufferedReader(new FileReader(file));
+
+                            String line;
+                            while ((line = br.readLine()) != null) {
+                                text.append(line);
+                                text.append('\n');
+                            }
+                            br.close();
+
+
+                            String keyUrl = text.toString();
+                            keyUrl = keyUrl.substring(keyUrl.indexOf("URI="));
+                            keyUrl = keyUrl.replace("URI=\"","");
+                            keyUrl = keyUrl.substring(0, keyUrl.indexOf("\""));
+
+                            PRDownloaderConfig config = PRDownloaderConfig.newBuilder()
+                                    .setReadTimeout(30_000)
+                                    .setConnectTimeout(30_000)
+                                    .setUserAgent(
+                                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
+                                    .setHttpClient(new DefaultHttpClient())
+                                    .build();
+
+                            PRDownloader.initialize(getApplicationContext(), config);
+                            final String finalKeyUrl = keyUrl;
+                            PRDownloader.download(finalKeyUrl, filePath+"/pl", "enc.key").build().start(
+                                    new OnDownloadListener() {
+                                        @Override
+                                        public void onDownloadComplete() {
+
+                                            String s = text.toString();
+                                            s = s.replace(finalKeyUrl, "enc.key");
+
+                                            File file1 = new File(filePath+"/pl", "pl.m3u8");
+                                            try (FileWriter writer = new FileWriter(file1)) {
+                                                writer.write(s);
+                                                addSaveFile(postion);
+                                            } catch (IOException e) {
+                                                PopupClearSaved.delete(new File(filePath));
+                                                File[] filesDirs = getExternalFilesDirs(null);
+                                                for (final File filesDir : filesDirs) {
+                                                    if (filesDir != null) {
+                                                        File file = new File(filesDir.getAbsolutePath());
+                                                        deleteEmtyFolder(file);
+                                                    }
+                                                }
+
+                                                Toast.makeText(getApplicationContext(),
+                                                        getString(R.string.error_load_file),
+                                                        Toast.LENGTH_SHORT).show();
+                                            }
+                                            downloadNext(postion + 1);
+                                        }
+
+                                        @Override
+                                        public void onError(final Error error) {
+                                            PopupClearSaved.delete(new File(filePath));
+                                            File[] filesDirs = getExternalFilesDirs(null);
+                                            for (final File filesDir : filesDirs) {
+                                                if (filesDir != null) {
+                                                    File file = new File(filesDir.getAbsolutePath());
+                                                    deleteEmtyFolder(file);
+                                                }
+                                            }
+
+                                            Toast.makeText(getApplicationContext(),
+                                                    getString(R.string.error_load_file),
+                                                    Toast.LENGTH_SHORT).show();
+                                            downloadNext(postion + 1);
+                                        }
+                                    });
+                        } catch (IOException e) {
+                            PopupClearSaved.delete(new File(filePath));
+                            File[] filesDirs = getExternalFilesDirs(null);
+                            for (final File filesDir : filesDirs) {
+                                if (filesDir != null) {
+                                    File file = new File(filesDir.getAbsolutePath());
+                                    deleteEmtyFolder(file);
+                                }
+                            }
+
+                            Toast.makeText(getApplicationContext(),
+                                    getString(R.string.error_load_file),
+                                    Toast.LENGTH_SHORT).show();
+                            downloadNext(postion + 1);
+
+                        }
+
+                    }
+
+                    @Override
+                    public void onSaveInstance(final Task task, final byte[] data) {
+
+                    }
                 });
+                downloader.create();
+        }
 
 
     }
@@ -297,10 +524,16 @@ public class Download extends Service {
         Intent playbackAction = new Intent(getApplicationContext(),
                 OnNotificationButtonClick.class);
         String urlPath = mList.get(postion);
+
         String fileName = urlPath.substring(urlPath.lastIndexOf("/") + 1);
         playbackAction.setAction(action);
         playbackAction.putExtra("downloadId", downloadId);
-        playbackAction.putExtra("path", path + "/" + mBookPOJO.get(postion).getName());
+        String source = Consts.getSorceName(this, mBookPOJO.get(postion).getUrl());
+        String filePath = path + "/" + source
+                + "/" + mBookPOJO.get(postion).getAutor()
+                + "/" + mBookPOJO.get(postion).getArtist()
+                + "/" + mBookPOJO.get(postion).getName();
+        playbackAction.putExtra("path", filePath);
         playbackAction.putExtra("fileName", fileName);
         return PendingIntent.getBroadcast(getApplicationContext(), 0, playbackAction,
                 PendingIntent.FLAG_UPDATE_CURRENT);

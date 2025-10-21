@@ -63,6 +63,10 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
                 case Consts.SOURCE_BAZA_KNIG:
                     mText.setText(R.string.baza_knig);
                     break;
+
+                case Consts.SOURCE_KNIGOBLUD:
+                    mText.setText(R.string.knigoblud);
+                    break;
             }
 
         }
@@ -102,6 +106,10 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
 
         if (preferences.getBoolean("search_baza_knig", true)) {
             mData.add(Consts.SOURCE_BAZA_KNIG);
+        }
+
+        if (preferences.getBoolean("search_knigoblud", true)) {
+            mData.add(Consts.SOURCE_KNIGOBLUD);
         }
 
     }

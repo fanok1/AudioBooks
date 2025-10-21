@@ -84,7 +84,9 @@ public class BookDescriptionModel implements DescriptionModel {
                     articlesModels = loadDescriptionAkniga();
                 } else if (mUrl.contains(Url.SERVER_BAZA_KNIG)) {
                     articlesModels = loadDescriptionBazaKnig();
-                } else {
+                } else if (mUrl.contains(Url.SERVER_KNIGOBLUD)){
+                    articlesModels = loadDescriptionKnigoblud();
+                }else {
                     articlesModels = new DescriptionPOJO();
                 }
                 observableEmitter.onNext(articlesModels);
@@ -323,7 +325,7 @@ public class BookDescriptionModel implements DescriptionModel {
                     descriptionPOJO.setSeries(seriesElement.first().text());
                     descriptionPOJO.setSeriesUrl(Url.SERVER + seriesElement.first().attr("href"));
                 }
-            } else if (element.text().contains("Другие варианты озвучки")) {
+            } else if (element.text().contains("Другие варианты озвучки")||element.text().contains("Другие озвучки")) {
                 descriptionPOJO.setOtherReader(true);
             }
         }
@@ -437,6 +439,86 @@ public class BookDescriptionModel implements DescriptionModel {
         try {
             ArrayList<OtherArtistPOJO> arrayList = OtherArtistModel
                     .loadOtherArtistABMP3(descriptionPOJO.getTitle(), descriptionPOJO.getAutor(), mUrl,
+                            descriptionPOJO.getArtist());
+            descriptionPOJO.setOtherReader(arrayList.size() != 0);
+        } catch (Exception ignored) {
+            descriptionPOJO.setOtherReader(false);
+        }
+
+        return descriptionPOJO;
+    }
+
+    private DescriptionPOJO loadDescriptionKnigoblud() throws IOException {
+
+        DescriptionPOJO descriptionPOJO = new DescriptionPOJO();
+        if (getDocument() == null) {
+            setDocument();
+        }
+        Document document = getDocument();
+
+        Element img = document.getElementById("BookCoverImage");
+        if (img != null) {
+            descriptionPOJO.setPoster(img.attr("src"));
+        }
+
+        Elements desc = document.getElementsByClass("BookDescriptionContent");
+        if (desc != null && desc.size() != 0) {
+            descriptionPOJO.setDescription(desc.first().ownText());
+        }
+
+        Elements clock = document.getElementsByClass("PageTitle_Subtitle");
+        if (clock != null && clock.size() != 0) {
+            descriptionPOJO.setTime(clock.first().ownText());
+        }
+
+        Elements seriesConteiner = document.getElementsByClass("BookDescription BookSeries");
+        if (seriesConteiner!=null&&seriesConteiner.size()!=0){
+            Elements series = seriesConteiner.first().getElementsByTag("a");
+            if (series!=null&&series.size()!=0){
+                descriptionPOJO.setSeries(series.first().text());
+                descriptionPOJO.setSeriesUrl(Url.SERVER_KNIGOBLUD + series.first().attr("href"));
+            }
+        }
+
+
+        Elements elements = document.getElementsByClass("BookMetaBlock");
+        if(elements!=null&&elements.size()!=0) {
+            Elements infos = elements.first().getElementsByClass("BookMetaBlockLine");
+            if (infos != null) {
+                for (Element info : infos) {
+                    if (info.text().contains("✍")) {
+                        Elements element = info.getElementsByTag("a");
+                        if (element != null && element.size() != 0) {
+                            String autor = element.first().text();
+                            descriptionPOJO.setAutor(autor);
+                            descriptionPOJO.setAutorUrl(Url.SERVER_KNIGOBLUD + element.first().attr("href"));
+                        }
+                    } else if (info.text().contains("\uD83C\uDF99")) {
+                        Elements element = info.getElementsByTag("a");
+                        if (element != null && element.size() != 0) {
+                            descriptionPOJO.setArtist(element.first().text());
+                            descriptionPOJO.setArtistUrl(Url.SERVER_KNIGOBLUD + element.first().attr("href"));
+                        }
+                    } else if (info.text().contains("\uD83D\uDCD5")) {
+                        Elements element = info.getElementsByTag("a");
+                        if (element != null && element.size() != 0) {
+                            descriptionPOJO.setGenre(element.first().text());
+                            descriptionPOJO.setGenreUrl(Url.SERVER_KNIGOBLUD + element.first().attr("href"));
+                        }
+                    }
+                }
+            }
+        }
+
+        Elements titleElement = document.getElementsByTag("h1");
+        if (titleElement!=null&&titleElement.size() != 0) {
+            String name = titleElement.first().text().trim();
+            descriptionPOJO.setTitle(name);
+        }
+
+        try {
+            ArrayList<OtherArtistPOJO> arrayList = OtherArtistModel
+                    .loadOtherArtistKnigoblud(descriptionPOJO.getTitle(), descriptionPOJO.getAutor(), mUrl,
                             descriptionPOJO.getArtist());
             descriptionPOJO.setOtherReader(arrayList.size() != 0);
         } catch (Exception ignored) {

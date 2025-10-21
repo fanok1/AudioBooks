@@ -135,7 +135,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     private static final String CHANNEL_ID = "124";
     private static final String CHANNEL_NAME = "Player";
     private static boolean isPlay = false;
-    public static final int countAudioWereShowingRatingPopUp = 50;
+    public static final int countAudioWereShowingRatingPopUp = 15;
     private static final int REWIND = 30000;
     private static final int FAST_FORWARD = 30000;
 
@@ -931,7 +931,13 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                             + "/" + bookPOJO.getArtist()
                             + "/" + bookPOJO.getName();
                     if (url != null && !url.isEmpty()) {
-                        File file = new File(filePath + "/" + url.substring(url.lastIndexOf("/") + 1));
+                        File file;
+                        if(!Objects.equals(source, getString(R.string.abook))) {
+                            file = new File(filePath + "/" + url.substring(url.lastIndexOf("/") + 1));
+                        }else {
+                            file = new File(filePath + "/" + "pl/pl.m3u8");
+                        }
+
                         if (file.exists()) {
                             return file;
                         }

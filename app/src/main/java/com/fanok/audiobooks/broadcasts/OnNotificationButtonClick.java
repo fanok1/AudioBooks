@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.broadcasts;
 
+import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SHOW_GET_PLUS;
 import static com.fanok.audiobooks.service.Download.ACTION_PAUSE;
 import static com.fanok.audiobooks.service.Download.ACTION_RESUME;
 import static com.fanok.audiobooks.service.Download.ACTION_STOP;
@@ -8,13 +9,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import com.downloader.PRDownloader;
+import com.theo.downloader.IDownloader;
 import java.io.File;
 
 
 public class OnNotificationButtonClick extends BroadcastReceiver {
 
+
+    Context mContext;
     @Override
     public void onReceive(Context context, Intent intent) {
+        mContext = context;
         handleIncomingActions(intent);
     }
 
@@ -29,7 +34,7 @@ public class OnNotificationButtonClick extends BroadcastReceiver {
         int downloadId = playbackAction.getIntExtra("downloadId", 0);
         String path = playbackAction.getStringExtra("path");
         String fileName = playbackAction.getStringExtra("fileName");
-        if (downloadId != 0) {
+        if (downloadId != 0&&!fileName.contains("m3u8")) {
             switch (actionString) {
                 case ACTION_RESUME:
                     PRDownloader.resume(downloadId);
@@ -54,6 +59,12 @@ public class OnNotificationButtonClick extends BroadcastReceiver {
                         i++;
                     }
                     break;
+            }
+        }else {
+            Intent broadcastIntent = new Intent(actionString);
+            broadcastIntent.putExtra("path", path);
+            if(mContext!=null){
+                mContext.sendBroadcast(broadcastIntent);
             }
         }
     }

@@ -11,6 +11,14 @@ public class GenrePOJO {
     private int reting = 0;
     private String description = "";
 
+    public GenrePOJO(final String name, final String url) {
+        this.name = name;
+        this.url = url;
+    }
+
+    public GenrePOJO() {
+    }
+
     public String getName() {
         return name;
     }

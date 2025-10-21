@@ -65,6 +65,11 @@
             android:key="search_baza_knig"
             android:title="@string/baza_knig" />
 
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="search_knigoblud"
+            android:title="@string/knigoblud" />
+
     </PreferenceScreen>
 
     <!--<Preference

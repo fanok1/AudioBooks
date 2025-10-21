@@ -572,14 +572,21 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                             + "/" + mBookPOJO.getName();
                 File dir = new File(filePath);
                 if (dir.exists() && dir.isDirectory()) {
-                    for (String url : data) {
-                        File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
-                        if (file.exists()) {
-                            if (!file.delete()) {
-                                Log.d(TAG, file + " delete: false");
-                            } else {
-                                Log.d(TAG, file + " delete: true");
+                    if(source!=mContext.getString(R.string.abook)) {
+                        for (String url : data) {
+                            File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
+                            if (file.exists()) {
+                                if (!file.delete()) {
+                                    Log.d(TAG, file + " delete: false");
+                                } else {
+                                    Log.d(TAG, file + " delete: true");
+                                }
                             }
+                        }
+                    }else {
+                        File file = new File(dir, "pl");
+                        if (file.exists()) {
+                            PopupClearSaved.delete(file);
                         }
                     }
                     if (Objects.requireNonNull(dir.list()).length == 0) {

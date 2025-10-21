@@ -279,6 +279,10 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                     case Consts.SOURCE_BAZA_KNIG:
                         item = menu.findItem(R.id.source_baza_knig);
                         break;
+                    case Consts.SOURCE_KNIGOBLUD:
+                        item = menu.findItem(R.id.source_knigoblud);
+                        menu.findItem(R.id.order).setVisible(false);
+                        break;
                     default:
                         item = null;
                         break;

@@ -53,44 +53,8 @@ public class LoadBook extends AppCompatActivity {
         mContext = this;
         Intent intent = getIntent();
         mUrl = intent.getStringExtra("url");
-        if (mUrl == null && intent.getData() != null) {
-            mUrl = intent.getData().toString();
-            if (mUrl.contains(Url.SERVER)) {
-                if (!mUrl.contains("/book/")) {
-                    startActivity(new Intent(this, MainActivity.class));
-                    finish();
-                } else {
-                    mUrl = mUrl.replace("https://m.", "https://");
-                }
-            } else if (mUrl.contains(Url.SERVER_IZIBUK)) {
-                if (!mUrl.contains("/book")) {
-                    startActivity(new Intent(this, MainActivity.class));
-                    finish();
-                } else {
-                    mUrl = mUrl.replace("https://pda.", "https://");
-                }
-
-            } else if (mUrl.contains(Url.SERVER_ABMP3)) {
-                if (!mUrl.contains("/audio-")) {
-                    startActivity(new Intent(this, MainActivity.class));
-                    finish();
-                }
-            } else if (mUrl.contains(Url.SERVER_AKNIGA)) {
-                if (mUrl.contains("/index/") || mUrl.contains("/sections/") || mUrl.contains("/authors/")
-                        || mUrl.contains("/performers/") || mUrl.contains("/search/") || mUrl
-                        .equals(Url.SERVER_AKNIGA + "/")) {
-                    startActivity(new Intent(this, MainActivity.class));
-                    finish();
-                }
-
-            } else if (mUrl.contains(Url.SERVER_BAZA_KNIG)) {
-                if (!mUrl.contains(".html")) {
-                    startActivity(new Intent(this, MainActivity.class));
-                    finish();
-                }
-            } else {
-                finish();
-            }
+        if (mUrl == null) {
+            finish();
         }
         mNotificationClick = intent.getBooleanExtra("notificationClick", false);
         String text = BookActivity.getShowingView();

@@ -200,8 +200,10 @@
     <string name="MonobanckNumberEUR" translatable="false">5375 4199 0104 6886</string>
     <string name="privat">ПриватБанк</string>
     <string name="privatNumber" translatable="false">5168 7573 6995 1399</string>
-    <string name="alpha">АльфаБанк</string>
-    <string name="alphaNumber" translatable="false">5355 5711 0636 3922</string>
+    <string name="alpha">АльфаБанк UA</string>
+    <string name="alphaNumber" translatable="false">5355 5712 8204 2217</string>
+    <string name="psb">Промсвязьбанк</string>
+    <string name="psbNumber" translatable="false">2200 0303 2768 4834</string>
     <string name="paypal" translatable="false">PayPal</string>
     <string name="paypalEmail" translatable="false">fanok.inc@gmail.com</string>
     <string name="qiwi" translatable="false">QIWI</string>
@@ -285,7 +287,7 @@
     <string name="seconds">с.</string>
     <string name="zero_time" translatable="false">00</string>
     <string name="equalizer">Эквалайзер</string>
-    <string name="yd">Яндекс Деньги</string>
+    <string name="yd">ЮMoney</string>
     <string name="ydNumb" translatable="false">410014301337309</string>
     <string name="yandex_form">Яндекс форма</string>
     <string name="exit">Выход</string>
@@ -342,6 +344,7 @@
     <string name="audiobook_mp3_value" translatable="false">audiobook_mp3</string>
     <string name="baza_knig">База Книг</string>
     <string name="baza_knig_value" translatable="false">baza_knig</string>
+    <string name="knigoblud_value" translatable="false">knigoblud</string>
     <string name="menu_saved">Скачанные</string>
     <string name="clear_audio_list">Очистить список аудио файлов</string>
     <string name="confirm_clear_audio_list">Вы уверены что хотите очистить список аудио файлов</string>
@@ -390,6 +393,8 @@
     <string name="search_multithreading">Использовать многопоточность для поиска</string>
     <string name="cutting_file">Разделить файл на разделы</string>
     <string name="cutting_file_desc">Разделять книги источника, в котором данные залиты одним файлом, на главы</string>
+    <string name="thanks">Спасибо!</string>
+    <string name="open_rustore">Открыть в магазине</string>
 
 
 </resources>

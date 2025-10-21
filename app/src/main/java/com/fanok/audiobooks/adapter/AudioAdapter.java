@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Objects;
 
 public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> {
 
@@ -227,8 +228,14 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
                             + "/" + bookPOJO.getName();
                     File dir = new File(filePath);
                     if (dir.exists() && dir.isDirectory()) {
-                        String url = mData.get(i).getUrl();
-                        File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
+                        File file;
+                        if(!Objects.equals(source, viewHolder.mImageView.getContext().getString(R.string.abook))) {
+                            String url = mData.get(i).getUrl();
+                            file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
+                        }else {
+                            file = new File(dir+"/pl","enc.key");
+                        }
+
                         if (file.exists()) {
                             b = true;
                             break;
