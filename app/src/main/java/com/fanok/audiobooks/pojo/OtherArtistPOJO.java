@@ -1,7 +1,6 @@
 package com.fanok.audiobooks.pojo;
 
 import androidx.annotation.NonNull;
-
 import com.fanok.audiobooks.Consts;
 
 public class OtherArtistPOJO {

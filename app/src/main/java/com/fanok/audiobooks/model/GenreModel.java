@@ -1,8 +1,12 @@
 package com.fanok.audiobooks.model;
 
 
-import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
 
+
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
+
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.AutorsSearchABMP3;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
@@ -13,6 +17,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.reactivex.Observable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.util.ArrayList;
 import java.util.Map;
 import org.jsoup.Connection;
@@ -30,7 +37,7 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
     public Observable<ArrayList<GenrePOJO>> getBooks(String url, int page) {
         int size = 4;
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             ArrayList<GenrePOJO> articlesModels;
             try {
                 if (url.contains(Url.SERVER_AKNIGA) && url.contains("ajax-search")) {
@@ -126,12 +133,19 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
 
     protected ArrayList<GenrePOJO> loadBooksListABMP3(String url, int page) throws IOException {
         ArrayList<GenrePOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url + page)
+        Connection connection = Jsoup.connect(url + page)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements items = doc.getElementsByClass("b-posts");
         if (items != null && items.size() != 0) {
@@ -208,12 +222,19 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
 
     protected ArrayList<GenrePOJO> loadBooksListIzibuk(String url, int page) throws IOException {
         ArrayList<GenrePOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url + page)
+        Connection connection = Jsoup.connect(url + page)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements items = doc.getElementsByClass("_e181af");
         if (items != null && items.size() != 0) {
@@ -259,6 +280,12 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
 
         if (!Consts.getBazaKnigCookies().isEmpty()) {
             connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+        }
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
         }
 
         Document doc = connection.get();

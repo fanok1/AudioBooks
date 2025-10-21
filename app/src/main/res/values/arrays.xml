@@ -112,6 +112,7 @@
         <item>@string/antizapret</item>
         <item>@string/zaborona</item>
         <item>@string/zaborona_europe</item>
+        <item>@string/vpn_ukrane</item>
     </string-array>
 
     <string-array name="vpn_values">
@@ -119,6 +120,7 @@
         <item>@string/vpn_antizapret_value</item>
         <item>@string/vpn_zaborona_value</item>
         <item>@string/vpn_zaborona_europe_value</item>
+        <item>@string/vpn_ukrane_value</item>
     </string-array>
 
     <string-array name="email_catigory">

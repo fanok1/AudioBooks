@@ -9,6 +9,10 @@ import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -18,11 +22,22 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
+import com.fanok.audiobooks.App;
+import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.squareup.picasso.Picasso;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.ViewHolder> {
     private static final String TAG = "BooksOtherAdapter";
@@ -62,7 +77,32 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
         Log.d(TAG, "onBindViewHolder: called");
-        Picasso.get().load(mData.get(i).getPhoto()).into(viewHolder.mImageView);
+
+        if(App.useProxy&&mData.get(i).getPhoto().contains(Url.SERVER_BAZA_KNIG)){
+
+            final Bitmap[] bmp = {null};
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Handler handler = new Handler(Looper.getMainLooper());
+            executor.execute(() -> {
+
+                try {
+                    URL url = new URL(mData.get(i).getPhoto());
+                    Proxy proxy = new Proxy(Type.SOCKS, new InetSocketAddress(Consts.PROXY_HOST, Consts.PROXY_PORT));
+                    bmp[0] = BitmapFactory.decodeStream(url.openConnection(proxy).getInputStream());
+                } catch (IOException ignored) {
+                }
+                handler.post(() -> {
+                    if(bmp[0] !=null) {
+                        viewHolder.mImageView.setImageBitmap(bmp[0]);
+                    }
+                });
+            });
+
+
+        }else {
+            Picasso.get().load(mData.get(i).getPhoto()).into(viewHolder.mImageView);
+        }
+
         viewHolder.mTitle.setText(mData.get(i).getName());
         viewHolder.mImageView.setOnClickListener(
                 view -> myOnClick(view.getContext(), viewHolder.getAdapterPosition()));

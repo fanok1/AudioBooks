@@ -90,14 +90,18 @@ import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdCallback;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.tabs.TabLayout;
+import com.google.android.play.core.review.ReviewException;
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
+import com.google.android.play.core.review.model.ReviewErrorCode;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
-import com.stepstone.apprating.AppRatingDialog;
-import com.stepstone.apprating.listener.RatingDialogListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -106,7 +110,7 @@ import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.xmlpull.v1.XmlPullParser;
 
-public class BookActivity extends MvpAppCompatActivity implements Activity, RatingDialogListener {
+public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     private static final String TAG = "BookActivity";
 
@@ -729,14 +733,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         mNextBottom.setOnClickListener(view -> mPresenter.buttomNextClick(view));
         mRewind.setOnClickListener(view -> mPresenter.buttomRewindClick(view));
         mForward.setOnClickListener(view -> mPresenter.buttomForwardClick(view));
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mSpeed.setOnClickListener(v -> mPresenter.buttonSpeedClick(v));
-            mSpeed.setVisibility(View.VISIBLE);
-        } else {
-            mSpeed.setVisibility(View.GONE);
-        }
-
+        mSpeed.setOnClickListener(v -> mPresenter.buttonSpeedClick(v));
         getSystemService(AUDIO_SERVICE);
 
 
@@ -1111,29 +1108,24 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
         MainActivity.startMainActivity(this, fragmentId, "settings");
     }
 
-    @Override
-    public void showRatingDialog() {
-        AppRatingDialog builder = new AppRatingDialog.Builder()
-                .setPositiveButtonText(R.string.submit)
-                .setNegativeButtonText(R.string.cancel)
-                .setNeutralButtonText(R.string.later)
-                .setNoteDescriptions(
-                        Arrays.asList(getResources().getStringArray(R.array.ratingStarName)))
-                .setDefaultRating(5)
-                .setTitle(R.string.rating_title)
-                .setDescription(R.string.ration_desc)
-                .setCommentInputEnabled(false)
-                .setWindowAnimation(R.style.MyDialogFadeAnimation)
-                .setCancelable(false)
-                .setCanceledOnTouchOutside(false)
-                .create(this);
 
-        try {
-            builder.show();
-        } catch (IllegalStateException e) {
-            new StorageUtil(this).storeCountAudioListneredForRating(
-                    countAudioWereShowingRatingPopUp - 1);
-        }
+    public void showRatingDialog() {
+        ReviewManager manager = ReviewManagerFactory.create(this);
+        Task<ReviewInfo> request = manager.requestReviewFlow();
+        request.addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                // We can get the ReviewInfo object
+                new StorageUtil(this).storeShowRating(false);
+                // Создаем намерение для открытия ссылки
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://4pda.to/forum/index.php?showtopic=978445"));
+                Intent chooser = Intent.createChooser(browserIntent, "Открыть с помощью...");
+                startActivity(chooser);
+            } else {
+                new StorageUtil(this).storeCountAudioListneredForRating(
+                        countAudioWereShowingRatingPopUp - 1);
+            }
+        });
     }
 
     @Override
@@ -1354,31 +1346,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity, Rati
                 mPresenter.dowland(mAudioAdapter.getSelectedItems());
             }
         }
-    }
-
-    @Override
-    public void onNegativeButtonClicked() {
-        new StorageUtil(this).storeShowRating(false);
-    }
-
-    @Override
-    public void onNeutralButtonClicked() {
-
-    }
-
-    @Override
-    public void onPositiveButtonClicked(int i, @NotNull String s) {
-        new StorageUtil(this).storeShowRating(false);
-        startActivity(new Intent(Intent.ACTION_VIEW,
-                Uri.parse("https://4pda.to/forum/index.php?showtopic=978445")));
-        /*String packageName = getPackageName();
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("market://details?id=" + packageName)));
-        } catch (ActivityNotFoundException anfe) {
-            startActivity(new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://4pda.to/forum/index.php?showtopic=978445")));
-        }*/
     }
 
     @Override

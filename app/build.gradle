@@ -24,8 +24,8 @@ android {
         minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 30
-        versionCode 83
-        versionName "5.9"
+        versionCode 88
+        versionName "5.14"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.release
@@ -60,6 +60,7 @@ dependencies {
     implementation('androidx.lifecycle:lifecycle-extensions:2.2.0') {
         exclude group: 'androidx'
     }
+    implementation 'com.google.firebase:firebase-crashlytics-buildtools:2.9.4'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.5.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -77,10 +78,7 @@ dependencies {
     //noinspection GradleDependency
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
     //noinspection GradleDependency
-    implementation 'com.google.android.exoplayer:exoplayer:2.10.4'
-    //noinspection GradleDependency
-    implementation 'com.google.android.exoplayer:extension-okhttp:2.10.4'
-
+    implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
     implementation platform('com.google.firebase:firebase-bom:26.7.0')
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-core'
@@ -96,7 +94,7 @@ dependencies {
     implementation 'tech.schoolhelper:moxy-x-androidx:1.7.0'
     implementation 'tech.schoolhelper:moxy-x-material:1.7.0'
     implementation 'com.android.support:preference-v7:33.0.0'
-    implementation 'pub.devrel:easypermissions:0.2.0'
+    implementation 'pub.devrel:easypermissions:3.0.0'
     implementation 'com.github.mendhak:storage-chooser:2.0.4.4b'
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'
     implementation 'androidx.palette:palette:1.0.0'
@@ -109,17 +107,15 @@ dependencies {
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.6'
 
     implementation 'com.alimuzaffar.lib:pinentryedittext:2.0.6'
-    implementation 'com.mindorks.android:prdownloader:0.6.0'
-    implementation('com.stepstone.apprating:app-rating:2.3.1') {
-        exclude group: 'androidx'
-    }
+    implementation 'com.github.amitshekhariitbhu:PRDownloader:1.0.2'
+    implementation 'com.google.android.play:review:2.0.2'
 
     implementation 'com.diogobernardino:williamchart:2.2'
     implementation 'com.h6ah4i.android.widget.verticalseekbar:verticalseekbar:1.0.0'
 
     implementation 'com.github.lzyzsd:circleprogress:1.2.1'
 
-    implementation 'it.xabaras.android:recyclerview-swipedecorator:1.2.3'
+    implementation 'it.xabaras.android:recyclerview-swipedecorator:1.4'
 
     implementation 'org.mozilla:rhino:1.7R4'
     implementation 'com.github.evgenyneu:js-evaluator-for-android:v5.0.0'
@@ -128,9 +124,7 @@ dependencies {
 
 
 
-
-
-    implementation project(':vpnLib')
+    //implementation project(':vpnLib')
 
 
 

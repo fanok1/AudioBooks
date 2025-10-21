@@ -123,6 +123,14 @@ public class Consts {
 
     public static final String mSkuId = "android.test.purchased";
 
+
+    public static final String PROXY_HOST = "62.233.60.173";
+    public static final int PROXY_PORT = 12355;
+    public static final String PROXY_USERNAME = "user142424";
+    public static final String PROXY_PASSWORD = "3yuh5e";
+
+
+
     public static String getBazaKnigCookies() {
         return bazaKnigCookies;
     }

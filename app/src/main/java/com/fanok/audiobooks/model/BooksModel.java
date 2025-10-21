@@ -1,13 +1,19 @@
 package com.fanok.audiobooks.model;
 
-import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
 
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
+
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import org.jsoup.Connection;
@@ -37,7 +43,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         authorUrl = null;
         int size = 4;
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             ArrayList<BookPOJO> articlesModels;
             try {
                 for (int i = 1; i <= size; i++) {
@@ -79,7 +85,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         authorName = null;
         authorUrl = null;
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             int size = 4;
             try {
                 for (int i = 1; i <= size; i++) {
@@ -101,7 +107,9 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                         articlesModels = loadBooksListAbook(url.replace("/page" + page + "/", "/page" + temp + "/"),
                                 temp);
                     } else if (url.contains(Url.SERVER_BAZA_KNIG)) {
-                        articlesModels = loadBooksListBazaKnig(url.replace("&page=" + page, ""), temp);
+                        if (temp % size == 0) {
+                            articlesModels = loadBooksListBazaKnig(url.replace("&page=" + page, ""), temp / size);
+                        }
                     }
                     observableEmitter.onNext(articlesModels);
                 }
@@ -284,12 +292,19 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
     private ArrayList<BookPOJO> loadBooksListABMP3(String url, int page) throws IOException {
         ArrayList<BookPOJO> result = new ArrayList<>();
 
-        Document doc = Jsoup.connect(url)
+        Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements pagesConteiner = doc.getElementsByClass("pagination");
         if (pagesConteiner.size() != 0) {
@@ -560,6 +575,12 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                 .maxBodySize(0)
                 .ignoreHttpErrors(true);
 
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
         if (!Consts.getBazaKnigCookies().isEmpty()) {
             connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
         }
@@ -626,7 +647,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                             if (img != null && img.size() > 0) {
                                 String src = img.first().attr("src");
                                 if (src != null) {
-                                    bookPOJO.setPhoto(src);
+                                    bookPOJO.setPhoto(Url.SERVER_BAZA_KNIG+src);
                                 }
                             }
                         }
@@ -770,9 +791,21 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
         } else {
             cookie = 0;
         }
-        Document document = Jsoup.connect(url).userAgent(Consts.USER_AGENT).sslSocketFactory(
+
+
+        Connection connection = Jsoup.connect(url).userAgent(Consts.USER_AGENT).sslSocketFactory(
                 Consts.socketFactory()).referrer(
-                Url.INDEX_IZIBUK + "1").maxBodySize(0).cookie("sort_pop", String.valueOf(cookie)).get();
+                Url.INDEX_IZIBUK + "1").maxBodySize(0).cookie("sort_pop", String.valueOf(cookie));
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+
+        Document document = connection.get();
+
 
         Element bootom = document.getElementById("books_updates_list__pn");
         if (bootom == null) {
@@ -994,12 +1027,19 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
 
     private ArrayList<BookPOJO> loadBooksListSearchABMP3(String url, int page) throws IOException {
         ArrayList<BookPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
+        Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements elements = doc.getElementsByClass("b-statictop-search");
         if (elements != null) {
@@ -1010,7 +1050,7 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                         Elements parent = item.getElementsByClass("b-statictop__items");
                         if (parent != null && parent.size() != 0) {
                             Elements books = parent.first().children();
-                            for (int i = (page - 1) * 5; i < page * 5; i++) {
+                            for (int i = (page - 1) * 7; i < page * 7; i++) {
                                 if (i >= books.size()) {
                                     break;
                                 }
@@ -1021,12 +1061,21 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                                     bookPOJO.setUrl(Url.SERVER_ABMP3 + aTag.first().attr("href"));
                                     String name = aTag.first().text();
                                     bookPOJO.setName(name.substring(0, name.indexOf(" (")));
-                                    Document bookPage = Jsoup.connect(bookPOJO.getUrl())
+
+
+                                    Connection connection1 = Jsoup.connect(bookPOJO.getUrl())
                                             .userAgent(Consts.USER_AGENT)
                                             .referrer("http://www.google.com")
                                             .maxBodySize(0)
-                                            .sslSocketFactory(Consts.socketFactory())
-                                            .get();
+                                            .sslSocketFactory(Consts.socketFactory());
+
+                                    if(App.useProxy) {
+                                        Proxy proxy = new Proxy(Type.SOCKS,
+                                                new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+                                        connection1.proxy(proxy);
+                                    }
+
+                                    Document bookPage = connection1.get();
                                     Elements img = bookPage.getElementsByClass("abook_image");
                                     if (img != null && img.size() != 0) {
                                         bookPOJO.setPhoto(img.first().attr("src"));
@@ -1098,12 +1147,21 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
 
     private ArrayList<BookPOJO> loadBooksListSearchABMP3SpeedUp(String url, int page) throws IOException {
         ArrayList<BookPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
+
+
+        Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements elements = doc.getElementsByClass("b-statictop-search");
         if (elements != null) {

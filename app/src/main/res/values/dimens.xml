@@ -36,4 +36,5 @@
 
     <integer name="isTablet">0</integer>
 
+    <dimen name="margin_small">8dp</dimen>
 </resources>

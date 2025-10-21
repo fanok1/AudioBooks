@@ -4,13 +4,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-
 import androidx.annotation.NonNull;
-
 import com.fanok.audiobooks.interface_pacatge.books.AudioListDBHelperInterfase;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBAbstract;
 import com.fanok.audiobooks.pojo.AudioListPOJO;
-
 import java.util.ArrayList;
 
 public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelperInterfase {

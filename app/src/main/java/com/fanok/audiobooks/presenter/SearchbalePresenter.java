@@ -83,7 +83,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
     private final SharedPreferences mPreferences;
 
-    Hashtable<String, Boolean> hesSearchable;
+    private Hashtable<String, Boolean> hesSearchable;
 
     private int exit = 0;
 
@@ -196,7 +196,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             setBooksFilter("akniga.org");
             getViewState().showData(books_filter);
         } else if (filter == Consts.SOURCE_BAZA_KNIG) {
-            setBooksFilter("baza-knig.ru");
+            setBooksFilter("baza-knig.ink");
             getViewState().showData(books_filter);
         }
 
@@ -261,11 +261,11 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             isEnd = false;
 
             hesSearchable.clear();
-            hesSearchable.put("knigavuhe.org", mPreferences.getBoolean("search_kniga_v_uhe", true));
-            hesSearchable.put("izibuk.ru", mPreferences.getBoolean("search_izibuc", true));
-            hesSearchable.put("audiobook-mp3.com", mPreferences.getBoolean("search_abmp3", true));
-            hesSearchable.put("akniga.org", mPreferences.getBoolean("search_abook", true));
-            hesSearchable.put("baza-knig.ru", mPreferences.getBoolean("search_baza_knig", true));
+            hesSearchable.put(Url.SERVER, mPreferences.getBoolean("search_kniga_v_uhe", true));
+            hesSearchable.put(Url.SERVER_IZIBUK, mPreferences.getBoolean("search_izibuc", true));
+            hesSearchable.put(Url.SERVER_ABMP3, mPreferences.getBoolean("search_abmp3", true));
+            hesSearchable.put(Url.SERVER_AKNIGA, mPreferences.getBoolean("search_abook", true));
+            hesSearchable.put(Url.SERVER_BAZA_KNIG, mPreferences.getBoolean("search_baza_knig", true));
 
             page = 0;
             loadNext();
@@ -482,7 +482,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             @Override
             public void onError(@NotNull Throwable e) {
                 if (e.getClass() == CookesExeption.class) {
-                    if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                    if (Objects.requireNonNull(e.getMessage()).contains(Url.SERVER_BAZA_KNIG)) {
                         getViewState().showToast(R.string.cookes_baza_knig_exeption);
                     }
                 } else if (e.getClass() == NullPointerException.class) {
@@ -524,7 +524,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 for (int i = 0; i < url.size(); i++) {
                     String s = url.get(i);
                     if (s.contains(key)) {
-                        if (key.equals("audiobook-mp3.com")) {
+                        if (key.equals(Url.SERVER_ABMP3)) {
                             boolean speed = mPreferences.getBoolean("speed_up_search_abmp3", false);
                             execute(value, s, speed, observer, scheduler);
                         } else {

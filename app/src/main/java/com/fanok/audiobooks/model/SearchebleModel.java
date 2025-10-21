@@ -1,7 +1,7 @@
 package com.fanok.audiobooks.model;
 
 
-import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+
 
 import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
@@ -26,7 +26,7 @@ public class SearchebleModel implements SearchableModel {
     @Override
     public Observable<SearcheblPOJO> dowland(SharedPreferences preferences, ArrayList<String> urls, String query) {
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             boolean searchKnigaVUhe = preferences.getBoolean("search_kniga_v_uhe", true);
             boolean searchABMP3 = preferences.getBoolean("search_abmp3", true);
 

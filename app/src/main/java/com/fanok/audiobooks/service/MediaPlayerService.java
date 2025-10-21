@@ -82,30 +82,28 @@ import com.fanok.audiobooks.аndroid_equalizer.EqualizerModel;
 import com.fanok.audiobooks.аndroid_equalizer.Settings;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem.ClippingConfiguration;
+import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.Player.Listener;
+import com.google.android.exoplayer2.Timeline.Window;
 import com.google.android.exoplayer2.audio.AudioAttributes;
-import com.google.android.exoplayer2.source.ClippingMediaSource;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.ProgressiveMediaSource;
-import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+import com.google.android.exoplayer2.upstream.FileDataSource;
+import com.google.android.exoplayer2.upstream.FileDataSource.Factory;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -149,14 +147,13 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     private final Handler handler1 = new Handler();
     private final Handler handler2 = new Handler();
     //private MediaPlayer mediaPlayer;
-    private SimpleExoPlayer mediaPlayer;
+    private ExoPlayer mediaPlayer;
     //MediaSession
     private MediaSessionManager mediaSessionManager;
     private MediaSessionCompat mediaSession;
     private MediaControllerCompat.TransportControls transportControls;
     //Used to pause/resume MediaPlayer
     private int resumePosition;
-    private int timeDuration;
     //AudioFocus
     private AudioManager audioManager;
     private ArrayList<AudioPOJO> audioList;
@@ -196,7 +193,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             sendBroadcast(broadcastIntent);
         }
     };
-
     private boolean mEqualizerEnabled = true;
 
     private SharedPreferences mPreferences;
@@ -238,7 +234,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         public void onReceive(Context context, Intent intent) {
             Intent broadcastIntent = new Intent(Broadcast_SET_PROGRESS);
             broadcastIntent.putExtra("timeCurrent", resumePosition);
-            broadcastIntent.putExtra("timeEnd", timeDuration);
+            broadcastIntent.putExtra("timeEnd", (int) mediaPlayer.getDuration());
             sendBroadcast(broadcastIntent);
         }
     };
@@ -433,13 +429,10 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     private final BroadcastReceiver setSpeed = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mediaPlayer != null) {
+            if (mediaPlayer != null) {
                 resumeMedia();
-                try {
-                    PlaybackParameters param = new PlaybackParameters(BookPresenter.getSpeed());
-                    mediaPlayer.setPlaybackParameters(param);
-                } catch (IllegalArgumentException ignored) {
-                }
+                PlaybackParameters param = new PlaybackParameters(BookPresenter.getSpeed());
+                mediaPlayer.setPlaybackParameters(param);
             }
         }
     };
@@ -608,15 +601,9 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                         if (!pause) {
                             mediaPlayer.setPlayWhenReady(true);
                             buildNotification(PlaybackStatus.PLAYING);
-                            if (mCountDownTimer != null) {
-                                mCountDownTimer.resumeTimer();
-                            }
                         } else {
                             mediaPlayer.setPlayWhenReady(false);
                             buildNotification(PlaybackStatus.PAUSED);
-                            if (mCountDownTimer != null) {
-                                mCountDownTimer.pauseTimer();
-                            }
                         }
                     }
                 }
@@ -971,8 +958,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         }
 
         File file = getSaveFile();
-        TrackSelection.Factory trackSelectionFactory = new AdaptiveTrackSelection.Factory();
-        DataSource.Factory dateSourceFactory;
 
         Uri uri;
         if (file == null) {
@@ -981,34 +966,49 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             uri = Uri.fromFile(file);
         }
 
-        if (urlBook.contains(Url.SERVER_ABMP3) && file == null) {
-            DefaultHttpDataSourceFactory source = new DefaultHttpDataSourceFactory(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
-                    null);
-            source.setDefaultRequestProperty("referer", Url.SERVER_ABMP3 + "/");
-            dateSourceFactory = new DefaultDataSourceFactory(this, null, source);
-        } else if (urlBook.contains("baza-knig.ru") && file == null) {
-            DefaultHttpDataSourceFactory source = new DefaultHttpDataSourceFactory(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
-                    null);
-            source.setDefaultRequestProperty("referer", Url.SERVER_BAZA_KNIG+"/");
-            dateSourceFactory = new DefaultDataSourceFactory(this, null, source);
-        } else {
-            dateSourceFactory = new DefaultDataSourceFactory(this,
-                    Util.getUserAgent(this, getPackageName()));
+        DataSource.Factory dataSourceFactory;
+        if(file==null) {
+            dataSourceFactory = () -> {
+                HttpDataSource.Factory source = new DefaultHttpDataSource.Factory();
+                HashMap<String, String> map = new HashMap<>();
+                if (urlBook.contains(Url.SERVER_ABMP3)) {
+                    map.put("user-agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36");
+                    map.put("Referer", Url.SERVER_ABMP3 + "/");
+                } else if (urlBook.contains(Url.SERVER_BAZA_KNIG)) {
+                    map.put("user-agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36");
+                    map.put("referer", Url.SERVER_BAZA_KNIG + "/");
+                } else {
+                    map.put("user-agent", Util.getUserAgent(this, getPackageName()));
+                    ;
+                }
+                source.setDefaultRequestProperties(map);
+                return source.createDataSource();
+            };
+
+        }else {
+            dataSourceFactory = new Factory();
         }
 
-        MediaSource mediaSource = new ProgressiveMediaSource.Factory(
-                dateSourceFactory).createMediaSource(uri);
 
-        ClippingMediaSource clippingMediaSource = null;
+
+        com.google.android.exoplayer2.MediaItem.Builder builderMediaItem =
+                new com.google.android.exoplayer2.MediaItem.Builder()
+                        .setUri(uri);
+
 
         if(activeAudio.getTimeStart()>=0 && activeAudio.getTimeFinish()>=0){
-            long timeStart = activeAudio.getTimeStart()* 1000000L;
-            long timeFinish = activeAudio.getTimeFinish()* 1000000L;
-            clippingMediaSource = new ClippingMediaSource(mediaSource, timeStart, timeFinish);
+            long timeStart = activeAudio.getTimeStart()* 1000L;
+            long timeFinish = activeAudio.getTimeFinish()* 1000L;
+            builderMediaItem.setClippingConfiguration(
+                    new ClippingConfiguration.Builder()
+                            .setStartPositionMs(timeStart)
+                            .setEndPositionMs(timeFinish)
+                            .build());
         }
 
+        com.google.android.exoplayer2.MediaItem mediaItem = builderMediaItem.build();
 
         buttonClick = false;
 
@@ -1025,37 +1025,33 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                 DEFAULT_BUFFER_FOR_PLAYBACK_MS, DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS);
 
 
-        mediaPlayer = ExoPlayerFactory.newSimpleInstance(this,
-                new DefaultTrackSelector(trackSelectionFactory),
-                builder.createDefaultLoadControl());
+
+
+
+        mediaPlayer = new ExoPlayer.Builder(this)
+                .setMediaSourceFactory(new DefaultMediaSourceFactory(this)
+                        .setDataSourceFactory(dataSourceFactory))
+                .setLoadControl(builder.build())
+                .setTrackSelector(new DefaultTrackSelector(this))
+                .build();
+        mediaPlayer.addMediaItem(mediaItem);
+
+        //mediaPlayer.addAnalyticsListener(new EventLogger());
 
 
         //Set up MediaPlayer event listeners
 
-        mediaPlayer.addListener(new Player.EventListener() {
-            @Override
-            public void onTimelineChanged(Timeline timeline, @Nullable Object manifest,
-                    int reason) {
+        mediaPlayer.addListener(new Player.Listener() {
 
+
+            @Override
+            public void onPlayWhenReadyChanged(final boolean playWhenReady, final int reason) {
+                Listener.super.onPlayWhenReadyChanged(playWhenReady, reason);
+                onPlaybackStateChanged(mediaPlayer.getPlaybackState());
             }
 
             @Override
-            public void onTracksChanged(TrackGroupArray trackGroups,
-                    TrackSelectionArray trackSelections) {
-
-            }
-
-            @Override
-            public void onLoadingChanged(boolean isLoading) {
-
-            }
-
-            @Override
-            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-                if (playbackState == Player.STATE_READY
-                        && timeDuration != (int) mediaPlayer.getDuration()) {
-                    timeDuration = (int) mediaPlayer.getDuration();
-                }
+            public void onPlaybackStateChanged(final int playbackState) {
                 if (playbackState == Player.STATE_ENDED) {
                     if (!buttonClick) {
                         skipToNext();
@@ -1066,84 +1062,74 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                     }
                     buttonClick = false;
                 }
-                if (playWhenReady && playbackState == Player.STATE_READY) {
-                    if (!BookPresenter.start || BookPresenter.resume) {
-                        if (!mPreferences.getBoolean("rewind_back", false)) {
-                            if (timeStart != 0) seekTo(timeStart * 1000);
-                        } else {
-                            if (timeStart > 30) seekTo((timeStart - 30) * 1000);
+
+                if(mediaPlayer!=null) {
+                    if (mediaPlayer.getPlayWhenReady() && playbackState == Player.STATE_READY) {
+                        if (!BookPresenter.start || BookPresenter.resume) {
+                            if (!mPreferences.getBoolean("rewind_back", false)) {
+                                if (timeStart != 0)
+                                    seekTo(timeStart * 1000L);
+                            } else {
+                                if (timeStart > 30)
+                                    seekTo((timeStart - 30) * 1000L);
+                            }
+
+
+                        }
+                        if (BookPresenter.resume) {
+                            BookPresenter.resume = false;
+                        }
+                        isPlay = true;
+                        mediaSession.setActive(true);
+                        startPlayProgressUpdater();
+                        startTimeProgressUpdater();
+                        if (mCountDownTimer != null) {
+                            mCountDownTimer.resumeTimer();
+                        }
+                        buildNotification(PlaybackStatus.PLAYING);
+
+                        if (!BookPresenter.start) {
+                            BookPresenter.start = true;
+                            pauseMedia();
                         }
 
-
-                    }
-                    if (BookPresenter.resume) {
-                        BookPresenter.resume = false;
-                    }
-                    isPlay = true;
-                    mediaSession.setActive(true);
-                    startPlayProgressUpdater();
-                    startTimeProgressUpdater();
-                    buildNotification(PlaybackStatus.PLAYING);
-
-                    if (!BookPresenter.start) {
-                        BookPresenter.start = true;
-                        pauseMedia();
-                    }
-
-                    if (mEqualizerEnabled) {
-                        storage.loadEqualizerSettings();
-                        if (Settings.isEqualizerEnabled) {
-                            startEqualizer();
+                        if (mEqualizerEnabled) {
+                            storage.loadEqualizerSettings();
+                            if (Settings.isEqualizerEnabled) {
+                                startEqualizer();
+                            }
+                        }
+                    } else if (!mediaPlayer.getPlayWhenReady() && playbackState == Player.STATE_READY) {
+                        buildNotification(PlaybackStatus.PAUSED);
+                        isPlay = false;
+                        mediaSession.setActive(false);
+                        resumePosition = (int) mediaPlayer.getCurrentPosition();
+                        int time = resumePosition / 1000;
+                        mAudioDBModel.setTime(urlBook, time);
+                        if (mCountDownTimer != null) {
+                            mCountDownTimer.pauseTimer();
                         }
                     }
-                } else if (!playWhenReady && playbackState == Player.STATE_READY) {
-                    buildNotification(PlaybackStatus.PAUSED);
-                    isPlay = false;
-                    mediaSession.setActive(false);
-                    resumePosition = (int) mediaPlayer.getCurrentPosition();
-                    int time = resumePosition / 1000;
-                    mAudioDBModel.setTime(urlBook, time);
                 }
 
             }
 
             @Override
-            public void onPlayerError(ExoPlaybackException error) {
+            public void onPlayerError(@NonNull final PlaybackException error) {
                 Log.d(TAG, "onPlayerError: " + error);
-            }
-
-            @Override
-            public void onPositionDiscontinuity(int reason) {
-
-            }
-
-            @Override
-            public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-            }
-
-            @Override
-            public void onSeekProcessed() {
-
             }
         });
 
 
         AudioAttributes audioAttributes = new AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA)
-                .setContentType(C.CONTENT_TYPE_SPEECH)
+                .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH)
                 .build();
-        mediaPlayer.setAudioAttributes(audioAttributes);
+        mediaPlayer.setAudioAttributes(audioAttributes, false);
 
+        PlaybackParameters param = new PlaybackParameters(BookPresenter.getSpeed());
+        mediaPlayer.setPlaybackParameters(param);
 
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            try {
-                PlaybackParameters param = new PlaybackParameters(BookPresenter.getSpeed());
-                mediaPlayer.setPlaybackParameters(param);
-            } catch (IllegalArgumentException ignored) {
-            }
-        }
 
         if (BookPresenter.start && !StorageAds.idDisableAds()) {
             long carentTime = new Date().getTime();
@@ -1154,15 +1140,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         }
 
         mediaPlayer.setPlayWhenReady(true);
-        if (mCountDownTimer != null) {
-            mCountDownTimer.resumeTimer();
-        }
-
-        if(clippingMediaSource!=null){
-            mediaPlayer.prepare(clippingMediaSource);
-        }else {
-            mediaPlayer.prepare(mediaSource);
-        }
+        mediaPlayer.prepare();
 
         if (!StorageAds.idDisableAds()) {
 
@@ -1323,9 +1301,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         if (isPlaying()) {
             mediaPlayer.setPlayWhenReady(false);
             pauseTime = System.currentTimeMillis();
-            if (mCountDownTimer != null) {
-                mCountDownTimer.pauseTimer();
-            }
         }
     }
 
@@ -1539,24 +1514,26 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                     stopSelf();
                 }
                 isPlay = true;
-                if (!mPreferences.getBoolean("rewind_back", false)) {
-                    mediaPlayer.seekTo(resumePosition);
-                } else {
-                    int time = (int) ((System.currentTimeMillis() - pauseTime) / 1000);
-                    if (time < 10) {
+
+                Window window = new Window();
+                window = mediaPlayer.getCurrentTimeline().getWindow(mediaPlayer.getCurrentMediaItemIndex(), window);
+                if(window.isSeekable) {
+                    if (!mPreferences.getBoolean("rewind_back", false)) {
                         mediaPlayer.seekTo(resumePosition);
-                    } else if (resumePosition - 10000 <= 0) {
-                        mediaPlayer.seekTo(0);
-                    } else if (time < 30) {
-                        mediaPlayer.seekTo(resumePosition - 10000);
                     } else {
-                        mediaPlayer.seekTo(resumePosition - 30000);
+                        int time = (int) ((System.currentTimeMillis() - pauseTime) / 1000);
+                        if (time < 10) {
+                            mediaPlayer.seekTo(resumePosition);
+                        } else if (resumePosition - 10000 <= 0) {
+                            mediaPlayer.seekTo(0);
+                        } else if (time < 30) {
+                            mediaPlayer.seekTo(resumePosition - 10000);
+                        } else {
+                            mediaPlayer.seekTo(resumePosition - 30000);
+                        }
                     }
                 }
                 mediaPlayer.setPlayWhenReady(true);
-                if (mCountDownTimer != null) {
-                    mCountDownTimer.resumeTimer();
-                }
             }
         } catch (Exception ignored) {
 
@@ -1568,13 +1545,13 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             if (isPrepared()) {
                 Intent broadcastIntent = new Intent(Broadcast_SET_PROGRESS);
                 broadcastIntent.putExtra("timeCurrent", (int) mediaPlayer.getCurrentPosition());
-                broadcastIntent.putExtra("timeEnd", timeDuration);
+                broadcastIntent.putExtra("timeEnd", (int) mediaPlayer.getDuration());
                 broadcastIntent.putExtra("buffered", (int) mediaPlayer.getBufferedPosition());
                 this.sendBroadcast(broadcastIntent);
-                if (mediaPlayer.getCurrentPosition() >= mediaPlayer.getDuration()) {
+                /*if (mediaPlayer.getCurrentPosition() >= mediaPlayer.getDuration()) {
                     buttonClick = false;
                     skipToNext();
-                }
+                }*/
 
                 if (isPlaying()) {
                     Runnable notification = this::startPlayProgressUpdater;
@@ -1603,14 +1580,18 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
 
     private void seekTo(long postion) {
         try {
-            if (mediaPlayer != null && postion >= 0 && timeDuration > postion) {
-                mediaPlayer.seekTo(postion);
-                resumePosition = (int) postion;
-                if (!mediaPlayer.getPlayWhenReady()) {
-                    Intent broadcastIntent = new Intent(Broadcast_SET_PROGRESS);
-                    broadcastIntent.putExtra("timeCurrent", (int) mediaPlayer.getCurrentPosition());
-                    broadcastIntent.putExtra("timeEnd", timeDuration);
-                    this.sendBroadcast(broadcastIntent);
+            if (mediaPlayer != null && postion >= 0 && mediaPlayer.getDuration() > postion) {
+                Window window = new Window();
+                window = mediaPlayer.getCurrentTimeline().getWindow(mediaPlayer.getCurrentMediaItemIndex(), window);
+                if(window.isSeekable) {
+                    mediaPlayer.seekTo(postion);
+                    resumePosition = (int) postion;
+                    if (!mediaPlayer.getPlayWhenReady()) {
+                        Intent broadcastIntent = new Intent(Broadcast_SET_PROGRESS);
+                        broadcastIntent.putExtra("timeCurrent", (int) mediaPlayer.getCurrentPosition());
+                        broadcastIntent.putExtra("timeEnd", (int) mediaPlayer.getDuration());
+                        this.sendBroadcast(broadcastIntent);
+                    }
                 }
             }
         } catch (Exception e) {

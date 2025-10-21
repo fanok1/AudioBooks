@@ -1,10 +1,19 @@
 package com.fanok.audiobooks.model;
 
+import static com.fanok.audiobooks.App.useProxy;
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
+
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.util.ArrayList;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -56,12 +65,22 @@ public class AutorsModel extends GenreModel {
     @Override
     protected ArrayList<GenrePOJO> loadBooksListABMP3(String url, int page) throws IOException {
         ArrayList<GenrePOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
+
+
+
+        Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements autors = doc.getElementsByClass("authors_list");
         if (autors == null || autors.size() == 0) {
@@ -210,12 +229,19 @@ public class AutorsModel extends GenreModel {
     @Override
     protected ArrayList<GenrePOJO> loadBooksListIzibuk(String url, int page) throws IOException {
         ArrayList<GenrePOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
+        Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(useProxy){
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Element bootom = doc.getElementById("authors_list__pn");
         if (bootom == null) {

@@ -42,44 +42,45 @@ public class FavoriteModel implements
                         break;
                 }
 
-                File[] folders = null;
-                if(mContext!=null){
-                    folders = mContext.getExternalFilesDirs(null);
-                }
-                if(folders!=null) {
 
-                    ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.getAll();
-                    for (int i=0; i<books.size(); i++) {
-                        BookPOJO bookPOJO = books.get(i);
-                        boolean temp = false;
-                        for (File folder : folders) {
-                            if (folder != null) {
-                                String source = Consts.getSorceName(mContext, bookPOJO.getUrl());
-                                String filePath = folder.getAbsolutePath() + "/" + source
-                                        + "/" + bookPOJO.getAutor()
-                                        + "/" + bookPOJO.getArtist()
-                                        + "/" + bookPOJO.getName();
-                                File dir = new File(filePath);
-                                if (dir.exists() && dir.isDirectory()) {
-                                    for (AudioListPOJO pojo : arrayList) {
-                                        if(pojo.getBookUrl().equals(bookPOJO.getUrl())) {
-                                            String url = pojo.getAudioUrl();
-                                            File file = new File(dir,
-                                                    url.substring(url.lastIndexOf("/") + 1));
-                                            if (file.exists()) {
-                                                temp = true;
+                if (table == Consts.TABLE_SAVED) {
+                    File[] folders = null;
+                    if (mContext != null) {
+                        folders = mContext.getExternalFilesDirs(null);
+                    }
+                    if (folders != null) {
+
+                        ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.getAll();
+                        for (int i = 0; i < books.size(); i++) {
+                            BookPOJO bookPOJO = books.get(i);
+                            boolean temp = false;
+                            for (File folder : folders) {
+                                if (folder != null) {
+                                    String source = Consts.getSorceName(mContext, bookPOJO.getUrl());
+                                    String filePath = folder.getAbsolutePath() + "/" + source
+                                            + "/" + bookPOJO.getAutor()
+                                            + "/" + bookPOJO.getArtist()
+                                            + "/" + bookPOJO.getName();
+                                    File dir = new File(filePath);
+                                    if (dir.exists() && dir.isDirectory()) {
+                                        for (AudioListPOJO pojo : arrayList) {
+                                            if (pojo.getBookUrl().equals(bookPOJO.getUrl())) {
+                                                String url = pojo.getAudioUrl();
+                                                File file = new File(dir,
+                                                        url.substring(url.lastIndexOf("/") + 1));
+                                                if (file.exists()) {
+                                                    temp = true;
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
-                        if (!temp) {
-                            if (table == Consts.TABLE_SAVED) {
+                            if (!temp) {
                                 books.remove(i);
                                 i--;
+                                deleteSavedBook(bookPOJO);
                             }
-                            deleteSavedBook(bookPOJO);
                         }
                     }
                 }

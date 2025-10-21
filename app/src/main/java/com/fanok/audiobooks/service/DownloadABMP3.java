@@ -97,7 +97,7 @@ public class DownloadABMP3 extends Download {
                         int i = 0;
                         ArrayList<File> files = new ArrayList<>();
                         while (true) {
-                            String source = Consts.getSorceName(getApplicationContext(), urlPath);
+                            String source = Consts.getSorceName(getApplicationContext(), mBookPOJO.get(postion).getUrl());
                             String filePath = path+"/"+source
                                     +"/"+mBookPOJO.get(postion).getAutor()
                                     +"/"+mBookPOJO.get(postion).getArtist()

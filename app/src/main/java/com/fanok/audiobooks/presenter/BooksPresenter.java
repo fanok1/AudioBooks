@@ -620,7 +620,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             @Override
                             public void onError(@NotNull Throwable e) {
                                 if (e.getClass() == CookesExeption.class) {
-                                    if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                                    if (Objects.requireNonNull(e.getMessage()).contains(Url.SERVER_BAZA_KNIG)) {
                                         getViewState().showToast(R.string.cookes_baza_knig_exeption);
                                     }
                                 } else if (e.getClass() == NullPointerException.class) {
@@ -667,7 +667,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             @Override
                             public void onError(@NotNull Throwable e) {
                                 if (e.getClass() == CookesExeption.class) {
-                                    if (Objects.requireNonNull(e.getMessage()).contains("baza-knig.ru")) {
+                                    if (Objects.requireNonNull(e.getMessage()).contains(Url.SERVER_BAZA_KNIG)) {
                                         getViewState().showToast(R.string.cookes_baza_knig_exeption);
                                     }
                                 } else if (e.getClass() == NullPointerException.class) {

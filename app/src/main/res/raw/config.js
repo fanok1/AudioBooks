@@ -53,3 +53,7 @@ CryptoJSAesJson = {
 function getHash(key){
     return CryptoJS.AES.encrypt(JSON.stringify(key), "EKxtcg46V", { format: CryptoJSAesJson }).toString()
 }
+
+function myDecrypt(key){
+    return  JSON.parse(CryptoJS.AES.decrypt(key, "EKxtcg46V", {format: CryptoJSAesJson}).toString(CryptoJS.enc.Utf8))
+}

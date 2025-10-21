@@ -78,7 +78,28 @@
             android:name=".activity.ActivityCookies"
             android:configChanges="locale|uiMode"
             android:label="@string/baza_knig"
-            android:theme="@style/AppTheme.SwipeOnClose" />
+            android:theme="@style/AppTheme.SwipeOnClose">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="izibuk.ru" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="pda.izibuk.ru" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".activity.SleepTimerActivity"
             android:configChanges="locale|uiMode"
@@ -138,6 +159,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
@@ -193,26 +215,6 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="izibuk.ru"
-                    android:scheme="https" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="pda.izibuk.ru"
-                    android:scheme="https" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
                     android:host="audiobook-mp3.com"
                     android:scheme="https" />
             </intent-filter>
@@ -233,7 +235,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="baza-knig.ru"
+                    android:host="baza-knig.ink"
                     android:scheme="https" />
             </intent-filter>
         </activity>
@@ -259,7 +261,8 @@
         <receiver
             android:name=".broadcasts.OnNotificationButtonClick"
             android:exported="false" />
-        <receiver android:name="androidx.media.session.MediaButtonReceiver"
+        <receiver
+            android:name="androidx.media.session.MediaButtonReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
@@ -284,21 +287,21 @@
             android:enabled="true"
             android:permission="audioBookDownload" />
 
-        <activity
+        <!--<activity
             android:name="de.blinkt.openvpn.DisconnectVPNActivity"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:taskAffinity=".DisconnectVPN"
-            android:theme="@style/blinkt.dialog" />
+            android:theme="@style/blinkt.dialog" />-->
 
-        <service
+        <!--<service
             android:name="de.blinkt.openvpn.core.OpenVPNService"
             android:permission="android.permission.BIND_VPN_SERVICE"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
-        </service>
+        </service>-->
     </application>
 
 </manifest>

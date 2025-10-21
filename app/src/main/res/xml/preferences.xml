@@ -73,14 +73,23 @@
         android:summary="@string/cookies_info_baza_knig"
         android:title="@string/getCookies" />-->
 
-    <ListPreference
+    <!--<ListPreference
         android:defaultValue="@string/vpn_no_value"
         android:dialogTitle="@string/use_vpn"
         android:entries="@array/vpn_titles"
         android:entryValues="@array/vpn_values"
         android:icon="@drawable/vpn"
         android:key="vpn"
-        android:title="@string/use_vpn" />
+        android:title="@string/use_vpn" />-->
+
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:icon="@drawable/vpn"
+        android:key="pref_proxy"
+        android:summary="@string/proxy_desc"
+        android:title="@string/proxy" />
+
 
     <CheckBoxPreference
         android:defaultValue="false"

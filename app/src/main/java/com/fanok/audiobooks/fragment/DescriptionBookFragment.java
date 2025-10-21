@@ -6,7 +6,11 @@ import static java.lang.Integer.MAX_VALUE;
 import android.app.UiModeManager;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,9 +28,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
+import com.bumptech.glide.Glide;
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MarginItemDecoration;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.ImageFullScreenActivity;
 import com.fanok.audiobooks.activity.MainActivity;
@@ -37,8 +44,15 @@ import com.fanok.audiobooks.pojo.DescriptionPOJO;
 import com.fanok.audiobooks.presenter.BookDescriptionPresenter;
 import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DescriptionBookFragment extends MvpAppCompatFragment implements Description {
 
@@ -146,16 +160,45 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
             }
 
             if (mImageView != null) {
-                Picasso.get()
-                        .load(description.getPoster())
-                        .placeholder(android.R.drawable.ic_menu_gallery)
-                        .error(android.R.drawable.ic_menu_gallery)
-                        .into(mImageView);
+
+                if(!description.getPoster().isEmpty()) {
+                    if(App.useProxy&&description.getPoster().contains(Url.SERVER_BAZA_KNIG)){
+
+                        final Bitmap[] bmp = {null};
+                        ExecutorService executor = Executors.newSingleThreadExecutor();
+                        Handler handler = new Handler(Looper.getMainLooper());
+                        executor.execute(() -> {
+
+                            try {
+                                URL url = new URL(description.getPoster());
+                                Proxy proxy = new Proxy(Type.SOCKS, new InetSocketAddress(Consts.PROXY_HOST, Consts.PROXY_PORT));
+                                bmp[0] = BitmapFactory.decodeStream(url.openConnection(proxy).getInputStream());
+                            } catch (IOException ignored) {
+                            }
+                            handler.post(() -> {
+                                if(bmp[0] !=null) {
+                                    mImageView.setImageBitmap(bmp[0]);
+                                }
+                            });
+                        });
+
+
+                    }else {
+                        Picasso.get()
+                                .load(description.getPoster())
+                                .placeholder(android.R.drawable.ic_menu_gallery)
+                                .error(android.R.drawable.ic_menu_gallery)
+                                .into(mImageView);
+                    }
+                }else {
+                    Picasso.get().load(android.R.drawable.ic_menu_gallery)
+                            .into(mImageView);
+                }
             }
 
             BookActivity activity = (BookActivity) getActivity();
 
-            if (activity != null && mImageView != null) {
+            if (activity != null && mImageView != null && !description.getPoster().isEmpty()) {
                 mImageView.setOnClickListener(view ->
                         ImageFullScreenActivity.start(activity,
                                 description.getPoster(), description.getTitle(),

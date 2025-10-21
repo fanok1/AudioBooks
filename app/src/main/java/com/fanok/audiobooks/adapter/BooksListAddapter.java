@@ -8,6 +8,11 @@ import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CON
 import android.app.UiModeManager;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +24,7 @@ import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
@@ -28,7 +34,14 @@ import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.github.lzyzsd.circleprogress.DonutProgress;
 import java.io.File;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.MyHolder> {
 
@@ -121,10 +134,33 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
 
             } else {
                 if (book.getPhoto() != null && !book.getPhoto().isEmpty()) {
-                    Glide.with(mImageView).load(book.getPhoto())
-                            .thumbnail(0.1f)
-                            .override(mImageView.getWidth(), mImageView.getHeight()).into(
-                            mImageView);
+                    if(App.useProxy&&book.getPhoto().contains(Url.SERVER_BAZA_KNIG)){
+
+                        final Bitmap[] bmp = {null};
+                        ExecutorService executor = Executors.newSingleThreadExecutor();
+                        Handler handler = new Handler(Looper.getMainLooper());
+                        executor.execute(() -> {
+
+                            try {
+                                URL url = new URL(book.getPhoto());
+                                Proxy proxy = new Proxy(Type.SOCKS, new InetSocketAddress(Consts.PROXY_HOST, Consts.PROXY_PORT));
+                                bmp[0] = BitmapFactory.decodeStream(url.openConnection(proxy).getInputStream());
+                            } catch (IOException ignored) {
+                            }
+                            handler.post(() -> {
+                                if(bmp[0] !=null) {
+                                    mImageView.setImageBitmap(bmp[0]);
+                                }
+                            });
+                        });
+
+
+                    }else {
+                        Glide.with(mImageView).load(book.getPhoto())
+                                .thumbnail(0.1f)
+                                .override(mImageView.getWidth(), mImageView.getHeight()).into(
+                                        mImageView);
+                    }
                 } else {
                     mImageView.setImageDrawable(
                             ContextCompat.getDrawable(mImageView.getContext(), R.drawable.image_placeholder));

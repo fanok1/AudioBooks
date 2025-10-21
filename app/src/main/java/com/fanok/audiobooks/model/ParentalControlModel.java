@@ -1,13 +1,18 @@
 package com.fanok.audiobooks.model;
 
 
-import static de.blinkt.openvpn.core.VpnStatus.waitVpnConetion;
+import static com.fanok.audiobooks.Consts.PROXY_HOST;
+import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.ParentControlPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.util.ArrayList;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -19,7 +24,7 @@ public class ParentalControlModel {
 
     public Observable<ArrayList<ParentControlPOJO>> getBooks() {
         return Observable.create(observableEmitter -> {
-            waitVpnConetion();
+            //waitVpnConetion();
             ArrayList<ParentControlPOJO> arrayList = new ArrayList<>();
 
             try {
@@ -76,12 +81,19 @@ public class ParentalControlModel {
 
     ArrayList<ParentControlPOJO> loadBooksListABMP3() throws IOException {
         ArrayList<ParentControlPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(Url.SECTIONS_ABMP3)
+        Connection connection = Jsoup.connect(Url.SECTIONS_ABMP3)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements items = doc.getElementsByClass("b-posts");
         if (items != null && items.size() != 0) {
@@ -152,6 +164,12 @@ public class ParentalControlModel {
                 .maxBodySize(0)
                 .sslSocketFactory(Consts.socketFactory());
 
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
         if (!Consts.getBazaKnigCookies().isEmpty()) {
             connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
         }
@@ -181,12 +199,19 @@ public class ParentalControlModel {
 
     ArrayList<ParentControlPOJO> loadBooksListIziBuk() throws IOException {
         ArrayList<ParentControlPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(Url.SECTIONS_IZIBUK + 1)
+        Connection connection = Jsoup.connect(Url.SECTIONS_IZIBUK + 1)
                 .userAgent(Consts.USER_AGENT)
                 .referrer("http://www.google.com")
                 .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
 
         Elements items = doc.getElementsByClass("_e181af");
         if (items != null && items.size() != 0) {
