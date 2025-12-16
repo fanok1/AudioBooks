@@ -14,8 +14,6 @@ public interface BooksDBHelperInterfase {
 
     boolean inFavorite(String url);
 
-    boolean inHistory(String url);
-
     boolean inSaved(String url);
 
     void addFavorite(BookPOJO book);
@@ -34,13 +32,7 @@ public interface BooksDBHelperInterfase {
 
     void removeSaved(BookPOJO book);
 
-    void clearSaved();
-
-    int getHistoryCount();
-
-    int getFavoriteCount();
-
-    int getSavedCount();
+    void removeSavedById(final BookPOJO book);
 
     ArrayList<BookPOJO> getAllFavorite();
 
@@ -51,6 +43,8 @@ public interface BooksDBHelperInterfase {
     BookPOJO getHistory();
 
     BookPOJO getSaved(@NonNull String url);
+
+    BookPOJO getSomewhere(@NonNull String url);
 
     ArrayList<String> getGenre(int table);
 

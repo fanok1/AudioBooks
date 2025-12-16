@@ -4,13 +4,13 @@ import static android.content.Context.UI_MODE_SERVICE;
 import static java.lang.Integer.MAX_VALUE;
 
 import android.app.UiModeManager;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,13 +22,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.preference.PreferenceManager;
+import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
-import com.bumptech.glide.Glide;
 import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MarginItemDecoration;
@@ -56,7 +55,6 @@ import java.util.concurrent.Executors;
 
 public class DescriptionBookFragment extends MvpAppCompatFragment implements Description {
 
-    private static final String TAG = "DescriptionBookFragment";
     private static final String ARG_BOOK_POJO = "arg_book_pojo";
     private static final int MAX_LINES = 4;
 
@@ -66,9 +64,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     private TextView mGenre;
     private TextView mTime;
     private TextView mAuthor;
-    private LinearLayout mAutorConteiner;
     private TextView mArtist;
-    private LinearLayout mArtistConteiner;
     private TextView mSeries;
     private LinearLayout mSeriesConteiner;
     private TextView mDesc;
@@ -87,6 +83,8 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     private BooksOtherAdapter mAdapterBooksRecomended;
     private boolean showMore;
 
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
     public static DescriptionBookFragment newInstance(@NonNull BookPOJO pojo) {
         Bundle args = new Bundle();
         args.putString(ARG_BOOK_POJO, new Gson().toJson(pojo));
@@ -100,18 +98,8 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
 
-        View view;
-        UiModeManager uiModeManager = (UiModeManager) Objects.requireNonNull(
-                container).getContext().getSystemService(UI_MODE_SERVICE);
 
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(requireContext());
-
-        if (uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            view = inflater.inflate(R.layout.fragment_book_description_television, container, false);
-        } else {
-            view = inflater.inflate(R.layout.fragment_book_description, container, false);
-        }
+        View view = inflater.inflate(R.layout.fragment_book_description, container, false);
 
         mTitle = view.findViewById(R.id.title);
         mImageView = view.findViewById(R.id.imageView);
@@ -119,9 +107,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         mGenre = view.findViewById(R.id.genre);
         mTime = view.findViewById(R.id.time);
         mAuthor = view.findViewById(R.id.author);
-        mAutorConteiner = view.findViewById(R.id.autorConteiner);
         mArtist = view.findViewById(R.id.artist);
-        mArtistConteiner = view.findViewById(R.id.artistConteiner);
         mSeries = view.findViewById(R.id.series);
         mSeriesConteiner = view.findViewById(R.id.seriesConteiner);
         mDesc = view.findViewById(R.id.desc);
@@ -142,6 +128,52 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         int margin = (int) requireContext().getResources().getDimension(R.dimen.books_other_margin);
         mRecommendedBooks.addItemDecoration(new MarginItemDecoration(margin));
+        UiModeManager uiModeManager = (UiModeManager) requireContext().getSystemService(UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+
+            // Вешаем слушатель на ПОСЛЕДНИЙ интерактивный элемент в этом фрагменте.
+            // В данном случае, это RecyclerView с рекомендованными книгами.
+            if (mRecommendedBooks != null) {
+                mRecommendedBooks.setOnKeyListener((v, keyCode, event) -> {
+                    // Реагируем только на нажатие кнопки
+                    if (event.getAction() != KeyEvent.ACTION_DOWN) {
+                        return false;
+                    }
+
+                    RecyclerView.LayoutManager layoutManager = mRecommendedBooks.getLayoutManager();
+                    if (layoutManager == null) {
+                        return false;
+                    }
+
+                    // Получаем позицию текущего сфокусированного элемента
+                    View focusedChild = layoutManager.getFocusedChild();
+                    if (focusedChild == null) {
+                        return false;
+                    }
+                    int focusedPos = layoutManager.getPosition(focusedChild);
+
+                    // Получаем общее количество элементов
+                    int itemCount = layoutManager.getItemCount();
+
+                    // Если нажата кнопка "ВНИЗ" и фокус на ПОСЛЕДНЕМ элементе списка
+                    if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && focusedPos == itemCount - 1) {
+                        // Находим плеер в родительской Activity
+                        View playerView = requireActivity().findViewById(R.id.player);
+                        if (playerView != null) {
+                            // Передаем фокус плееру
+                            playerView.requestFocus();
+                        }
+                        // Возвращаем true, говоря, что мы обработали это событие
+                        return true;
+                    }
+
+                    // Для всех остальных случаев позволяем RecyclerView работать как обычно
+                    return false;
+                });
+            }
+        }
+
+
         return view;
     }
 
@@ -152,7 +184,28 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (executor != null) {
+            executor.shutdown();
+        }
+    }
+
+    @UnstableApi
+    @Override
     public void showDescription(@NonNull DescriptionPOJO description) {
+
+        UiModeManager uiModeManager = (UiModeManager) requireContext().getSystemService(UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            // Устанавливаем наш селектор в качестве фона для всех интерактивных элементов
+            // Система сама будет показывать/скрывать рамку при смене фокуса.
+            mImageView.setBackgroundResource(R.drawable.focusable);
+            mGenre.setBackgroundResource(R.drawable.focusable);
+            mAuthor.setBackgroundResource(R.drawable.focusable);
+            mArtist.setBackgroundResource(R.drawable.focusable);
+            mSeries.setBackgroundResource(R.drawable.focusable);
+            mShowMore.setBackgroundResource(R.drawable.focusable);
+        }
         try {
             if (mTitle != null && description.getTitle() != null
                     && !description.getTitle().isEmpty()) {
@@ -165,7 +218,6 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                     if(App.useProxy&&description.getPoster().contains(Url.SERVER_BAZA_KNIG)){
 
                         final Bitmap[] bmp = {null};
-                        ExecutorService executor = Executors.newSingleThreadExecutor();
                         Handler handler = new Handler(Looper.getMainLooper());
                         executor.execute(() -> {
 
@@ -360,7 +412,7 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         if (mAdapterBooksRecomended != null) {
             mAdapterBooksRecomended.setData(data);
         }
-        if (data.size() != 0) {
+        if (!data.isEmpty()) {
             mRecommendedBooks.setVisibility(View.VISIBLE);
             mRecommendedBooksTitle.setVisibility(View.VISIBLE);
             showOtherBooksLine(true);

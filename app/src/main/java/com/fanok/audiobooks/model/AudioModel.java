@@ -50,13 +50,13 @@ public class AudioModel implements
 
     private static final String TAG = "AudioModel";
 
-    public static String runScript(Context context, String key, String functionName) {
+    public static String runScript(Context context, String fileName, String key, String functionName) {
         String resultStr = null;
         // Get the JavaScript in previous section
         try {
 
             InputStream inputStream = context.getResources().openRawResource(
-                    context.getResources().getIdentifier("config",
+                    context.getResources().getIdentifier(fileName,
                             "raw", context.getPackageName()));
             String data = convertStreamToString(inputStream);
 
@@ -315,15 +315,17 @@ public class AudioModel implements
             }
         }
 
-        String hash = runScript(mContext, key, "getHash");
+        String hash = runScript(mContext, "config", key, "getHash");
 
         String text = Jsoup.connect(Url.SERVER_AKNIGA + "/ajax/b/" + id)
                 .userAgent(Consts.USER_AGENT)
                 .method(Method.POST)
                 .referrer(url)
+                .header("origin", "https://akniga.org")
                 .sslSocketFactory(Consts.socketFactory())
                 .data("bid", id)
                 .data("hash", hash)
+                .data("hls", "true")
                 .data("security_ls_key", key)
                 .maxBodySize(0)
                 .ignoreContentType(true)
@@ -343,7 +345,7 @@ public class AudioModel implements
             }else {
 
                 String hres = jsonObject.get("hres").getAsString();
-                audioUrl = runScript(mContext, hres, "myDecrypt");
+                audioUrl = runScript(mContext, "config", hres, "myDecrypt");
             }
 
 
@@ -459,6 +461,32 @@ public class AudioModel implements
         if (title != null && title.size() > 0) {
             String text = title.first().ownText();
             bookName = text.substring(0, text.indexOf(" - "));
+        }
+
+        Elements sriptElements = doc.getElementsByTag("script");
+        for (Element script : sriptElements) {
+            String value = script.toString();
+            if (value.contains("strDecode(\"")) {
+                value = deleteComnets(value);
+                value = value.substring(value.indexOf("strDecode("));
+                String key = value.substring(value.indexOf("(") + 1, value.indexOf("\");"));
+                String hash = runScript(mContext, "decode", key, "strDecode");
+                System.out.println(hash);
+                JsonElement element = JsonParser.parseString(hash);
+                if (element.isJsonArray()) {
+                    JsonArray array = element.getAsJsonArray();
+                    for (JsonElement item : array) {
+                        if (item.isJsonObject()) {
+                            AudioPOJO audioPOJO = new AudioPOJO();
+                            JsonObject obj = item.getAsJsonObject();
+                            audioPOJO.setName(obj.get("title").getAsString());
+                            audioPOJO.setUrl(obj.get("file").getAsString());
+                            audioPOJO.setBookName(bookName);
+                            result.add(audioPOJO);
+                        }
+                    }
+                }
+            }
         }
 
         Element div = doc.getElementById("fr");

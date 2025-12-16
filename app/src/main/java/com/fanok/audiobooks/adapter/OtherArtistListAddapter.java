@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.adapter;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import java.util.ArrayList;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class OtherArtistListAddapter extends
         RecyclerView.Adapter<OtherArtistListAddapter.MyHolder> {
 
@@ -23,14 +25,20 @@ public class OtherArtistListAddapter extends
         mListener = listener;
     }
 
-    public void setItem(ArrayList<OtherArtistPOJO> model) {
-        mModel = model;
+    @SuppressLint("NotifyDataSetChanged")
+    public void setItem(ArrayList<OtherArtistPOJO> newModel) {
+        mModel = newModel;
         notifyDataSetChanged();
     }
 
     public void clearItem() {
-        mModel.clear();
-        notifyDataSetChanged();
+        if (mModel != null) {
+            int oldSize = mModel.size();
+            if (oldSize > 0) {
+                mModel.clear();
+                notifyItemRangeRemoved(0, oldSize);
+            }
+        }
     }
 
     public OtherArtistPOJO getItem(int postion) {
@@ -75,7 +83,7 @@ public class OtherArtistListAddapter extends
             mText = itemView.findViewById(R.id.text);
 
             itemView.setOnClickListener(view -> {
-                if (mListener != null) mListener.onItemSelected(view, getAdapterPosition());
+                if (mListener != null) mListener.onItemSelected(view, getBindingAdapterPosition());
             });
 
 
@@ -83,31 +91,6 @@ public class OtherArtistListAddapter extends
 
         void bind(OtherArtistPOJO book) {
             mText.setText(book.getName());
-            //translation
-            /*String lang = Locale.getDefault().toLanguageTag();
-            if(!lang.equals("ru")) {
-                FirebaseTranslatorOptions options =
-                        new FirebaseTranslatorOptions.Builder()
-                                .setSourceLanguage(FirebaseTranslateLanguage.RU)
-                                .setTargetLanguage(FirebaseTranslateLanguage
-                                .languageForLanguageCode(lang))
-                                .build();
-                final FirebaseTranslator translator =
-                        FirebaseNaturalLanguage.getInstance().getTranslator(options);
-
-                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
-                .Builder()
-                        .requireWifi()
-                        .build();
-                translator.downloadModelIfNeeded(conditions)
-                        .addOnSuccessListener(
-                                v -> {
-                                    translator.translate(book.getName())
-                                            .addOnSuccessListener(
-                                                    translatedText -> mText.setText
-                                                    (translatedText));
-                                });
-            }*/
         }
     }
 }

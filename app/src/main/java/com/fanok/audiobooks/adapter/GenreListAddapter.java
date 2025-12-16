@@ -1,6 +1,7 @@
 package com.fanok.audiobooks.adapter;
 
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,7 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import java.util.ArrayList;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.MyHolder> {
 
     private RecyclerTushListner listner;
@@ -20,15 +22,19 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
         this.listner = listner;
     }
 
-    public void setItem(ArrayList<GenrePOJO> model) {
-        mModel = model;
+    @SuppressLint("NotifyDataSetChanged")
+    public void setItem(ArrayList<GenrePOJO> newModel) {
+        mModel = newModel;
         notifyDataSetChanged();
     }
 
     public void clearItem() {
         if (mModel != null) {
-            mModel = new ArrayList<>();
-            notifyDataSetChanged();
+            int oldSize = mModel.size();
+            if (oldSize > 0) {
+                mModel.clear();
+                notifyItemRangeRemoved(0, oldSize);
+            }
         }
     }
 
@@ -77,7 +83,7 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
             mDescription = itemView.findViewById(R.id.desc);
             itemView.setOnClickListener(view -> {
                 if (listner != null) {
-                    listner.onClickItem(itemView, getAdapterPosition());
+                    listner.onClickItem(itemView, getBindingAdapterPosition());
                 }
             });
         }
@@ -94,37 +100,6 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
                 mReting.setVisibility(View.GONE);
             }
             mDescription.setText(book.getDescription());
-
-            /*//translation
-            String lang = Locale.getDefault().toLanguageTag();
-            if(!lang.equals("ru")) {
-                FirebaseTranslatorOptions options =
-                        new FirebaseTranslatorOptions.Builder()
-                                .setSourceLanguage(FirebaseTranslateLanguage.RU)
-                                .setTargetLanguage(FirebaseTranslateLanguage
-                                .languageForLanguageCode(lang))
-                                .build();
-                final FirebaseTranslator translator =
-                        FirebaseNaturalLanguage.getInstance().getTranslator(options);
-
-                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
-                .Builder()
-                        .requireWifi()
-                        .build();
-                translator.downloadModelIfNeeded(conditions)
-                        .addOnSuccessListener(
-                                v -> {
-                                    translator.translate(book.getName())
-                                            .addOnSuccessListener(
-                                                    translatedText -> mName.setText
-                                                    (translatedText));
-
-                                    translator.translate(book.getDescription())
-                                            .addOnSuccessListener(
-                                                    translatedText -> mDescription.setText
-                                                    (translatedText));
-                                });
-            }*/
 
         }
     }

@@ -4,6 +4,7 @@ import static com.fanok.audiobooks.Consts.handleUserInput;
 
 import android.app.Activity;
 import android.app.SearchManager;
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,6 +16,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
@@ -213,29 +215,32 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                     (view, position) -> mPresenter.onAutorsListItemClick(view, position));
         }
 
-        binding.list.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                int y = recyclerView.computeVerticalScrollOffset();
-                boolean b = mAdapterAutors != null && mAdapterAutors.getItemCount() != 0;
-                if (mAdapterSeries != null && mAdapterSeries.getItemCount() != 0) {
-                    b = true;
+        UiModeManager uiModeManager = (UiModeManager) getSystemService(Context.UI_MODE_SERVICE);
+        if (uiModeManager == null || uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+            binding.list.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                    super.onScrollStateChanged(recyclerView, newState);
+                    int y = recyclerView.computeVerticalScrollOffset();
+                    boolean b = mAdapterAutors != null && mAdapterAutors.getItemCount() != 0;
+                    if (mAdapterSeries != null && mAdapterSeries.getItemCount() != 0) {
+                        b = true;
+                    }
+
+                    if (y == 0 && binding.topList.getVisibility() == View.GONE && b) {
+                        binding.topList.setVisibility(View.VISIBLE);
+                    }
                 }
 
-                if (y == 0 && binding.topList.getVisibility() == View.GONE && b) {
-                    binding.topList.setVisibility(View.VISIBLE);
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    if (dy > 0 && binding.topList.getVisibility() == View.VISIBLE) {
+                        binding.topList.setVisibility(View.GONE);
+                    }
                 }
-            }
-
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                if (dy > 0 && binding.topList.getVisibility() == View.VISIBLE) {
-                    binding.topList.setVisibility(View.GONE);
-                }
-            }
-        });
+            });
+        }
 
     }
 
@@ -269,7 +274,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     }
 
     @Override
-    protected void onNewIntent(Intent intent) {
+    protected void onNewIntent(@NonNull Intent intent) {
         super.onNewIntent(intent);
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
@@ -317,23 +322,70 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     }
 
     @Override
-    public void showData(ArrayList arrayList) {
-        try {
-            if (arrayList != null && arrayList.size() != 0) {
-                if (arrayList.get(0) instanceof BookPOJO && mAddapterBooks != null) {
-                    mAddapterBooks.setItem(arrayList);
-                } else if (arrayList.get(0) instanceof GenrePOJO && mAddapterGenre != null) {
-                    mAddapterGenre.setItem(arrayList);
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        View currentFocus = getCurrentFocus();
+        if (currentFocus!=null){
+            if(keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                if (isUpButton(currentFocus)) {
+                    Toolbar toolbar = findViewById(R.id.toolbar);
+                    toolbar.requestFocus();
                 }
-            } else {
-                if (mAddapterBooks != null) {
+                if (currentFocus.getId()==R.id.toolbar){
+                    View view = findViewById(R.id.filter);
+                    if(view!=null){
+                        view.requestFocus();
+                    }
+                }
+            }else if(keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                if (currentFocus.getId()==R.id.filter||currentFocus.getId()==R.id.toolbar) {
+                    View menuItem = findViewById(R.id.searchView);
+                    if (menuItem != null) {
+                        menuItem.requestFocus();
+                    }
+                }
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private boolean isUpButton(View view) {
+        if (view instanceof ImageButton) {
+            return "Перейти вверх".contentEquals(view.getContentDescription());
+        }
+        return false;
+    }
+
+
+    @Override
+    public void showDataBooks(ArrayList<BookPOJO> books) {
+        try {
+            if (mAddapterBooks != null) {
+                if (books != null && !books.isEmpty()) {
+                    mAddapterBooks.setItem(books);
+                } else {
+                    // Если пришел пустой список, очищаем адаптер
                     mAddapterBooks.clearItem();
                 }
-                if (mAddapterGenre != null) {
+            }
+        } catch (Exception e) {
+            Log.e("showData", "Error displaying book data", e);
+            showToast(R.string.error_display_data);
+        }
+    }
+
+    @Override
+    public void showDataGenres(ArrayList<GenrePOJO> genres) {
+        try {
+            if (mAddapterGenre != null) {
+                if (genres != null && !genres.isEmpty()) {
+                    mAddapterGenre.setItem(genres);
+                } else {
+                    // Если пришел пустой список, очищаем адаптер
                     mAddapterGenre.clearItem();
                 }
             }
-        } catch (NullPointerException e) {
+        } catch (Exception e) {
+            Log.e("showData", "Error displaying genre data", e);
             showToast(R.string.error_display_data);
         }
     }
@@ -396,7 +448,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
     @Override
     public void showSeriesAndAutors(SearcheblPOJO searcheblPOJO) {
         if (mAdapterSeries != null && mAdapterAutors != null && searcheblPOJO != null) {
-            if (searcheblPOJO.getAutorsList().size() == 0) {
+            if (searcheblPOJO.getAutorsList().isEmpty()) {
                 binding.autors.setVisibility(View.GONE);
                 binding.authorList.setVisibility(View.GONE);
             } else {
@@ -406,7 +458,7 @@ public class SearchableActivity extends MvpAppCompatActivity implements Searchab
                 mAdapterAutors.setItem(searcheblPOJO.getAutorsList());
             }
 
-            if (searcheblPOJO.getSeriesList().size() == 0) {
+            if (searcheblPOJO.getSeriesList().isEmpty()) {
                 binding.series.setVisibility(View.GONE);
                 binding.seriesList.setVisibility(View.GONE);
             } else {

@@ -5,10 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
@@ -24,18 +24,20 @@ import com.r0adkll.slidr.Slidr;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.regex.Matcher;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class ActivitySendEmail extends MvpAppCompatActivity {
 
 
     private ActivitySendEmailBinding binding;
+    private final java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,90 +140,100 @@ public class ActivitySendEmail extends MvpAppCompatActivity {
 
         if (!binding.messageLayout.isErrorEnabled() && !binding.emailLayout.isErrorEnabled()) {
 
-            new AsyncTask<Void, Void, Boolean>() {
+            binding.progressBar.setVisibility(View.VISIBLE);
 
-                String email;
+            // Получаем данные из полей ввода
+            String email = binding.emailInput.getText().toString();
+            String subject = binding.spinner.getSelectedItem().toString();
+            String userMessage = binding.messageInput.getText().toString();
 
-                String message;
+            // Запускаем фоновую задачу
+            executeInBackground(() -> {
+                // --- Эта часть кода выполняется в фоновом потоке ---
 
-                String subject;
-
-
-                @Override
-                protected void onPostExecute(Boolean aBoolean) {
-                    super.onPostExecute(aBoolean);
-                    binding.progressBar.setVisibility(View.GONE);
-                    if (aBoolean) {
-                        Toast.makeText(ActivitySendEmail.this, getString(R.string.email_send),
-                                Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(ActivitySendEmail.this, getString(R.string.error_send_mail),
-                                Toast.LENGTH_SHORT).show();
-                    }
+                // Формируем текст сообщения
+                StringBuilder systemInfo = new StringBuilder();
+                systemInfo.append("<b>Модель телефона:</b> ").append(Build.MODEL).append("\n");
+                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                if (pm != null) {
+                    systemInfo.append("<b>Игнор. оптимизацию батареи:</b> ").append(
+                            pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks"));
                 }
 
-                @Override
-                protected void onPreExecute() {
-                    super.onPreExecute();
-                    binding.progressBar.setVisibility(View.VISIBLE);
+                String messageText = "<b>Новое сообщение из Audiobooks!</b>\n\n" +
+                        "<b>Тема:</b> " + subject + "\n" +
+                        "<b>Email для ответа:</b> " + email + "\n\n" +
+                        "<b>--- Сообщение пользователя ---</b>\n" + userMessage + "\n\n" +
+                        "<b>--- Системная информация ---</b>\n" + systemInfo;
 
-                    StringBuilder builder = new StringBuilder();
-                    builder.append("email = ").append(binding.emailInput.getText().toString()).append(
-                            "<br/>");
-                    builder.append("phone = ").append(Build.MODEL).append("<br/>");
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-                        if (pm != null) {
-                            builder.append("isIgnoringBatteryOptimizations = ").append(
-                                    pm.isIgnoringBatteryOptimizations(
-                                            "com.fanok.audiobooks")).append("<br/>");
-                        }
-                    }
+                String botToken = "8215660724:AAHFRPOblghARinIzWlqMnfroK0LJMF5efo";
+                String chatId = "234305064";
+                String urlString = "https://api.telegram.org/bot" + botToken + "/sendMessage";
 
-                    builder.append("<br/>").append("<br/>");
-                    builder.append(binding.messageInput.getText().toString().replaceAll("\n", "<br/>"));
-
-                    email = binding.emailInput.getText().toString();
-                    subject = binding.spinner.getSelectedItem().toString();
-                    message = builder.toString();
-                }
-
-                @Override
-                protected Boolean doInBackground(Void... voids) {
-
+                try {
                     JSONObject json = new JSONObject();
-                    try {
-                        json.put("email", email);
-                        json.put("subject", subject);
-                        json.put("message", message);
+                    json.put("chat_id", chatId);
+                    json.put("text", messageText);
+                    json.put("parse_mode", "HTML");
 
+                    RequestBody body = RequestBody.create(json.toString(),
+                            MediaType.get("application/json; charset=utf-8"));
 
-                        RequestBody body = RequestBody.create(
-                                MediaType.get("application/json; charset=utf-8"), json.toString());
+                    OkHttpClient client = new OkHttpClient();
+                    Request request = new Request.Builder()
+                            .url(urlString)
+                            .post(body)
+                            .build();
 
-                        OkHttpClient client = new OkHttpClient();
-                        Request request = new Request.Builder()
-                                .url("http://mdpu.mcdir.ru/audiobooks_send_mail.php")
-                                .post(body)
-                                .build();
-                        try (Response response = client.newCall(request).execute()) {
-                            String result = Objects.requireNonNull(response.body()).string();
-                            return result.contains("1");
-                        } catch (IOException e) {
-                            return false;
-                        }
-
-                    } catch (JSONException e) {
-                        return false;
+                    try (Response response = client.newCall(request).execute()) {
+                        Log.d("TelegramResponse", "Response: " + response.body().string());
+                        return response.isSuccessful(); // Возвращаем результат
                     }
+                } catch (IOException | JSONException e) {
+                    Log.e("TelegramError", "Error sending message", e);
+                    return false; // Возвращаем результат
                 }
-            }.execute();
+            }, (Boolean success) -> {
+
+                binding.progressBar.setVisibility(View.GONE);
+                if (success) {
+                    Toast.makeText(ActivitySendEmail.this, getString(R.string.email_send),
+                            Toast.LENGTH_LONG).show();
+                    finish();
+                } else {
+                    Toast.makeText(ActivitySendEmail.this, getString(R.string.error_send_mail),
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
 
         }
     }
 
+    private <T> void executeInBackground(java.util.concurrent.Callable<T> task, java.util.function.Consumer<T> callback) {
+
+        android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+
+        executor.execute(() -> {
+            try {
+                final T result = task.call();
+                handler.post(() -> callback.accept(result));
+            } catch (Exception e) {
+                Log.e("BackgroundTask", "Error executing background task", e);
+            }
+        });
+    }
+
+
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(LocaleManager.onAttach(base));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (executor != null) {
+            executor.shutdown();
+        }
     }
 }

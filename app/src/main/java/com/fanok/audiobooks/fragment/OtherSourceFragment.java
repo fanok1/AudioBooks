@@ -63,7 +63,7 @@ public class OtherSourceFragment extends Fragment {
             requireActivity().startActivity(intent);
         });
 
-        if (bookPOJO.size() == 0) {
+        if (bookPOJO.isEmpty()) {
             binding.placeholder.setText(R.string.error_load_data);
             binding.placeholder.setVisibility(View.VISIBLE);
         } else {

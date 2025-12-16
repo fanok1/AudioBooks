@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android"><!-- Состояние: Кнопка в фокусе -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <!-- Полупрозрачный акцентный цвет для явной подсветки -->
+            <solid android:color="?attr/colorControlHighlight" />
+            <corners android:radius="4dp" />
+        </shape>
+    </item>
+
+    <!-- Состояние по умолчанию (прозрачный фон) -->
+    <item android:drawable="@android:color/transparent" />
+
+</selector>
+    

@@ -9,14 +9,6 @@
         android:key="pref_theme"
         android:title="@string/setting_theme" />
 
-    <!--<ListPreference
-        android:defaultValue="ru"
-        android:dialogTitle="@string/setting_lang"
-        android:entries="@array/settings_lang_titles"
-        android:entryValues="@array/settings_lang_values"
-        android:key="pref_lang"
-        android:title="@string/setting_lang" />-->
-
     <ListPreference
         android:defaultValue="@string/abook_value"
         android:dialogTitle="@string/sorce_books"
@@ -25,6 +17,11 @@
         android:icon="@drawable/ic_web"
         android:key="sorce_books"
         android:title="@string/sorce_books" />
+
+    <Preference
+        android:icon="@drawable/ic_download"
+        android:key="download"
+        android:title="@string/download" />
 
     <CheckBoxPreference
         android:defaultValue="true"
@@ -71,21 +68,6 @@
             android:title="@string/knigoblud" />
 
     </PreferenceScreen>
-
-    <!--<Preference
-        android:icon="@drawable/ic_cookie"
-        android:key="cookies"
-        android:summary="@string/cookies_info_baza_knig"
-        android:title="@string/getCookies" />-->
-
-    <!--<ListPreference
-        android:defaultValue="@string/vpn_no_value"
-        android:dialogTitle="@string/use_vpn"
-        android:entries="@array/vpn_titles"
-        android:entryValues="@array/vpn_values"
-        android:icon="@drawable/vpn"
-        android:key="vpn"
-        android:title="@string/use_vpn" />-->
 
 
     <CheckBoxPreference
@@ -221,15 +203,6 @@
             android:summary="@string/abook_description"
             android:title="@string/abook" />
     </PreferenceScreen>
-
-    <ListPreference
-        android:defaultValue="@string/dir_value_emulated"
-        android:dialogTitle="@string/pref_dowland_path"
-        android:entries="@array/settings_dir_titles"
-        android:entryValues="@array/settings_dir_values"
-        android:icon="@drawable/ic_folder"
-        android:key="pref_downland_path"
-        android:title="@string/pref_dowland_path" />
 
     <!--
     <PreferenceScreen

@@ -9,9 +9,8 @@ import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CON
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_PASSWORD;
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_SHOW_TITLE;
 import static com.fanok.audiobooks.service.MediaPlayerService.countAudioWereShowingRatingPopUp;
-import static com.google.android.gms.ads.AdRequest.ERROR_CODE_NETWORK_ERROR;
 
-import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.app.UiModeManager;
 import android.content.BroadcastReceiver;
@@ -20,7 +19,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.content.res.Configuration;
@@ -42,6 +40,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewParent;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -50,20 +49,22 @@ import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.ShareCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.media3.common.util.UnstableApi;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager2.widget.ViewPager2;
+
 import com.alimuzaffar.lib.pin.PinEntryEditText;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
@@ -73,37 +74,28 @@ import com.evgenii.jsevaluator.interfaces.JsCallback;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.TvSeekBar;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.adapter.AudioAdapter;
 import com.fanok.audiobooks.adapter.SectionsPagerAdapter;
 import com.fanok.audiobooks.interface_pacatge.book_content.Activity;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
-import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
-import com.fanok.audiobooks.service.Download;
-import com.fanok.audiobooks.service.DownloadABMP3;
 import com.fanok.audiobooks.service.MediaPlayerService;
-import com.fanok.audiobooks.аndroid_equalizer.DialogEqualizerFragment;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.rewarded.RewardItem;
-import com.google.android.gms.ads.rewarded.RewardedAd;
-import com.google.android.gms.ads.rewarded.RewardedAdCallback;
-import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.fanok.audiobooks.android_equalizer.DialogEqualizerFragment;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.tabs.TabLayout;
-import com.google.android.play.core.review.ReviewException;
+import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.play.core.review.ReviewInfo;
 import com.google.android.play.core.review.ReviewManager;
 import com.google.android.play.core.review.ReviewManagerFactory;
-import com.google.android.play.core.review.model.ReviewErrorCode;
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
@@ -119,13 +111,11 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     public static final String Broadcast_SET_PROGRESS = "SetProgress";
     public static final String Broadcast_SET_SELECTION = "SetSelection";
     public static final String Broadcast_SET_TITLE = "SetTitle";
-    public static final String Broadcast_SHOW_GET_PLUS = "ShowGetPlus";
     public static final String Broadcast_SHOW_RATING = "ShowRating";
-    public static final String Broadcast_SHOW_EQUALIZER = "ShowEqualizer";
     public static final String Broadcast_UPDATE_ADAPTER = "UpdateAdapter";
-    public static final String Broadcast_CLEAR_DOWNLOADING = "clearDownloading";
 
-    private static final int REQUEST_WRITE_STORAGE = 145;
+    public static final String Broadcast_SHOW_EQUALIZER = "ShowEqualizer";
+
 
     private static String showingView;
 
@@ -135,7 +125,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     private LinearLayout mPlayer;
     private RadioButton mRadioAll;
     private ImageButton mDelete;
-    private ImageButton mDowland;
+    private ImageButton mDownland;
 
     public static String getShowingView() {
         return showingView;
@@ -152,7 +142,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     private ImageButton mPlayTop;
     private ImageButton mNextTop;
     private TextView mTimeStart;
-    private SeekBar mSeekBar;
+    private AppCompatSeekBar mSeekBar;
     private TextView mTimeEnd;
     private ImageButton mRewind;
     private ImageButton mPreviousBottom;
@@ -162,9 +152,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     private TabLayout tabs;
     private SectionsPagerAdapter sectionsPagerAdapter;
     private BookPOJO mBookPOJO;
-    private BottomSheetBehavior bottomSheetBehavior;
-    private RewardedAd rewardedAd;
-    private boolean showedAd = false;
+    private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
     private LinearLayoutManager mLinearLayoutManager;
     private SharedPreferences pref;
 
@@ -173,20 +161,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     private boolean mNotificationClick;
 
+    @SuppressLint("UnsafeOptInUsageError")
     private AudioAdapter mAudioAdapter;
     private final BroadcastReceiver setImage = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int id = intent.getIntExtra("id", R.drawable.ic_play);
             mPresenter.setImageDrawable(id);
-        }
-    };
-    private final BroadcastReceiver showGetPlus = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Intent start = new Intent(context, PopupGetPlus.class);
-            start.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-            startActivity(start);
         }
     };
 
@@ -226,6 +207,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         }
     };
 
+
     private final BroadcastReceiver showEqualizer = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -236,8 +218,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                             .setAudioSessionId(sessionId)
                             .themeColor(ContextCompat.getColor(context, R.color.primaryColorEq))
                             .textColor(ContextCompat.getColor(context, R.color.textColor))
-                            .accentAlpha(ContextCompat.getColor(context, R.color.playingCardColor))
-                            .darkColor(ContextCompat.getColor(context, R.color.primaryDarkColorEq))
                             .setAccentColor(ContextCompat.getColor(context, R.color.secondaryColor))
                             .build();
 
@@ -248,19 +228,15 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         }
     };
 
+
     private final BroadcastReceiver updateAdapter = new BroadcastReceiver() {
+        @UnstableApi
         @Override
         public void onReceive(Context context, Intent intent) {
-            updateAdapter(intent.getStringExtra("url"));
+            updateAdapter();
         }
     };
 
-    private final BroadcastReceiver clearDownloading = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            clearDownloading();
-        }
-    };
 
     public static void startNewActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO) {
         startNewActivity(context, bookPOJO, false);
@@ -282,7 +258,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                 parser.next();
                 parser.nextTag();
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.d(TAG, "startNewActivity: ", e);
             }
 
             AttributeSet attr = Xml.asAttributeSet(parser);
@@ -379,6 +355,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         super.attachBaseContext(LocaleManager.onAttach(base));
     }
 
+    @UnstableApi
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -394,18 +372,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
         int isTablet = getResources().getInteger(R.integer.isTablet);
         UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
-        if (uiModeManager != null
-                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            setContentView(R.layout.activity_book_television);
-        } else {
-            setContentView(R.layout.activity_book);
-        }
+        setContentView(R.layout.activity_book);
         mButtonCollapse = findViewById(R.id.buttonCollapse);
         mTopButtonsControls = findViewById(R.id.topButtonsControls);
         mPlayer = findViewById(R.id.player);
         mRadioAll = findViewById(R.id.radioAll);
         mDelete = findViewById(R.id.delete);
-        mDowland = findViewById(R.id.dowland);
+        mDownland = findViewById(R.id.dowland);
         mSpeed = findViewById(R.id.speed);
         mList = findViewById(R.id.list);
         mNameCurent = findViewById(R.id.name_curent);
@@ -424,10 +397,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
         MainActivity.setCloseApp(false);
 
-        if (!StorageAds.idDisableAds()) {
-            rewardedAd = createAndLoadRewardedAd();
-        }
-
         mNotificationClick = intent.getBooleanExtra("notificationClick", false);
 
         String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
@@ -442,14 +411,18 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         if (mBookPOJO != null && mBookPOJO.getName() != null) {
             setTitle(mBookPOJO.getName().trim());
         }
-        sectionsPagerAdapter = new SectionsPagerAdapter(this,
-                getSupportFragmentManager(), mBookPOJO);
-        ViewPager viewPager = findViewById(R.id.view_pager);
+
+        sectionsPagerAdapter = new SectionsPagerAdapter(this, Objects.requireNonNull(mBookPOJO));
+        ViewPager2 viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(sectionsPagerAdapter);
+
         tabs = findViewById(R.id.tabs);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        tabs.setupWithViewPager(viewPager);
+        new TabLayoutMediator(tabs, viewPager,
+                (tab, position) -> tab.setText(sectionsPagerAdapter.getPageTitle(position))
+        ).attach();
+
 
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -465,18 +438,47 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         }
 
 
-        registerReceiver(setImage, new IntentFilter(Broadcast_SET_IMAGE));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(setImage, new IntentFilter(Broadcast_SET_IMAGE), RECEIVER_EXPORTED);
+        }else {
+            registerReceiver(setImage, new IntentFilter(Broadcast_SET_IMAGE));
+        }
 
-        registerReceiver(setProgress, new IntentFilter(Broadcast_SET_PROGRESS));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(setProgress, new IntentFilter(Broadcast_SET_PROGRESS), RECEIVER_EXPORTED);
+        }else {
+            registerReceiver(setProgress, new IntentFilter(Broadcast_SET_PROGRESS));
+        }
 
-        registerReceiver(setSelectionBroadcast, new IntentFilter(Broadcast_SET_SELECTION));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(setSelectionBroadcast, new IntentFilter(Broadcast_SET_SELECTION), RECEIVER_EXPORTED);
+        }else {
+            registerReceiver(setSelectionBroadcast, new IntentFilter(Broadcast_SET_SELECTION));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(setTitleBroadcast, new IntentFilter(Broadcast_SET_TITLE), RECEIVER_EXPORTED);
+        }else{
+            registerReceiver(setTitleBroadcast, new IntentFilter(Broadcast_SET_TITLE));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(showRating, new IntentFilter(Broadcast_SHOW_RATING), RECEIVER_EXPORTED);
+        }else {
+            registerReceiver(showRating, new IntentFilter(Broadcast_SHOW_RATING));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(updateAdapter, new IntentFilter(Broadcast_UPDATE_ADAPTER), RECEIVER_EXPORTED);
+        }else {
+            registerReceiver(updateAdapter, new IntentFilter(Broadcast_UPDATE_ADAPTER));
+        }
 
-        registerReceiver(setTitleBroadcast, new IntentFilter(Broadcast_SET_TITLE));
-        registerReceiver(showGetPlus, new IntentFilter(Broadcast_SHOW_GET_PLUS));
-        registerReceiver(showRating, new IntentFilter(Broadcast_SHOW_RATING));
-        registerReceiver(showEqualizer, new IntentFilter(Broadcast_SHOW_EQUALIZER));
-        registerReceiver(updateAdapter, new IntentFilter(Broadcast_UPDATE_ADAPTER));
-        registerReceiver(clearDownloading, new IntentFilter(Broadcast_CLEAR_DOWNLOADING));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(showEqualizer, new IntentFilter(Broadcast_SHOW_EQUALIZER), RECEIVER_EXPORTED);
+        }else {
+            registerReceiver(showEqualizer, new IntentFilter(Broadcast_SHOW_EQUALIZER));
+        }
+
+
+
 
 
         if (isTablet == 0 && (uiModeManager == null
@@ -539,9 +541,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
                                 }
 
-                                if (mDowland != null && mDowland.getVisibility() != View.VISIBLE &&
+                                if (mDownland != null && mDownland.getVisibility() != View.VISIBLE &&
                                         mAudioAdapter.getSelectedItemsSize() > 0) {
-                                    mDowland.setVisibility(View.VISIBLE);
+                                    mDownland.setVisibility(View.VISIBLE);
                                     mDelete.setVisibility(View.VISIBLE);
                                 }
 
@@ -560,8 +562,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                                             0);
                                 }
 
-                                if (mDowland != null) {
-                                    mDowland.animate().alpha(
+                                if (mDownland != null) {
+                                    mDownland.animate().alpha(
                                             (float) alphaCollapse).setDuration(
                                             0);
                                     mDelete.animate().alpha(
@@ -594,8 +596,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                                     mRadioAll.setVisibility(View.GONE);
                                 }
 
-                                if (mDowland != null && mDowland.getVisibility() != View.GONE) {
-                                    mDowland.setVisibility(View.GONE);
+                                if (mDownland != null && mDownland.getVisibility() != View.GONE) {
+                                    mDownland.setVisibility(View.GONE);
                                     mDelete.setVisibility(View.GONE);
                                 }
 
@@ -637,18 +639,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             }
         });
 
-        mDowland.setOnClickListener(view -> {
-            boolean hasPermission = (ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED);
-            if (!hasPermission) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        REQUEST_WRITE_STORAGE);
-            } else {
-                mPresenter.dowland(mAudioAdapter.getSelectedItems());
-            }
-        });
+        mDownland.setOnClickListener(view -> mPresenter.dowland(mAudioAdapter.getSelectedItems()));
 
         mDelete.setOnClickListener(view -> mPresenter.delete(mAudioAdapter.getSelectedItems()));
 
@@ -663,8 +654,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                     mRadioAll.setVisibility(View.GONE);
                 }
 
-                if (mDowland != null && mDowland.getVisibility() != View.GONE) {
-                    mDowland.setVisibility(View.GONE);
+                if (mDownland != null && mDownland.getVisibility() != View.GONE) {
+                    mDownland.setVisibility(View.GONE);
                     mDelete.setVisibility(View.GONE);
                 }
                 if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.VISIBLE) {
@@ -683,11 +674,14 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                     }
                     mRadioAll.setChecked(
                             mAudioAdapter.getItemCount() == mAudioAdapter.getSelectedItemsSize());
+                    if (mBookPOJO.getUrl().contains(Url.SERVER_AKNIGA)) {
+                        mRadioAll.setVisibility(View.GONE);
+                    }
                 }
 
-                if (mDowland != null) {
-                    if (mDowland.getVisibility() != View.VISIBLE) {
-                        mDowland.setVisibility(View.VISIBLE);
+                if (mDownland != null) {
+                    if (mDownland.getVisibility() != View.VISIBLE) {
+                        mDownland.setVisibility(View.VISIBLE);
                         mDelete.setVisibility(View.VISIBLE);
                     }
                 }
@@ -703,20 +697,39 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             mProgressBar.setMax(100);
         }
 
-        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-            }
+        if (mSeekBar instanceof TvSeekBar) {
+            // --- Логика для ТВ ---
+            // Безопасно приводим тип и устанавливаем кастомный слушатель
+            ((TvSeekBar) mSeekBar).setOnSeekBarChangedByUserListener(new TvSeekBar.OnSeekBarChangedByUserListener() {
+                @Override
+                public void onProgressChangedByUser(TvSeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        // Этот код сработает ОДИН РАЗ, когда фокус уйдет с SeekBar на ТВ
+                        mPresenter.seekChange(progress);
+                    }
+                }
+            });
+        } else {
+            // --- Логика для Телефона ---
+            // Если это обычный SeekBar, устанавливаем стандартный слушатель
+            mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    // Можно оставить пустым
+                }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                    // Можно оставить пустым
+                }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                mPresenter.seekChange(seekBar);
-            }
-        });
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    // Этот код сработает, когда пользователь отпустит палец от SeekBar на телефоне
+                    mPresenter.seekChange(seekBar.getProgress());
+                }
+            });
+        }
 
 
         if (mPlayTop != null) {
@@ -737,26 +750,41 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         getSystemService(AUDIO_SERVICE);
 
 
-    }
 
-    private RewardedAd createAndLoadRewardedAd() {
-        RewardedAd rewardedAd = new RewardedAd(this,
-                getString(R.string.rewardedID));
-        RewardedAdLoadCallback adLoadCallback = new RewardedAdLoadCallback() {
-            @Override
-            public void onRewardedAdLoaded() {
-            }
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
-            public void onRewardedAdFailedToLoad(int errorCode) {
-                if (errorCode == ERROR_CODE_NETWORK_ERROR) {
-                    Toast.makeText(BookActivity.this, R.string.error_load_data,
-                            Toast.LENGTH_SHORT).show();
+            public void handleOnBackPressed() {
+                if (bottomSheetBehavior != null
+                        && bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                    if (mAudioAdapter.getSelectedItemsSize() > 0) {
+                        mAudioAdapter.clearSelected();
+                    } else {
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    }
+                    return;
+                }
+
+                if (bottomSheetBehavior == null && mAudioAdapter.getSelectedItemsSize() > 0) {
+                    mAudioAdapter.clearSelected();
+                    return;
+                }
+
+                if (mNotificationClick) {
+                    Intent intent = new Intent(BookActivity.this, MainActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    intent.putExtra("notificationClick", true);
+                    startActivity(intent);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
                 }
             }
-        };
-        rewardedAd.loadAd(new AdRequest.Builder().build(), adLoadCallback);
-        return rewardedAd;
+        });
+
+
+
     }
 
     @Override
@@ -776,8 +804,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             mRadioAll.setVisibility(View.GONE);
         }
 
-        if (mDowland != null && mDowland.getVisibility() != View.GONE) {
-            mDowland.setVisibility(View.GONE);
+        if (mDownland != null && mDownland.getVisibility() != View.GONE) {
+            mDownland.setVisibility(View.GONE);
             mDelete.setVisibility(View.GONE);
         }
 
@@ -785,6 +813,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         broadcastSend(broadcastIntent);
     }
 
+    @UnstableApi
     @Override
     public void stateExpanded() {
         if (mTopButtonsControls != null && mTopButtonsControls.getVisibility() != View.GONE) {
@@ -807,9 +836,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             }
         }
 
-        if (mDowland != null && mDowland.getVisibility() != View.VISIBLE
+        if (mDownland != null && mDownland.getVisibility() != View.VISIBLE
                 && mAudioAdapter.getSelectedItemsSize() > 0) {
-            mDowland.setVisibility(View.VISIBLE);
+            mDownland.setVisibility(View.VISIBLE);
             mDelete.setVisibility(View.VISIBLE);
         }
 
@@ -883,12 +912,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                 tabs.addTab(tabs.newTab().setText(name));
                 sectionsPagerAdapter.addTabPage(name);
             } else {
-                tabs.addTab(tabs.newTab().setText(name), sectionsPagerAdapter.getCount() - 1);
-                sectionsPagerAdapter.addTabPage(name, sectionsPagerAdapter.getCount() - 1);
+                tabs.addTab(tabs.newTab().setText(name), sectionsPagerAdapter.getItemCount() - 1);
+                sectionsPagerAdapter.addTabPage(name, sectionsPagerAdapter.getItemCount() - 1);
             }
         }
     }
 
+    @UnstableApi
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if (menuItem.getItemId() == android.R.id.home) {
@@ -923,11 +953,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         unregisterReceiver(setProgress);
         unregisterReceiver(setSelectionBroadcast);
         unregisterReceiver(setTitleBroadcast);
-        unregisterReceiver(showGetPlus);
         unregisterReceiver(showRating);
-        unregisterReceiver(showEqualizer);
         unregisterReceiver(updateAdapter);
-        unregisterReceiver(clearDownloading);
+        unregisterReceiver(showEqualizer);
         showingView = "";
         mPresenter.onDestroy();
         super.onDestroy();
@@ -942,7 +970,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             menu.findItem(R.id.addMainScreen).setVisible(false);
         }
+
         mPresenter.onCreateOptionsMenu(menu);
+
         return true;
     }
 
@@ -963,121 +993,67 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @Override
     public void shareTextUrl() {
-        ShareCompat.IntentBuilder.from(this)
-                .setType("text/plain")
-                .setText(mBookPOJO.getUrl())
-                .startChooser();
+        Intent sendIntent = new Intent();
+        sendIntent.setAction(Intent.ACTION_SEND);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, mBookPOJO.getUrl());
+        sendIntent.setType("text/plain");
+        Intent shareIntent = Intent.createChooser(sendIntent, null);
+        startActivity(shareIntent);
     }
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void addToMainScreen(BookPOJO pojo) {
-        if (StorageAds.idDisableAds()) {
-            Picasso.get().load(pojo.getPhoto()).into(new Target() {
-                @Override
-                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                    ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
+        Picasso.get().load(pojo.getPhoto()).into(new Target() {
+            @Override
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
 
-                    Intent intent = new Intent(getApplicationContext(), LoadBook.class);
-                    intent.setAction(Intent.ACTION_VIEW);
-                    intent.putExtra("url", pojo.getUrl());
-                    intent.putExtra("notificationClick", true);
+                Intent intent = new Intent(getApplicationContext(), LoadBook.class);
+                intent.setAction(Intent.ACTION_VIEW);
+                intent.putExtra("url", pojo.getUrl());
+                intent.putExtra("notificationClick", true);
 
-                    ShortcutInfo shortcut = new ShortcutInfo.Builder(getApplicationContext(),
-                            pojo.getUrl())
-                            .setShortLabel(pojo.getName())
-                            .setLongLabel(pojo.getName())
-                            .setIcon(Icon.createWithBitmap(bitmap))
-                            .setIntent(intent)
-                            .build();
+                ShortcutInfo shortcut = new ShortcutInfo.Builder(getApplicationContext(),
+                        pojo.getUrl())
+                        .setShortLabel(pojo.getName())
+                        .setLongLabel(pojo.getName())
+                        .setIcon(Icon.createWithBitmap(bitmap))
+                        .setIntent(intent)
+                        .build();
 
-                    if (shortcutManager != null) {
-                        shortcutManager.setDynamicShortcuts(Collections.singletonList(shortcut));
-                        if (shortcutManager.isRequestPinShortcutSupported()) {
-                            ShortcutInfo pinShortcutInfo = new ShortcutInfo
-                                    .Builder(getApplicationContext(), pojo.getUrl())
-                                    .build();
-                            Intent pinnedShortcutCallbackIntent =
-                                    shortcutManager.createShortcutResultIntent(pinShortcutInfo);
+                if (shortcutManager != null) {
+                    shortcutManager.setDynamicShortcuts(Collections.singletonList(shortcut));
+                    if (shortcutManager.isRequestPinShortcutSupported()) {
+                        ShortcutInfo pinShortcutInfo = new ShortcutInfo
+                                .Builder(getApplicationContext(), pojo.getUrl())
+                                .build();
+                        Intent pinnedShortcutCallbackIntent =
+                                shortcutManager.createShortcutResultIntent(pinShortcutInfo);
 
 
-                            PendingIntent successCallback = PendingIntent.getBroadcast(
-                                    getApplicationContext(), 0,
-                                    pinnedShortcutCallbackIntent, 0);
-                            shortcutManager.requestPinShortcut(pinShortcutInfo,
-                                    successCallback.getIntentSender());
-                        }
+                        PendingIntent successCallback = PendingIntent.getBroadcast(
+                                getApplicationContext(), 0,
+                                pinnedShortcutCallbackIntent, PendingIntent.FLAG_IMMUTABLE);
+                        shortcutManager.requestPinShortcut(pinShortcutInfo,
+                                successCallback.getIntentSender());
                     }
                 }
+            }
 
-                @Override
-                public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+            @Override
+            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
 
-                }
+            }
 
-                @Override
-                public void onPrepareLoad(Drawable placeHolderDrawable) {
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
 
-                }
-            });
-
-        } else {
-            showGetPlus();
-        }
-    }
-
-    @Override
-    public void showGetPlus() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.getPlus);
-        builder.setMessage(R.string.only_plus);
-        builder.setPositiveButton(R.string.buy, (dialogInterface, i) -> {
-            Intent start = new Intent(BookActivity.this, PopupGetPlus.class);
-            start.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-            startActivity(start);
+            }
         });
-        builder.setNeutralButton(R.string.cancel, null);
-        builder.show();
     }
 
-    @Override
-    public void showShowAdsBeforeDownload() {
-        if (showedAd) {
-            mPresenter.loadBooks(mAudioAdapter.getSelectedItems());
-        } else if (rewardedAd != null && rewardedAd.isLoaded() && !StorageAds.idDisableAds()) {
-            RewardedAdCallback adCallback = new RewardedAdCallback() {
-                @Override
-                public void onRewardedAdOpened() {
-                    // Ad opened.
-                }
-
-
-                @Override
-                public void onRewardedAdClosed() {
-                    rewardedAd = createAndLoadRewardedAd();
-                }
-
-                @Override
-                public void onUserEarnedReward(@NonNull RewardItem reward) {
-                    showedAd = true;
-                    mPresenter.loadBooks(mAudioAdapter.getSelectedItems());
-                }
-
-                @Override
-                public void onRewardedAdFailedToShow(int errorCode) {
-                    if (errorCode == ERROR_CODE_AD_REUSED) {
-                        mPresenter.loadBooks(mAudioAdapter.getSelectedItems());
-                    }
-                }
-            };
-            rewardedAd.show(this, adCallback);
-        } else {
-            Log.d(TAG, "The rewarded ad wasn't loaded yet.");
-            Toast.makeText(this, R.string.rewardedad_not_loaded, Toast.LENGTH_SHORT).show();
-        }
-
-    }
 
     @Override
     public void showToast(int id) {
@@ -1089,18 +1065,12 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 
+    @UnstableApi
     @Override
-    public void updateAdapter(String url) {
-        if (url != null) {
-            mAudioAdapter.removeDownloadingItem(url);
-        } else {
-            if (mAudioAdapter != null) mAudioAdapter.notifyDataSetChanged();
+    public void updateAdapter() {
+        if (mAudioAdapter != null) {
+            mAudioAdapter.refresh();
         }
-    }
-
-    @Override
-    public void clearDownloading() {
-        mAudioAdapter.clearDownloadingItem();
     }
 
     @Override
@@ -1134,29 +1104,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     }
 
     @Override
-    public void onBackPressed() {
-        if (bottomSheetBehavior != null
-                && bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-            if (mAudioAdapter.getSelectedItemsSize() > 0) {
-                mAudioAdapter.clearSelected();
-            } else {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            }
-        } else if (bottomSheetBehavior == null && mAudioAdapter.getSelectedItemsSize() > 0) {
-            mAudioAdapter.clearSelected();
-        } else {
-            if (mNotificationClick) {
-                Intent intent = new Intent(this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                intent.putExtra("notificationClick", true);
-                startActivity(intent);
-            } else {
-                super.onBackPressed();
-            }
-        }
-    }
-
-    @Override
     public void decode(@NotNull @NonNull final String key) {
         JsEvaluator jsEvaluator = new JsEvaluator(this);
         jsEvaluator.callFunction(Consts.decodeScript,
@@ -1178,10 +1125,11 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         mNameCurent.setText(name);
     }
 
+    @UnstableApi
     @Override
     public void showData(@NonNull ArrayList<AudioPOJO> data, @NonNull String bookUrl) {
         if (mAudioAdapter != null) {
-            mAudioAdapter.setData(data, bookUrl);
+            mAudioAdapter.setData(data);
         }
     }
 
@@ -1237,6 +1185,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         mPresenter.setServiceBound(savedInstanceState.getBoolean("serviceStatus"));
     }
 
+    @UnstableApi
     @Override
     public void setSelected(int id, String name) {
         if (mAudioAdapter != null) {
@@ -1288,13 +1237,69 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     }
 
     @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        View currentFocus = getCurrentFocus();
+        if (currentFocus!=null){
+            if(keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                // --- НАЧАЛО ИСПРАВЛЕНИЯ ---
+                // Проверяем, является ли текущий сфокусированный View дочерним элементом нашего TabLayout
+                if (isTabView(currentFocus)) {
+                    // Находим ViewPager2
+                    ViewPager2 viewPager = findViewById(R.id.view_pager);
+                    if (viewPager != null) {
+                        // Получаем текущую позицию ViewPager2
+                        int currentItem = viewPager.getCurrentItem();
+                        // Получаем адаптер ViewPager2
+                        RecyclerView.Adapter adapter = viewPager.getAdapter();
+
+                        // Проверяем, что адаптер - это наш SectionsPagerAdapter
+                        if (adapter instanceof SectionsPagerAdapter) {
+                            // Получаем ID фрагмента по его позиции
+                            long fragmentId = adapter.getItemId(currentItem);
+                            // Находим сам фрагмент по его ID
+                            Fragment currentFragment = getSupportFragmentManager().findFragmentByTag("f" + fragmentId);
+
+                            // Если фрагмент найден, передаем фокус его корневому View
+                            if (currentFragment != null && currentFragment.getView() != null) {
+                                currentFragment.getView().requestFocus();
+                            }
+                        }
+                    }
+                    // Возвращаем true, т.к. мы обработали событие
+                    return true;
+                }
+            }else if(keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                if (currentFocus.getId()==R.id.genre||currentFocus.getId()==R.id.autorConteiner||currentFocus.getId()==R.id.author||
+                        currentFocus.getId()==R.id.artistConteiner||currentFocus.getId()==R.id.artist||currentFocus.getId()==R.id.seriesConteiner||
+                        currentFocus.getId()==R.id.series||currentFocus.getId()==R.id.showMore) {
+                    View playerView = findViewById(R.id.player);
+                    if (playerView != null) {
+                        playerView.requestFocus();
+                    }
+                }
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private boolean isTabView(View view) {
+        if (view == null || tabs == null) return false;
+        // Каждая вкладка (TabView) является дочерним элементом контейнера внутри TabLayout.
+        // Проверяем, совпадает ли родительский View нашего focusedView с контейнером вкладок.
+        ViewParent parent = view.getParent();
+        // TabLayout содержит дочерний SlidingTabIndicator, который в свою очередь содержит TabView
+        return parent != null && parent.getParent() == tabs;
+    }
+
+    @UnstableApi
+    @Override
     protected void onResume() {
         super.onResume();
         showingView = mBookPOJO.getUrl();
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
-        mAudioAdapter.notifyDataSetChanged();
+        mAudioAdapter.refresh();
 
         if (bottomSheetBehavior != null) {
             bottomSheetBehavior.setState(mPresenter.getState());
@@ -1311,42 +1316,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         }
     }
 
-    @Override
-    public void downloadFile(String url, BookPOJO bookPOJO) {
-        mAudioAdapter.addDownloadingItem(url);
-        Intent intent = new Intent(this, Download.class);
-        intent.putExtra("url", url);
-        Gson gson = new Gson();
-        String json = gson.toJson(bookPOJO);
-        intent.putExtra("book", json);
-        startService(intent);
-    }
-
-    @Override
-    public void downloadFileABMP3(final String url, final BookPOJO bookPOJO) {
-        mAudioAdapter.addDownloadingItem(url);
-        Intent intent = new Intent(this, DownloadABMP3.class);
-        intent.putExtra("url", url);
-        Gson gson = new Gson();
-        String json = gson.toJson(bookPOJO);
-        intent.putExtra("book", json);
-        startService(intent);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NotNull String[] permissions,
-            @NotNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_WRITE_STORAGE) {
-            if (grantResults.length <= 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this,
-                        getString(R.string.worning_not_allowed_write_storege),
-                        Toast.LENGTH_LONG).show();
-            } else {
-                mPresenter.dowland(mAudioAdapter.getSelectedItems());
-            }
-        }
-    }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {

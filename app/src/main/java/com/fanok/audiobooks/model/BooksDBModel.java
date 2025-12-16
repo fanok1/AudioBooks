@@ -41,11 +41,6 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     }
 
     @Override
-    public boolean inHistory(@NonNull String url) {
-        return booksInTable(url, "history");
-    }
-
-    @Override
     public boolean inSaved(final String url) {
         return booksInTable(url, "saved");
     }
@@ -109,23 +104,8 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     }
 
     @Override
-    public void clearSaved() {
-        clearAll("saved");
-    }
-
-    @Override
-    public int getHistoryCount() {
-        return getCount("history");
-    }
-
-    @Override
-    public int getFavoriteCount() {
-        return getCount("favorite");
-    }
-
-    @Override
-    public int getSavedCount() {
-        return getCount("saved");
+    public void removeSavedById(final BookPOJO book) {
+        remove(book, "saved");
     }
 
     @Override
@@ -151,6 +131,19 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     @Override
     public BookPOJO getSaved(@NonNull String url) {
         return getByUrl(url, "saved");
+    }
+
+    @Override
+    public BookPOJO getSomewhere(@NonNull String url) {
+        BookPOJO bookPOJO = getSaved(url);
+        if (bookPOJO!=null && bookPOJO.getUrl()!=null) {
+            return bookPOJO;
+        }
+        bookPOJO = getByUrl(url, "favorite");
+        if (bookPOJO!=null && bookPOJO.getUrl()!=null) {
+            return bookPOJO;
+        }
+        return getByUrl(url, "history");
     }
 
     private BookPOJO getByUrl(@NonNull final String url, @NonNull final String table) {
@@ -339,12 +332,9 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
         String countQuery = "SELECT  * FROM " + table;
         SQLiteDatabase db = getDBHelper().getWritableDatabase();
         Cursor cursor = db.rawQuery(countQuery, null);
-
         int result = 0;
-        if (cursor != null) {
-            result = cursor.getCount();
-            cursor.close();
-        }
+        result = cursor.getCount();
+        cursor.close();
         db.close();
         return result;
     }

@@ -1,23 +1,25 @@
 package com.fanok.audiobooks.presenter;
 
 
+import static com.fanok.audiobooks.util.DownloadUtil.getDownloadManager;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.offline.Download;
+import androidx.media3.exoplayer.offline.DownloadIndex;
 import androidx.preference.PreferenceManager;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
-import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
-import com.fanok.audiobooks.activity.PopupClearSaved;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
 import com.fanok.audiobooks.model.AudioDBModel;
@@ -32,10 +34,11 @@ import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
+import java.util.Objects;
+
 import org.jetbrains.annotations.NotNull;
 
 @InjectViewState
@@ -83,6 +86,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
     }
 
 
+    @UnstableApi
     @Override
     public void loadBooks() {
         if (!isLoading) {
@@ -126,11 +130,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                                             Comparator<BookPOJO> comparator = getComparator(sort);
                                             if (!sort.equals(
                                                     mContext.getString(R.string.sort_value_date))) {
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                                    books.sort(comparator);
-                                                } else {
-                                                    Collections.sort(books, comparator);
-                                                }
+                                                books.sort(comparator);
                                             }
                                         }
                                     }
@@ -209,8 +209,8 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         ImageView imageView = layout.findViewById(R.id.imageView);
         Picasso.get()
                 .load(book.getPhoto())
-                .error(R.drawable.image_placeholder)
-                .placeholder(R.drawable.image_placeholder)
+                .error(android.R.drawable.ic_menu_gallery)
+                .placeholder(android.R.drawable.ic_menu_gallery)
                 .into(imageView);
 
         TextView title = layout.findViewById(R.id.title);
@@ -237,7 +237,6 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
         open.setOnClickListener(view1 -> {
             dialog.dismiss();
-            MyInterstitialAd.increase();
             getViewState().showBooksActivity(book);
         });
 
@@ -317,24 +316,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
             mAudioDBModel.remove(book.getUrl());
         } else if (table == Consts.TABLE_SAVED){
             mBooksDBModel.removeSaved(book);
-            File[] folders = mContext.getExternalFilesDirs(null);
-            for (File folder : folders) {
-                if (folder != null) {
-                    String source = Consts.getSorceName(mContext, book.getUrl());
-                    String filePath = folder.getAbsolutePath() + "/" + source
-                            + "/" + book.getAutor()
-                            + "/" + book.getArtist()
-                            + "/" + book.getName();
-                    File dir = new File(filePath);
-                    PopupClearSaved.delete(dir);
-                }
-            }
-            for (final File filesDir : folders) {
-                if (filesDir != null) {
-                    File file = new File(filesDir.getAbsolutePath());
-                    PopupClearSaved.deleteEmtyFolder(file);
-                }
-            }
+            //
 
         }
         if (filterSearch.isEmpty()) {
@@ -357,7 +339,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                     filterSearch.add(book);
                 }
             }
-        } else if (books != null && books.size() > 0) {
+        } else if (books != null && !books.isEmpty()) {
             for (BookPOJO book : books) {
                 if (book.getName().toLowerCase().contains(qery.toLowerCase())) {
                     filterSearch.add(book);
@@ -367,14 +349,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         getViewState().showData(filterSearch);
     }
 
-    @Override
-    public void cealrData() {
-        if (books != null) {
-            books.clear();
-            getViewState().showData(books);
-        }
-    }
-
+    @UnstableApi
     @Override
     public void onOptionsItemSelected(@NotNull View view, int id) {
         if (books != null && id != R.id.filter && id != R.id.order) {
@@ -385,35 +360,30 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                 loadBooks();
             } else if (id == R.id.saved_filter) {
                 if (!isFilterSaved) {
-                    File[] folders = mContext.getExternalFilesDirs(null);
                     flter = new ArrayList<>();
                     if (mAudioListDBModel == null) {
                         mAudioListDBModel = new AudioListDBModel(mContext);
                     }
                     for (BookPOJO bookPOJO : books) {
-                        ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(
-                                bookPOJO.getUrl());
-                        for (File folder : folders) {
-                            if (folder != null) {
-                                String source = Consts.getSorceName(mContext, bookPOJO.getUrl());
-                                String filePath = folder.getAbsolutePath() + "/" + source
-                                        + "/" + bookPOJO.getAutor()
-                                        + "/" + bookPOJO.getArtist()
-                                        + "/" + bookPOJO.getName();
-                                File dir = new File(filePath);
-                                if (dir.exists() && dir.isDirectory()) {
-                                    for (AudioListPOJO pojo : arrayList) {
-                                        String url = pojo.getAudioUrl();
-                                        File file = new File(dir,
-                                                url.substring(url.lastIndexOf("/") + 1));
-                                        if (file.exists()) {
-                                            flter.add(bookPOJO);
-                                            break;
-                                        }
+                        ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(bookPOJO.getUrl());
+                        if (!arrayList.isEmpty()) {
+                            DownloadIndex downloadIndex = getDownloadManager().getDownloadIndex();
+                            try {
+                                for (AudioListPOJO pojo : arrayList) {
+                                    Download download = downloadIndex.getDownload(pojo.getCleanAudioUrl());
+                                    if (download != null && download.state == Download.STATE_COMPLETED) {
+                                        flter.add(bookPOJO);
+                                        break;
                                     }
                                 }
+                            } catch (IOException e) {
+                                // ignore
                             }
                         }
+
+
+
+
                     }
                     getViewState().setSubTitle(mContext.getString(R.string.menu_saved));
                 } else {
@@ -424,18 +394,10 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
                 onSearch(mQuery);
             } else {
                 Comparator<BookPOJO> comparator = getComparator(id);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    if (flter == null) {
-                        books.sort(comparator);
-                    } else {
-                        flter.sort(comparator);
-                    }
+                if (flter == null) {
+                    books.sort(comparator);
                 } else {
-                    if (flter == null) {
-                        Collections.sort(books, comparator);
-                    } else {
-                        Collections.sort(flter, comparator);
-                    }
+                    flter.sort(comparator);
                 }
                 onSearch(mQuery);
             }
@@ -471,7 +433,7 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         }
         popupMenu.setOnMenuItemClickListener(item -> {
             if (books != null) {
-                if (item.getTitle().equals("Все")) {
+                if (Objects.requireNonNull(item.getTitle()).equals("Все")) {
                     getViewState().setSubTitle("");
                     this.flter = null;
                     onSearch(mQuery);
@@ -637,35 +599,28 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         }
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     private int getSavedAudioNumber(BookPOJO book) {
         if (mAudioListDBModel == null) {
             mAudioListDBModel = new AudioListDBModel(mContext);
         }
-        int size = 0;
-        File[] folders = mContext.getExternalFilesDirs(null);
+        DownloadIndex downloadIndex = getDownloadManager().getDownloadIndex();
         ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(book.getUrl());
-        for (File folder : folders) {
-            if (folder != null) {
-                String source = Consts.getSorceName(mContext, book.getUrl());
-                String filePath = folder.getAbsolutePath() + "/" + source
-                        + "/" + book.getAutor()
-                        + "/" + book.getArtist()
-                        + "/" + book.getName();
-                File dir = new File(filePath);
-                if (dir.exists() && dir.isDirectory()) {
-                    for (AudioListPOJO pojo : arrayList) {
-                        String url = pojo.getAudioUrl();
-                        File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
-                        if (file.exists()) {
-                            size++;
-                        }
-                    }
+        int downloadedCount = 0;
+        try {
+            for (AudioListPOJO pojo : arrayList) {
+                Download download = downloadIndex.getDownload(pojo.getCleanAudioUrl());
+                if (download != null && download.state == Download.STATE_COMPLETED) {
+                    downloadedCount++;
                 }
             }
+        } catch (IOException e) {
+            // ignore
         }
-        if (size == 0) {
+
+        if (downloadedCount == 0) {
             return NOT_SAVED;
-        } else if (size >= arrayList.size()) {
+        } else if (downloadedCount >= arrayList.size()) {
             return SAVED_ALL;
         } else {
             return SAVED;

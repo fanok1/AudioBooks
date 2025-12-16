@@ -2,6 +2,7 @@ package com.fanok.audiobooks.adapter;
 
 import static java.lang.Integer.MAX_VALUE;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +17,7 @@ import com.squareup.picasso.Picasso;
 import de.hdodenhof.circleimageview.CircleImageView;
 import java.util.ArrayList;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class AnswerListAddapter extends RecyclerView.Adapter<AnswerListAddapter.MyHolder> {
 
     private static final int MAX_LINES = 5;
@@ -65,7 +67,7 @@ public class AnswerListAddapter extends RecyclerView.Adapter<AnswerListAddapter.
 
         void bind(SubComentsPOJO comentsPOJO) {
 
-            if (getAdapterPosition() == 0) {
+            if (getBindingAdapterPosition() == 0) {
 
 
                 mImageView.setLayoutParams(new LinearLayout.LayoutParams(width, height));
@@ -89,7 +91,7 @@ public class AnswerListAddapter extends RecyclerView.Adapter<AnswerListAddapter.
             mText.setMaxLines(MAX_VALUE);
             mText.setText(comentsPOJO.getText());
 
-            if (getAdapterPosition() != 0) {
+            if (getBindingAdapterPosition() != 0) {
                 mText.post(() -> {
                     if (mText.getLineCount() <= MAX_LINES) {
                         mReadMore.setVisibility(View.GONE);
@@ -171,6 +173,7 @@ public class AnswerListAddapter extends RecyclerView.Adapter<AnswerListAddapter.
         mContext = context;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void clearItem() {
         mModel.clear();
         notifyDataSetChanged();
@@ -202,8 +205,10 @@ public class AnswerListAddapter extends RecyclerView.Adapter<AnswerListAddapter.
         return new MyHolder(view);
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void setItem(ArrayList<SubComentsPOJO> model) {
         mModel = model;
         notifyDataSetChanged();
+
     }
 }

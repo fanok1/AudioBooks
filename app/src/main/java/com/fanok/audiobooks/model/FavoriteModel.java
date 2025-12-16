@@ -1,12 +1,17 @@
 package com.fanok.audiobooks.model;
 
+import static com.fanok.audiobooks.util.DownloadUtil.getDownloadManager;
+
 import android.content.Context;
+
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.offline.Download;
+import androidx.media3.exoplayer.offline.DownloadIndex;
 import com.fanok.audiobooks.Consts;
-import com.fanok.audiobooks.activity.PopupClearSaved;
 import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import io.reactivex.Observable;
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class FavoriteModel implements
@@ -22,6 +27,7 @@ public class FavoriteModel implements
         mContext = context;
     }
 
+    @UnstableApi
     @Override
     public Observable<ArrayList<BookPOJO>> getBooks(int table) {
         return Observable.create(observableEmitter -> {
@@ -42,41 +48,29 @@ public class FavoriteModel implements
                         break;
                 }
 
-
                 if (table == Consts.TABLE_SAVED) {
-                    File[] folders = null;
                     if (mContext != null) {
-                        folders = mContext.getExternalFilesDirs(null);
-                    }
-                    if (folders != null) {
-
-                        ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.getAll();
+                        DownloadIndex downloadIndex = getDownloadManager().getDownloadIndex();
                         for (int i = 0; i < books.size(); i++) {
                             BookPOJO bookPOJO = books.get(i);
-                            boolean temp = false;
-                            for (File folder : folders) {
-                                if (folder != null) {
-                                    String source = Consts.getSorceName(mContext, bookPOJO.getUrl());
-                                    String filePath = folder.getAbsolutePath() + "/" + source
-                                            + "/" + bookPOJO.getAutor()
-                                            + "/" + bookPOJO.getArtist()
-                                            + "/" + bookPOJO.getName();
-                                    File dir = new File(filePath);
-                                    if (dir.exists() && dir.isDirectory()) {
-                                        for (AudioListPOJO pojo : arrayList) {
-                                            if (pojo.getBookUrl().equals(bookPOJO.getUrl())) {
-                                                String url = pojo.getAudioUrl();
-                                                File file = new File(dir,
-                                                        url.substring(url.lastIndexOf("/") + 1));
-                                                if (file.exists()) {
-                                                    temp = true;
-                                                }
-                                            }
+                            boolean hasDownloads = false;
+                            ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(bookPOJO.getUrl());
+
+                            if (arrayList != null && !arrayList.isEmpty()) {
+                                try {
+                                    for (AudioListPOJO pojo : arrayList) {
+                                        Download download = downloadIndex.getDownload(pojo.getCleanAudioUrl());
+                                        if (download != null && download.state == Download.STATE_COMPLETED) {
+                                            hasDownloads = true;
+                                            break;
                                         }
                                     }
+                                } catch (IOException e) {
+                                    // ignore
                                 }
                             }
-                            if (!temp) {
+
+                            if (!hasDownloads) {
                                 books.remove(i);
                                 i--;
                                 deleteSavedBook(bookPOJO);
@@ -96,13 +90,6 @@ public class FavoriteModel implements
     private void deleteSavedBook(final BookPOJO bookPOJO) {
         if(mBooksDBModel.inSaved(bookPOJO)){
             mBooksDBModel.removeSaved(bookPOJO);
-        }
-        File[] filesDirs = mContext.getExternalFilesDirs(null);
-        for (final File filesDir : filesDirs) {
-            if (filesDir != null) {
-                File file = new File(filesDir.getAbsolutePath());
-                PopupClearSaved.deleteEmtyFolder(file);
-            }
         }
     }
 

@@ -1,13 +1,12 @@
 package com.fanok.audiobooks.fragment;
-
-import static com.fanok.audiobooks.Consts.FRAGMENT_SAVED;
-import static com.fanok.audiobooks.Consts.REQEST_CODE_SEARCH;
 import static com.fanok.audiobooks.Consts.TABLE_FAVORITE;
 import static com.fanok.audiobooks.Consts.TABLE_HISTORY;
 import static com.fanok.audiobooks.Consts.TABLE_SAVED;
 import static com.fanok.audiobooks.Consts.getAttributeColor;
 import static com.fanok.audiobooks.Consts.setColorPrimeriTextInIconItemMenu;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -23,9 +22,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -91,10 +96,95 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
     }
 
+    private final ActivityResultLauncher<Intent> searchActivityLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Log.d(TAG, "onCreate: searchActivityLauncher");
+                }
+            });
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         binding = FragmentFavoriteBinding.inflate(inflater, container, false);
+
+        MenuHost menuHost = requireActivity();
+        menuHost.addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+                inflater.inflate(R.menu.favorite_options_menu, menu);
+                MenuItem item = menu.findItem(R.id.app_bar_search);
+                SharedPreferences pref = PreferenceManager
+                        .getDefaultSharedPreferences(requireContext());
+
+                Consts.setColorPrimeriTextInIconItemMenu(item, requireContext());
+
+                if (pref.getBoolean("search_pref", false)) {
+                    item.setActionView(null);
+                    item.setOnMenuItemClickListener(menuItem -> {
+                        showSearchActivity(Consts.MODEL_BOOKS);
+                        return true;
+                    });
+                } else {
+                    searchView = (SearchView) item.getActionView();
+                    Objects.requireNonNull(searchView).setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                        @Override
+                        public boolean onQueryTextChange(String s) {
+                            getPresenter().onSearch(s);
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onQueryTextSubmit(String s) {
+                            return false;
+                        }
+                    });
+                }
+
+
+                if(table==TABLE_SAVED){
+                    menu.findItem(R.id.saved).setVisible(false);
+                    menu.findItem(R.id.saved_filter).setVisible(false);
+                }
+
+                if (table == TABLE_FAVORITE || table == TABLE_SAVED) {
+                    menu.findItem(R.id.order).setVisible(true);
+                    menu.findItem(R.id.filter).setVisible(true);
+                    setColorPrimeriTextInIconItemMenu(
+                            menu.findItem(R.id.order), requireContext());
+                    String sort = pref.getString("pref_sort_favorite", getString(R.string.sort_value_date));
+                    setColorPrimeriTextInIconItemMenu(
+                            menu.findItem(R.id.filter), requireContext());
+
+                    if (getString(R.string.sort_value_name).equals(sort)) {
+                        menu.findItem(R.id.name).setChecked(true);
+                    } else if (getString(R.string.sort_value_genre).equals(sort)) {
+                        menu.findItem(R.id.genre).setChecked(true);
+                    } else if (getString(R.string.sort_value_autor).equals(sort)) {
+                        menu.findItem(R.id.autor).setChecked(true);
+                    } else if (getString(R.string.sort_value_artist).equals(sort)) {
+                        menu.findItem(R.id.artist).setChecked(true);
+                    } else if (getString(R.string.sort_value_series).equals(sort)) {
+                        menu.findItem(R.id.series).setChecked(true);
+                    } else if (getString(R.string.sort_value_saved).equals(sort)&&table!=TABLE_SAVED){
+                        menu.findItem(R.id.saved).setChecked(true);
+                    }else {
+                        menu.findItem(R.id.date).setChecked(true);
+                    }
+                }
+
+                setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search), requireContext());
+            }
+
+            @SuppressLint("UnsafeOptInUsageError")
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem item) {
+                mPresenter.onOptionsItemSelected(binding.view, item.getItemId());
+                item.setChecked(true);
+                return true;
+            }
+        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         if (titleId != 0) {
             requireActivity().setTitle(titleId);
@@ -105,7 +195,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
         mAddapterBooks = new BooksListAddapter(pref.getBoolean("history_procent", true));
         binding.list.setAdapter(mAddapterBooks);
-        setHasOptionsMenu(true);
         mAddapterBooks.setListener(this::onItemSelected);
 
         mAddapterBooks.setLongListener(
@@ -124,7 +213,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int position = viewHolder.getAdapterPosition();
+                int position = viewHolder.getBindingAdapterPosition();
                 mPresenter.onRemove(position);
                 Toast.makeText(getContext(), R.string.delete_complite, Toast.LENGTH_SHORT).show();
             }
@@ -171,75 +260,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     }
 
     @Override
-    public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.favorite_options_menu, menu);
-        MenuItem item = menu.findItem(R.id.action_search);
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(requireContext());
-
-        Consts.setColorPrimeriTextInIconItemMenu(item, requireContext());
-
-        if (pref.getBoolean("search_pref", false)) {
-            item.setActionView(null);
-            item.setOnMenuItemClickListener(menuItem -> {
-                Intent intent = new Intent(getContext(), SearchableActivity.class);
-                intent.putExtra(Consts.ARG_MODEL, Consts.MODEL_BOOKS);
-                startActivityForResult(intent, REQEST_CODE_SEARCH);
-                return true;
-            });
-        } else {
-            searchView = (SearchView) item.getActionView();
-            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                @Override
-                public boolean onQueryTextChange(String s) {
-                    getPresenter().onSearch(s);
-                    return false;
-                }
-
-                @Override
-                public boolean onQueryTextSubmit(String s) {
-                    return false;
-                }
-            });
-        }
-
-
-        if(table==TABLE_SAVED){
-            menu.findItem(R.id.saved).setVisible(false);
-            menu.findItem(R.id.saved_filter).setVisible(false);
-        }
-
-        if (table == TABLE_FAVORITE || table == TABLE_SAVED) {
-            menu.findItem(R.id.order).setVisible(true);
-            menu.findItem(R.id.filter).setVisible(true);
-            setColorPrimeriTextInIconItemMenu(
-                    menu.findItem(R.id.order), requireContext());
-            String sort = pref.getString("pref_sort_favorite", getString(R.string.sort_value_date));
-            setColorPrimeriTextInIconItemMenu(
-                    menu.findItem(R.id.filter), requireContext());
-
-            if (getString(R.string.sort_value_name).equals(sort)) {
-                menu.findItem(R.id.name).setChecked(true);
-            } else if (getString(R.string.sort_value_genre).equals(sort)) {
-                menu.findItem(R.id.genre).setChecked(true);
-            } else if (getString(R.string.sort_value_autor).equals(sort)) {
-                menu.findItem(R.id.autor).setChecked(true);
-            } else if (getString(R.string.sort_value_artist).equals(sort)) {
-                menu.findItem(R.id.artist).setChecked(true);
-            } else if (getString(R.string.sort_value_series).equals(sort)) {
-                menu.findItem(R.id.series).setChecked(true);
-            } else if (getString(R.string.sort_value_saved).equals(sort)&&table!=TABLE_SAVED){
-                menu.findItem(R.id.saved).setChecked(true);
-            }else {
-                menu.findItem(R.id.date).setChecked(true);
-            }
-        }
-
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-
-    @Override
     public void onDestroyView() {
         getPresenter().onDestroy();
         if (mAddapterBooks != null) {
@@ -248,13 +268,6 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         mAddapterBooks = null;
         super.onDestroyView();
         binding = null;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        mPresenter.onOptionsItemSelected(binding.view, item.getItemId());
-        item.setChecked(true);
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -330,6 +343,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         return mPresenter;
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     @Override
     public void onResume() {
         super.onResume();
@@ -391,7 +405,7 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     public void showSearchActivity(int modelId) {
         Intent intent = new Intent(getContext(), SearchableActivity.class);
         intent.putExtra(Consts.ARG_MODEL, modelId);
-        startActivityForResult(intent, REQEST_CODE_SEARCH);
+        searchActivityLauncher.launch(intent);
     }
 
 

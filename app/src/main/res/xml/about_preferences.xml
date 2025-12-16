@@ -6,11 +6,11 @@
         android:key="version"
         android:selectable="false" />
 
-    <Preference
+    <!--<Preference
         android:icon="@drawable/ic_plus_version"
         android:key="version_plus"
         android:summary="@string/how_is"
-        android:title="@string/getPlus" />
+        android:title="@string/getPlus" />-->
 
     <Preference
         android:icon="@drawable/ic_privacy"

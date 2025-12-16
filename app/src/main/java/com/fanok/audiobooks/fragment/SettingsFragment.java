@@ -23,14 +23,19 @@ import android.os.Environment;
 import android.os.PowerManager;
 import android.provider.SearchRecentSuggestions;
 import android.provider.Settings;
+import android.util.Log;
 import android.util.TypedValue;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.annotation.Nullable;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.offline.DownloadService;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.MultiSelectListPreference;
@@ -47,14 +52,15 @@ import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.ActivityCookies;
 import com.fanok.audiobooks.activity.ActivityImport;
+import com.fanok.audiobooks.activity.ClearSavedActivity;
 import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.activity.ParentalControlActivity;
-import com.fanok.audiobooks.activity.PopupClearSaved;
 import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.AudioListDBModel;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BackupPOJO;
 import com.fanok.audiobooks.pojo.StorageUtil;
+import com.fanok.audiobooks.service.ExoDownloadService;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -72,15 +78,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+
 import org.jetbrains.annotations.NotNull;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class SettingsFragment extends PreferenceFragmentCompat implements
         SharedPreferences.OnSharedPreferenceChangeListener, EasyPermissions.PermissionCallbacks {
 
-    private static final int CODE_RESTORE = 292;
-
-    private static final int REQUEST_WRITE_STORAGE = 112;
 
     private static final int EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 342;
 
@@ -195,21 +200,20 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         }
     }
 
-    @Override
-    public void onActivityResult(final int requestCode, final int resultCode, @Nullable final Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CODE_RESTORE) {
-            if (SDK_INT >= Build.VERSION_CODES.R) {
-                if (Environment.isExternalStorageManager()) {
-                    showAllert(requireContext(), R.string.confirm_restore, restoreClickListnere);
-                } else {
-                    Toast.makeText(requireContext(), getString(R.string.worning_not_allowed_read_storege),
-                            Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
 
-    }
+    private final ActivityResultLauncher<Intent> manageStorageLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    if (Environment.isExternalStorageManager()) {
+                        showAllert(requireContext(), R.string.confirm_restore, restoreClickListnere);
+                    } else {
+                        Toast.makeText(requireContext(), getString(R.string.worning_not_allowed_read_storege),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
 
     @Override
     public void onResume() {
@@ -241,22 +245,19 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 .unregisterOnSharedPreferenceChangeListener(this);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NotNull String[] permissions,
-            @NotNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_WRITE_STORAGE) {
-            if (grantResults.length <= 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(getContext(),
-                        getString(R.string.worning_not_allowed_write_storege),
-                        Toast.LENGTH_LONG).show();
-            } else {
-                showAllert(requireContext(), R.string.confirm_backup,
-                        mOnClickListener);
-            }
-        }
-    }
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                   showAllert(requireContext(), R.string.confirm_backup, mOnClickListener);
+                } else {
+                    Toast.makeText(getContext(),
+                            getString(R.string.worning_not_allowed_write_storege),
+                            Toast.LENGTH_LONG).show();
+                }
+            });
 
+
+    @UnstableApi
     @SuppressLint("InlinedApi")
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -319,65 +320,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
 */
 
-        /*preferenceChangeListner("vpn", (preference, newValue) -> {
-
-            if (!newValue.equals(getString(R.string.vpn_no_value))) {
-                String file = "";
-                String name = "";
-                if (newValue.equals(getString(R.string.vpn_antizapret_value))) {
-                    file = "antizapret-tcp.ovpn";
-                    name = "Антизапрет";
-                } else if (newValue.equals(getString(R.string.vpn_zaborona_value))) {
-                    file = "srv0.zaborona-help_maxroutes.ovpn";
-                    name = "Заборона";
-                } else if (newValue.equals(getString(R.string.vpn_zaborona_europe_value))) {
-                    file = "srv0.zaborona-help-UDP-no-encryption_maxroutes.ovpn";
-                    name = "Заборона Европа";
-                } else if (newValue.equals(getString(R.string.vpn_ukrane_value))) {
-                    file = "ukrane.ovpn";
-                    name = "VPN Украина";
-                }
-                if (!file.isEmpty()) {
-
-                    Intent intent = VpnService.prepare(getContext().getApplicationContext());
-                    if (intent != null) {
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        getContext().getApplicationContext().startActivity(intent);
-                    }
-
-                    try {
-                        // .ovpn file
-                        InputStream conf = requireContext().getAssets().open(file);
-                        InputStreamReader isr = new InputStreamReader(conf);
-                        BufferedReader br = new BufferedReader(isr);
-                        StringBuilder config = new StringBuilder();
-                        String line;
-
-                        while (true) {
-                            line = br.readLine();
-                            if (line == null) {
-                                break;
-                            }
-                            config.append(line).append("\n");
-                        }
-
-                        br.readLine();
-                        OpenVpnApi.startVpn(requireContext().getApplicationContext(), config.toString(), name, null,
-                                null);
-
-                    } catch (IOException | RemoteException e) {
-                        e.printStackTrace();
-                    }
-                }
-            } else {
-                try {
-                    OpenVPNThread.stop();
-                } catch (NullPointerException ignored) {
-                }
-            }
-            return true;
-        });*/
-
         preferenceChangeListner("pref_theme", (preference, newValue) -> {
             if (newValue.equals(getString(R.string.theme_dark_value)) || newValue
                     .equals(getString(R.string.theme_black_value))) {
@@ -393,24 +335,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             String value = (String) newValue;
             if (value.equals("0")) return false;
             return value.matches("\\d{1,3}");
-        });
-
-        preferenceChangeListner("pref_downland_path", (preference, newValue) -> {
-
-            if (newValue.equals(getString(R.string.dir_value_sdcrd))) {
-                File[] folders = requireContext().getExternalFilesDirs(null);
-                if (folders.length == 1) {
-                    Toast.makeText(getContext(), R.string.no_sdcard, Toast.LENGTH_SHORT).show();
-                    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(
-                            requireActivity().getApplicationContext());
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putString("pref_downland_path",
-                            requireContext().getString(R.string.dir_value_emulated));
-                    editor.apply();
-                    return false;
-                }
-            }
-            return true;
         });
 
         preferenceChangeListner("sorce_books", (preference, newValue) -> {
@@ -465,7 +389,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         });
 
         preferenceClickListner("clear_savind", preference -> {
-            startActivity(new Intent(getContext(), PopupClearSaved.class));
+            showAllert(preference.getContext(), R.string.confirm_clear_saved,
+                    (dialogInterface, i) -> {
+                        DownloadService.sendRemoveAllDownloads(
+                                requireContext(), ExoDownloadService.class, false);
+                    });
             return true;
         });
 
@@ -479,9 +407,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_GRANTED);
             if (!hasPermission) {
-                ActivityCompat.requestPermissions(requireActivity(),
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        REQUEST_WRITE_STORAGE);
+                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
             } else {
                 showAllert(preference.getContext(), R.string.confirm_backup,
                         mOnClickListener);
@@ -496,23 +422,18 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
         boolean ignor;
 
-        if (SDK_INT >= Build.VERSION_CODES.M) {
-            PowerManager pm = (PowerManager) requireContext().getSystemService(
-                    Context.POWER_SERVICE);
-            if (pm != null) {
+        PowerManager pm = (PowerManager) requireContext().getSystemService(
+                Context.POWER_SERVICE);
+        if (pm != null) {
 
-                UiModeManager uiModeManager = (UiModeManager) requireContext().getSystemService(
-                        UI_MODE_SERVICE);
+            UiModeManager uiModeManager = (UiModeManager) requireContext().getSystemService(
+                    UI_MODE_SERVICE);
 
-                StorageUtil storageUtil = new StorageUtil(requireContext());
-                if (uiModeManager == null || uiModeManager.getCurrentModeType()
-                        == Configuration.UI_MODE_TYPE_TELEVISION) {
-                    ignor = true;
-                } else {
-                    ignor = pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks");
-                }
-            } else {
+            if (uiModeManager == null || uiModeManager.getCurrentModeType()
+                    == Configuration.UI_MODE_TYPE_TELEVISION) {
                 ignor = true;
+            } else {
+                ignor = pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks");
             }
         } else {
             ignor = true;
@@ -542,14 +463,14 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                     Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                     intent.addCategory("android.intent.category.DEFAULT");
                     intent.setData(Uri.parse(String.format("package:%s", requireContext().getPackageName())));
-                    startActivityForResult(intent, CODE_RESTORE);
+                    manageStorageLauncher.launch(intent);
                 } catch (Exception e) {
                     Intent intent = new Intent();
                     intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                    startActivityForResult(intent, CODE_RESTORE);
+                    manageStorageLauncher.launch(intent);
                 }
             } else {
-                if (!EasyPermissions.hasPermissions(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                if (!EasyPermissions.hasPermissions(requireActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
                     EasyPermissions.requestPermissions(this, getString(R.string.permission_read_external_storage),
                             EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE, Manifest.permission.READ_EXTERNAL_STORAGE);
                 } else {
@@ -570,17 +491,14 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             return true;
         });
 
-
-        /*findPreference("pref_lang").setOnPreferenceChangeListener(
-                (preference, newValue) -> {
-                    LocaleManager.setLocale(getContext(), newValue.toString());
-                    getActivity().recreate();
-                    return true;
-                });*/
+        preferenceClickListner("download", preference -> {
+            ClearSavedActivity.startActivity(requireActivity());
+            return true;
+        });
     }
 
     @Override
-    public void onPermissionsGranted(int requestCode, List<String> perms) {
+    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
         if (requestCode == EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE) {
             showAllert(requireContext(), R.string.confirm_restore,
                     restoreClickListnere);
@@ -667,7 +585,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             in.close();
             fis.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e("login activity", "Can not read file: " + e);
         }
         return myData.toString();
     }
@@ -734,23 +652,38 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         if (p instanceof ListPreference) {
             ListPreference listPref = (ListPreference) p;
             p.setSummary(listPref.getEntry());
-        }
-        if (p instanceof EditTextPreference) {
+        } else if (p instanceof EditTextPreference) {
             EditTextPreference editTextPref = (EditTextPreference) p;
             if (p.getTitle().toString().toLowerCase().contains("password")) {
                 p.setSummary("******");
             } else {
                 p.setSummary(editTextPref.getText());
             }
-        }
-        if (p instanceof MultiSelectListPreference) {
-            EditTextPreference editTextPref = (EditTextPreference) p;
-            p.setSummary(editTextPref.getText());
+        } else if (p instanceof MultiSelectListPreference) {
+            MultiSelectListPreference multiSelectPref = (MultiSelectListPreference) p;
+            Set<String> values = multiSelectPref.getValues();
+            CharSequence[] entries = multiSelectPref.getEntries();
+            CharSequence[] entryValues = multiSelectPref.getEntryValues();
+            StringBuilder summary = new StringBuilder();
+            boolean isFirst = true;
+            for (String value : values) {
+                for (int i = 0; i < entryValues.length; i++) {
+                    if (entryValues[i].equals(value)) {
+                        if (!isFirst) {
+                            summary.append(", ");
+                        }
+                        summary.append(entries[i]);
+                        isFirst = false;
+                        break;
+                    }
+                }
+            }
+            p.setSummary(summary.toString());
         }
     }
 
     @Override
-    public void onPermissionsDenied(int requestCode, List<String> perms) {
+    public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
         if (requestCode == EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE) {
             Toast.makeText(getContext(), getString(R.string.worning_not_allowed_read_storege),
                     Toast.LENGTH_SHORT).show();

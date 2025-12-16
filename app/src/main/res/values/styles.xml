@@ -242,5 +242,25 @@
         <item name="android:colorForeground">#383838</item>
     </style>
 
+    <style name="DownloadItemDetailText">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">?attr/subTextColor</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:drawablePadding">8dp</item>
+    </style>
+
+
+    <style name="TvOptionsMenuItem" parent="Widget.AppCompat.Button.Borderless"><item name="android:layout_width">?attr/actionBarSize</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:scaleType">center</item>
+        <item name="android:focusable">true</item>
+        <item name="android:background">@drawable/tv_toolbar_button_selector</item>
+    </style>
+
+
 
 </resources>

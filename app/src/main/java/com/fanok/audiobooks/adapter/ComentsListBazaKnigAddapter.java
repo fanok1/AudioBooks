@@ -2,6 +2,7 @@ package com.fanok.audiobooks.adapter;
 
 import static java.lang.Integer.MAX_VALUE;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +18,7 @@ import com.squareup.picasso.Picasso;
 import de.hdodenhof.circleimageview.CircleImageView;
 import java.util.ArrayList;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsListBazaKnigAddapter.MyHolder> {
 
     class MyHolder extends RecyclerView.ViewHolder {
@@ -25,7 +27,7 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
 
         private final TextView mName;
 
-        private final TextView mQuoteNmae;
+        private final TextView mQuoteName;
 
         private final LinearLayout mQuoteParent;
 
@@ -48,7 +50,7 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
             mText = itemView.findViewById(R.id.text);
             mReadMore = itemView.findViewById(R.id.readMore);
             mQuoteText = itemView.findViewById(R.id.quoteText);
-            mQuoteNmae = itemView.findViewById(R.id.quoteName);
+            mQuoteName = itemView.findViewById(R.id.quoteName);
             mQuoteParent = itemView.findViewById(R.id.quoteParent);
         }
 
@@ -66,10 +68,10 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
             } else {
                 mQuoteParent.setVisibility(View.VISIBLE);
                 if (quoteName.isEmpty()) {
-                    mQuoteNmae.setVisibility(View.GONE);
+                    mQuoteName.setVisibility(View.GONE);
                 } else {
-                    mQuoteNmae.setVisibility(View.VISIBLE);
-                    mQuoteNmae.setText(quoteName);
+                    mQuoteName.setVisibility(View.VISIBLE);
+                    mQuoteName.setText(quoteName);
                 }
 
                 if (quoteText.isEmpty()) {
@@ -82,7 +84,7 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
 
             mQuoteParent.setOnClickListener(view -> {
                 if (mListener != null) {
-                    mListener.onItemSelected(view, getAdapterPosition());
+                    mListener.onItemSelected(view, getBindingAdapterPosition());
                 }
             });
 
@@ -123,8 +125,11 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
     }
 
     public void clearItem() {
-        mModel.clear();
-        notifyDataSetChanged();
+        int oldSize = mModel.size();
+        if (oldSize > 0) {
+            mModel.clear();
+            notifyItemRangeRemoved(0, oldSize);
+        }
     }
 
 
@@ -134,15 +139,11 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
 
     @Override
     public int getItemCount() {
-        if (mModel == null) {
-            return 0;
-        } else {
-            return mModel.size();
-        }
+        return mModel.size();
     }
 
-    public int getParentQuoteId(int curentPosition) {
-        String quote = mModel.get(curentPosition).getQuoteText();
+    public int getParentQuoteId(int currentPosition) {
+        String quote = mModel.get(currentPosition).getQuoteText();
         for (int i = 0; i < mModel.size(); i++) {
             ComentsPOJO coment = mModel.get(i);
             if (quote.equals(coment.getText())) {
@@ -165,8 +166,9 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
         return new MyHolder(view);
     }
 
-    public void setItem(ArrayList<ComentsPOJO> model) {
-        mModel = model;
+    @SuppressLint("NotifyDataSetChanged")
+    public void setItem(ArrayList<ComentsPOJO> newModel) {
+        mModel = newModel;
         notifyDataSetChanged();
     }
 

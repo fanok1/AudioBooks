@@ -6,6 +6,7 @@ import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_PLAY;
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_PLAY_NEXT;
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_PLAY_PREVIOUS;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +21,7 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -64,8 +66,6 @@ public class Consts {
     public static final int TABLE_HISTORY = 2;
 
     public static final int TABLE_SAVED = 3;
-
-    public static final int REQEST_CODE_SEARCH = 157;
 
     public static final String ARG_MODEL = "ARG_MODEL";
 
@@ -122,12 +122,8 @@ public class Consts {
     public static int getSOURCE() {
         return SOURCE;
     }
-
-    public static final String mSkuId = "android.test.purchased";
-
-
-    public static final String PROXY_HOST = "62.233.60.173";
-    public static final int PROXY_PORT = 12355;
+    public static final String PROXY_HOST = "23.247.247.115";
+    public static final int PROXY_PORT = 15441;
     public static final String PROXY_USERNAME = "user142424";
     public static final String PROXY_PASSWORD = "3yuh5e";
 
@@ -165,7 +161,7 @@ public class Consts {
         int colorRes = typedValue.resourceId;
         int color = -1;
         try {
-            color = context.getResources().getColor(colorRes);
+            color = context.getColor(colorRes);
         } catch (Resources.NotFoundException e) {
             Log.w(TAG, "Not found color resource by id: " + colorRes);
         }
@@ -174,7 +170,7 @@ public class Consts {
 
     public static void setColorPrimeriTextInIconItemMenu(MenuItem item, @NonNull Context context) {
         Drawable drawable = item.getIcon();
-        drawable = DrawableCompat.wrap(drawable);
+        drawable = DrawableCompat.wrap(Objects.requireNonNull(drawable));
         DrawableCompat.setTint(drawable,
                 Consts.getAttributeColor(context, R.attr.colorItemMenu));
         item.setIcon(drawable);
@@ -232,14 +228,18 @@ public class Consts {
     }
 
     public static SSLSocketFactory socketFactory() {
+
+        @SuppressLint("CustomX509TrustManager")
         TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
             public java.security.cert.X509Certificate[] getAcceptedIssuers() {
                 return null;
             }
 
+            @SuppressLint("TrustAllX509TrustManager")
             public void checkClientTrusted(X509Certificate[] certs, String authType) {
             }
 
+            @SuppressLint("TrustAllX509TrustManager")
             public void checkServerTrusted(X509Certificate[] certs, String authType) {
             }
         }};

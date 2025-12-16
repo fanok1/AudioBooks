@@ -3,7 +3,9 @@ package com.fanok.audiobooks.presenter;
 import static com.fanok.audiobooks.Consts.getAttributeColor;
 import static com.fanok.audiobooks.Consts.isServiceRunning;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_PLAY_NEW_AUDIO;
+import static com.fanok.audiobooks.util.DownloadUtil.getDownloadManager;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -22,15 +24,18 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.offline.Download;
+import androidx.media3.exoplayer.offline.DownloadIndex;
+import androidx.media3.exoplayer.offline.DownloadManager;
+import androidx.media3.exoplayer.offline.DownloadRequest;
+import androidx.media3.exoplayer.offline.DownloadService;
 import androidx.preference.PreferenceManager;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.EncodingExeption;
-import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
-import com.fanok.audiobooks.Url;
-import com.fanok.audiobooks.activity.PopupClearSaved;
 import com.fanok.audiobooks.activity.SleepTimerActivity;
 import com.fanok.audiobooks.interface_pacatge.book_content.Activity;
 import com.fanok.audiobooks.interface_pacatge.book_content.ActivityPresenter;
@@ -44,11 +49,14 @@ import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
-import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
+import com.fanok.audiobooks.service.ExoDownloadService;
 import com.fanok.audiobooks.service.MediaPlayerService;
+import com.fanok.audiobooks.util.DownloadUtil;
+
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -57,7 +65,7 @@ import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
@@ -194,8 +202,6 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             getViewState().broadcastSend(broadcastIntent);
         }
         getAudio();
-
-        MyInterstitialAd.show();
     }
 
     @Override
@@ -209,9 +215,6 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     public void onStop() {
         if (serviceBound) {
             getViewState().myUnbindService(serviceConnection);
-            /*if(!MediaPlayerService.isPlay()&&player!=null){
-                player.stopSelf();
-            }*/
         }
 
     }
@@ -256,44 +259,35 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void onOptionsMenuItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.addFavorite:
-                if (!mBooksDBModel.inFavorite(mBookPOJO)) {
-                    mBooksDBModel.addFavorite(mBookPOJO);
-                    getViewState().setIsFavorite(true);
-                }
-                break;
-            case R.id.removeFavorite:
-                if (mBooksDBModel.inFavorite(mBookPOJO)) {
-                    mBooksDBModel.removeFavorite(mBookPOJO);
-                    getViewState().setIsFavorite(false);
-                }
-                break;
-            case R.id.refresh:
-                getViewState().refreshActivity();
-                break;
-            case R.id.share:
-                getViewState().shareTextUrl();
-                break;
-            case R.id.addMainScreen:
-                getViewState().addToMainScreen(mBookPOJO);
-                break;
-            case R.id.openSite:
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                        Uri.parse(mBookPOJO.getUrl()));
-                getViewState().activityStart(browserIntent);
-                break;
-            case R.id.sleep_timer:
-                Intent sleepIntent = new Intent(mContext, SleepTimerActivity.class);
-                getViewState().activityStart(sleepIntent);
-                break;
-            case R.id.equalizer:
-                Intent breadCast = new Intent(Broadcast_Equalizer);
-                getViewState().broadcastSend(breadCast);
-                break;
-            case R.id.settings:
-                getViewState().startMainActivity(Consts.FRAGMENT_SETTINGS);
-                break;
+        int itemId = item.getItemId();
+        if (itemId == R.id.addFavorite) {
+            if (!mBooksDBModel.inFavorite(mBookPOJO)) {
+                mBooksDBModel.addFavorite(mBookPOJO);
+                getViewState().setIsFavorite(true);
+            }
+        } else if (itemId == R.id.removeFavorite) {
+            if (mBooksDBModel.inFavorite(mBookPOJO)) {
+                mBooksDBModel.removeFavorite(mBookPOJO);
+                getViewState().setIsFavorite(false);
+            }
+        } else if (itemId == R.id.refresh) {
+            getViewState().refreshActivity();
+        } else if (itemId == R.id.share) {
+            getViewState().shareTextUrl();
+        } else if (itemId == R.id.addMainScreen) {
+            getViewState().addToMainScreen(mBookPOJO);
+        } else if (itemId == R.id.openSite) {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse(mBookPOJO.getUrl()));
+            getViewState().activityStart(browserIntent);
+        } else if (itemId == R.id.sleep_timer) {
+            Intent sleepIntent = new Intent(mContext, SleepTimerActivity.class);
+            getViewState().activityStart(sleepIntent);
+        } else if (itemId == R.id.equalizer) {
+            Intent breadCast = new Intent(Broadcast_Equalizer);
+            getViewState().broadcastSend(breadCast);
+        } else if (itemId == R.id.settings) {
+            getViewState().startMainActivity(Consts.FRAGMENT_SETTINGS);
         }
     }
 
@@ -334,7 +328,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     }
 
     private void onCompleteAudio() {
-        if (mAudioPOJO != null && mAudioPOJO.size() > 0) {
+        if (mAudioPOJO != null && !mAudioPOJO.isEmpty()) {
             Log.d(TAG, "onComplete");
             int curentTrack = 0;
             AudioPOJO pojo = null;
@@ -459,7 +453,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
 
     @Override
     public void buttomPreviousClick(View view) {
-        if (mAudioPOJO != null && mAudioPOJO.size() > 0) {
+        if (mAudioPOJO != null && !mAudioPOJO.isEmpty()) {
             Intent broadcastIntent = new Intent(Broadcast_PLAY_PREVIOUS);
             getViewState().broadcastSend(broadcastIntent);
         }
@@ -468,7 +462,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     @Override
     public void buttomPlayClick(View view) {
         if (!isServiceRunning(mContext, MediaPlayerService.class) && mAudioPOJO != null
-                && mAudioPOJO.size() != 0) {
+                && !mAudioPOJO.isEmpty()) {
             serviceBound = false;
             start = true;
             resume = true;
@@ -498,16 +492,15 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
     }
 
     @Override
-    public void seekChange(View view) {
-        SeekBar sb = (SeekBar) view;
+    public void seekChange(int progress) {
         Intent broadcastIntent = new Intent(Broadcast_SEEK_TO);
-        broadcastIntent.putExtra("postion", sb.getProgress());
+        broadcastIntent.putExtra("postion", progress);
         getViewState().broadcastSend(broadcastIntent);
     }
 
     @Override
     public void buttomNextClick(View view) {
-        if (mAudioPOJO != null && mAudioPOJO.size() > 0) {
+        if (mAudioPOJO != null && !mAudioPOJO.isEmpty()) {
             Intent broadcastIntent = new Intent(Broadcast_PLAY_NEXT);
             getViewState().broadcastSend(broadcastIntent);
         }
@@ -551,57 +544,36 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
         getViewState().stateElse();
     }
 
+    @UnstableApi
     @Override
     public void dowland(HashSet<String> data) {
-        if (!StorageAds.idDisableAds()) {
-            getViewState().showShowAdsBeforeDownload();
-        } else {
-            loadBooks(data);
+        for (String url : data) {
+            Uri uri = Uri.parse(url);
+            String id = new Uri.Builder()
+                    .scheme(uri.getScheme())
+                    .authority(uri.getAuthority())
+                    .path(uri.getPath())
+                    .build()
+                    .toString();
+            DownloadRequest downloadRequest = new DownloadRequest.Builder(id, DownloadUtil.buildAnnotatedUri(url, mBookPOJO.getUrl()))
+                    .setData(new Gson().toJson(mBookPOJO).getBytes())
+                    //.setCustomCacheKey(url)
+                    .build();
+            DownloadService.sendAddDownload(mContext, ExoDownloadService.class, downloadRequest, false);
         }
     }
 
+    @UnstableApi
     @Override
     public void delete(HashSet<String> data) {
-        File[] folders = mContext.getExternalFilesDirs(null);
-        for (File folder : folders) {
-            if (folder != null) {
-                    String source = Consts.getSorceName(mContext, mBookPOJO.getUrl());
-                    String filePath = folder.getAbsolutePath() + "/" + source
-                            + "/" + mBookPOJO.getAutor()
-                            + "/" + mBookPOJO.getArtist()
-                            + "/" + mBookPOJO.getName();
-                File dir = new File(filePath);
-                if (dir.exists() && dir.isDirectory()) {
-                    if(source!=mContext.getString(R.string.abook)) {
-                        for (String url : data) {
-                            File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
-                            if (file.exists()) {
-                                if (!file.delete()) {
-                                    Log.d(TAG, file + " delete: false");
-                                } else {
-                                    Log.d(TAG, file + " delete: true");
-                                }
-                            }
-                        }
-                    }else {
-                        File file = new File(dir, "pl");
-                        if (file.exists()) {
-                            PopupClearSaved.delete(file);
-                        }
-                    }
-                    if (Objects.requireNonNull(dir.list()).length == 0) {
-                        if (!dir.delete()) {
-                            Log.d(TAG, dir + " delete: false");
-                        } else {
-                            Log.d(TAG, dir + " delete: true");
-                        }
-                    }
-
-                }
-                PopupClearSaved.deleteEmtyFolder(folder);
-            }
+        for (String url : data) {
+            DownloadService.sendRemoveDownload(
+                    mContext,
+                    ExoDownloadService.class,
+                    url,
+                    false
+            );
         }
-        getViewState().updateAdapter(null);
         getViewState().showToast(R.string.delete_complite);
     }
 
@@ -618,6 +590,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                         onCompleteAudio();
                     }
 
+                    @UnstableApi
                     @Override
                     public void onError(@NotNull Throwable e) {
 
@@ -630,36 +603,24 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                             boolean b = pref.getBoolean("offline", false);
                             ArrayList<AudioListPOJO> list = mAudioListDBModel.get(mBookPOJO.getUrl());
                             ArrayList<AudioPOJO> audioPOJOS = new ArrayList<>();
-                            File[] folders = mContext.getExternalFilesDirs(null);
-                            for (int i = 0; i < list.size(); i++) {
-                                AudioListPOJO audioListPOJO = list.get(i);
-                                for (File folder : folders) {
-                                    File file = null;
-                                    if (folder != null) {
-                                        String source = Consts.getSorceName(mContext, mBookPOJO.getUrl());
-                                        String filePath = folder.getAbsolutePath() + "/" + source
-                                                + "/" + mBookPOJO.getAutor()
-                                                + "/" + mBookPOJO.getArtist()
-                                                + "/" + mBookPOJO.getName();
-                                        file = new File(
-                                                filePath + "/"
-                                                        + audioListPOJO.getAudioUrl().substring(
-                                                        audioListPOJO.getAudioUrl().lastIndexOf("/")
-                                                                + 1));
-                                    }
-                                    if ((file != null && file.exists()) || !b) {
+                            DownloadIndex downloadIndex = getDownloadManager().getDownloadIndex();
+                            try {
+                                for (AudioListPOJO pojo : list) {
+                                    Download download = downloadIndex.getDownload(pojo.getCleanAudioUrl());
+                                    if (download != null && download.state == Download.STATE_COMPLETED || !b) {
                                         AudioPOJO audioPOJO = new AudioPOJO();
-                                        audioPOJO.setName(audioListPOJO.getAudioName());
-                                        audioPOJO.setBookName(audioListPOJO.getBookName());
-                                        audioPOJO.setUrl(audioListPOJO.getAudioUrl());
-                                        audioPOJO.setTime(audioListPOJO.getTime());
-                                        audioPOJO.setTimeStart(audioListPOJO.getTimeStart());
-                                        audioPOJO.setTimeFinish(audioListPOJO.getTimeEnd());
+                                        audioPOJO.setName(pojo.getAudioName());
+                                        audioPOJO.setBookName(pojo.getBookName());
+                                        audioPOJO.setUrl(pojo.getAudioUrl());
+                                        audioPOJO.setTime(pojo.getTime());
+                                        audioPOJO.setTimeStart(pojo.getTimeStart());
+                                        audioPOJO.setTimeFinish(pojo.getTimeEnd());
                                         audioPOJOS.add(audioPOJO);
-                                        break;
                                     }
                                 }
+                            } catch (IOException ignored) {
                             }
+
                             mAudioPOJO = audioPOJOS;
                             getViewState().showData(mAudioPOJO, mBookPOJO.getUrl());
                             getViewState().showToast(mContext.getString(R.string.error_load_data)
@@ -708,16 +669,6 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
                 });
     }
 
-    public void loadBooks(HashSet<String> data) {
-        for (String url : data) {
-            if (mBookPOJO.getUrl().contains(Url.SERVER_ABMP3)) {
-                getViewState().downloadFileABMP3(url, mBookPOJO);
-            } else {
-                getViewState().downloadFile(url, mBookPOJO);
-            }
-        }
-    }
-
     private void playAudio(int audioIndex, int timeStart) {
         StorageUtil storage = new StorageUtil(mContext.getApplicationContext());
         storage.storeAudioIndex(audioIndex);
@@ -728,6 +679,7 @@ public class BookPresenter extends MvpPresenter<Activity> implements ActivityPre
             storage.storeTimeStart(timeStart);
             Intent playerIntent = new Intent(mContext, MediaPlayerService.class);
             playerIntent.setAction("start");
+
             if (serviceConnection != null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     mContext.startForegroundService(playerIntent);

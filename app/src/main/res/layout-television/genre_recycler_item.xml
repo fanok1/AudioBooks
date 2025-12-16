@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/recycler_item_height_genre"
+    android:background="@drawable/focusable"
+    android:focusable="true"
+    android:orientation="horizontal"
+    tools:viewBindingIgnore="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:layout_marginStart="@dimen/text_margin"
+                android:layout_marginTop="@dimen/item_genre_title_top_margin"
+                android:textColor="?attr/colorPrimaryText"
+                tools:text="Фантастика" />
+
+            <TextView
+                android:id="@+id/desc"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="@dimen/text_margin"
+                android:layout_marginBottom="@dimen/item_genre_title_top_margin"
+                android:gravity="bottom"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textColor="?attr/subTextColor"
+                android:textSize="@dimen/subTextSize"
+                tools:text="Фантастика" />
+        </LinearLayout>
+
+
+        <TextView
+            android:id="@+id/reting"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="@dimen/text_margin"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textColor="?attr/colorPrimaryText"
+            android:drawableStart="@drawable/ic_reting"
+            tools:text="1840" />
+    </LinearLayout>
+</LinearLayout>

@@ -2,6 +2,7 @@ package com.fanok.audiobooks.adapter;
 
 import static java.lang.Integer.MAX_VALUE;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +16,7 @@ import com.squareup.picasso.Picasso;
 import de.hdodenhof.circleimageview.CircleImageView;
 import java.util.ArrayList;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapter.MyHolder> {
 
     private static final int MAX_LINES = 5;
@@ -31,7 +33,7 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
 
         private final TextView mReadMore;
 
-        private final TextView mReting;
+        private final TextView mRating;
 
         private final TextView mShowAnswer;
 
@@ -49,16 +51,16 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
             mTime = itemView.findViewById(R.id.time);
             mText = itemView.findViewById(R.id.text);
             mReadMore = itemView.findViewById(R.id.readMore);
-            mReting = itemView.findViewById(R.id.reting);
+            mRating = itemView.findViewById(R.id.reting);
             mComents = itemView.findViewById(R.id.coments);
             mShowAnswer = itemView.findViewById(R.id.showAnswer);
 
             mShowAnswer.setOnClickListener(view -> {
-                if (mListener != null) mListener.onItemSelected(view, getAdapterPosition());
+                if (mListener != null) mListener.onItemSelected(view, getBindingAdapterPosition());
             });
 
             mComents.setOnClickListener(view -> {
-                if (mListener != null) mListener.onItemSelected(view, getAdapterPosition());
+                if (mListener != null) mListener.onItemSelected(view, getBindingAdapterPosition());
             });
 
 
@@ -71,10 +73,10 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
             mName.setText(comentsPOJO.getName());
             mTime.setText(comentsPOJO.getDate());
             if (!comentsPOJO.getReting().isEmpty()) {
-                mReting.setText(comentsPOJO.getReting());
-                mReting.setVisibility(View.VISIBLE);
+                mRating.setText(comentsPOJO.getReting());
+                mRating.setVisibility(View.VISIBLE);
             } else {
-                mReting.setVisibility(View.GONE);
+                mRating.setVisibility(View.GONE);
             }
             int childCount = comentsPOJO.getChildComents().size();
             if (childCount == 0) {
@@ -122,8 +124,11 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
     }
 
     public void clearItem() {
-        mModel.clear();
-        notifyDataSetChanged();
+        int oldSize = mModel.size();
+        if (oldSize > 0) {
+            mModel.clear();
+            notifyItemRangeRemoved(0, oldSize);
+        }
     }
 
     public ComentsPOJO getItem(int position) {
@@ -132,11 +137,7 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
 
     @Override
     public int getItemCount() {
-        if (mModel == null) {
-            return 0;
-        } else {
-            return mModel.size();
-        }
+        return mModel.size();
     }
 
     @Override
@@ -152,8 +153,9 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
         return new MyHolder(view);
     }
 
-    public void setItem(ArrayList<ComentsPOJO> model) {
-        mModel = model;
+    @SuppressLint("NotifyDataSetChanged")
+    public void setItem(ArrayList<ComentsPOJO> newModel) {
+        mModel = newModel;
         notifyDataSetChanged();
     }
 

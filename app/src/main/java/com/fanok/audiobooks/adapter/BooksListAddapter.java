@@ -5,12 +5,12 @@ import static android.content.Context.UI_MODE_SERVICE;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_ENABLED;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
 
+import android.annotation.SuppressLint;
 import android.app.UiModeManager;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
@@ -21,6 +21,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.offline.Download;
+import androidx.media3.exoplayer.offline.DownloadIndex;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
@@ -32,8 +35,8 @@ import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.AudioListDBModel;
 import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.util.DownloadUtil;
 import com.github.lzyzsd.circleprogress.DonutProgress;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -43,9 +46,8 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.MyHolder> {
-
-    private static final String TAG = "BooksListAddapter";
 
     private ArrayList<BookPOJO> mModel;
 
@@ -53,6 +55,9 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
     private OnListItemLongSelectedInterface mLongListener;
     private AudioListDBModel mAudioListDBModel;
     private AudioDBModel mAudioDBModel;
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    @UnstableApi
     class MyHolder extends RecyclerView.ViewHolder {
 
         private final TextView mArtist;
@@ -81,6 +86,8 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
 
         private final TextView mTitle;
 
+
+        @UnstableApi
         MyHolder(@NonNull final View itemView) {
             super(itemView);
 
@@ -99,12 +106,10 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             mDonutProgress = itemView.findViewById(R.id.donutProgress);
             mPreferences = mArtist.getContext().getSharedPreferences(PARENTAL_CONTROL_PREFERENCES,
                     MODE_PRIVATE);
-
-
             linearLayout.setOnClickListener(view -> {
                 if (mListener != null) {
                     mListener.onItemSelected(view,
-                            getAdapterPosition());
+                            getBindingAdapterPosition());
                 }
             });
 
@@ -112,7 +117,7 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             linearLayout.setOnLongClickListener(view -> {
                 if (mLongListener != null) {
                     mLongListener.onItemLongSelected(view,
-                            getAdapterPosition());
+                            getBindingAdapterPosition());
                 }
                 return true;
             });
@@ -137,7 +142,6 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                     if(App.useProxy&&book.getPhoto().contains(Url.SERVER_BAZA_KNIG)){
 
                         final Bitmap[] bmp = {null};
-                        ExecutorService executor = Executors.newSingleThreadExecutor();
                         Handler handler = new Handler(Looper.getMainLooper());
                         executor.execute(() -> {
 
@@ -157,13 +161,12 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
 
                     }else {
                         Glide.with(mImageView).load(book.getPhoto())
-                                .thumbnail(0.1f)
                                 .override(mImageView.getWidth(), mImageView.getHeight()).into(
                                         mImageView);
                     }
                 } else {
                     mImageView.setImageDrawable(
-                            ContextCompat.getDrawable(mImageView.getContext(), R.drawable.image_placeholder));
+                            ContextCompat.getDrawable(mImageView.getContext(), android.R.drawable.ic_menu_gallery));
                 }
             }
 
@@ -181,6 +184,9 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 mSource.setVisibility(View.VISIBLE);
             } else if (book.getUrl().contains(Url.SERVER_BAZA_KNIG)) {
                 mSource.setText(R.string.baza_knig);
+                mSource.setVisibility(View.VISIBLE);
+            } else if (book.getUrl().contains(Url.SERVER_KNIGOBLUD)) {
+                mSource.setText(R.string.knigoblud);
                 mSource.setVisibility(View.VISIBLE);
             } else {
                 mSource.setVisibility(View.GONE);
@@ -276,40 +282,36 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 setVisible(false);
             }
 
-            File[] folders = mIsDownload.getContext().getExternalFilesDirs(null);
-            int size = 0;
             if (mAudioListDBModel != null) {
                 ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(book.getUrl());
-                for (File folder : folders) {
-                    if (folder != null) {
-                        String source = Consts.getSorceName(mIsDownload.getContext(), book.getUrl());
-                        String filePath = folder.getAbsolutePath() + "/" + source
-                                + "/" + book.getAutor()
-                                + "/" + book.getArtist()
-                                + "/" + book.getName();
-                        File dir = new File(filePath);
-                        if (dir.exists() && dir.isDirectory()) {
-                            for (AudioListPOJO pojo : arrayList) {
-                                String url = pojo.getAudioUrl();
-                                File file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
-                                if (file.exists()) {
-                                    size++;
-                                }
+                if (!arrayList.isEmpty()) {
+                    DownloadIndex downloadIndex = DownloadUtil.getDownloadManager().getDownloadIndex();
+                    int downloadedCount = 0;
+                    try {
+                        for (AudioListPOJO pojo : arrayList) {
+                            Download download = downloadIndex.getDownload(pojo.getCleanAudioUrl());
+                            if (download != null && download.state == Download.STATE_COMPLETED) {
+                                downloadedCount++;
                             }
                         }
+                    } catch (IOException e) {
+                        // ignore
                     }
-                }
-                if (size == 0) {
-                    mIsDownload.setVisibility(View.GONE);
-                } else {
-                    if (size >= arrayList.size()) {
-                        mIsDownload.setImageDrawable(
-                                ContextCompat.getDrawable(mIsDownload.getContext(), R.drawable.ic_check_all));
+
+                    if (downloadedCount == 0) {
+                        mIsDownload.setVisibility(View.GONE);
                     } else {
-                        mIsDownload.setImageDrawable(
-                                ContextCompat.getDrawable(mIsDownload.getContext(), R.drawable.ic_check_1));
+                        if (downloadedCount >= arrayList.size()) {
+                            mIsDownload.setImageDrawable(
+                                    ContextCompat.getDrawable(mIsDownload.getContext(), R.drawable.ic_check_all));
+                        } else {
+                            mIsDownload.setImageDrawable(
+                                    ContextCompat.getDrawable(mIsDownload.getContext(), R.drawable.ic_check_1));
+                        }
+                        mIsDownload.setVisibility(View.VISIBLE);
                     }
-                    mIsDownload.setVisibility(View.VISIBLE);
+                } else {
+                    mIsDownload.setVisibility(View.GONE);
                 }
             } else {
                 mIsDownload.setVisibility(View.GONE);
@@ -352,6 +354,7 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
         this.procent = showProcent;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void clearItem() {
         if (mModel != null) {
             mModel = new ArrayList<>();
@@ -377,51 +380,38 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
         }
     }
 
+    @UnstableApi
     @Override
     public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
         myHolder.bind(mModel.get(i));
     }
 
+    @UnstableApi
     @NonNull
     @Override
     public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         View view = LayoutInflater.from(viewGroup.getContext()).inflate(
                 R.layout.books_recycler_item, viewGroup, false);
-        UiModeManager uiModeManager = (UiModeManager) viewGroup.getContext().getSystemService(
-                UI_MODE_SERVICE);
         SharedPreferences preferences = PreferenceManager
                 .getDefaultSharedPreferences(viewGroup.getContext());
         String listType = preferences.getString("books_adapter_layout_pref",
                 viewGroup.getContext().getString(R.string.books_adapter_layout_list_value));
-        if (uiModeManager != null
-                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            if (listType.equals(
-                    viewGroup.getContext().getString(R.string.books_adapter_layout_list_value))) {
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                        R.layout.books_recycler_item_television, viewGroup, false);
-            } else if (listType.equals(viewGroup.getContext().getString(
-                    R.string.books_adapter_layout_big_list_value))) {
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                        R.layout.books_recycler_item_big_lelevision, viewGroup, false);
-            }
-        } else {
-            if (listType.equals(
-                    viewGroup.getContext().getString(R.string.books_adapter_layout_list_value))) {
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                        R.layout.books_recycler_item, viewGroup, false);
-            } else if (listType.equals(viewGroup.getContext().getString(
-                    R.string.books_adapter_layout_big_list_value))) {
-                view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                        R.layout.books_recycler_item_big, viewGroup, false);
-            }
+
+        if (listType.equals(viewGroup.getContext().getString(R.string.books_adapter_layout_list_value))) {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                    R.layout.books_recycler_item, viewGroup, false);
+        } else if (listType.equals(viewGroup.getContext().getString(
+                R.string.books_adapter_layout_big_list_value))) {
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                    R.layout.books_recycler_item_big, viewGroup, false);
         }
+
         return new MyHolder(view);
     }
 
-    public void setItem(ArrayList<BookPOJO> model) {
-        if (mModel != model) {
-            mModel = model;
-        }
+    @SuppressLint("NotifyDataSetChanged")
+    public void setItem(ArrayList<BookPOJO> newModel) {
+        mModel = newModel;
         notifyDataSetChanged();
     }
 
@@ -433,5 +423,13 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
     public void setLongListener(
             OnListItemLongSelectedInterface longListener) {
         mLongListener = longListener;
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdown();
+        }
     }
 }

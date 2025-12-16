@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.activity;
 
+import android.annotation.SuppressLint;
 import android.app.UiModeManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -65,13 +67,8 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
-        if (uiModeManager != null
-                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            setContentView(R.layout.activity_sleep_timer_television);
-        } else {
-            setContentView(R.layout.activity_sleep_timer);
-        }
+
+        setContentView(R.layout.activity_sleep_timer);
 
         mHours = findViewById(R.id.hours);
         mMinutes = findViewById(R.id.minutes);
@@ -107,7 +104,7 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
         int hours = Integer.parseInt(mHours.getText().toString());
         int min = Integer.parseInt(mMinutes.getText().toString());
         int sec = Integer.parseInt(mSeconds.getText().toString());
-        long time = (hours * 60 * 60 + min * 60 + sec) * 1000;
+        long time = (hours * 60L * 60L + min * 60L + sec) * 1000;
         intent.putExtra("time", time);
         sendBroadcast(intent);
     }
@@ -120,9 +117,9 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
     @Override
     public void setSrcToStartButton(boolean started) {
         if (started) {
-            mStart.setImageDrawable(getDrawable(R.drawable.ic_stop));
+            mStart.setImageResource(R.drawable.ic_stop);
         } else {
-            mStart.setImageDrawable(getDrawable(R.drawable.ic_play));
+            mStart.setImageResource(R.drawable.ic_play);
         }
     }
 
@@ -165,7 +162,7 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
             View view = viewGroup.getChildAt(i);
             if (view instanceof Button) {
                 Button button = (Button) view;
-                if (button.getText().toString().equals(getString(R.string.end_сhapter))) {
+                if (button.getText().toString().equals(getString(R.string.end_chapter))) {
                     button.setOnClickListener(view1 -> mPresenter.endChapterClick(view1));
                 } else {
                     button.setOnClickListener(view1 -> mPresenter.numberClick(view1));
@@ -176,6 +173,7 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
         }
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private void registerdBradcast() {
         updateTimerBroadcast = new BroadcastReceiver() {
             @Override
@@ -225,7 +223,12 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
             }
         };
         IntentFilter updateTimerFilter = new IntentFilter(bradcast_UpdateTimer);
-        registerReceiver(updateTimerBroadcast, updateTimerFilter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(updateTimerBroadcast, updateTimerFilter, RECEIVER_EXPORTED);
+        }else{
+            registerReceiver(updateTimerBroadcast, updateTimerFilter);
+        }
+
 
         finihTimer = new BroadcastReceiver() {
             @Override
@@ -234,7 +237,12 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
             }
         };
         IntentFilter finishTimerFilter = new IntentFilter(bradcast_FinishTimer);
-        registerReceiver(finihTimer, finishTimerFilter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(finihTimer, finishTimerFilter, RECEIVER_EXPORTED);
+        }else{
+            registerReceiver(finihTimer, finishTimerFilter);
+        }
+
 
         setProgress = new BroadcastReceiver() {
             @Override
@@ -243,7 +251,11 @@ public class SleepTimerActivity extends MvpAppCompatActivity implements SleepTim
                 mPresenter.setEndCapterTime(time);
             }
         };
-        registerReceiver(setProgress, new IntentFilter(Broadcast_SET_TIME_LEFT));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(setProgress, new IntentFilter(Broadcast_SET_TIME_LEFT), RECEIVER_EXPORTED);
+        }else {
+            registerReceiver(setProgress, new IntentFilter(Broadcast_SET_TIME_LEFT));
+        }
     }
 
 

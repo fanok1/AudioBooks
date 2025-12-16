@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/player"
+    android:layout_width="320dp"
+    android:layout_height="match_parent"
+    android:layout_gravity="end"
+    android:background="?attr/backgraundColor"
+    android:orientation="vertical">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingTop="@dimen/text_margin"
+        android:paddingBottom="@dimen/text_margin"
+        tools:showIn="@layout/player">
+
+        <RadioButton
+            android:id="@+id/radioAll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="@dimen/text_margin"
+            android:background="@drawable/focusable"
+            android:button="@null"
+            android:drawableStart="@drawable/radio_select"
+            android:drawablePadding="@dimen/text_margin_book_description"
+            android:focusable="true"
+            android:text="@string/all"
+            android:textColor="?attr/colorPrimaryText"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/name_curent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/text_margin"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textColor="?attr/colorPrimaryText"
+            android:textSize="@dimen/titleSize"
+            tools:text="0001"
+            tools:textColor="#000" />
+
+
+        <ImageButton
+            android:id="@+id/dowland"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginEnd="@dimen/text_margin"
+            android:background="@drawable/focusable"
+            android:contentDescription="@string/dowland"
+            android:focusable="true"
+            android:src="@drawable/ic_download"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginEnd="@dimen/text_margin"
+            android:background="@drawable/focusable"
+            android:contentDescription="@string/delete"
+            android:focusable="true"
+            android:src="@drawable/ic_delete"
+            android:visibility="gone" />
+    </LinearLayout>
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:nextFocusDown="@id/seekBar"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/text_margin"
+        android:paddingTop="@dimen/text_margin"
+        android:paddingEnd="0dp">
+
+        <TextView
+            android:id="@+id/timeStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/time_zero"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <com.fanok.audiobooks.TvSeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:focusableInTouchMode="true"
+            android:nextFocusUp="@id/list"
+            android:layout_weight="1"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/timeEnd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/time_zero"
+            android:textColor="?attr/colorPrimaryText" />
+
+        <ImageButton
+            android:id="@+id/speed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/focusable"
+            android:contentDescription="@string/speed"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:paddingStart="@dimen/text_margin"
+            android:paddingEnd="@dimen/text_margin"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_play_speed" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/player_row_height"
+        android:gravity="center_vertical|center_horizontal"
+        android:orientation="horizontal"
+        android:padding="@dimen/text_margin">
+
+        <ImageButton
+            android:id="@+id/rewind"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@drawable/focusable"
+            android:contentDescription="@string/rewind_10"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:paddingStart="@dimen/text_margin"
+            android:paddingEnd="@dimen/text_margin"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_rewind_30" />
+
+
+        <ImageButton
+            android:id="@+id/previousBottom"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@drawable/focusable"
+            android:contentDescription="@string/previous"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:paddingStart="@dimen/text_margin"
+            android:paddingEnd="@dimen/text_margin"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_skip_previous" />
+
+        <ImageButton
+            android:id="@+id/playBottom"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@drawable/focusable"
+            android:contentDescription="@string/play"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:paddingStart="@dimen/text_margin"
+            android:paddingEnd="@dimen/text_margin"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_play" />
+
+        <ImageButton
+            android:id="@+id/nextBottom"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@drawable/focusable"
+            android:contentDescription="@string/next"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:paddingStart="@dimen/text_margin"
+            android:paddingEnd="@dimen/text_margin"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_skip_next" />
+
+        <ImageButton
+            android:id="@+id/forward"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@drawable/focusable"
+            android:contentDescription="@string/forward_30"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:paddingStart="@dimen/text_margin"
+            android:paddingEnd="@dimen/text_margin"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_fast_forward_30" />
+
+
+    </LinearLayout>
+
+
+</LinearLayout>

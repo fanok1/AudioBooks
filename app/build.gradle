@@ -4,9 +4,11 @@ apply plugin: 'com.google.firebase.firebase-perf'
 apply plugin: 'com.google.firebase.crashlytics'
 
 android {
+    namespace "com.fanok.audiobooks"
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 
     signingConfigs {
@@ -18,14 +20,14 @@ android {
 
         }
     }
-    compileSdkVersion 33
+    compileSdkVersion 36
     defaultConfig {
         applicationId "com.fanok.audiobooks"
-        minSdkVersion 21
+        minSdkVersion 24
         //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 30
-        versionCode 88
-        versionName "5.14"
+        targetSdkVersion 36
+        versionCode 91
+        versionName "7.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.release
@@ -50,41 +52,42 @@ dependencies {
 
 
 
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation('com.google.android.material:material:1.8.0') {
+    implementation('com.google.android.material:material:1.13.0') {
         exclude group: 'androidx'
     }
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation('androidx.lifecycle:lifecycle-extensions:2.2.0') {
         exclude group: 'androidx'
     }
-    implementation 'com.google.firebase:firebase-crashlytics-buildtools:2.9.4'
+    implementation 'com.google.firebase:firebase-crashlytics-buildtools:3.0.6'
+    implementation 'androidx.activity:activity:1.12.1'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.5.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test:runner:1.7.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
     implementation('com.squareup.picasso:picasso:2.71828') {
         exclude group: 'com.android.support'
         exclude module: ['exifinterface', 'support-annotations']
     }
     implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation 'org.jsoup:jsoup:1.13.1'
+    implementation 'org.jsoup:jsoup:1.21.2'
     implementation 'com.r0adkll:slidableactivity:2.1.0'
-    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'com.google.code.gson:gson:2.13.2'
     implementation 'de.hdodenhof:circleimageview:3.1.0'
 
     //noinspection GradleDependency
-    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
-    //noinspection GradleDependency
-    implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
-    implementation platform('com.google.firebase:firebase-bom:26.7.0')
+    implementation 'com.squareup.okhttp3:okhttp:5.3.2'
+    implementation 'androidx.media3:media3-exoplayer:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.8.0'
+    implementation 'androidx.media3:media3-ui:1.8.0'
+    implementation 'androidx.media3:media3-session:1.8.0'
+    implementation platform('com.google.firebase:firebase-bom:34.7.0')
     implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.google.firebase:firebase-core'
     implementation 'com.google.firebase:firebase-perf'
     implementation 'com.google.firebase:firebase-crashlytics'
-    implementation 'com.google.firebase:firebase-ads'
     implementation 'com.google.firebase:firebase-inappmessaging-display'
 
 
@@ -93,55 +96,38 @@ dependencies {
     annotationProcessor 'tech.schoolhelper:moxy-x-compiler:1.7.0'
     implementation 'tech.schoolhelper:moxy-x-androidx:1.7.0'
     implementation 'tech.schoolhelper:moxy-x-material:1.7.0'
-    implementation 'com.android.support:preference-v7:33.0.0'
+    implementation 'com.android.support:preference-v7:28.0.0'
     implementation 'pub.devrel:easypermissions:3.0.0'
-    implementation 'com.github.mendhak:storage-chooser:2.0.4.4b'
+    implementation 'com.github.mendhak:storage-chooser:2.0.4.4'
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'
     implementation 'androidx.palette:palette:1.0.0'
-    implementation('com.android.billingclient:billing:3.0.3') {
+    implementation('com.android.billingclient:billing:8.2.0') {
         exclude group: 'androidx'
     }
 
-    implementation 'com.github.bumptech.glide:glide:4.13.2'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.13.2'
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.6'
+    implementation 'com.github.bumptech.glide:glide:5.0.5'
+    annotationProcessor 'com.github.bumptech.glide:compiler:5.0.5'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.14'
 
     implementation 'com.alimuzaffar.lib:pinentryedittext:2.0.6'
     implementation 'com.github.amitshekhariitbhu:PRDownloader:1.0.2'
     implementation 'com.google.android.play:review:2.0.2'
 
-    implementation 'com.diogobernardino:williamchart:2.2'
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation 'com.h6ah4i.android.widget.verticalseekbar:verticalseekbar:1.0.0'
 
     implementation 'com.github.lzyzsd:circleprogress:1.2.1'
 
     implementation 'it.xabaras.android:recyclerview-swipedecorator:1.4'
 
-    implementation 'org.mozilla:rhino:1.7R4'
-    implementation 'com.github.evgenyneu:js-evaluator-for-android:v5.0.0'
-    implementation "io.grpc:grpc-okhttp:1.32.2"
+    implementation 'org.mozilla:rhino:1.8.1'
+    implementation 'com.github.evgenyneu:js-evaluator-for-android:6.0.0'
+    implementation "io.grpc:grpc-okhttp:1.77.0"
+    implementation "androidx.work:work-runtime:2.11.0"
 
+    //noinspection NewerVersionAvailable
+    implementation 'com.diogobernardino:williamchart:2.2'
+    implementation 'com.h6ah4i.android.widget.verticalseekbar:verticalseekbar:1.0.0'
+    implementation 'it.xabaras.android:recyclerview-swipedecorator:1.4'
 
-
-
-    //implementation project(':vpnLib')
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /*implementation('com.google.firebase:firebase-ml-natural-language:21.0.2') {
-        exclude module: 'androidx.activity'
-    }
-    implementation('com.google.firebase:firebase-ml-natural-language-translate-model:20.0.5') {
-        exclude module: 'androidx.activity'
-    }*/
 }

@@ -122,7 +122,7 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
 
     @Override
     public void showSeries(ArrayList<OtherArtistPOJO> data) {
-        if (data.size() == 0) {
+        if (data.isEmpty()) {
             binding.placeholder.setText(R.string.error_load_data);
             binding.placeholder.setVisibility(View.VISIBLE);
         } else {

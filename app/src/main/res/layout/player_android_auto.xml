@@ -16,7 +16,7 @@
         android:orientation="horizontal"
         android:paddingTop="@dimen/text_margin"
         android:paddingBottom="@dimen/text_margin"
-        tools:showIn="@layout/player_television">
+        tools:showIn="@layout/player">
 
         <RadioButton
             android:id="@+id/radioAll"

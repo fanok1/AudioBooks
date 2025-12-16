@@ -73,20 +73,9 @@ public interface Activity extends MvpView {
     @StateStrategyType(SkipStrategy.class)
     void setIsFavorite(boolean b);
 
-    @StateStrategyType(SkipStrategy.class)
-    void downloadFile(String url, BookPOJO bookPOJO);
-
-    @StateStrategyType(SkipStrategy.class)
-    void downloadFileABMP3(String url, BookPOJO bookPOJO);
-
-    @StateStrategyType(SkipStrategy.class)
-    void showGetPlus();
 
     @StateStrategyType(SkipStrategy.class)
     void showRatingDialog();
-
-    @StateStrategyType(SkipStrategy.class)
-    void showShowAdsBeforeDownload();
 
     @StateStrategyType(SkipStrategy.class)
     void showToast(int id);
@@ -95,10 +84,7 @@ public interface Activity extends MvpView {
     void showToast(String s);
 
     @StateStrategyType(SkipStrategy.class)
-    void updateAdapter(String url);
-
-    @StateStrategyType(SkipStrategy.class)
-    void clearDownloading();
+    void updateAdapter();
 
     @StateStrategyType(SkipStrategy.class)
     void startMainActivity(int fragmentId);

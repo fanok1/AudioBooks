@@ -16,7 +16,7 @@ public class Url {
     public static final String RATING_MONTH = SERVER + "/rating/?w=month&page=";
     public static final String RATING_ALL_TIME = SERVER + "/rating/?w=alltime&page=";
 
-    public static final String SERVER_IZIBUK = "https://izibuk.ru";
+    public static final String SERVER_IZIBUK = "https://izib.uk";
 
     public static final String INDEX_IZIBUK = SERVER_IZIBUK + "/?p=";
     public static final String SECTIONS_IZIBUK = SERVER_IZIBUK + "/genres?p=";
@@ -49,14 +49,14 @@ public class Url {
     public static final String RATING_ALL_TIME_AKNIGA = SERVER_AKNIGA + "/index/discussed/page<page>/?period=all";
 
 
-    public static final String SERVER_BAZA_KNIG = "https://baza-knig.ink";
+    public static final String SERVER_BAZA_KNIG = "https://baza-knig.top";
     public static final String INDEX_BAZA_KNIG = SERVER_BAZA_KNIG + "/page/";
     public static final String SECTIONS_BAZA_KNIG = SERVER_BAZA_KNIG;
     public static final String NEW_BOOK_BAZA_KNIG = SERVER_BAZA_KNIG + "/page/";
-    public static final String BEST_BAZA_KNIG = SERVER_BAZA_KNIG + "/fi/sort=news_read/order=desc/page/";
-    public static final String RATING_BAZA_KNIG = SERVER_BAZA_KNIG + "/fi/sort=rating/order=desc/page/";
-    public static final String COMENTS_BAZA_KNIG = SERVER_BAZA_KNIG + "/fi/sort=comm_num/order=desc/page/";
-    public static final String YEARS_BAZA_KNIG = SERVER_BAZA_KNIG + "/fi/sort=d.god/order=desc/page/";
+    public static final String BEST_BAZA_KNIG = SERVER_BAZA_KNIG + "/f/sort=news_read/order=desc/page/";
+    public static final String RATING_BAZA_KNIG = SERVER_BAZA_KNIG + "/f/sort=rating/order=desc/page/";
+    public static final String COMENTS_BAZA_KNIG = SERVER_BAZA_KNIG + "/f/sort=comm_num/order=desc/page/";
+    public static final String YEARS_BAZA_KNIG = SERVER_BAZA_KNIG + "/f/sort=d.god/order=desc/page/";
 
 
     public static final String SERVER_KNIGOBLUD = "https://www.knigoblud.club";

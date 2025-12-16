@@ -5,6 +5,7 @@ import static android.view.KeyEvent.KEYCODE_DPAD_CENTER;
 import static android.view.KeyEvent.KEYCODE_ENTER;
 import static android.view.KeyEvent.KEYCODE_NUMPAD_ENTER;
 
+import android.annotation.SuppressLint;
 import android.app.UiModeManager;
 import android.content.res.Configuration;
 import android.util.Log;
@@ -18,19 +19,26 @@ import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.offline.Download;
+import androidx.media3.exoplayer.offline.DownloadCursor;
+import androidx.media3.exoplayer.offline.DownloadIndex;
 import androidx.recyclerview.widget.RecyclerView;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
-import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.AudioPOJO;
-import com.fanok.audiobooks.pojo.BookPOJO;
-import java.io.File;
+import com.fanok.audiobooks.util.DownloadUtil;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
-import java.util.Objects;
+import java.util.Map;
 
+/** @noinspection ClassEscapesDefinedScope*/
+@UnstableApi
 public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> {
 
     private static final String TAG = "AudioAdapter";
@@ -39,11 +47,22 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
 
     private ArrayList<AudioPOJO> mData;
 
-    private String mUrlBook;
-
     private AudioAdapter.OnListItemSelectedInterface mListener;
 
     private AudioAdapter.OnSelectedListner mSelectedListner;
+    private final Map<String, Download> allDownloads;
+
+    private final  int[] states = new int[] {
+            Download.STATE_COMPLETED,
+            Download.STATE_DOWNLOADING,
+            Download.STATE_QUEUED,
+            Download.STATE_FAILED,
+            Download.STATE_STOPPED,
+            Download.STATE_REMOVING,
+            Download.STATE_RESTARTING
+    };
+
+
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -79,29 +98,31 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
     public AudioAdapter() {
         mData = new ArrayList<>();
         mSelectedItems = new HashSet<>();
-        mDownloadingItems = new HashSet<>();
+        allDownloads = new HashMap<>();
+        refresh();
     }
 
-    public void setSelectedListner(
-            OnSelectedListner selectedListner) {
+    public void setSelectedListner(OnSelectedListner selectedListner) {
         mSelectedListner = selectedListner;
     }
 
-    public void addDownloadingItem(@NonNull String url) {
-        mDownloadingItems.add(url);
+    @SuppressLint("NotifyDataSetChanged")
+    public void refresh() {
+        allDownloads.clear();
+        try {
+            DownloadIndex index = DownloadUtil.getDownloadManager().getDownloadIndex();
+            try (DownloadCursor cursor = index.getDownloads(states)) {
+                while (cursor.moveToNext()) {
+                    Download d = cursor.getDownload();
+                    allDownloads.put(d.request.id, d);
+                }
+            }
+
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to query downloads", e);
+        }
         notifyDataSetChanged();
     }
-
-    public void removeDownloadingItem(@NonNull String url) {
-        mDownloadingItems.remove(url);
-        notifyDataSetChanged();
-    }
-
-    public void clearDownloadingItem() {
-        mDownloadingItems.clear();
-        notifyDataSetChanged();
-    }
-
 
     public HashSet<String> getSelectedItems() {
         return mSelectedItems;
@@ -111,12 +132,13 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         return mSelectedItems.size();
     }
 
-    public void setData(@NonNull ArrayList<AudioPOJO> data, @NonNull String urlBook) {
+    @SuppressLint("NotifyDataSetChanged")
+    public void setData(@NonNull ArrayList<AudioPOJO> data) {
         mData = data;
-        mUrlBook = urlBook;
         notifyDataSetChanged();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void setIndexSelected(int indexSelected) {
         this.indexSelected = indexSelected;
         notifyDataSetChanged();
@@ -140,18 +162,10 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         Log.d(TAG, "onCreateViewHolder: called");
 
         View view;
-        UiModeManager uiModeManager = (UiModeManager) viewGroup.getContext().getSystemService(
-                UI_MODE_SERVICE);
-        if (uiModeManager != null
-                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                    R.layout.audio_recycler_item_television,
-                    viewGroup, false);
-        } else {
-            view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                    R.layout.audio_recycler_item,
-                    viewGroup, false);
-        }
+
+        view = LayoutInflater.from(viewGroup.getContext()).inflate(
+                R.layout.audio_recycler_item,
+                viewGroup, false);
 
         return new ViewHolder(view);
     }
@@ -161,10 +175,9 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         void onItemSelected();
     }
 
-    private final HashSet<String> mDownloadingItems;
-
     private final HashSet<String> mSelectedItems;
 
+    @SuppressLint("NotifyDataSetChanged")
     public void clearSelected() {
         mSelectedItems.clear();
         if (mSelectedListner != null) {
@@ -174,14 +187,13 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
     }
 
 
-
     @Override
     public int getItemCount() {
         return mData.size();
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
+    public void onBindViewHolder(@NonNull ViewHolder viewHolder, @SuppressLint("RecyclerView") int i) {
         Log.d(TAG, "onBindViewHolder: called");
 
         if (mData.get(i).getTime() != 0) {
@@ -214,60 +226,78 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
             return false;
         });
 
-        File[] folders = viewHolder.mImageView.getContext().getExternalFilesDirs(null);
-        boolean b = false;
-        BooksDBModel dbModel = new BooksDBModel(viewHolder.mImageView.getContext());
-        if(dbModel.inSaved(mUrlBook)) {
-            BookPOJO bookPOJO = dbModel.getSaved(mUrlBook);
-            String source = Consts.getSorceName(viewHolder.mImageView.getContext(), mUrlBook);
-            for (File folder : folders) {
-                if (folder != null) {
-                    String filePath = folder.getAbsolutePath() + "/" + source
-                            + "/" + bookPOJO.getAutor()
-                            + "/" + bookPOJO.getArtist()
-                            + "/" + bookPOJO.getName();
-                    File dir = new File(filePath);
-                    if (dir.exists() && dir.isDirectory()) {
-                        File file;
-                        if(!Objects.equals(source, viewHolder.mImageView.getContext().getString(R.string.abook))) {
-                            String url = mData.get(i).getUrl();
-                            file = new File(dir, url.substring(url.lastIndexOf("/") + 1));
-                        }else {
-                            file = new File(dir+"/pl","enc.key");
-                        }
 
-                        if (file.exists()) {
-                            b = true;
-                            break;
-                        }
-                    }
-                }
+        String url = mData.get(i).getUrl();
+        Download download = allDownloads.get(mData.get(i).getCleanUrl());
+        if (download != null && java.util.stream.IntStream.of(states).anyMatch(v -> v == download.state)){
+            if (download.state == Download.STATE_COMPLETED) {
+                viewHolder.mImageView.setVisibility(View.VISIBLE);
+                viewHolder.mImageView.setImageResource(R.drawable.ic_is_check);
+                viewHolder.mProgressBar.setVisibility(View.GONE);
+            } else if (download.state == Download.STATE_DOWNLOADING || download.state == Download.STATE_QUEUED){
+                viewHolder.mImageView.setVisibility(View.INVISIBLE);
+                viewHolder.mProgressBar.setVisibility(View.VISIBLE);
+            }else if (download.state == Download.STATE_FAILED){
+                viewHolder.mProgressBar.setVisibility(View.GONE);
+                viewHolder.mImageView.setImageResource(R.drawable.ic_error);
+                viewHolder.mImageView.setVisibility(View.VISIBLE);
+            }else if (download.state == Download.STATE_STOPPED){
+                viewHolder.mProgressBar.setVisibility(View.GONE);
+                viewHolder.mImageView.setImageResource(R.drawable.ic_pause_circle_outline);
+                viewHolder.mImageView.setVisibility(View.VISIBLE);
             }
-        }
-        dbModel.closeDB();
-        if (b) {
-            viewHolder.mImageView.setVisibility(View.VISIBLE);
-            viewHolder.mProgressBar.setVisibility(View.GONE);
         } else {
             viewHolder.mImageView.setVisibility(View.INVISIBLE);
-            if (mDownloadingItems.contains(mData.get(i).getUrl())) {
-                viewHolder.mProgressBar.setVisibility(View.VISIBLE);
-            } else {
-                viewHolder.mProgressBar.setVisibility(View.GONE);
-            }
+            viewHolder.mProgressBar.setVisibility(View.GONE);
         }
-
 
 
         viewHolder.mView.setOnLongClickListener(view -> {
-            String url = mData.get(i).getUrl();
-            if(url.contains(Url.SERVER_AKNIGA)){
-                selectedItemsAddAll();
-            }else {
-                selectedItemsAdd(url);
-            }
+            selectedItemsAdd(url);
             return true;
         });
+
+        UiModeManager uiModeManager = (UiModeManager) viewHolder.mView.getContext().getSystemService(UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            // --- Логика для ТВ ---
+            // Устанавливаем OnKeyListener для эмуляции долгого нажатия
+            viewHolder.mView.setOnKeyListener(new View.OnKeyListener() {
+                private long keyHeldDownTime = 0;
+                private final long LONG_PRESS_DURATION_MS = 500; // 0.5 секунды
+
+                @Override
+                public boolean onKey(View v, int keyCode, KeyEvent event) {
+                    // Нас интересуют только центральные кнопки пульта
+                    if (keyCode == KEYCODE_DPAD_CENTER || keyCode == KEYCODE_ENTER || keyCode == KEYCODE_NUMPAD_ENTER) {
+                        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                            // Если это первое нажатие, запоминаем время
+                            if (keyHeldDownTime == 0) {
+                                keyHeldDownTime = event.getEventTime();
+                            }
+                            return true; // Мы обработаем событие, когда кнопка будет отпущена
+                        }
+
+                        if (event.getAction() == KeyEvent.ACTION_UP) {
+                            // Кнопку отпустили
+                            long duration = event.getEventTime() - keyHeldDownTime;
+                            keyHeldDownTime = 0; // Сбрасываем таймер
+
+                            if (duration >= LONG_PRESS_DURATION_MS) {
+                                // Если удержание было достаточно долгим, считаем это "долгим кликом"
+                                selectedItemsAdd(url);
+                                return true; // Событие полностью обработано
+                            } else {
+                                // Если удержание было коротким, считаем это обычным кликом
+                                click(v, i);
+                                return true; // Событие полностью обработано
+                            }
+                        }
+                    }
+                    return false; // Для всех остальных кнопок возвращаем false
+                }
+            });
+
+        }
 
 
         if (indexSelected != i) {
@@ -291,6 +321,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         viewHolder.mRadioButton.setChecked(mSelectedItems.contains(mData.get(i).getUrl()));
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void selectedItemsAddAll() {
 
         if (mSelectedItems.size() == mData.size()) {
@@ -308,6 +339,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         notifyDataSetChanged();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void click(View view, int pos) {
         if (mSelectedItems.isEmpty()) {
             indexSelected = pos;
@@ -320,6 +352,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void selectedItemsAdd(String s) {
         if (mSelectedItems.contains(s)) {
             mSelectedItems.remove(s);

@@ -7,13 +7,13 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.Xml;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Switch;
 import android.widget.Toast;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -51,7 +51,7 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
 
     private SharedPreferences mSettings;
 
-    private Switch parentalControl;
+    private androidx.appcompat.widget.SwitchCompat parentalControl;
 
     private AlertDialog mAlertDialog;
 
@@ -89,7 +89,7 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
             parser.next();
             parser.nextTag();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.d("Error", Objects.requireNonNull(e.getMessage()));
         }
 
         AttributeSet attr = Xml.asAttributeSet(parser);
@@ -186,7 +186,7 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.parental_control_menu, menu);
         MenuItem switshMenuItem = menu.findItem(R.id.app_bar_switch);
-        parentalControl = switshMenuItem.getActionView().findViewById(R.id.switchView);
+        parentalControl = Objects.requireNonNull(switshMenuItem.getActionView()).findViewById(R.id.switchView);
         parentalControl.setOnCheckedChangeListener(
                 (compoundButton, b) -> {
                     mAddapter.setEnabled(b);

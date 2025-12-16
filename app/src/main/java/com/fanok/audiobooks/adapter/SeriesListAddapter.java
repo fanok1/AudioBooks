@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.adapter;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 import java.util.ArrayList;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.MyHolder> {
 
     private ArrayList<SeriesPOJO> mModel;
@@ -33,7 +35,7 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
             mLinearLayout = itemView.findViewById(R.id.item);
 
             itemView.setOnClickListener(view -> {
-                if (mListener != null) mListener.onItemSelected(view, getAdapterPosition());
+                if (mListener != null) mListener.onItemSelected(view, getBindingAdapterPosition());
             });
 
 
@@ -47,33 +49,6 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
             }
             mLine.setText(book.getNumber());
             mText.setText(book.getName());
-
-            /*//translation
-            String lang = Locale.getDefault().toLanguageTag();
-            if(!lang.equals("ru")) {
-                FirebaseTranslatorOptions options =
-                        new FirebaseTranslatorOptions.Builder()
-                                .setSourceLanguage(FirebaseTranslateLanguage.RU)
-                                .setTargetLanguage(FirebaseTranslateLanguage
-                                .languageForLanguageCode(lang))
-                                .build();
-                final FirebaseTranslator translator =
-                        FirebaseNaturalLanguage.getInstance().getTranslator(options);
-
-                FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions
-                .Builder()
-                        .requireWifi()
-                        .build();
-                translator.downloadModelIfNeeded(conditions)
-                        .addOnSuccessListener(
-                                v -> {
-                                    translator.translate(book.getName())
-                                            .addOnSuccessListener(
-                                                    translatedText -> mText.setText
-                                                    (translatedText));
-                                });
-            }*/
-
         }
     }
 
@@ -91,9 +66,15 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
     }
 
     public void clearItem() {
-        mModel.clear();
-        notifyDataSetChanged();
+        if (mModel != null) {
+            int oldSize = mModel.size();
+            if (oldSize > 0) {
+                mModel.clear();
+                notifyItemRangeRemoved(0, oldSize);
+            }
+        }
     }
+
 
     public SeriesPOJO getItem(int postion) {
         return mModel.get(postion);
@@ -121,10 +102,12 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
         return new MyHolder(view);
     }
 
-    public void setItem(ArrayList<SeriesPOJO> model) {
-        mModel = model;
+    @SuppressLint("NotifyDataSetChanged")
+    public void setItem(ArrayList<SeriesPOJO> newModel) {
+        mModel = newModel;
         notifyDataSetChanged();
     }
+
 
     public void setListener(
             OnListItemSelectedInterface listener) {

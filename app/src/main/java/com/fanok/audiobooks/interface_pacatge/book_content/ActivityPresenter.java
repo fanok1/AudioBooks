@@ -31,7 +31,7 @@ public interface ActivityPresenter {
 
     void buttomForwardClick(View view);
 
-    void seekChange(View view);
+    void seekChange(int progress);
 
     void buttonSpeedClick(View view);
 

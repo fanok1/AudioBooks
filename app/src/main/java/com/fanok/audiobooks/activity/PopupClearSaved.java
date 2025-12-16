@@ -81,7 +81,7 @@ public class PopupClearSaved extends AppCompatActivity {
             }
 
         }
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
             Toast.makeText(this, R.string.saved_file_not_found, Toast.LENGTH_SHORT).show();
             finish();
         }
@@ -90,10 +90,8 @@ public class PopupClearSaved extends AppCompatActivity {
 
         int spacing = (int) getResources().getDimension(R.dimen.text_margin);
         binding.recyclerView.addItemDecoration(new GridSpacingItemDecoration(1, spacing, true));
-        clearSavedAdapter.setChackedChange(() -> {
-            binding.checkBoxAll.setChecked(
-                    clearSavedAdapter.getItemCount() == clearSavedAdapter.getSelectedItemsSize());
-        });
+        clearSavedAdapter.setChackedChange(() -> binding.checkBoxAll.setChecked(
+                clearSavedAdapter.getItemCount() == clearSavedAdapter.getSelectedItemsSize()));
         binding.recyclerView.setAdapter(clearSavedAdapter);
 
         binding.checkBoxAll.setOnClickListener(view -> {
@@ -106,21 +104,13 @@ public class PopupClearSaved extends AppCompatActivity {
 
         binding.button.setOnClickListener(view -> {
             HashSet<File> files = clearSavedAdapter.getSelectedItems();
-            if (files.size() == 0) {
+            if (files.isEmpty()) {
                 Toast.makeText(this, R.string.no_selecetd, Toast.LENGTH_SHORT).show();
                 return;
             }
             for (File file : files) {
                 if (file.exists()) {
                     delete(file);
-                }
-            }
-
-            File[] filesDirs = getExternalFilesDirs(null);
-            for (final File filesDir : filesDirs) {
-                if (filesDir != null) {
-                    File file = new File(filesDir.getAbsolutePath());
-                    deleteEmtyFolder(file);
                 }
             }
 
@@ -208,30 +198,7 @@ public class PopupClearSaved extends AppCompatActivity {
         }
     }
 
-    public static void deleteEmtyFolder(@NonNull File file) {
-        if (!file.exists()) {
-            return;
-        }
-        if (file.isDirectory()) {
-            File[] files = file.listFiles();
-            if (files == null || files.length == 0) {
-                // Удаляем пустую папку
-                file.delete();
-                System.out.println("Удалена пустая папка: " + file.getAbsolutePath());
-                return;
-            }
-            // Рекурсивный вызов для всех файлов и папок в текущей папке
-            for (File subFile : files) {
-                deleteEmtyFolder(new File(subFile.getAbsolutePath()));
-            }
-            // Проверяем еще раз, если папка пуста, то удаляем
-            files = file.listFiles();
-            if (files == null || files.length == 0) {
-                file.delete();
-                System.out.println("Удалена пустая папка: " + file.getAbsolutePath());
-            }
-        }
-    }
+
 
 
     @Override

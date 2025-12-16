@@ -11,6 +11,7 @@ import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import java.util.ArrayList;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> {
 
     class MyHolder extends RecyclerView.ViewHolder {
@@ -25,12 +26,15 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
             mText = itemView.findViewById(R.id.textView);
             mView = itemView;
             itemView.setOnClickListener(view -> {
-                int pos = getAdapterPosition();
-                if (mListener != null) {
-                    mListener.onItemSelected(view, pos);
+                int newPosition = getBindingAdapterPosition();
+                if (newPosition != RecyclerView.NO_POSITION && newPosition != selected) {
+                    notifyItemChanged(selected);
+                    selected = newPosition;
+                    notifyItemChanged(selected);
+                    if (mListener != null) {
+                        mListener.onItemSelected(view, newPosition);
+                    }
                 }
-                selected = pos;
-                notifyDataSetChanged();
             });
 
 
@@ -40,8 +44,7 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
             if (pos == selected) {
                 mView.setBackgroundResource(R.drawable.filter_selected);
             } else {
-                mView.setBackgroundColor(
-                        mView.getContext().getResources().getColor(android.R.color.transparent));
+                mView.setBackgroundResource(R.drawable.filter_item_selector);
             }
 
             switch (mData.get(pos)) {

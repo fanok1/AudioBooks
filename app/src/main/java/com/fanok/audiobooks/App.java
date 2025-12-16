@@ -7,16 +7,38 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.common.util.Util;
+import androidx.media3.database.StandaloneDatabaseProvider;
+import androidx.media3.datasource.DataSource;
+import androidx.media3.datasource.DefaultHttpDataSource;
+import androidx.media3.datasource.cache.Cache;
+import androidx.media3.datasource.cache.CacheDataSource;
+import androidx.media3.datasource.cache.NoOpCacheEvictor;
+import androidx.media3.datasource.cache.SimpleCache;
+import androidx.media3.exoplayer.offline.DownloadManager;
 import androidx.preference.PreferenceManager;
+
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
-import com.google.android.gms.ads.MobileAds;
+import com.fanok.audiobooks.util.DownloadUtil;
+
+
+import java.io.File;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
+import java.util.concurrent.Executors;
 
+@UnstableApi
 public class App extends Application {
 
     public static boolean useProxy;
+    private DownloadManager downloadManager;
+    private SimpleCache downloadCache;
+
+    private StandaloneDatabaseProvider databaseProvider;
+
+    private static App instance;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -27,10 +49,30 @@ public class App extends Application {
         super.attachBaseContext(LocaleManager.onAttach(base, lang));
     }
 
+    @UnstableApi
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
 
+        // --- ВОЗВРАЩАЕМ ПРОСТОЙ И ПОНЯТНЫЙ КОД ---
+        databaseProvider = new StandaloneDatabaseProvider(this);
+        File downloadDirectory = new File(getCacheDir(), "downloads");
+        downloadCache = new SimpleCache(downloadDirectory, new NoOpCacheEvictor(), databaseProvider);
+
+        DataSource.Factory resolvingDataSourceFactory = DownloadUtil.getResolvingUpstreamFactory(this);
+
+        downloadManager = new DownloadManager(
+                this,
+                databaseProvider,
+                downloadCache,
+                resolvingDataSourceFactory, // <-- Используем вашу фабрику для сети
+                Executors.newFixedThreadPool(3)
+        );
+        downloadManager.setMaxParallelDownloads(1);
+
+
+        // User's original code
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
 
@@ -45,7 +87,6 @@ public class App extends Application {
 
         Consts.setBazaKnigCookies(pref.getString("cookes_baza_knig", ""));
 
-        MobileAds.initialize(this, "ca-app-pub-3595775191373219~2371571769");
 
         BookPresenter.setSpeedWithoutBroadcast(new StorageUtil(getBaseContext()).loadSpeed());
 
@@ -63,59 +104,24 @@ public class App extends Application {
             };
             Authenticator.setDefault(authenticator);
         }
-
-        /*String vpn = pref.getString("vpn", getString(R.string.vpn_no_value));
-        if (!vpn.equals(getString(R.string.vpn_no_value))) {
-            String file = "";
-            String name = "";
-            if (vpn.equals(getString(R.string.vpn_antizapret_value))) {
-                file = "antizapret-tcp.ovpn";
-                name = "Антизапрет";
-            } else if (vpn.equals(getString(R.string.vpn_zaborona_value))) {
-                file = "srv0.zaborona-help_maxroutes.ovpn";
-                name = "Заборона";
-            } else if (vpn.equals(getString(R.string.vpn_zaborona_europe_value))) {
-                file = "srv0.zaborona-help-UDP-no-encryption_maxroutes.ovpn";
-                name = "Заборона Европа";
-            } else if (vpn.equals(getString(R.string.vpn_ukrane_value))) {
-                file = "ukrane.ovpn";
-                name = "VPN Украина";
-            }
-            if (!file.isEmpty()) {
-                Intent intent = VpnService.prepare(getApplicationContext());
-                if (intent != null) {
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    getApplicationContext().startActivity(intent);
-                }
-                startVpn(file, name);
-            }
-        }*/
-
-        //Billing.initBilding(getBaseContext());
     }
 
-    /*private void startVpn(String file, String name) {
-        try {
-            // .ovpn file
-            InputStream conf = getAssets().open(file);
-            InputStreamReader isr = new InputStreamReader(conf);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder config = new StringBuilder();
-            String line;
 
-            while (true) {
-                line = br.readLine();
-                if (line == null) {
-                    break;
-                }
-                config.append(line).append("\n");
-            }
+    public StandaloneDatabaseProvider getDatabaseProvider() {
+        return databaseProvider;
+    }
 
-            br.readLine();
-            OpenVpnApi.startVpn(getApplicationContext(), config.toString(), name, null, null);
+    public static App getInstance() {
+        return instance;
+    }
 
-        } catch (IOException | RemoteException e) {
-            e.printStackTrace();
-        }
-    }*/
+    @UnstableApi
+    public DownloadManager getDownloadManager() {
+        return downloadManager;
+    }
+
+    public SimpleCache getDownloadCache() {
+        return downloadCache;
+    }
+
 }

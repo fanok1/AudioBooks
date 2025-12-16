@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Состояние: Элемент ВЫБРАН (selected) -->
+    <!-- Используем ваш существующий drawable для выбранного состояния -->
+    <item android:state_selected="true"
+        android:drawable="@drawable/filter_selected" />
+
+    <!-- Состояние: Элемент В ФОКУСЕ, но не выбран -->
+    <item android:state_focused="true" android:state_selected="false">
+        <shape android:shape="rectangle">
+            <!-- Полупрозрачный цвет для подсветки фокуса -->
+            <solid android:color="?attr/colorControlHighlight" />
+            <corners android:radius="4dp"/>
+        </shape>
+    </item>
+
+    <!-- Состояние по умолчанию (не в фокусе и не выбран) -->
+    <item android:drawable="@android:color/transparent" />
+
+</selector>

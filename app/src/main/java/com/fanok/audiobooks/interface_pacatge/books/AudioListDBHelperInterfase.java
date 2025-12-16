@@ -19,5 +19,7 @@ public interface AudioListDBHelperInterfase {
 
     ArrayList<AudioListPOJO> getAll();
 
+    AudioListPOJO get(@NonNull String url, @NonNull String audioUrl);
+
 
 }

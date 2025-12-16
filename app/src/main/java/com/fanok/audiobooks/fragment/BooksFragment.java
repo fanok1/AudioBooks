@@ -1,15 +1,17 @@
 package com.fanok.audiobooks.fragment;
 
+import static android.content.Context.UI_MODE_SERVICE;
 import static com.fanok.audiobooks.Consts.MODEL_ARTIST;
 import static com.fanok.audiobooks.Consts.MODEL_AUTOR;
 import static com.fanok.audiobooks.Consts.MODEL_BOOKS;
 import static com.fanok.audiobooks.Consts.MODEL_GENRE;
-import static com.fanok.audiobooks.Consts.REQEST_CODE_SEARCH;
 import static com.fanok.audiobooks.Consts.setColorPrimeriTextInIconItemMenu;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -24,10 +26,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -78,6 +86,10 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     private int modelID;
     private String mUrl;
 
+    private boolean isTelevision;
+
+    private MenuProvider mMenuProvider;
+
 
     public static BooksFragment newInstance(@NonNull String url, int title, int modelID) {
         BooksFragment fragment = new BooksFragment();
@@ -125,6 +137,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         return fragment;
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: called");
@@ -145,13 +158,81 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
             throw new IllegalArgumentException("Illegal model id");
         }
         mUrl = url;
+
+
     }
+
+    private final ActivityResultLauncher<Intent> searchActivityLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Intent data = result.getData();
+                    if (data != null) {
+                        mPresenter.onActivityResult(data);
+                    }
+                }
+            });
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
 
         binding = FragmentBooksBinding.inflate(inflater, container, false);
+
+        UiModeManager uiModeManager = (UiModeManager) requireContext().getSystemService(UI_MODE_SERVICE);
+        isTelevision = (uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION);
+
+
+        MenuHost menuHost = requireActivity();
+        mMenuProvider = new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+
+
+                menu.clear();
+
+                int menuResId;
+                if (mUrl.contains(Url.SERVER_IZIBUK) || mUrl.contains(Url.SERVER_ABMP3)) {
+                    menuResId = R.menu.books_izibuk_options_menu;
+                } else if (mUrl.contains(Url.SERVER_BAZA_KNIG)) {
+                    menuResId = R.menu.books_baza_knig_options_menu;
+                } else {
+                    menuResId = R.menu.books_options_menu;
+                }
+                inflater.inflate(menuResId, menu);
+
+                if (modelID != Consts.MODEL_BOOKS || mUrl.contains("reader") || mUrl.contains("author")
+                        || mUrl.contains("genre") || mUrl.contains("serie") || mUrl.contains("performer")) {
+                    MenuItem sourceItem = menu.findItem(R.id.source);
+                    if (sourceItem != null) sourceItem.setVisible(false);
+                } else {
+                    setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.source), requireContext());
+                }
+
+                if (modelID != Consts.MODEL_BOOKS || mUrl.contains("reader") || mUrl.contains("author") ||
+                        mUrl.contains("serie") || mUrl.contains("cikl") ||
+                        (mUrl.contains(Url.SERVER_ABMP3) && mUrl.contains("genre")) ||
+                        (mUrl.contains(Url.SERVER_IZIBUK) && mUrl.contains("genre")) ||
+                        (mUrl.contains(Url.SERVER_BAZA_KNIG) && mUrl.contains("ispolnitel")) ||
+                        (mUrl.contains(Url.SERVER_KNIGOBLUD))) {
+                    MenuItem orderItem = menu.findItem(R.id.order);
+                    if (orderItem != null) orderItem.setVisible(false);
+                } else {
+                    setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.order), requireContext());
+                }
+
+                setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search), requireContext());
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem item) {
+                getPresenter().onOptionItemSelected(item.getItemId());
+                return true;
+            }
+        };
+        menuHost.addMenuProvider(mMenuProvider, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+
 
         if (titleId != 0) {
             requireActivity().setTitle(titleId);
@@ -179,9 +260,13 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                 binding.list.setAdapter(mAddapterGenre);
                 break;
         }
-        setHasOptionsMenu(true);
 
-        binding.refresh.setOnRefreshListener(() -> getPresenter().onRefresh());
+
+        if (isTelevision){
+            binding.refresh.setEnabled(false);
+        }else {
+            binding.refresh.setOnRefreshListener(() -> getPresenter().onRefresh());
+        }
 
         binding.list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -232,6 +317,13 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
         return binding.getRoot();
     }
 
+
+
+
+
+
+
+
     @Override
     public void onDestroyView() {
         getPresenter().onDestroy();
@@ -245,80 +337,11 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     }
 
     @Override
-    public void onCreateOptionsMenu(@NotNull Menu menu, @NotNull MenuInflater inflater) {
-        if (mUrl.contains(Url.SERVER_IZIBUK) || mUrl.contains(Url.SERVER_ABMP3)) {
-            inflater.inflate(R.menu.books_izibuk_options_menu, menu);
-        } else if (mUrl.contains(Url.SERVER_BAZA_KNIG)) {
-            inflater.inflate(R.menu.books_baza_knig_options_menu, menu);
-        } else {
-            inflater.inflate(R.menu.books_options_menu, menu);
-        }
-
-        if (modelID == Consts.MODEL_BOOKS) {
-
-            if (mUrl.contains("reader") || mUrl.contains("author") || mUrl.contains("genre")
-                    || mUrl.contains("serie") || mUrl.contains("performer")) {
-                menu.findItem(R.id.source).setVisible(false);
-            } else {
-                setColorPrimeriTextInIconItemMenu(
-                        menu.findItem(R.id.source), requireContext());
-                MenuItem item;
-                switch (Consts.getSOURCE()) {
-                    case Consts.SOURCE_KNIGA_V_UHE:
-                        item = menu.findItem(R.id.source_kniga_v_uhe);
-                        break;
-                    case Consts.SOURCE_IZI_BUK:
-                        item = menu.findItem(R.id.source_izi_book);
-                        break;
-                    case Consts.SOURCE_AUDIO_BOOK_MP3:
-                        item = menu.findItem(R.id.source_audio_book_mp3);
-                        break;
-                    case Consts.SOURCE_ABOOK:
-                        item = menu.findItem(R.id.source_abook);
-                        break;
-                    case Consts.SOURCE_BAZA_KNIG:
-                        item = menu.findItem(R.id.source_baza_knig);
-                        break;
-                    case Consts.SOURCE_KNIGOBLUD:
-                        item = menu.findItem(R.id.source_knigoblud);
-                        menu.findItem(R.id.order).setVisible(false);
-                        break;
-                    default:
-                        item = null;
-                        break;
-                }
-                if (item != null) {
-                    item.setChecked(true);
-                }
-
-            }
-
-            if (mUrl.contains("reader") || mUrl.contains("author") ||
-                    mUrl.contains("serie") || mUrl.contains("cikl") ||
-                    (mUrl.contains(Url.SERVER_ABMP3) && mUrl.contains("genre")) ||
-                    (mUrl.contains(Url.SERVER_IZIBUK) && mUrl.contains("genre")) ||
-                    (mUrl.contains(Url.SERVER_BAZA_KNIG) && mUrl.contains("ispolnitel"))) {
-                menu.findItem(R.id.order).setVisible(false);
-            } else {
-                setColorPrimeriTextInIconItemMenu(
-                        menu.findItem(R.id.order), requireContext());
-            }
-        } else {
-            menu.findItem(R.id.order).setVisible(false);
-            menu.findItem(R.id.source).setVisible(false);
-        }
-        setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search),
-                requireContext());
-
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
     public void recreate() {
         Intent mStartActivity = new Intent(getContext(), MainActivity.class);
         int mPendingIntentId = 123456;
         PendingIntent mPendingIntent = PendingIntent.getActivity(getContext(), mPendingIntentId,
-                mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+                mStartActivity, PendingIntent.FLAG_IMMUTABLE);
         AlarmManager mgr = (AlarmManager) requireContext()
                 .getSystemService(Context.ALARM_SERVICE);
         mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
@@ -365,16 +388,21 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     }
 
     @Override
-    public void showData(@NonNull ArrayList bookPOJOS) {
-        try {
-            if (bookPOJOS.size() != 0) {
-                if (bookPOJOS.get(0) instanceof BookPOJO) {
-                    mAddapterBooks.setItem(bookPOJOS);
-                } else if (bookPOJOS.get(0) instanceof GenrePOJO) {
-                    mAddapterGenre.setItem(bookPOJOS);
-                }
-            }
-        } catch (NullPointerException e) {
+    public void showDataBooks(@NonNull ArrayList<BookPOJO> books) {
+        if (mAddapterBooks != null) {
+            mAddapterBooks.setItem(books); // Используем setData, который мы ранее исправили
+        } else {
+            // Если адаптер еще не создан, это может быть ошибкой в логике,
+            // но на всякий случай можно добавить обработку.
+            showToast(R.string.error_display_data);
+        }
+    }
+
+    @Override
+    public void showDataGenres(@NonNull ArrayList<GenrePOJO> genres) {
+        if (mAddapterGenre != null) {
+            mAddapterGenre.setItem(genres);
+        } else {
             showToast(R.string.error_display_data);
         }
     }
@@ -429,18 +457,12 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     public void showSearchActivity(int modelId) {
         Intent intent = new Intent(getContext(), SearchableActivity.class);
         intent.putExtra(Consts.ARG_MODEL, modelId);
-        startActivityForResult(intent, REQEST_CODE_SEARCH);
+        searchActivityLauncher.launch(intent);
     }
 
     @Override
     public void showRefreshing(boolean b) {
         binding.refresh.setRefreshing(b);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        getPresenter().onOptionItemSelected(item.getItemId());
-        return true;
     }
 
     protected BooksPresenter getPresenter() {
@@ -488,16 +510,6 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                     break;
             }
         }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == Consts.REQEST_CODE_SEARCH && resultCode == Activity.RESULT_OK) {
-            if (data != null) {
-                mPresenter.onActivityResult(data);
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private int getCount() {

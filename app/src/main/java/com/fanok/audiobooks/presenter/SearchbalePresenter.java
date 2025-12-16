@@ -15,7 +15,6 @@ import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
-import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.interface_pacatge.searchable.SearchableModel;
@@ -83,7 +82,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
     private final SharedPreferences mPreferences;
 
-    private Hashtable<String, Boolean> hesSearchable;
+    private final Hashtable<String, Boolean> hesSearchable;
 
     private int exit = 0;
 
@@ -104,6 +103,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 mUrls.add(Url.SERVER_IZIBUK + "/search?q=<qery>&p=<page>");
                 mUrls.add(Url.SERVER_ABMP3 + "/search?text=<qery>");
                 mUrls.add(Url.SERVER_BAZA_KNIG + "/index.php?do=search///qery=<qery>&page=<page>");
+                mUrls.add(Url.SERVER_KNIGOBLUD + "/search?q=<qery>&page=<page>");
                 break;
             case Consts.MODEL_AUTOR:
                 if (Consts.SOURCE_KNIGA_V_UHE == Consts.getSOURCE()) {
@@ -173,6 +173,8 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                 mSearcheblPOJOFilter = new SearcheblPOJO();
             } else if (filter == Consts.SOURCE_BAZA_KNIG) {
                 mSearcheblPOJOFilter = new SearcheblPOJO();
+            }else if (filter == Consts.SOURCE_KNIGOBLUD) {
+                mSearcheblPOJOFilter = new SearcheblPOJO();
             }
             getViewState().showSeriesAndAutors(mSearcheblPOJOFilter);
         }
@@ -182,22 +184,25 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
     public void filterBooks() {
         if (filter == -1) {
             books_filter = null;
-            getViewState().showData(books);
+            getViewState().showDataBooks(books);
         } else if (filter == Consts.SOURCE_KNIGA_V_UHE) {
             setBooksFilter("knigavuhe.org");
-            getViewState().showData(books_filter);
+            getViewState().showDataBooks(books_filter);
         } else if (filter == Consts.SOURCE_IZI_BUK) {
             setBooksFilter("izibuk.ru");
-            getViewState().showData(books_filter);
+            getViewState().showDataBooks(books_filter);
         } else if (filter == Consts.SOURCE_AUDIO_BOOK_MP3) {
             setBooksFilter("audiobook-mp3.com");
-            getViewState().showData(books_filter);
+            getViewState().showDataBooks(books_filter);
         } else if (filter == Consts.SOURCE_ABOOK) {
             setBooksFilter("akniga.org");
-            getViewState().showData(books_filter);
+            getViewState().showDataBooks(books_filter);
         } else if (filter == Consts.SOURCE_BAZA_KNIG) {
             setBooksFilter("baza-knig.ink");
-            getViewState().showData(books_filter);
+            getViewState().showDataBooks(books_filter);
+        }else if (filter == Consts.SOURCE_KNIGOBLUD) {
+            setBooksFilter("knigoblud.club");
+            getViewState().showDataBooks(books_filter);
         }
 
     }
@@ -237,14 +242,14 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         if (query != null) {
             if (books != null) {
                 books.clear();
-                getViewState().showData(books);
+                getViewState().showDataBooks(books);
             }
             if (books_filter != null) {
                 books_filter = null;
             }
             if (genre != null) {
                 genre.clear();
-                getViewState().showData(genre);
+                getViewState().showDataGenres(genre);
             }
 
             mSearcheblPOJO = new SearcheblPOJO();
@@ -266,6 +271,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             hesSearchable.put(Url.SERVER_ABMP3, mPreferences.getBoolean("search_abmp3", true));
             hesSearchable.put(Url.SERVER_AKNIGA, mPreferences.getBoolean("search_abook", true));
             hesSearchable.put(Url.SERVER_BAZA_KNIG, mPreferences.getBoolean("search_baza_knig", true));
+            hesSearchable.put(Url.SERVER_KNIGOBLUD, mPreferences.getBoolean("search_knigoblud", true));
 
             page = 0;
             loadNext();
@@ -278,7 +284,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
             if (!isEnd && !isLoading) {
                 getViewState().showProgres(true);
                 page++;
-                if (mUrls != null && mUrls.size() != 0) {
+                if (mUrls != null && !mUrls.isEmpty()) {
                     ArrayList<String> temp = new ArrayList<>();
                     for (String url : mUrls) {
                         temp.add(url.replace("<qery>", query).replace("<page>",
@@ -336,8 +342,8 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
         ImageView imageView = layout.findViewById(R.id.imageView);
         Picasso.get()
                 .load(bookPOJO.getPhoto())
-                .error(R.drawable.image_placeholder)
-                .placeholder(R.drawable.image_placeholder)
+                .error(android.R.drawable.ic_menu_gallery)
+                .placeholder(android.R.drawable.ic_menu_gallery)
                 .into(imageView);
 
         TextView title = layout.findViewById(R.id.title);
@@ -367,7 +373,6 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
 
         open.setOnClickListener(view1 -> {
             dialog.dismiss();
-            MyInterstitialAd.increase();
             getViewState().startBookActivity(bookPOJO);
         });
 
@@ -542,7 +547,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
     private ArrayList<BookPOJO> sort(ArrayList<String> urls, ArrayList<BookPOJO> array) {
         //при добавлении источников изменять не надо
         ArrayList<BookPOJO> result = new ArrayList<>();
-        while (array.size() != 0) {
+        while (!array.isEmpty()) {
             for (String url : urls) {
                 String text = url.replace("https://", "");
                 text = text.replace("http://", "");
@@ -589,7 +594,7 @@ public class SearchbalePresenter extends MvpPresenter<SearchableView> implements
                         @Override
                         public void onComplete() {
                             Log.d(TAG, "onComplete");
-                            getViewState().showData(genre);
+                            getViewState().showDataGenres(genre);
                             getViewState().showProgres(false);
                             isLoading = false;
                             getViewState().setNotFoundVisibile(genre.isEmpty());

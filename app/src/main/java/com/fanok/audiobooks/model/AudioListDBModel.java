@@ -96,6 +96,30 @@ public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelp
     }
 
     @Override
+    public AudioListPOJO get(@NonNull String url, @NonNull String audioUrl) {
+        ArrayList<AudioListPOJO> list = new ArrayList<>();
+        String selectQuery = "SELECT  * FROM books_audio WHERE url_book = ? And url_audio LIKE ?";
+
+        SQLiteDatabase db = getDBHelper().getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{url, audioUrl});
+        AudioListPOJO audio = new AudioListPOJO();
+        if (cursor.moveToFirst()) {
+            do {
+                audio.setBookUrl(cursor.getString(1));
+                audio.setBookName(cursor.getString(2));
+                audio.setAudioName(cursor.getString(3));
+                audio.setAudioUrl(cursor.getString(4));
+                audio.setTime(cursor.getInt(5));
+                audio.setTimeStart(cursor.getInt(6));
+                audio.setTimeEnd(cursor.getInt(7));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return audio;
+    }
+
+    @Override
     public ArrayList<AudioListPOJO> getAll() {
         ArrayList<AudioListPOJO> list = new ArrayList<>();
         String selectQuery = "SELECT * FROM books_audio";

@@ -1,12 +1,13 @@
 package com.fanok.audiobooks.service;
 
 import static android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
+import static androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
+import static androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_IMAGE;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_PROGRESS;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_SELECTION;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SET_TITLE;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SHOW_EQUALIZER;
-import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SHOW_GET_PLUS;
 import static com.fanok.audiobooks.activity.BookActivity.Broadcast_SHOW_RATING;
 import static com.fanok.audiobooks.activity.SleepTimerActivity.Broadcast_GET_TIME_LEFT;
 import static com.fanok.audiobooks.activity.SleepTimerActivity.Broadcast_SET_TIME_LEFT;
@@ -14,10 +15,11 @@ import static com.fanok.audiobooks.activity.SleepTimerActivity.Broadcast_UPDATE_
 import static com.fanok.audiobooks.activity.SleepTimerActivity.bradcast_FinishTimer;
 import static com.fanok.audiobooks.activity.SleepTimerActivity.bradcast_UpdateTimer;
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_Equalizer;
-import static com.fanok.audiobooks.аndroid_equalizer.EqualizerFragment.Broadcast_EqualizerEnabled;
-import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
-import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS;
+import static com.fanok.audiobooks.util.DownloadUtil.buildAnnotatedUri;
+import static com.fanok.audiobooks.android_equalizer.EqualizerFragment.Broadcast_EqualizerEnabled;
 
+
+import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -26,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ServiceInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -51,8 +54,6 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -60,50 +61,45 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.media.MediaBrowserServiceCompat;
 import androidx.media.session.MediaButtonReceiver;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.offline.Download;
+import androidx.media3.exoplayer.offline.DownloadCursor;
+import androidx.media3.exoplayer.offline.DownloadIndex;
 import androidx.preference.PreferenceManager;
-import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Hourglass;
-import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.PlaybackStatus;
 import com.fanok.audiobooks.R;
-import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.LoadBook;
 import com.fanok.audiobooks.broadcasts.OnCancelBroadcastReceiver;
 import com.fanok.audiobooks.model.AudioDBModel;
-import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.AudioPOJO;
-import com.fanok.audiobooks.pojo.BookPOJO;
-import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.fanok.audiobooks.presenter.SleepTimerPresenter;
-import com.fanok.audiobooks.аndroid_equalizer.EqualizerModel;
-import com.fanok.audiobooks.аndroid_equalizer.Settings;
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem.ClippingConfiguration;
-import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Player.Listener;
-import com.google.android.exoplayer2.Timeline.Window;
-import com.google.android.exoplayer2.audio.AudioAttributes;
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
-import com.google.android.exoplayer2.upstream.FileDataSource;
-import com.google.android.exoplayer2.upstream.FileDataSource.Factory;
-import com.google.android.exoplayer2.upstream.HttpDataSource;
-import com.google.android.exoplayer2.util.Util;
+import com.fanok.audiobooks.util.DownloadUtil;
+import com.fanok.audiobooks.android_equalizer.EqualizerModel;
+import com.fanok.audiobooks.android_equalizer.Settings;
+import androidx.media3.common.C;
+import androidx.media3.exoplayer.DefaultLoadControl;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.common.MediaItem.ClippingConfiguration;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.PlaybackParameters;
+import androidx.media3.common.Player;
+import androidx.media3.common.Player.Listener;
+import androidx.media3.common.Timeline.Window;
+import androidx.media3.common.AudioAttributes;
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+import androidx.media3.datasource.DataSource;
+import androidx.media3.datasource.cache.Cache;
+import androidx.media3.datasource.cache.CacheDataSource;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
-import java.io.File;
+
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -125,8 +121,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     public static final String ACTION_NEXT = "audioBook.ACTION_NEXT";
 
     public static final String ACTION_STOP = "audioBook.ACTION_STOP";
-
-    public static final String Broadcast_DELETE_NOTIFICATION = "brodcast.DELETE_NOTIFICATION";
     public static final String Broadcast_CloseIfPause = "brodcast.CloseIfPause";
 
     private static final String TAG = "MediaPlayerService";
@@ -139,10 +133,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     private static final int REWIND = 30000;
     private static final int FAST_FORWARD = 30000;
 
-    private static final int countAudioWereShowingActivity = 25;
-    private long timeStarting;
-
-    // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
     private final Handler handler1 = new Handler();
     private final Handler handler2 = new Handler();
@@ -159,10 +149,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     private ArrayList<AudioPOJO> audioList;
     private int audioIndex = -1;
     private AudioPOJO activeAudio;
-
-    private PhoneStateListener phoneStateListener;
-
-    private TelephonyManager telephonyManager;
 
     private boolean buttonClick;
 
@@ -181,6 +167,100 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
 
     private StorageUtil storage;
 
+    private boolean mEqualizerEnabled = true;
+
+    private Equalizer mEqualizer;
+
+    private BassBoost bassBoost;
+
+    private PresetReverb presetReverb;
+
+
+    private final BroadcastReceiver equalizer = new BroadcastReceiver() {
+        @UnstableApi
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Intent broadcastIntent = new Intent(Broadcast_SHOW_EQUALIZER);
+            if (mediaPlayer != null) {
+                broadcastIntent.putExtra("id", mediaPlayer.getAudioSessionId());
+            }
+            sendBroadcast(broadcastIntent);
+        }
+    };
+
+    private final BroadcastReceiver equalizerEnabled = new BroadcastReceiver() {
+        @UnstableApi
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mEqualizerEnabled = intent.getBooleanExtra("enabled", false);
+            if (!mEqualizerEnabled) {
+                stopEqualizer();
+            } else {
+                storage.loadEqualizerSettings();
+                startEqualizer();
+            }
+        }
+    };
+
+    @UnstableApi
+    private void startEqualizer() {
+        if (mediaPlayer == null) return;
+        stopEqualizer();
+        int audioSesionId = mediaPlayer.getAudioSessionId();
+        if (audioSesionId > 0) {
+            if (Settings.equalizerModel == null) {
+                Settings.equalizerModel = new EqualizerModel();
+                Settings.equalizerModel.setReverbPreset(PresetReverb.PRESET_NONE);
+                Settings.equalizerModel.setBassStrength((short) (1000 / 19));
+            }
+
+            try {
+                mEqualizer = new Equalizer(0, audioSesionId);
+
+                bassBoost = new BassBoost(0, audioSesionId);
+                bassBoost.setEnabled(Settings.isEqualizerEnabled);
+                BassBoost.Settings bassBoostSettingTemp = bassBoost.getProperties();
+                BassBoost.Settings bassBoostSetting = new BassBoost.Settings(
+                        bassBoostSettingTemp.toString());
+                bassBoostSetting.strength = Settings.equalizerModel.getBassStrength();
+                bassBoost.setProperties(bassBoostSetting);
+
+                presetReverb = new PresetReverb(0, audioSesionId);
+                presetReverb.setPreset(Settings.equalizerModel.getReverbPreset());
+                presetReverb.setEnabled(Settings.isEqualizerEnabled);
+
+                mEqualizer.setEnabled(Settings.isEqualizerEnabled);
+
+                if (Settings.presetPos == 0) {
+                    for (short bandIdx = 0; bandIdx < mEqualizer.getNumberOfBands(); bandIdx++) {
+                        mEqualizer.setBandLevel(bandIdx, (short) Settings.seekbarpos[bandIdx]);
+                    }
+                } else {
+                    mEqualizer.usePreset((short) Settings.presetPos);
+                }
+            } catch (RuntimeException e) {
+                stopEqualizer();
+            }
+        }
+    }
+
+    private void stopEqualizer() {
+        if (mEqualizer != null) {
+            mEqualizer.release();
+            mEqualizer = null;
+        }
+
+        if (bassBoost != null) {
+            bassBoost.release();
+            bassBoost = null;
+        }
+
+        if (presetReverb != null) {
+            presetReverb.release();
+            presetReverb = null;
+        }
+    }
+
     private final BroadcastReceiver getTimeLeft = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -193,28 +273,10 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             sendBroadcast(broadcastIntent);
         }
     };
-    private boolean mEqualizerEnabled = true;
 
     private SharedPreferences mPreferences;
 
-    private Equalizer mEqualizer;
-
-    private BassBoost bassBoost;
-
-    private PresetReverb presetReverb;
-
     private Hourglass mCountDownTimer;
-
-    private final BroadcastReceiver equalizer = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Intent broadcastIntent = new Intent(Broadcast_SHOW_EQUALIZER);
-            if (mediaPlayer != null) {
-                broadcastIntent.putExtra("id", mediaPlayer.getAudioSessionId());
-            }
-            sendBroadcast(broadcastIntent);
-        }
-    };
 
     public static int getNotificationId() {
         return NOTIFICATION_ID;
@@ -310,18 +372,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             }
         }
     };
-    private final BroadcastReceiver equalizerEnabled = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            mEqualizerEnabled = intent.getBooleanExtra("enabled", false);
-            if (!mEqualizerEnabled) {
-                stopEqualizer();
-            } else {
-                storage.loadEqualizerSettings();
-                startEqualizer();
-            }
-        }
-    };
 
     private final BroadcastReceiver updateTimer = new BroadcastReceiver() {
         @Override
@@ -349,6 +399,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
      * Play new Audio
      */
     private final BroadcastReceiver playNewAudio = new BroadcastReceiver() {
+        @UnstableApi
         @Override
         public void onReceive(Context context, Intent intent) {
             buttonClick = true;
@@ -372,6 +423,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         }
     };
     private final BroadcastReceiver playPriveos = new BroadcastReceiver() {
+        @UnstableApi
         @Override
         public void onReceive(Context context, Intent intent) {
             buttonClick = true;
@@ -380,6 +432,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         }
     };
     private final BroadcastReceiver playNext = new BroadcastReceiver() {
+        @UnstableApi
         @Override
         public void onReceive(Context context, Intent intent) {
             buttonClick = true;
@@ -388,6 +441,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         }
     };
     private final BroadcastReceiver play = new BroadcastReceiver() {
+        @UnstableApi
         @Override
         public void onReceive(Context context, Intent intent) {
             if (isPlaying()) {
@@ -457,63 +511,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         }
     }
 
-    private void startEqualizer() {
-        if (mediaPlayer == null) return;
-        stopEqualizer();
-        int audioSesionId = mediaPlayer.getAudioSessionId();
-        if (audioSesionId > 0) {
-            if (Settings.equalizerModel == null) {
-                Settings.equalizerModel = new EqualizerModel();
-                Settings.equalizerModel.setReverbPreset(PresetReverb.PRESET_NONE);
-                Settings.equalizerModel.setBassStrength((short) (1000 / 19));
-            }
-
-            try {
-                mEqualizer = new Equalizer(0, audioSesionId);
-
-                bassBoost = new BassBoost(0, audioSesionId);
-                bassBoost.setEnabled(Settings.isEqualizerEnabled);
-                BassBoost.Settings bassBoostSettingTemp = bassBoost.getProperties();
-                BassBoost.Settings bassBoostSetting = new BassBoost.Settings(
-                        bassBoostSettingTemp.toString());
-                bassBoostSetting.strength = Settings.equalizerModel.getBassStrength();
-                bassBoost.setProperties(bassBoostSetting);
-
-                presetReverb = new PresetReverb(0, audioSesionId);
-                presetReverb.setPreset(Settings.equalizerModel.getReverbPreset());
-                presetReverb.setEnabled(Settings.isEqualizerEnabled);
-
-                mEqualizer.setEnabled(Settings.isEqualizerEnabled);
-
-                if (Settings.presetPos == 0) {
-                    for (short bandIdx = 0; bandIdx < mEqualizer.getNumberOfBands(); bandIdx++) {
-                        mEqualizer.setBandLevel(bandIdx, (short) Settings.seekbarpos[bandIdx]);
-                    }
-                } else {
-                    mEqualizer.usePreset((short) Settings.presetPos);
-                }
-            } catch (RuntimeException e) {
-                stopEqualizer();
-            }
-        }
-    }
-
-    private void stopEqualizer() {
-        if (mEqualizer != null) {
-            mEqualizer.release();
-            mEqualizer = null;
-        }
-
-        if (bassBoost != null) {
-            bassBoost.release();
-            bassBoost = null;
-        }
-
-        if (presetReverb != null) {
-            presetReverb.release();
-            presetReverb = null;
-        }
-    }
 
 
     public static boolean isPlay() {
@@ -528,13 +525,10 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         // Manage incoming phone calls during playback.
         // Pause MediaPlayer on incoming call,
         // Resume on hangup.
-        callStateListener();
         //ACTION_AUDIO_BECOMING_NOISY -- change in audio outputs -- BroadcastReceiver
         registerBecomingNoisyReceiver();
 
         registerAllBroadcast();
-
-        timeStarting = new Date().getTime();
     }
 
     @Override
@@ -545,10 +539,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         removeNotification();
         removeAudioFocus();
         stopEqualizer();
-        //Disable the PhoneStateListener
-        if (phoneStateListener != null) {
-            telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
-        }
         if(mAudioDBModel!=null){
             mAudioDBModel.closeDB();
         }
@@ -569,10 +559,10 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             unregisterReceiver(closeNotPrerepred);
             unregisterReceiver(closeIfPause);
             unregisterReceiver(sleepTimer);
-            unregisterReceiver(equalizer);
-            unregisterReceiver(equalizerEnabled);
             unregisterReceiver(getTimeLeft);
             unregisterReceiver(updateTimer);
+            unregisterReceiver(equalizer);
+            unregisterReceiver(equalizerEnabled);
         } catch (Exception ignored){
 
         }
@@ -646,10 +636,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     @Override
     public BrowserRoot onGetRoot(@NonNull final String clientPackageName, final int clientUid,
             @Nullable final Bundle rootHints) {
-
-        if (!isValid(clientPackageName, clientUid)) {
-            return null;
-        }
         return new MediaBrowserServiceCompat.BrowserRoot(MY_MEDIA_ROOT_ID, null);
     }
 
@@ -671,6 +657,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
     }
 
     //The system calls this method when an activity, requests the service be started
+    @UnstableApi
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -717,7 +704,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                 initMediaSession();
                 initMediaPlayer();
             } catch (RemoteException e) {
-                e.printStackTrace();
                 stopSelf();
             }
             if (!BookPresenter.start) {
@@ -771,7 +757,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             //create the play action
             play_pauseAction = playbackAction(0);
         }
-
         this.sendBroadcast(broadcastIntent);
 
         // I removed one of the semi-colons in the next line of code
@@ -793,7 +778,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         intent.putExtra("url", urlBook);
         intent.putExtra("notificationClick", true);
         PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this,
                 CHANNEL_ID)
@@ -840,12 +825,17 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         }
 
         if (playbackStatus == PlaybackStatus.PLAYING) {
-            startForeground(NOTIFICATION_ID, notificationBuilder.build());
+            if (VERSION.SDK_INT >= VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, notificationBuilder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+            } else {
+                startForeground(NOTIFICATION_ID, notificationBuilder.build());
+            }
+
         } else {
             notificationBuilder.setOngoing(false);
             Intent onCancelIntent = new Intent(this, OnCancelBroadcastReceiver.class);
             PendingIntent onDismissPendingIntent = PendingIntent.getBroadcast(
-                    this.getApplicationContext(), 0, onCancelIntent, 0);
+                    this.getApplicationContext(), 0, onCancelIntent, PendingIntent.FLAG_IMMUTABLE);
             notificationBuilder.setDeleteIntent(onDismissPendingIntent);
             stopForeground(false);
             Objects.requireNonNull(notificationManager).notify(NOTIFICATION_ID,
@@ -856,7 +846,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
             Picasso.get().load(imageUrl).into(new Target() {
                 @Override
                 public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                    notificationBuilder.setLargeIcon(null);
                     image = null;
                     Objects.requireNonNull(notificationManager).notify(NOTIFICATION_ID,
                             notificationBuilder.build());
@@ -878,130 +867,51 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         }
 
     }
-
-    /**
-     * Handle PhoneState changes
-     */
-    private void callStateListener() {
-        // Get the telephony manager
-        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        //Starting listening for PhoneState changes
-        phoneStateListener = new PhoneStateListener() {
-            @Override
-            public void onCallStateChanged(int state, String incomingNumber) {
-                switch (state) {
-                    //if at least one call exists or the phone is ringing
-                    //pause the MediaPlayer
-                    case TelephonyManager.CALL_STATE_OFFHOOK:
-                    case TelephonyManager.CALL_STATE_RINGING:
-                        if (mediaPlayer != null) {
-                            pauseMedia();
-                        }
-                        break;
-                    case TelephonyManager.CALL_STATE_IDLE:
-                        if (!requestAudioFocus()) {
-                            stopSelf();
-                        }
-                        break;
-                }
-            }
-        };
-        // Register the listener with the telephony manager
-        // Listen for changes to the device call state.
-        telephonyManager.listen(phoneStateListener,
-                PhoneStateListener.LISTEN_CALL_STATE);
-    }
-
-    /**
-     * MediaPlayer actions
-     */
-
-    @Nullable
-    private File getSaveFile() {
-        File[] folders = getExternalFilesDirs(null);
-        for (File folder : folders) {
-            if (folder != null && activeAudio!=null) {
-                String url = activeAudio.getUrl();
-                BooksDBModel dbModel = new BooksDBModel(this);
-                if(dbModel.inSaved(urlBook)) {
-                    BookPOJO bookPOJO = dbModel.getSaved(urlBook);
-                    String source = Consts.getSorceName(this, urlBook);
-                    String filePath = folder.getAbsolutePath() + "/" + source
-                            + "/" + bookPOJO.getAutor()
-                            + "/" + bookPOJO.getArtist()
-                            + "/" + bookPOJO.getName();
-                    if (url != null && !url.isEmpty()) {
-                        File file;
-                        if(!Objects.equals(source, getString(R.string.abook))) {
-                            file = new File(filePath + "/" + url.substring(url.lastIndexOf("/") + 1));
-                        }else {
-                            file = new File(filePath + "/" + "pl/pl.m3u8");
-                        }
-
-                        if (file.exists()) {
-                            return file;
-                        }
-
-                    } else {
-                        File file = new File(
-                                filePath+ "/" + activeAudio.getName() + ".mp3");
-                        if (file.exists()) {
-                            return file;
-                        }
-                    }
-                }
-                dbModel.closeDB();
-            }
-
-        }
-        return null;
-    }
-
+    @UnstableApi
     private void initMediaPlayer() {
 
         if (!requestAudioFocus()) {
             stopSelf();
         }
 
-        File file = getSaveFile();
+        String fileUrl = activeAudio.getUrl();
+        Uri annotated = buildAnnotatedUri(fileUrl, urlBook);
 
-        Uri uri;
-        if (file == null) {
-            uri = Uri.parse(activeAudio.getUrl());
-        } else {
-            uri = Uri.fromFile(file);
-        }
-
-        DataSource.Factory dataSourceFactory;
-        if(file==null) {
-            dataSourceFactory = () -> {
-                HttpDataSource.Factory source = new DefaultHttpDataSource.Factory();
-                HashMap<String, String> map = new HashMap<>();
-                if (urlBook.contains(Url.SERVER_ABMP3)) {
-                    map.put("user-agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36");
-                    map.put("Referer", Url.SERVER_ABMP3 + "/");
-                } else if (urlBook.contains(Url.SERVER_BAZA_KNIG)) {
-                    map.put("user-agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36");
-                    map.put("referer", Url.SERVER_BAZA_KNIG + "/");
-                } else {
-                    map.put("user-agent", Util.getUserAgent(this, getPackageName()));
-                    ;
+        try {
+            DownloadIndex index = DownloadUtil.getDownloadManager().getDownloadIndex();
+            try (DownloadCursor cursor = index.getDownloads(Download.STATE_COMPLETED)) {
+                while (cursor.moveToNext()) {
+                    Download d = cursor.getDownload();
+                    if (d.request.id.equals(activeAudio.getCleanUrl())){
+                        annotated = d.request.uri;
+                    }
                 }
-                source.setDefaultRequestProperties(map);
-                return source.createDataSource();
-            };
+            }
 
-        }else {
-            dataSourceFactory = new Factory();
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to query downloads", e);
         }
 
+        Cache downloadCache = DownloadUtil.getDownloadCache();
+
+        DataSource.Factory upstream = DownloadUtil.getResolvingUpstreamFactory(getApplicationContext());
+
+        DataSource.Factory cacheDataSourceFactory =
+                new CacheDataSource.Factory()
+                        .setCache(downloadCache)
+                        .setUpstreamDataSourceFactory(upstream)
+                        //.setCacheKeyFactory(DownloadUtil.getCleanCacheKeyFactory())
+                        .setCacheWriteDataSinkFactory(null) // read-only
+                        .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR);
 
 
-        com.google.android.exoplayer2.MediaItem.Builder builderMediaItem =
-                new com.google.android.exoplayer2.MediaItem.Builder()
-                        .setUri(uri);
+
+
+        androidx.media3.common.MediaItem.Builder builderMediaItem =
+                new androidx.media3.common.MediaItem.Builder()
+                        //.setCustomCacheKey(fileUrl)
+                        .setUri(annotated);
+
 
 
         if(activeAudio.getTimeStart()>=0 && activeAudio.getTimeFinish()>=0){
@@ -1014,7 +924,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                             .build());
         }
 
-        com.google.android.exoplayer2.MediaItem mediaItem = builderMediaItem.build();
+        androidx.media3.common.MediaItem mediaItem = builderMediaItem.build();
 
         buttonClick = false;
 
@@ -1035,8 +945,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
 
 
         mediaPlayer = new ExoPlayer.Builder(this)
-                .setMediaSourceFactory(new DefaultMediaSourceFactory(this)
-                        .setDataSourceFactory(dataSourceFactory))
+                .setMediaSourceFactory(new DefaultMediaSourceFactory(cacheDataSourceFactory))
                 .setLoadControl(builder.build())
                 .setTrackSelector(new DefaultTrackSelector(this))
                 .build();
@@ -1105,6 +1014,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                                 startEqualizer();
                             }
                         }
+
                     } else if (!mediaPlayer.getPlayWhenReady() && playbackState == Player.STATE_READY) {
                         buildNotification(PlaybackStatus.PAUSED);
                         isPlay = false;
@@ -1137,28 +1047,8 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         mediaPlayer.setPlaybackParameters(param);
 
 
-        if (BookPresenter.start && !StorageAds.idDisableAds()) {
-            long carentTime = new Date().getTime();
-            if ((carentTime - timeStarting) / 60000 >= 30) {
-                timeStarting = carentTime;
-                MyInterstitialAd.showRequire();
-            }
-        }
-
         mediaPlayer.setPlayWhenReady(true);
         mediaPlayer.prepare();
-
-        if (!StorageAds.idDisableAds()) {
-
-            int countAudioListnered = storage.loadCountAudioListnered() + 1;
-            if (countAudioListnered >= countAudioWereShowingActivity) {
-                storage.storeCountAudioListnered(0);
-                Intent broadcastIntent = new Intent(Broadcast_SHOW_GET_PLUS);
-                sendBroadcast(broadcastIntent);
-            } else {
-                storage.storeCountAudioListnered(countAudioListnered);
-            }
-        }
 
         if (storage.loadShowRating()) {
             int countAudioListnered = storage.loadCountAudioListneredForRating() + 1;
@@ -1194,7 +1084,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
                 | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
-        //Set mediaSession's MetaData
         updateMetaData();
         mediaSession.setPlaybackState(
                 mState.setState(PlaybackStateCompat.STATE_PLAYING, 0, 1, SystemClock.elapsedRealtime()).build());
@@ -1204,7 +1093,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                 Intent.ACTION_MEDIA_BUTTON, null, getApplicationContext(),
                 MediaButtonReceiver.class);
         mediaSession.setMediaButtonReceiver(
-                PendingIntent.getBroadcast(getApplicationContext(), 0, mediaButtonIntent, 0));
+                PendingIntent.getBroadcast(getApplicationContext(), 0, mediaButtonIntent, PendingIntent.FLAG_IMMUTABLE));
 
         // Attach Callback to receive MediaSession updates
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
@@ -1231,6 +1120,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                 }
             }
 
+            @UnstableApi
             @Override
             public void onSkipToNext() {
                 super.onSkipToNext();
@@ -1239,6 +1129,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                 updateMetaData();
             }
 
+            @UnstableApi
             @Override
             public void onSkipToPrevious() {
                 super.onSkipToPrevious();
@@ -1275,6 +1166,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                 fastForward(FAST_FORWARD);
             }
 
+            @UnstableApi
             @Override
             public void onPlayFromMediaId(final String mediaId, final Bundle extras) {
                 super.onPlayFromMediaId(mediaId, extras);
@@ -1299,9 +1191,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         return mediaPlayer != null && mediaPlayer.getPlaybackState() == Player.STATE_READY;
     }
 
-    private boolean isValid(final String clientPackageName, final int clientUid) {
-        return true;
-    }
 
     private void pauseMedia() {
         if (isPlaying()) {
@@ -1310,24 +1199,45 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         }
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private void registerAllBroadcast() {
-        registerReceiver(playNewAudio, new IntentFilter(BookActivity.Broadcast_PLAY_NEW_AUDIO));
-        registerReceiver(playPriveos, new IntentFilter(BookPresenter.Broadcast_PLAY_PREVIOUS));
-        registerReceiver(playNext, new IntentFilter(BookPresenter.Broadcast_PLAY_NEXT));
-        registerReceiver(play, new IntentFilter(BookPresenter.Broadcast_PLAY));
-        registerReceiver(seekTo, new IntentFilter(BookPresenter.Broadcast_SEEK_TO));
-        registerReceiver(seekToNext30Sec, new IntentFilter(BookPresenter.Broadcast_SEEK_NEXT_30));
-        registerReceiver(seekToPrevious10Sec, new IntentFilter(BookPresenter.Broadcast_SEEK_PREVIOUS_10));
-        registerReceiver(showTitle, new IntentFilter(BookPresenter.Broadcast_SHOW_TITLE));
-        registerReceiver(getPosition, new IntentFilter(BookPresenter.Broadcast_GET_POSITION));
-        registerReceiver(setSpeed, new IntentFilter(BookPresenter.Broadcast_SET_SPEED));
-        registerReceiver(closeNotPrerepred, new IntentFilter(BookPresenter.Broadcast_CloseNotPrepered));
-        registerReceiver(closeIfPause, new IntentFilter(Broadcast_CloseIfPause));
-        registerReceiver(sleepTimer, new IntentFilter(SleepTimerPresenter.Broadcast_SleepTimer));
-        registerReceiver(equalizer, new IntentFilter(Broadcast_Equalizer));
-        registerReceiver(equalizerEnabled, new IntentFilter(Broadcast_EqualizerEnabled));
-        registerReceiver(getTimeLeft, new IntentFilter(Broadcast_GET_TIME_LEFT));
-        registerReceiver(updateTimer, new IntentFilter(Broadcast_UPDATE_TIMER_START));
+        if (VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
+            registerReceiver(playNewAudio, new IntentFilter(BookActivity.Broadcast_PLAY_NEW_AUDIO), RECEIVER_EXPORTED);
+            registerReceiver(playPriveos, new IntentFilter(BookPresenter.Broadcast_PLAY_PREVIOUS), RECEIVER_EXPORTED);
+            registerReceiver(playNext, new IntentFilter(BookPresenter.Broadcast_PLAY_NEXT), RECEIVER_EXPORTED);
+            registerReceiver(play, new IntentFilter(BookPresenter.Broadcast_PLAY), RECEIVER_EXPORTED);
+            registerReceiver(seekTo, new IntentFilter(BookPresenter.Broadcast_SEEK_TO), RECEIVER_EXPORTED);
+            registerReceiver(seekToNext30Sec, new IntentFilter(BookPresenter.Broadcast_SEEK_NEXT_30), RECEIVER_EXPORTED);
+            registerReceiver(seekToPrevious10Sec, new IntentFilter(BookPresenter.Broadcast_SEEK_PREVIOUS_10), RECEIVER_EXPORTED);
+            registerReceiver(showTitle, new IntentFilter(BookPresenter.Broadcast_SHOW_TITLE), RECEIVER_EXPORTED);
+            registerReceiver(getPosition, new IntentFilter(BookPresenter.Broadcast_GET_POSITION), RECEIVER_EXPORTED);
+            registerReceiver(setSpeed, new IntentFilter(BookPresenter.Broadcast_SET_SPEED), RECEIVER_EXPORTED);
+            registerReceiver(closeNotPrerepred, new IntentFilter(BookPresenter.Broadcast_CloseNotPrepered), RECEIVER_EXPORTED);
+            registerReceiver(closeIfPause, new IntentFilter(Broadcast_CloseIfPause), RECEIVER_EXPORTED);
+            registerReceiver(sleepTimer, new IntentFilter(SleepTimerPresenter.Broadcast_SleepTimer), RECEIVER_EXPORTED);
+            registerReceiver(getTimeLeft, new IntentFilter(Broadcast_GET_TIME_LEFT), RECEIVER_EXPORTED);
+            registerReceiver(updateTimer, new IntentFilter(Broadcast_UPDATE_TIMER_START), RECEIVER_EXPORTED);
+            registerReceiver(equalizer, new IntentFilter(Broadcast_Equalizer), RECEIVER_EXPORTED);
+            registerReceiver(equalizerEnabled, new IntentFilter(Broadcast_EqualizerEnabled), RECEIVER_EXPORTED);
+        }else {
+            registerReceiver(playNewAudio, new IntentFilter(BookActivity.Broadcast_PLAY_NEW_AUDIO));
+            registerReceiver(playPriveos, new IntentFilter(BookPresenter.Broadcast_PLAY_PREVIOUS));
+            registerReceiver(playNext, new IntentFilter(BookPresenter.Broadcast_PLAY_NEXT));
+            registerReceiver(play, new IntentFilter(BookPresenter.Broadcast_PLAY));
+            registerReceiver(seekTo, new IntentFilter(BookPresenter.Broadcast_SEEK_TO));
+            registerReceiver(seekToNext30Sec, new IntentFilter(BookPresenter.Broadcast_SEEK_NEXT_30));
+            registerReceiver(seekToPrevious10Sec, new IntentFilter(BookPresenter.Broadcast_SEEK_PREVIOUS_10));
+            registerReceiver(showTitle, new IntentFilter(BookPresenter.Broadcast_SHOW_TITLE));
+            registerReceiver(getPosition, new IntentFilter(BookPresenter.Broadcast_GET_POSITION));
+            registerReceiver(setSpeed, new IntentFilter(BookPresenter.Broadcast_SET_SPEED));
+            registerReceiver(closeNotPrerepred, new IntentFilter(BookPresenter.Broadcast_CloseNotPrepered));
+            registerReceiver(closeIfPause, new IntentFilter(Broadcast_CloseIfPause));
+            registerReceiver(sleepTimer, new IntentFilter(SleepTimerPresenter.Broadcast_SleepTimer));
+            registerReceiver(getTimeLeft, new IntentFilter(Broadcast_GET_TIME_LEFT));
+            registerReceiver(updateTimer, new IntentFilter(Broadcast_UPDATE_TIMER_START));
+            registerReceiver(equalizer, new IntentFilter(Broadcast_Equalizer));
+            registerReceiver(equalizerEnabled, new IntentFilter(Broadcast_EqualizerEnabled));
+        }
     }
 
     private boolean removeAudioFocus() {
@@ -1341,39 +1251,36 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
 
     private PendingIntent playbackAction(int actionNumber) {
         Intent playbackAction = new Intent(this, MediaPlayerService.class);
+
+        String action;
         switch (actionNumber) {
             case 0:
-                // Play
-                playbackAction.setAction(ACTION_PLAY);
-                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
-            case 1:
-                // Pause
-                playbackAction.setAction(ACTION_PAUSE);
-                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
-            case 2:
-                // Next track
-                playbackAction.setAction(ACTION_NEXT);
-                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
-            case 3:
-                // Previous track
-                playbackAction.setAction(ACTION_PREVIOUS);
-                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
-            case 4:
-                // Rewind track
-                playbackAction.setAction(ACTION_REWIND);
-                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
-            case 5:
-                // Fast Froward track
-                playbackAction.setAction(ACTION_FORWARD);
-                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
-            case 6:
-                //Stop
-                playbackAction.setAction(ACTION_STOP);
-                return PendingIntent.getService(this, actionNumber, playbackAction, 0);
-            default:
+                action = ACTION_PLAY;
                 break;
+            case 1:
+                action = ACTION_PAUSE;
+                break;
+            case 2:
+                action = ACTION_NEXT;
+                break;
+            case 3:
+                action = ACTION_PREVIOUS;
+                break;
+            case 4:
+                action = ACTION_REWIND;
+                break;
+            case 5:
+                action = ACTION_FORWARD;
+                break;
+            case 6:
+                action = ACTION_STOP;
+                break;
+            default:
+                return null;
         }
-        return null;
+
+        playbackAction.setAction(action);
+        return PendingIntent.getService(this, actionNumber, playbackAction, PendingIntent.FLAG_IMMUTABLE);
     }
 
     private void registerBecomingNoisyReceiver() {
@@ -1390,11 +1297,11 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
         int result = Objects.requireNonNull(audioManager).requestAudioFocus(this,
                 AudioManager.STREAM_MUSIC,
                 AudioManager.AUDIOFOCUS_GAIN);
-        //Focus gained
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
-        //Could not gain focus
+
     }
 
+    @UnstableApi
     private void skipToNext() {
         if (mediaPlayer == null) {
             return;
@@ -1421,6 +1328,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
 
     }
 
+    @UnstableApi
     private void skipToPrevious() {
         if (mediaPlayer == null) {
             return;
@@ -1554,10 +1462,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat implements Aud
                 broadcastIntent.putExtra("timeEnd", (int) mediaPlayer.getDuration());
                 broadcastIntent.putExtra("buffered", (int) mediaPlayer.getBufferedPosition());
                 this.sendBroadcast(broadcastIntent);
-                /*if (mediaPlayer.getCurrentPosition() >= mediaPlayer.getDuration()) {
-                    buttonClick = false;
-                    skipToNext();
-                }*/
 
                 if (isPlaying()) {
                     Runnable notification = this::startPlayProgressUpdater;

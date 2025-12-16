@@ -5,6 +5,7 @@ import static android.view.KeyEvent.KEYCODE_DPAD_CENTER;
 import static android.view.KeyEvent.KEYCODE_ENTER;
 import static android.view.KeyEvent.KEYCODE_NUMPAD_ENTER;
 
+import android.annotation.SuppressLint;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
@@ -21,8 +22,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.RecyclerView;
-import com.bumptech.glide.Glide;
 import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
@@ -39,17 +40,21 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.ViewHolder> {
     private static final String TAG = "BooksOtherAdapter";
 
     private ArrayList<BookPOJO> mData;
 
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
     public BooksOtherAdapter() {
         mData = new ArrayList<>();
     }
 
-    public void setData(@NonNull ArrayList<BookPOJO> data) {
-        mData = data;
+    @SuppressLint("NotifyDataSetChanged")
+    public void setData(@NonNull ArrayList<BookPOJO> newData) {
+        mData = newData;
         notifyDataSetChanged();
     }
 
@@ -59,29 +64,19 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         Log.d(TAG, "onCreateViewHolder: called");
 
-        View view;
-        UiModeManager uiModeManager = (UiModeManager) viewGroup.getContext().getSystemService(
-                UI_MODE_SERVICE);
-        if (uiModeManager != null
-                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            view = LayoutInflater.from(viewGroup.getContext()).inflate(
-                    R.layout.slider_item_television,
-                    viewGroup, false);
-        } else {
-            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.slider_item,
-                    viewGroup, false);
-        }
+        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.slider_item,
+                viewGroup, false);
         return new ViewHolder(view);
     }
 
+    @UnstableApi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
         Log.d(TAG, "onBindViewHolder: called");
 
-        if(App.useProxy&&mData.get(i).getPhoto().contains(Url.SERVER_BAZA_KNIG)){
+        if(App.useProxy && mData.get(i).getPhoto().contains(Url.SERVER_BAZA_KNIG)){
 
             final Bitmap[] bmp = {null};
-            ExecutorService executor = Executors.newSingleThreadExecutor();
             Handler handler = new Handler(Looper.getMainLooper());
             executor.execute(() -> {
 
@@ -105,14 +100,14 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
 
         viewHolder.mTitle.setText(mData.get(i).getName());
         viewHolder.mImageView.setOnClickListener(
-                view -> myOnClick(view.getContext(), viewHolder.getAdapterPosition()));
+                view -> myOnClick(view.getContext(), viewHolder.getBindingAdapterPosition()));
         viewHolder.mTitle.setOnClickListener(
-                view -> myOnClick(view.getContext(), viewHolder.getAdapterPosition()));
+                view -> myOnClick(view.getContext(), viewHolder.getBindingAdapterPosition()));
         viewHolder.mTitle.setOnKeyListener((view, i12, event) -> {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 if (event.getKeyCode() == KEYCODE_DPAD_CENTER || event.getKeyCode() == KEYCODE_ENTER
                         || event.getKeyCode() == KEYCODE_NUMPAD_ENTER) {
-                    myOnClick(view.getContext(), viewHolder.getAdapterPosition());
+                    myOnClick(view.getContext(), viewHolder.getBindingAdapterPosition());
                     return true;
                 }
             }
@@ -122,7 +117,7 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 if (event.getKeyCode() == KEYCODE_DPAD_CENTER || event.getKeyCode() == KEYCODE_ENTER
                         || event.getKeyCode() == KEYCODE_NUMPAD_ENTER) {
-                    myOnClick(view.getContext(), viewHolder.getAdapterPosition());
+                    myOnClick(view.getContext(), viewHolder.getBindingAdapterPosition());
                     return true;
                 }
             }
@@ -153,6 +148,14 @@ public class BooksOtherAdapter extends RecyclerView.Adapter<BooksOtherAdapter.Vi
             mTitle = itemView.findViewById(R.id.text);
 
 
+        }
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdown();
         }
     }
 }

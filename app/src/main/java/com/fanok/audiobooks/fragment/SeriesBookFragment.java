@@ -135,7 +135,7 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
 
     @Override
     public void showSeries(ArrayList<SeriesPOJO> data) {
-        if (data.size() == 0) {
+        if (data.isEmpty()) {
             binding.placeholder.setVisibility(View.VISIBLE);
         } else {
             binding.placeholder.setVisibility(View.GONE);

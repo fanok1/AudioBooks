@@ -9,6 +9,7 @@ import com.arellomobile.mvp.viewstate.strategy.AddToEndSingleStrategy;
 import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.pojo.GenrePOJO;
 
 import java.util.ArrayList;
 
@@ -20,7 +21,10 @@ public interface BooksView extends MvpView {
     void setLayoutManager(int count);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
-    void showData(ArrayList bookPOJOS);
+    void showDataBooks(@NonNull ArrayList<BookPOJO> genres);
+
+    @StateStrategyType(AddToEndSingleStrategy.class)
+    void showDataGenres(@NonNull ArrayList<GenrePOJO> genres);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
     void clearData();

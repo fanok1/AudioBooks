@@ -5,26 +5,24 @@ import static com.fanok.audiobooks.service.MediaPlayerService.getNotificationId;
 
 import android.app.NotificationManager;
 import android.app.UiModeManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
-import android.provider.Settings;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -44,13 +42,9 @@ import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.pojo.BookPOJO;
-import com.fanok.audiobooks.pojo.StorageAds;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.MainPresenter;
 import com.fanok.audiobooks.service.MediaPlayerService;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.MobileAds;
 import com.google.android.material.navigation.NavigationView;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -60,14 +54,12 @@ import org.jetbrains.annotations.NotNull;
 public class MainActivity extends MvpAppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MainView {
     private static final String TAG = "MainActivity";
-    public static final String Broadcast_DISABLE_ADS = "DISABLE_ADS";
-
-
     private static final String EXSTRA_FRAGMENT = "startFragment";
     private static final String EXSTRA_URL = "url";
     private static boolean closeApp = false;
-    private AdView mAdView;
     private boolean isSavedInstanceState = false;
+
+
 
     public static boolean isCloseApp() {
         return closeApp;
@@ -89,24 +81,6 @@ public class MainActivity extends MvpAppCompatActivity
     private boolean firstStart = true;
 
     private SharedPreferences preferences;
-    private final BroadcastReceiver disebledAds = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            showAds(context);
-        }
-    };
-
-    private void showAds(Context context) {
-        if (!StorageAds.idDisableAds()) {
-            MobileAds.initialize(context, initializationStatus -> {
-            });
-            AdRequest adRequest = new AdRequest.Builder().build();
-            mAdView.loadAd(adRequest);
-            mAdView.setVisibility(View.VISIBLE);
-        } else {
-            mAdView.setVisibility(View.GONE);
-        }
-    }
 
     public static void setCloseApp(boolean closeApp) {
         MainActivity.closeApp = closeApp;
@@ -148,18 +122,16 @@ public class MainActivity extends MvpAppCompatActivity
         super.onStart();
         if (!isSavedInstanceState) {
             if (firstStart) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-                    if (pm != null) {
-                        if (!pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks")) {
-                            UiModeManager uiModeManager = (UiModeManager) getSystemService(
-                                    UI_MODE_SERVICE);
-                            StorageUtil storageUtil = new StorageUtil(this);
-                            boolean b = storageUtil.loadBattaryOptimizeDisenbled();
-                            if (uiModeManager != null && uiModeManager.getCurrentModeType()
-                                    != Configuration.UI_MODE_TYPE_TELEVISION && !b) {
-                                alert.show();
-                            }
+                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                if (pm != null) {
+                    if (!pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks")) {
+                        UiModeManager uiModeManager = (UiModeManager) getSystemService(
+                                UI_MODE_SERVICE);
+                        StorageUtil storageUtil = new StorageUtil(this);
+                        boolean b = storageUtil.loadBattaryOptimizeDisenbled();
+                        if (uiModeManager != null && uiModeManager.getCurrentModeType()
+                                != Configuration.UI_MODE_TYPE_TELEVISION && !b) {
+                            alert.show();
                         }
                     }
                 }
@@ -219,43 +191,31 @@ public class MainActivity extends MvpAppCompatActivity
     }
 
     @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        if (drawer != null && drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-                if (drawer == null) {
-                    LinearLayout linearLayout = findViewById(R.id.liner_nav_view);
-                    if (linearLayout != null) {
-                        final TypedValue outValue = new TypedValue();
-                        getTheme().resolveAttribute(android.R.attr.selectableItemBackground,
-                                outValue,
-                                true);
-                        for (int i = 0; i < linearLayout.getChildCount(); i++) {
-                            View view = linearLayout.getChildAt(i);
-                            if (view instanceof TextView) {
-                                view.setBackgroundResource(outValue.resourceId);
-                            }
-                        }
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        View currentFocus = getCurrentFocus();
+        if (currentFocus!=null){
+            if(keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                if (currentFocus.getId()==R.id.layout_nav_audiobooks||currentFocus.getId()==R.id.toolbar) {
+                    View menuItem = findViewById(R.id.app_bar_search);
+                    if (menuItem != null) {
+                        menuItem.requestFocus();
                     }
                 }
-                if (fragmentsTag.size() > 0) fragmentsTag.remove(fragmentsTag.size() - 1);
-                getSupportFragmentManager().popBackStack();
-                while (true) {
-                    if (fragmentsTag.size() > 0 && fragmentsTag.get(
-                            fragmentsTag.size() - 1).isSkip()) {
-                        fragmentsTag.remove(fragmentsTag.size() - 1);
-                        getSupportFragmentManager().popBackStack();
-                    } else {
-                        break;
+            }
+            if(keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                if (currentFocus.getId()==R.id.app_bar_search){
+                    Toolbar toolbar = findViewById(R.id.toolbar);
+                    toolbar.requestFocus();
+                }
+                if (currentFocus.getId()==R.id.toolbar){
+                    View view = findViewById(R.id.layout_nav_audiobooks);
+                    if(view!=null){
+                        view.requestFocus();
                     }
                 }
-
-            } else {
-                super.onBackPressed();
             }
         }
+        return super.onKeyDown(keyCode, event);
     }
 
     @Override
@@ -263,14 +223,14 @@ public class MainActivity extends MvpAppCompatActivity
         super.onCreate(savedInstanceState);
         closeApp = false;
         Log.d(TAG, "onCreate: called");
-        UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
-        if (uiModeManager != null
-                && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            setContentView(R.layout.activity_main_television);
-        } else {
-            setContentView(R.layout.activity_main);
-        }
-        mAdView = findViewById(R.id.adView);
+
+        setContentView(R.layout.activity_main);
+
+
+
+
+
+
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(this);
@@ -288,6 +248,8 @@ public class MainActivity extends MvpAppCompatActivity
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
         if (drawer != null && navigationView != null) {
@@ -326,11 +288,6 @@ public class MainActivity extends MvpAppCompatActivity
 
         fragmentsTag = new ArrayList<>();
         isSavedInstanceState = savedInstanceState != null;
-        register_disebledAds();
-
-
-        showAds(this);
-
         alert = new AlertDialog.Builder(this);
         alert.setTitle(R.string.app_name);
         alert.setMessage(R.string.setIgnoredBatteryOptimyze);
@@ -340,7 +297,56 @@ public class MainActivity extends MvpAppCompatActivity
                 (dialogInterface, i) -> setBattaryOptimizeDisenbled(true));
         alert.setPositiveButton("OK",
                 (dialogInterface, i) -> mPresenter.openSettingsOptimizeBattery(dialogInterface));
+
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                DrawerLayout drawer = findViewById(R.id.drawer_layout);
+                if (drawer != null && drawer.isDrawerOpen(GravityCompat.START)) {
+                    drawer.closeDrawer(GravityCompat.START);
+                    return;
+                }
+
+
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    if (drawer == null) {
+                        LinearLayout linearLayout = findViewById(R.id.liner_nav_view);
+                        if (linearLayout != null) {
+                            final TypedValue outValue = new TypedValue();
+                            getTheme().resolveAttribute(android.R.attr.selectableItemBackground,
+                                    outValue,
+                                    true);
+                            for (int i = 0; i < linearLayout.getChildCount(); i++) {
+                                View view = linearLayout.getChildAt(i);
+                                if (view instanceof TextView) {
+                                    view.setBackgroundResource(outValue.resourceId);
+                                }
+                            }
+                        }
+                    }
+                    if (!fragmentsTag.isEmpty()) fragmentsTag.remove(fragmentsTag.size() - 1);
+                    getSupportFragmentManager().popBackStack();
+                    while (true) {
+                        if (!fragmentsTag.isEmpty() && fragmentsTag.get(
+                                fragmentsTag.size() - 1).isSkip()) {
+                            fragmentsTag.remove(fragmentsTag.size() - 1);
+                            getSupportFragmentManager().popBackStack();
+                        } else {
+                            break;
+                        }
+                    }
+                    return;
+                }
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+                setEnabled(true);
+            }
+        });
     }
+
+
+
 
 
     @Override
@@ -360,7 +366,7 @@ public class MainActivity extends MvpAppCompatActivity
 
     @Override
     public void showFragment(@NotNull Fragment fragment, @NonNull String tag) {
-        if (fragmentsTag.size() != 0 && tag.equals(
+        if (!fragmentsTag.isEmpty() && tag.equals(
                 fragmentsTag.get(fragmentsTag.size() - 1).getTag())
                 && !tag.equals("searchebleBooks")) {
             return;
@@ -435,15 +441,10 @@ public class MainActivity extends MvpAppCompatActivity
             notificationManager.cancel(getNotificationId());
         }
         super.onDestroy();
-        unregisterReceiver(disebledAds);
         mPresenter.onDestroy();
         closeApp = true;
     }
 
-    private void register_disebledAds() {
-        IntentFilter filter = new IntentFilter(Broadcast_DISABLE_ADS);
-        registerReceiver(disebledAds, filter);
-    }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {

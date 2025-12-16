@@ -21,8 +21,6 @@ public interface FavoritePresenter {
 
     void onSearch(String qery);
 
-    void cealrData();
-
     void onOptionsItemSelected(@NotNull View view, int id);
 
 

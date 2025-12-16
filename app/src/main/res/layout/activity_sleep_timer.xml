@@ -312,7 +312,7 @@
                     android:layout_height="@dimen/number_buttons_size"
                     android:layout_weight="1"
                     android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/end_сhapter"
+                    android:text="@string/end_chapter"
                     android:textColor="?attr/prefIconColor"
                     android:textSize="@dimen/titleSizeParentControl" />
             </LinearLayout>

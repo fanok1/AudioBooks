@@ -4,11 +4,12 @@ import static com.fanok.audiobooks.Consts.PROXY_HOST;
 import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
 import androidx.annotation.NonNull;
+import androidx.media3.common.util.UnstableApi;
+
 import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.Url;
-import com.fanok.audiobooks.model.OtherArtistModel;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.reactivex.Observable;
@@ -16,7 +17,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Proxy.Type;
-import java.util.ArrayList;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -25,7 +25,6 @@ import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
 public class BookPOJO {
-    private static final String TAG = "BookPOJO";
 
     private String photo;
     private String autor;
@@ -62,20 +61,20 @@ public class BookPOJO {
                 .maxBodySize(0)
                 .get();
         Elements titleElement = document.getElementsByClass("book_title_elem book_title_name");
-        if (titleElement.size() != 0) {
+        if (!titleElement.isEmpty()) {
             bookPOJO.setName(titleElement.first().text().trim());
         }
         Elements retingElements = document.getElementsByClass("book_views_icon");
-        if (retingElements.size() != 0) {
+        if (!retingElements.isEmpty()) {
             Node retingNode = retingElements.first().nextSibling();
             if (retingNode != null) {
                 bookPOJO.setReting(retingNode.toString());
             }
         }
         Elements posterElements = document.getElementsByClass("book_cover");
-        if (posterElements.size() != 0) {
+        if (!posterElements.isEmpty()) {
             Elements img = posterElements.first().getElementsByTag("img");
-            if (img.size() != 0) {
+            if (!img.isEmpty()) {
                 String imgUrl = img.first().attr("src");
                 if (imgUrl != null) {
                     int lastPos = imgUrl.indexOf("?");
@@ -89,7 +88,7 @@ public class BookPOJO {
 
         Elements timeElements = document.getElementsByClass("book_info_label");
 
-        if (timeElements.size() != 0 && timeElements.first().text().contains("Время звучания:")) {
+        if (!timeElements.isEmpty() && timeElements.first().text().contains("Время звучания:")) {
             Node timeNode = timeElements.first().nextSibling();
             if (timeNode != null) {
                 bookPOJO.setTime(timeNode.toString());
@@ -97,9 +96,9 @@ public class BookPOJO {
         }
 
         Elements autorElements = document.getElementsByAttributeValue("itemprop", "author");
-        if (autorElements.size() != 0) {
+        if (!autorElements.isEmpty()) {
             Elements aElements = autorElements.first().getElementsByTag("a");
-            if (aElements.size() != 0) {
+            if (!aElements.isEmpty()) {
                 bookPOJO.setAutor(aElements.first().text());
                 bookPOJO.setUrlAutor(Url.SERVER + aElements.first().attr("href"));
             }
@@ -111,7 +110,7 @@ public class BookPOJO {
             Element element = artistElements.get(i);
             if (element.text().contains("читает")) {
                 Elements aTag = element.getElementsByTag("a");
-                if (aTag.size() != 0) {
+                if (!aTag.isEmpty()) {
                     bookPOJO.setArtist(aTag.first().text());
                     bookPOJO.setUrlArtist(Url.SERVER + aTag.first().attr("href"));
                 }
@@ -123,7 +122,7 @@ public class BookPOJO {
             Element element = seriesSisterElements.get(i);
             if (element.text().contains("Цикл")) {
                 Elements seriesElement = element.getElementsByTag("a");
-                if (seriesElement.size() != 0) {
+                if (!seriesElement.isEmpty()) {
                     bookPOJO.setSeries(seriesElement.first().text());
                     bookPOJO.setUrlSeries(Url.SERVER + seriesElement.first().attr("href"));
                 }
@@ -132,9 +131,9 @@ public class BookPOJO {
         }
 
         Elements genreConteiner = document.getElementsByClass("book_genre_pretitle");
-        if (genreConteiner.size() != 0) {
+        if (!genreConteiner.isEmpty()) {
             Elements aTag = genreConteiner.first().getElementsByTag("a");
-            if (aTag.size() != 0) {
+            if (!aTag.isEmpty()) {
                 Element a = aTag.first();
                 bookPOJO.setGenre(a.text());
                 bookPOJO.setUrlGenre(Url.SERVER + a.attr("href"));
@@ -149,13 +148,14 @@ public class BookPOJO {
         }
 
         Elements desc = document.getElementsByClass("book_description");
-        if (desc != null && desc.size() != 0) {
+        if (desc != null && !desc.isEmpty()) {
             bookPOJO.setDesc(desc.first().text());
         }
 
         return bookPOJO;
     }
 
+    @UnstableApi
     public static BookPOJO getBookByUrlABMP3(String url) throws IOException {
         String autor = "";
 
@@ -178,12 +178,12 @@ public class BookPOJO {
         bookPOJO.setUrl(url);
 
         Elements img = document.getElementsByClass("abook_image");
-        if (img != null && img.size() != 0) {
+        if (img != null && !img.isEmpty()) {
             bookPOJO.setPhoto(img.first().attr("src"));
         }
 
         Elements desc = document.getElementsByClass("abook-desc");
-        if (desc != null && desc.size() != 0) {
+        if (desc != null && !desc.isEmpty()) {
             bookPOJO.setDesc(desc.first().ownText());
         }
 
@@ -192,31 +192,31 @@ public class BookPOJO {
             for (Element info : infos) {
                 if (info.text().contains("Автор")) {
                     Elements element = info.getElementsByTag("a");
-                    if (element != null && element.size() != 0) {
+                    if (element != null && !element.isEmpty()) {
                         autor = element.first().text();
                         bookPOJO.setAutor(autor);
                         bookPOJO.setUrlAutor(Url.SERVER_ABMP3 + element.first().attr("href") + "?page=");
                     }
                 } else if (info.text().contains("Читает")) {
                     Elements element = info.getElementsByTag("a");
-                    if (element != null && element.size() != 0) {
+                    if (element != null && !element.isEmpty()) {
                         bookPOJO.setArtist(element.first().text());
                         bookPOJO.setUrlArtist(Url.SERVER_ABMP3 + element.first().attr("href") + "?page=");
                     }
                 } else if (info.text().contains("Жанры")) {
                     Elements element = info.getElementsByTag("a");
-                    if (element != null && element.size() != 0) {
+                    if (element != null && !element.isEmpty()) {
                         bookPOJO.setGenre(element.first().text());
                         bookPOJO.setUrlGenre(Url.SERVER_ABMP3 + element.first().attr("href") + "?page=");
                     }
                 } else {
                     Elements clock = info.getElementsByClass("fa-clock-o");
-                    if (clock != null && clock.size() != 0) {
+                    if (clock != null && !clock.isEmpty()) {
                         bookPOJO.setTime(info.text().trim());
                     }
 
                     Elements reting = info.getElementsByClass("fa-eye");
-                    if (reting != null && reting.size() != 0) {
+                    if (reting != null && !reting.isEmpty()) {
                         bookPOJO.setReting(info.text().trim());
                     }
 
@@ -225,7 +225,7 @@ public class BookPOJO {
         }
 
         Elements titleElement = document.getElementsByTag("h1");
-        if (titleElement.size() != 0) {
+        if (!titleElement.isEmpty()) {
             String name = titleElement.first().text().trim();
             if (autor.isEmpty()) {
                 bookPOJO.setName(name);
@@ -253,26 +253,35 @@ public class BookPOJO {
         return photo;
     }
 
+    @UnstableApi
     public static BookPOJO getBookByUrlAbook(String url) throws IOException {
         String autor = "";
 
         BookPOJO bookPOJO = new BookPOJO();
 
-        Document document = Jsoup.connect(url)
+
+        Connection connection = Jsoup.connect(url)
                 .userAgent(Consts.USER_AGENT)
                 .sslSocketFactory(Consts.socketFactory())
                 .referrer("https://google.com/")
-                .maxBodySize(0)
-                .get();
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document document = connection.get();
 
         bookPOJO.setUrl(url);
 
         Elements titleElement = document.getElementsByClass("caption__article-main");
 
         Elements autorElements = document.getElementsByClass("about-author");
-        if (autorElements != null && autorElements.size() != 0) {
+        if (autorElements != null && !autorElements.isEmpty()) {
             Elements aElements = autorElements.first().getElementsByTag("a");
-            if (aElements != null && aElements.size() != 0) {
+            if (aElements != null && !aElements.isEmpty()) {
                 autor = aElements.first().text();
                 if (autor != null && !autor.isEmpty()) {
                     bookPOJO.setAutor(autor);
@@ -289,7 +298,7 @@ public class BookPOJO {
         }
 
         Elements posterElements = document.getElementsByClass("cover__wrapper--image");
-        if (posterElements != null && posterElements.size() != 0) {
+        if (posterElements != null && !posterElements.isEmpty()) {
             Elements img = posterElements.first().getElementsByTag("img");
             if (img != null && img.size() != 0) {
                 String imgUrl = img.first().attr("src");
@@ -368,6 +377,7 @@ public class BookPOJO {
         return bookPOJO;
     }
 
+    @UnstableApi
     public static BookPOJO getBookByUrlIziBuk(String url) throws IOException {
         BookPOJO bookPOJO = new BookPOJO();
 
@@ -491,6 +501,7 @@ public class BookPOJO {
         return bookPOJO;
     }
 
+    @UnstableApi
     public static Observable<BookPOJO> getDescription(String url) {
         return Observable.create(observableEmitter -> {
             if (url != null) {
@@ -606,6 +617,8 @@ public class BookPOJO {
 
 
     }
+
+    @UnstableApi
     private static BookPOJO getBookByUrlBazaKnig(final String url) throws IOException {
 
         int indexSorce = url.indexOf("?sorce");
@@ -747,7 +760,7 @@ public class BookPOJO {
         if (imgConteiner != null && imgConteiner.size() > 0) {
             Element element = imgConteiner.first();
             Elements img = element.getElementsByTag("img");
-            if (img != null && img.size() > 0) {
+            if (img != null && !img.isEmpty()) {
                 String src = img.first().attr("src");
                 if (src != null) {
                     bookPOJO.setPhoto(src);
@@ -756,19 +769,19 @@ public class BookPOJO {
         }
 
         Elements title = document.getElementsByTag("h1");
-        if (title != null && title.size() > 0) {
+        if (title != null && !title.isEmpty()) {
             String text = title.first().ownText();
             bookPOJO.setName(text.substring(0, text.indexOf(" - ")));
         }
 
         Elements desc = document.getElementsByClass("short-text");
-        if (desc != null && desc.size() > 0) {
+        if (desc != null && !desc.isEmpty()) {
             String text = desc.first().ownText();
             bookPOJO.setDesc(text);
         }
 
         Elements coments = document.getElementsByClass("comments");
-        if (coments != null && coments.size() > 0) {
+        if (coments != null && !coments.isEmpty()) {
             String text = coments.first().text();
             if (text != null && !text.isEmpty()) {
                 bookPOJO.setComents(text);
@@ -905,9 +918,6 @@ public class BookPOJO {
     }
 
     public void setReting(@NonNull String reting) {
-        if (reting.isEmpty()) {
-            this.reting = "0";
-        }
         this.reting = reting;
     }
 

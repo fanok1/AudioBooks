@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.adapter;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class ClearSavedAdapter extends RecyclerView.Adapter<ClearSavedAdapter.ViewHolder> {
 
     private ArrayList<ClearSavedPOJO> mData;
@@ -47,8 +49,10 @@ public class ClearSavedAdapter extends RecyclerView.Adapter<ClearSavedAdapter.Vi
         mChackedChange = chackedChange;
     }
 
-    public void setData(@NonNull ArrayList<ClearSavedPOJO> data) {
-        mData = data;
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void setData(@NonNull ArrayList<ClearSavedPOJO> newData) {
+        mData = newData;
         notifyDataSetChanged();
     }
 
@@ -64,6 +68,7 @@ public class ClearSavedAdapter extends RecyclerView.Adapter<ClearSavedAdapter.Vi
         return mData.get(index);
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void setSelectedAll() {
         mSelectedItems.clear();
         for (int i = 0; i < mData.size(); i++) {
@@ -72,6 +77,7 @@ public class ClearSavedAdapter extends RecyclerView.Adapter<ClearSavedAdapter.Vi
         notifyDataSetChanged();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void clearSelected() {
         mSelectedItems.clear();
         notifyDataSetChanged();
@@ -102,16 +108,19 @@ public class ClearSavedAdapter extends RecyclerView.Adapter<ClearSavedAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
+        final int position = viewHolder.getBindingAdapterPosition();
         viewHolder.mView.setOnClickListener(view -> {
-            if (viewHolder.mCheckBox.isChecked()) {
-                mSelectedItems.remove(mData.get(i).getFile());
-            } else {
-                mSelectedItems.add(mData.get(i).getFile());
+            if (position != RecyclerView.NO_POSITION) {
+                if (viewHolder.mCheckBox.isChecked()) {
+                    mSelectedItems.remove(mData.get(position).getFile());
+                } else {
+                    mSelectedItems.add(mData.get(position).getFile());
+                }
+                if (mChackedChange != null) {
+                    mChackedChange.onChackedChange();
+                }
+                notifyItemChanged(position);
             }
-            if (mChackedChange != null) {
-                mChackedChange.onChackedChange();
-            }
-            notifyDataSetChanged();
         });
 
         String text = mData.get(i).getFile().getPath() + " (" + mData.get(i).getStorege() + ")";

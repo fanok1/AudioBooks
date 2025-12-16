@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.adapter;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.SearchebleArrayPOJO;
 import java.util.ArrayList;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class SearchebleAdapter extends RecyclerView.Adapter<SearchebleAdapter.MyHolder> {
 
     private ArrayList<SearchebleArrayPOJO> mModel;
@@ -21,15 +23,23 @@ public class SearchebleAdapter extends RecyclerView.Adapter<SearchebleAdapter.My
         mListener = listener;
     }
 
-    public void setItem(ArrayList<SearchebleArrayPOJO> model) {
-        mModel = model;
+    @SuppressLint("NotifyDataSetChanged")
+    public void setItem(ArrayList<SearchebleArrayPOJO> newModel) {
+        mModel = newModel;
         notifyDataSetChanged();
     }
 
+
     public void clearItem() {
-        mModel.clear();
-        notifyDataSetChanged();
+        if (mModel != null) {
+            int oldSize = mModel.size();
+            if (oldSize > 0) {
+                mModel.clear();
+                notifyItemRangeRemoved(0, oldSize);
+            }
+        }
     }
+
 
     @NonNull
     @Override
@@ -66,7 +76,7 @@ public class SearchebleAdapter extends RecyclerView.Adapter<SearchebleAdapter.My
 
             mTextView = itemView.findViewById(R.id.textView);
             itemView.setOnClickListener(view -> {
-                if (mListener != null) mListener.onItemSelected(view, getAdapterPosition());
+                if (mListener != null) mListener.onItemSelected(view, getBindingAdapterPosition());
             });
         }
 

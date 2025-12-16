@@ -1,5 +1,7 @@
 package com.fanok.audiobooks.pojo;
 
+import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
 
@@ -32,6 +34,16 @@ public class AudioPOJO {
 
     public String getUrl() {
         return url;
+    }
+
+    public String getCleanUrl() {
+        Uri uri = Uri.parse(url);
+        return new Uri.Builder()
+                .scheme(uri.getScheme())
+                .authority(uri.getAuthority())
+                .path(uri.getPath())
+                .build()
+                .toString();
     }
 
     public void setUrl(@NonNull String url) {

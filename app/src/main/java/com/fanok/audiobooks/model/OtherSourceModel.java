@@ -30,7 +30,6 @@ public class OtherSourceModel implements
     @Override
     public Observable<ArrayList<OtherArtistPOJO>> getOtherArtist(@NonNull BookPOJO bookPOJO) {
         return Observable.create(observableEmitter -> {
-            //waitVpnConetion();
             ArrayList<OtherArtistPOJO> articlesModels = new ArrayList<>();
             try {
 

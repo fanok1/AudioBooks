@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
@@ -26,8 +28,6 @@ import java.util.ArrayList;
 import org.jetbrains.annotations.NotNull;
 
 public class ComentsBookFragment extends MvpAppCompatFragment implements Coments {
-
-    private static final String TAG = "DescriptionBookFragment";
 
     private static final String ARG_URL = "arg_url";
 
@@ -60,7 +60,7 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
 
         binding = FragmentBookComentsBinding.inflate(inflater, container, false);
 
-        BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(binding.answer.getRoot());
+        BottomSheetBehavior<LinearLayout> bottomSheetBehavior = BottomSheetBehavior.from(binding.answer.getRoot());
         binding.answer.close.setOnClickListener(view1 -> {
             if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -76,8 +76,7 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
                 ComentsPOJO comentsPOJO = mComentsListAddapter.getItem(position);
                 if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                    ArrayList<SubComentsPOJO> subComentsPOJOArrayList =
-                            (ArrayList<SubComentsPOJO>) comentsPOJO.getChildComents().clone();
+                    ArrayList<SubComentsPOJO> subComentsPOJOArrayList = new ArrayList<>(comentsPOJO.getChildComents());
                     SubComentsPOJO subComentsPOJO = new SubComentsPOJO();
                     subComentsPOJO.setName(comentsPOJO.getName());
                     subComentsPOJO.setDate(comentsPOJO.getDate());
@@ -132,7 +131,7 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
 
     @Override
     public void showComents(ArrayList<ComentsPOJO> data) {
-        if (data.size() == 0) {
+        if (data.isEmpty()) {
             binding.placeholder.setVisibility(View.VISIBLE);
         } else {
             binding.placeholder.setVisibility(View.GONE);

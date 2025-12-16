@@ -1,5 +1,7 @@
 package com.fanok.audiobooks.pojo;
 
+import android.net.Uri;
+
 public class AudioListPOJO {
 
     private String bookUrl;
@@ -52,6 +54,17 @@ public class AudioListPOJO {
         return audioUrl;
     }
 
+    public String getCleanAudioUrl() {
+        Uri uri = Uri.parse(audioUrl);
+        return new Uri.Builder()
+                .scheme(uri.getScheme())
+                .authority(uri.getAuthority())
+                .path(uri.getPath())
+                .build()
+                .toString();
+    }
+
+
     public void setAudioUrl(String audioUrl) {
         if (audioUrl == null || audioUrl.isEmpty()) {
             this.audioUrl = "";
@@ -65,11 +78,7 @@ public class AudioListPOJO {
     }
 
     public void setTime(int time) {
-        if (time < 0) {
-            this.time = 0;
-        } else {
-            this.time = time;
-        }
+        this.time = Math.max(time, 0);
     }
 
     public int getTimeStart() {

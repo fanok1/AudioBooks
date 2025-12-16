@@ -18,7 +18,6 @@ import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
-import com.fanok.audiobooks.MyInterstitialAd;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.fragment.BooksFragment;
@@ -141,8 +140,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             ImageView imageView = layout.findViewById(R.id.imageView);
             Picasso.get()
                     .load(books.get(position).getPhoto())
-                    .error(R.drawable.image_placeholder)
-                    .placeholder(R.drawable.image_placeholder)
+                    .error(android.R.drawable.ic_menu_gallery)
+                    .placeholder(android.R.drawable.ic_menu_gallery)
                     .into(imageView);
         }
 
@@ -173,7 +172,6 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
         open.setOnClickListener(view1 -> {
             dialog.dismiss();
-            MyInterstitialAd.increase();
             getViewState().showBooksActivity(books.get(position));
         });
 
@@ -276,65 +274,45 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
         if (mUrl.contains(Url.SERVER)) {
             if (!mUrl.contains("genre")) {
-                switch (itemId) {
-                    case R.id.new_data:
-                        url = Url.NEW_BOOK;
-                        break;
-                    case R.id.reting_all_time:
-                        url = Url.RATING_ALL_TIME;
-                        break;
-                    case R.id.reting_month:
-                        url = Url.RATING_MONTH;
-                        break;
-                    case R.id.reting_week:
-                        url = Url.RATING_WEEK;
-                        break;
-                    case R.id.reting_day:
-                        url = Url.RATING_TODATY;
-                        break;
-                    case R.id.popular_all_time:
-                        url = Url.BEST_ALL_TIME;
-                        break;
-                    case R.id.popular_month:
-                        url = Url.BEST_MONTH;
-                        break;
-                    case R.id.popular_week:
-                        url = Url.BEST_WEEK;
-                        break;
-                    case R.id.popular_day:
-                        url = Url.BEST_TODAY;
-                        break;
+                if (itemId == R.id.new_data) {
+                    url = Url.NEW_BOOK;
+                } else if (itemId == R.id.reting_all_time) {
+                    url = Url.RATING_ALL_TIME;
+                } else if (itemId == R.id.reting_month) {
+                    url = Url.RATING_MONTH;
+                } else if (itemId == R.id.reting_week) {
+                    url = Url.RATING_WEEK;
+                } else if (itemId == R.id.reting_day) {
+                    url = Url.RATING_TODATY;
+                } else if (itemId == R.id.popular_all_time) {
+                    url = Url.BEST_ALL_TIME;
+                } else if (itemId == R.id.popular_month) {
+                    url = Url.BEST_MONTH;
+                } else if (itemId == R.id.popular_week) {
+                    url = Url.BEST_WEEK;
+                } else if (itemId == R.id.popular_day) {
+                    url = Url.BEST_TODAY;
                 }
             } else {
                 url = mUrl.substring(0, Consts.indexOfByNumber(mUrl, '/', 5) + 1);
-                switch (itemId) {
-                    case R.id.new_data:
-                        url = url + "<page>/";
-                        break;
-                    case R.id.reting_all_time:
-                        url = url + "rating/<page>/?period=alltime";
-                        break;
-                    case R.id.reting_month:
-                        url = url + "rating/<page>/?period=month";
-                        break;
-                    case R.id.reting_week:
-                        url = url + "rating/<page>/?period=week";
-                        break;
-                    case R.id.reting_day:
-                        url = url + "rating/<page>/?period=today";
-                        break;
-                    case R.id.popular_all_time:
-                        url = url + "popular/<page>/?period=alltime";
-                        break;
-                    case R.id.popular_month:
-                        url = url + "popular/<page>/?period=month";
-                        break;
-                    case R.id.popular_week:
-                        url = url + "popular/<page>/?period=week";
-                        break;
-                    case R.id.popular_day:
-                        url = url + "popular/<page>/?period=today";
-                        break;
+                if (itemId == R.id.new_data) {
+                    url = url + "<page>/";
+                } else if (itemId == R.id.reting_all_time) {
+                    url = url + "rating/<page>/?period=alltime";
+                } else if (itemId == R.id.reting_month) {
+                    url = url + "rating/<page>/?period=month";
+                } else if (itemId == R.id.reting_week) {
+                    url = url + "rating/<page>/?period=week";
+                } else if (itemId == R.id.reting_day) {
+                    url = url + "rating/<page>/?period=today";
+                } else if (itemId == R.id.popular_all_time) {
+                    url = url + "popular/<page>/?period=alltime";
+                } else if (itemId == R.id.popular_month) {
+                    url = url + "popular/<page>/?period=month";
+                } else if (itemId == R.id.popular_week) {
+                    url = url + "popular/<page>/?period=week";
+                } else if (itemId == R.id.popular_day) {
+                    url = url + "popular/<page>/?period=today";
                 }
             }
         } else if (mUrl.contains(Url.SERVER_IZIBUK)) {
@@ -373,185 +351,142 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             }
         } else if (mUrl.contains(Url.SERVER_AKNIGA)) {
             if (!mUrl.contains("section")) {
-                switch (itemId) {
-                    case R.id.new_data:
-                        url = Url.NEW_BOOK_AKNIGA;
-                        break;
-                    case R.id.reting_all_time:
-                        url = Url.RATING_ALL_TIME_AKNIGA;
-                        break;
-                    case R.id.reting_month:
-                        url = Url.RATING_MONTH_AKNIGA;
-                        break;
-                    case R.id.reting_week:
-                        url = Url.RATING_WEEK_AKNIGA;
-                        break;
-                    case R.id.reting_day:
-                        url = Url.RATING_TODATY_AKNIGA;
-                        break;
-                    case R.id.popular_all_time:
-                        url = Url.BEST_ALL_TIME_AKNIGA;
-                        break;
-                    case R.id.popular_month:
-                        url = Url.BEST_MONTH_AKNIGA;
-                        break;
-                    case R.id.popular_week:
-                        url = Url.BEST_WEEK_AKNIGA;
-                        break;
-                    case R.id.popular_day:
-                        url = Url.BEST_TODAY_AKNIGA;
-                        break;
+                if (itemId == R.id.new_data) {
+                    url = Url.NEW_BOOK_AKNIGA;
+                } else if (itemId == R.id.reting_all_time) {
+                    url = Url.RATING_ALL_TIME_AKNIGA;
+                } else if (itemId == R.id.reting_month) {
+                    url = Url.RATING_MONTH_AKNIGA;
+                } else if (itemId == R.id.reting_week) {
+                    url = Url.RATING_WEEK_AKNIGA;
+                } else if (itemId == R.id.reting_day) {
+                    url = Url.RATING_TODATY_AKNIGA;
+                } else if (itemId == R.id.popular_all_time) {
+                    url = Url.BEST_ALL_TIME_AKNIGA;
+                } else if (itemId == R.id.popular_month) {
+                    url = Url.BEST_MONTH_AKNIGA;
+                } else if (itemId == R.id.popular_week) {
+                    url = Url.BEST_WEEK_AKNIGA;
+                } else if (itemId == R.id.popular_day) {
+                    url = Url.BEST_TODAY_AKNIGA;
                 }
             } else {
                 url = mUrl.substring(0, Consts.indexOfByNumber(mUrl, '/', 5) + 1);
-                switch (itemId) {
-                    case R.id.new_data:
-                        url += "page<page>/";
-                        break;
-                    case R.id.reting_all_time:
-                        url += "top/page<page>/?period=all";
-                        break;
-                    case R.id.reting_month:
-                        url += "top/page<page>/?period=30";
-                        break;
-                    case R.id.reting_week:
-                        url += "top/page<page>/?period=7";
-                        break;
-                    case R.id.reting_day:
-                        url += "top/page<page>/?period=1";
-                        break;
-                    case R.id.popular_all_time:
-                        url += "discussed/page<page>/?period=all";
-                        break;
-                    case R.id.popular_month:
-                        url += "discussed/page<page>/?period=30";
-                        break;
-                    case R.id.popular_week:
-                        url += "discussed/page<page>/?period=7";
-                        break;
-                    case R.id.popular_day:
-                        url += "discussed/page<page>/?period=1";
-                        break;
+                if (itemId == R.id.new_data) {
+                    url += "page<page>/";
+                } else if (itemId == R.id.reting_all_time) {
+                    url += "top/page<page>/?period=all";
+                } else if (itemId == R.id.reting_month) {
+                    url += "top/page<page>/?period=30";
+                } else if (itemId == R.id.reting_week) {
+                    url += "top/page<page>/?period=7";
+                } else if (itemId == R.id.reting_day) {
+                    url += "top/page<page>/?period=1";
+                } else if (itemId == R.id.popular_all_time) {
+                    url += "discussed/page<page>/?period=all";
+                } else if (itemId == R.id.popular_month) {
+                    url += "discussed/page<page>/?period=30";
+                } else if (itemId == R.id.popular_week) {
+                    url += "discussed/page<page>/?period=7";
+                } else if (itemId == R.id.popular_day) {
+                    url += "discussed/page<page>/?period=1";
                 }
             }
         } else if (mUrl.contains(Url.SERVER_BAZA_KNIG)) {
-            switch (itemId) {
-                case R.id.new_data:
-                    url = Url.NEW_BOOK_BAZA_KNIG;
-                    break;
-                case R.id.reting:
-                    url = Url.RATING_BAZA_KNIG;
-                    break;
-                case R.id.popular:
-                    url = Url.BEST_BAZA_KNIG;
-                    break;
-                case R.id.coments:
-                    url = Url.COMENTS_BAZA_KNIG;
-                    break;
-                case R.id.years:
-                    url = Url.YEARS_BAZA_KNIG;
-                    break;
+            if (itemId == R.id.new_data) {
+                url = Url.NEW_BOOK_BAZA_KNIG;
+            } else if (itemId == R.id.reting) {
+                url = Url.RATING_BAZA_KNIG;
+            } else if (itemId == R.id.popular) {
+                url = Url.BEST_BAZA_KNIG;
+            } else if (itemId == R.id.coments) {
+                url = Url.COMENTS_BAZA_KNIG;
+            } else if (itemId == R.id.years) {
+                url = Url.YEARS_BAZA_KNIG;
             }
         }
 
-        switch (itemId) {
-            case R.id.app_bar_search:
-                if (mUrl.contains(Url.SERVER_ABMP3)) {
-                    if (mModelId == Consts.MODEL_AUTOR) {
-                        getViewState().showSearchActivity(Consts.MODEL_AUTOR);
-                    } else {
-                        getViewState().showSearchActivity(Consts.MODEL_BOOKS);
-                    }
+        if (itemId == R.id.app_bar_search) {
+            if (mUrl.contains(Url.SERVER_ABMP3)) {
+                if (mModelId == Consts.MODEL_AUTOR) {
+                    getViewState().showSearchActivity(Consts.MODEL_AUTOR);
                 } else {
-                    getViewState().showSearchActivity(mModelId);
+                    getViewState().showSearchActivity(Consts.MODEL_BOOKS);
                 }
-                break;
-            case R.id.new_data:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url, R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_new), Consts.MODEL_BOOKS),
-                        "audioBooksOrederNew");
-                break;
-            case R.id.reting_all_time:
-            case R.id.reting:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url,
-                        R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_reting), Consts.MODEL_BOOKS),
-                        "audioBooksOrederBestAllTime");
-                break;
-            case R.id.reting_month:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url,
-                        R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_reting), Consts.MODEL_BOOKS),
-                        "audioBooksOrederBestMonth");
-                break;
-            case R.id.reting_week:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url,
-                        R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_reting), Consts.MODEL_BOOKS),
-                        "audioBooksOrederBestWeek");
-                break;
-            case R.id.reting_day:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url,
-                        R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_reting), Consts.MODEL_BOOKS),
-                        "audioBooksOrederBestDay");
-                break;
-            case R.id.popular_all_time:
-            case R.id.popular:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url,
-                        R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_popular),
-                        Consts.MODEL_BOOKS),
-                        "audioBooksOrederDiscussedAllTime");
-                break;
-            case R.id.popular_month:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url,
-                        R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_popular),
-                        Consts.MODEL_BOOKS),
-                        "audioBooksOrederDiscussedMonth");
-                break;
-            case R.id.popular_week:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url,
-                        R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_popular),
-                        Consts.MODEL_BOOKS),
-                        "audioBooksOrederDiscussedWeek");
-                break;
-            case R.id.popular_day:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url,
-                        R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_popular),
-                        Consts.MODEL_BOOKS),
-                        "audioBooksOrederDiscussedDay");
-                break;
-
-            case R.id.coments:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url,
-                        R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_coments),
-                        Consts.MODEL_BOOKS),
-                        "audioBooksOrederComents");
-                break;
-
-            case R.id.years:
-                getViewState().showFragment(BooksFragment.newInstance(
-                        url,
-                        R.string.menu_audiobooks,
-                        subTitle + " " + getStringById(R.string.order_year),
-                        Consts.MODEL_BOOKS),
-                        "audioBooksOrederYears");
-                break;
+            } else {
+                getViewState().showSearchActivity(mModelId);
+            }
+        } else if (itemId == R.id.new_data) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url, R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_new), Consts.MODEL_BOOKS),
+                    "audioBooksOrederNew");
+        } else if (itemId == R.id.reting_all_time || itemId == R.id.reting) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_reting), Consts.MODEL_BOOKS),
+                    "audioBooksOrederBestAllTime");
+        } else if (itemId == R.id.reting_month) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_reting), Consts.MODEL_BOOKS),
+                    "audioBooksOrederBestMonth");
+        } else if (itemId == R.id.reting_week) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_reting), Consts.MODEL_BOOKS),
+                    "audioBooksOrederBestWeek");
+        } else if (itemId == R.id.reting_day) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_reting), Consts.MODEL_BOOKS),
+                    "audioBooksOrederBestDay");
+        } else if (itemId == R.id.popular_all_time || itemId == R.id.popular) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_popular),
+                            Consts.MODEL_BOOKS),
+                    "audioBooksOrederDiscussedAllTime");
+        } else if (itemId == R.id.popular_month) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_popular),
+                            Consts.MODEL_BOOKS),
+                    "audioBooksOrederDiscussedMonth");
+        } else if (itemId == R.id.popular_week) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_popular),
+                            Consts.MODEL_BOOKS),
+                    "audioBooksOrederDiscussedWeek");
+        } else if (itemId == R.id.popular_day) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_popular),
+                            Consts.MODEL_BOOKS),
+                    "audioBooksOrederDiscussedDay");
+        } else if (itemId == R.id.coments) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_coments),
+                            Consts.MODEL_BOOKS),
+                    "audioBooksOrederComents");
+        } else if (itemId == R.id.years) {
+            getViewState().showFragment(BooksFragment.newInstance(
+                            url,
+                            R.string.menu_audiobooks,
+                            subTitle + " " + getStringById(R.string.order_year),
+                            Consts.MODEL_BOOKS),
+                    "audioBooksOrederYears");
         }
     }
 
@@ -646,7 +581,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                                 books.addAll(bookPOJOS);
                                 if (isRefreshing) {
                                     isRefreshing = false;
-                                    getViewState().showData(books);
+                                    getViewState().showDataBooks(books);
                                     getViewState().setPosition(0);
                                 }
                             }
@@ -658,7 +593,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             @Override
                             public void onComplete() {
                                 Log.d(TAG, "onComplete");
-                                getViewState().showData(books);
+                                getViewState().showDataBooks(books);
                                 getViewState().showProgres(false);
                                 getViewState().showRefreshing(false);
                                 isLoading = false;
@@ -693,7 +628,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                                 genre.addAll(bookPOJOS);
                                 if (isRefreshing) {
                                     isRefreshing = false;
-                                    getViewState().showData(genre);
+                                    getViewState().showDataGenres(genre);
                                     getViewState().setPosition(0);
                                 }
                             }
@@ -705,7 +640,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                             @Override
                             public void onComplete() {
                                 Log.d(TAG, "onComplete");
-                                getViewState().showData(genre);
+                                getViewState().showDataGenres(genre);
                                 getViewState().showProgres(false);
                                 getViewState().showRefreshing(false);
                                 isLoading = false;

@@ -11,6 +11,9 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.activity.OnBackPressedCallback;
+import androidx.activity.OnBackPressedDispatcher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.preference.PreferenceManager;
@@ -22,6 +25,7 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.databinding.ActivityImportBinding;
 import com.fanok.audiobooks.interface_pacatge.import_favorite.ActivityImportInterface;
 import com.fanok.audiobooks.presenter.ImportPresenter;
+import com.google.android.material.color.MaterialColors;
 import com.r0adkll.slidr.Slidr;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,6 +88,16 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
             return false;
         });
 
+
+        OnBackPressedDispatcher dispatcher = getOnBackPressedDispatcher();
+        dispatcher.addCallback(this, new OnBackPressedCallback(true /* enabled by default */) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+                overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left);
+            }
+        });
+
     }
 
     @Override
@@ -136,12 +150,6 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
             overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left);
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left);
     }
 
     private void click() {

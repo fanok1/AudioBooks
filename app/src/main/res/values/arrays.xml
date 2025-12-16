@@ -69,18 +69,6 @@
     </string-array>
 
 
-    <string-array name="settings_dir_titles">
-        <item>@string/dir_title_emulated</item>
-        <item>@string/dir_title_sdcrd</item>
-        <item>@string/dir_title_download</item>
-    </string-array>
-
-    <string-array name="settings_dir_values">
-        <item>@string/dir_value_emulated</item>
-        <item>@string/dir_value_sdcrd</item>
-        <item>@string/dir_value_download</item>
-    </string-array>
-
     <string-array name="books_adapter_layout_titles">
         <item>@string/books_adapter_layout_list_title</item>
         <item>@string/books_adapter_layout_big_list_title</item>

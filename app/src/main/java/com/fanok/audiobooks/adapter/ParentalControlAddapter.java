@@ -3,6 +3,7 @@ package com.fanok.audiobooks.adapter;
 import static android.content.Context.MODE_PRIVATE;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.view.LayoutInflater;
@@ -16,6 +17,7 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.ParentControlPOJO;
 import java.util.ArrayList;
 
+/** @noinspection ClassEscapesDefinedScope*/
 public class ParentalControlAddapter extends
         RecyclerView.Adapter<ParentalControlAddapter.MyHolder> {
 
@@ -69,7 +71,7 @@ public class ParentalControlAddapter extends
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-        notifyDataSetChanged();
+        notifyItemRangeChanged(0, getItemCount());
     }
 
     public ParentControlPOJO getItem(int position) {
@@ -77,8 +79,13 @@ public class ParentalControlAddapter extends
     }
 
     public void clearItem() {
-        mModel.clear();
-        notifyDataSetChanged();
+        if (mModel != null) {
+            int oldSize = mModel.size();
+            if (oldSize > 0) {
+                mModel.clear();
+                notifyItemRangeRemoved(0, oldSize);
+            }
+        }
     }
 
     @Override
@@ -95,10 +102,9 @@ public class ParentalControlAddapter extends
         return new MyHolder(view);
     }
 
-    public void setItem(ArrayList<ParentControlPOJO> model) {
-        if (mModel != model) {
-            mModel = model;
-        }
+    @SuppressLint("NotifyDataSetChanged")
+    public void setItem(ArrayList<ParentControlPOJO> newModel) {
+        mModel = newModel;
         notifyDataSetChanged();
     }
 

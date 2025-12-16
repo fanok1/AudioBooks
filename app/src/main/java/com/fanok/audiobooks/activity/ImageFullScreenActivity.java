@@ -73,12 +73,12 @@ public class ImageFullScreenActivity extends AppCompatActivity {
 
         binding.appBar.animate().setListener(new Animator.AnimatorListener() {
             @Override
-            public void onAnimationStart(Animator animator) {
+            public void onAnimationStart(@NonNull Animator animator) {
 
             }
 
             @Override
-            public void onAnimationEnd(Animator animator) {
+            public void onAnimationEnd(@NonNull Animator animator) {
                 if (!isHide) {
                     if (actionBar != null) {
                         actionBar.hide();
@@ -90,20 +90,20 @@ public class ImageFullScreenActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onAnimationCancel(Animator animator) {
+            public void onAnimationCancel(@NonNull Animator animator) {
 
             }
 
             @Override
-            public void onAnimationRepeat(Animator animator) {
+            public void onAnimationRepeat(@NonNull Animator animator) {
 
             }
         });
 
         Picasso.get()
                 .load(imageUrl)
-                .error(R.drawable.image_placeholder)
-                .placeholder(R.drawable.image_placeholder)
+                .error(android.R.drawable.ic_menu_gallery)
+                .placeholder(android.R.drawable.ic_menu_gallery)
                 .into(new Target() {
                     @Override
                     public void onBitmapFailed(Exception e, Drawable errorDrawable) {
