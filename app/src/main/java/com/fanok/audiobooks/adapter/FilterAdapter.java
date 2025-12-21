@@ -70,6 +70,10 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
                 case Consts.SOURCE_KNIGOBLUD:
                     mText.setText(R.string.knigoblud);
                     break;
+
+                case Consts.SOURCE_BOOKOOF:
+                    mText.setText(R.string.bookoof);
+                    break;
             }
 
         }
@@ -113,6 +117,10 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
 
         if (preferences.getBoolean("search_knigoblud", true)) {
             mData.add(Consts.SOURCE_KNIGOBLUD);
+        }
+
+        if (preferences.getBoolean("search_bookoof", true)) {
+            mData.add(Consts.SOURCE_BOOKOOF);
         }
 
     }

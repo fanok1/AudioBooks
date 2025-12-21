@@ -109,6 +109,8 @@ public class Consts {
 
     public static final int SOURCE_KNIGOBLUD = 5;
 
+    public static final int SOURCE_BOOKOOF= 6;
+
     public static boolean izibuk_reiting = false;
 
     private static int SOURCE;
@@ -151,6 +153,8 @@ public class Consts {
             Consts.SOURCE = Consts.SOURCE_BAZA_KNIG;
         } else if (value.equals(context.getString(R.string.knigoblud_value))){
             Consts.SOURCE = Consts.SOURCE_KNIGOBLUD;
+        }else if (value.equals(context.getString(R.string.bookoof_value))){
+            Consts.SOURCE = Consts.SOURCE_BOOKOOF;
         }
     }
 

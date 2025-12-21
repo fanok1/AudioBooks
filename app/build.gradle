@@ -6,6 +6,12 @@ apply plugin: 'com.google.firebase.crashlytics'
 android {
     namespace "com.fanok.audiobooks"
 
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
     buildFeatures {
         viewBinding true
         buildConfig true
@@ -62,7 +68,6 @@ dependencies {
     implementation('androidx.lifecycle:lifecycle-extensions:2.2.0') {
         exclude group: 'androidx'
     }
-    implementation 'com.google.firebase:firebase-crashlytics-buildtools:3.0.6'
     implementation 'androidx.activity:activity:1.12.1'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.7.0'

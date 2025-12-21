@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
@@ -45,7 +46,9 @@ public class SeriesModel implements
                     articlesModels = loadSeriesListBazaKnig(url);
                 } else if (url.contains(Url.SERVER_KNIGOBLUD)) {
                     articlesModels = loadSeriesListKnigoblud(url);
-                } else {
+                } else if (url.contains(Url.SERVER_BOOKOOF)) {
+                    articlesModels = loadSeriesListBookoof(url);
+                }else {
                     articlesModels = new ArrayList<>();
                 }
                 observableEmitter.onNext(articlesModels);
@@ -383,6 +386,87 @@ public class SeriesModel implements
 
                 }
             }
+        }
+        return result;
+    }
+
+
+    private ArrayList<SeriesPOJO> loadSeriesListBookoof(String url) throws IOException {
+        ArrayList<SeriesPOJO> result = new ArrayList<>();
+        Connection connection = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.get();
+
+        String seriesUrl = "";
+
+        Element seriesConteiner = doc.getElementsByClass("xfvalue_series").first();
+        if (seriesConteiner!=null){
+            Element series = seriesConteiner.getElementsByTag("a").first();
+            if (series!=null){
+                seriesUrl = series.attr("href");
+            }
+        }
+
+        if (!seriesUrl.isEmpty()){
+            Connection conn = Jsoup.connect(seriesUrl)
+                    .userAgent(Consts.USER_AGENT)
+                    .referrer("http://www.google.com")
+                    .sslSocketFactory(Consts.socketFactory())
+                    .maxBodySize(0);
+
+            if(App.useProxy) {
+                Proxy proxy = new Proxy(Type.SOCKS,
+                        new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+                conn.proxy(proxy);
+            }
+
+            Document document = conn.get();
+            Element bookList = document.getElementById("dle-content");
+            if (bookList != null) {
+                Elements books = bookList.getElementsByClass("short-item");
+                if (books.isEmpty()) return result;
+                for (Element book : books) {
+                    SeriesPOJO seriesPOJO = new SeriesPOJO();
+                    Elements aTags = book.getElementsByClass("short-title");
+                    if (!aTags.isEmpty()) {
+                        Element a = aTags.first();
+                        if (a != null) {
+                            seriesPOJO.setUrl(a.attr("href"));
+                            seriesPOJO.setName(a.text());
+                        }
+                    }
+
+                    Elements cont = book.getElementsByClass("short-list");
+
+                    Element element =  cont.first();
+                    if (element != null){
+                        Elements liTag = element.getElementsByTag("li");
+                        for (Element li : liTag) {
+                            Element span = li.getElementsByTag("span").first();
+                            if (span!=null) {
+                                String spanText = span.text();
+                                if (spanText.equals("№ в цикле:")){
+                                    seriesPOJO.setNumber(li.ownText());
+                                }
+                            }
+
+                        }
+
+                    }
+                    result.add(seriesPOJO);
+                }
+            }
+
         }
         return result;
     }

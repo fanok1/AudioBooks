@@ -345,6 +345,7 @@
     <string name="baza_knig">База Книг</string>
     <string name="baza_knig_value" translatable="false">baza_knig</string>
     <string name="knigoblud_value" translatable="false">knigoblud</string>
+    <string name="bookoof_value" translatable="false">bookoof</string>
     <string name="menu_saved">Загруженные</string>
     <string name="clear_audio_list">Очистить список аудио файлов</string>
     <string name="confirm_clear_audio_list">Вы уверены что хотите очистить список аудио файлов</string>
@@ -404,5 +405,6 @@
     <string name="toggle_details">Показать детали</string>
     <string name="download_control_button">Возобновить/Пауза</string>
     <string name="more_options">Дополнительно</string>
+    <string name="bookoof">Bookoof</string>
 </resources>
 

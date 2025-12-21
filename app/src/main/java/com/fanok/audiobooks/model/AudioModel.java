@@ -102,7 +102,9 @@ public class AudioModel implements
                     articlesModels = loadSeriesListBazaKnig(url);
                 } else if (url.contains(Url.SERVER_KNIGOBLUD)) {
                     articlesModels = loadSeriesKnigoblud(url);
-                } else {
+                } else if (url.contains(Url.SERVER_BOOKOOF)) {
+                    articlesModels = loadSeriesBookoof(url);
+                }else {
                     articlesModels = new ArrayList<>();
                 }
                 observableEmitter.onNext(articlesModels);
@@ -168,6 +170,56 @@ public class AudioModel implements
                 }
 
             }
+        }
+
+        return result;
+    }
+
+    private ArrayList<AudioPOJO> loadSeriesBookoof(String url) throws IOException {
+        ArrayList<AudioPOJO> result = new ArrayList<>();
+        Connection connection = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
+                .ignoreHttpErrors(true);
+
+        if(useProxy){
+            Proxy proxy = new Proxy(Type.SOCKS, new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+        Document doc = connection.get();
+
+        String bookName = "";
+        Element titleElement = doc.getElementsByClass("short-title fx-1").first();
+        if (titleElement != null) {
+            String name = titleElement.ownText().trim();
+            bookName = name.substring(0, name.length() - 2);
+        }
+
+        Element sriptParent = doc.getElementById("player");
+        if (sriptParent!=null) {
+            String value = sriptParent.toString();
+            value = deleteComnets(value);
+            value = value.substring(value.indexOf("var player = new Playerjs"));
+            value = value.substring(0, value.indexOf("\n"));
+            String json = value.substring(value.indexOf("["), value.indexOf("]") + 1);
+            JsonElement jsonTree = JsonParser.parseString(json);
+            if (jsonTree.isJsonArray()) {
+                JsonArray jsonArray = jsonTree.getAsJsonArray();
+                for (JsonElement element : jsonArray) {
+                    if (element.isJsonObject()) {
+                        JsonObject jsonObject = element.getAsJsonObject();
+                        AudioPOJO audioPOJO = new AudioPOJO();
+                        audioPOJO.setName(jsonObject.get("title").getAsString());
+                        audioPOJO.setUrl(jsonObject.get("file").getAsString());
+                        audioPOJO.setBookName(bookName);
+                        result.add(audioPOJO);
+                    }
+                }
+            }
+
+
         }
 
         return result;

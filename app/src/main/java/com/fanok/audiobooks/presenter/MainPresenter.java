@@ -58,6 +58,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             } else if (Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
                 fragment = BooksFragment.newInstance(Url.INDEX_KNIGOBLUD,
                         R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            }else if (Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
+                fragment = BooksFragment.newInstance(Url.INDEX_BOOKOOF,
+                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
             }
             if (fragment != null) {
                 getViewState().showFragment(fragment, "audioBook");
@@ -82,6 +85,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             } else if (Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
                 fragment = BooksFragment.newInstance(Url.SECTIONS_KNIGOBLUD,
                         R.string.menu_genre, Consts.MODEL_GENRE);
+            }else if (Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
+                fragment = BooksFragment.newInstance(Url.INDEX_BOOKOOF,
+                        R.string.menu_genre, Consts.MODEL_GENRE);
             }
             if (fragment != null) {
                 getViewState().showFragment(fragment, "genre");
@@ -89,7 +95,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
         } else if (id == R.id.nav_autor || id == R.id.layout_nav_autor) {
 
-            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG || Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
+            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG || Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD
+                    || Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
                 getViewState().showToast(R.string.section_not_available);
             } else {
                 Fragment fragment = null;
@@ -113,7 +120,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
         } else if (id == R.id.nav_artist || id == R.id.layout_nav_artist) {
 
-            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG||Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
+            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG||Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD
+                    ||Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
                 getViewState().showToast(R.string.section_not_available);
             } else {
                 Fragment fragment = null;
@@ -227,6 +235,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             } else if (Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
                 fragment = BooksFragment.newInstance(Url.INDEX_KNIGOBLUD,
                         R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            }else if (Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
+                fragment = BooksFragment.newInstance(Url.INDEX_BOOKOOF,
+                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
             }
 
             if (fragment != null) {
@@ -251,6 +262,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             } else if (Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
                 fragment = BooksFragment.newInstance(Url.SECTIONS_KNIGOBLUD,
                         R.string.menu_genre, Consts.MODEL_GENRE);
+            }else if (Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
+                fragment = BooksFragment.newInstance(Url.INDEX_BOOKOOF,
+                        R.string.menu_genre, Consts.MODEL_GENRE);
             }
 
             if (fragment != null) {
@@ -260,7 +274,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
         } else if (fragmentID == Consts.FRAGMENT_AUTOR) {
 
-            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG||Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
+            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG||Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD
+                    ||Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
                 getViewState().showToast(R.string.section_not_available);
             } else {
                 if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
@@ -282,7 +297,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             }
         } else if (fragmentID == Consts.FRAGMENT_ARTIST) {
 
-            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG||Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
+            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG||Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD
+                    ||Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
                 getViewState().showToast(R.string.section_not_available);
             } else {
                 if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
@@ -333,6 +349,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                         R.string.menu_audiobooks, Consts.MODEL_BOOKS);
             } else if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG) {
                 fragment = BooksFragment.newInstance(Url.INDEX_BAZA_KNIG,
+                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
+            } else if (Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
+                fragment = BooksFragment.newInstance(Url.INDEX_BOOKOOF,
                         R.string.menu_audiobooks, Consts.MODEL_BOOKS);
             }
             if (fragment != null) {

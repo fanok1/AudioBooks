@@ -6,12 +6,17 @@ import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.media3.common.util.UnstableApi;
+
 import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import io.reactivex.Observable;
+import okhttp3.HttpUrl;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -69,6 +74,13 @@ public class OtherSourceModel implements
 
                 if (!bookPOJO.getUrl().contains(Url.SERVER_KNIGOBLUD)) {
                     OtherArtistPOJO artistPOJO = getKnigoblud(bookPOJO);
+                    if (artistPOJO != null) {
+                        articlesModels.add(artistPOJO);
+                    }
+                }
+
+                if (!bookPOJO.getUrl().contains(Url.SERVER_BOOKOOF)) {
+                    OtherArtistPOJO artistPOJO = getBookoof(bookPOJO);
                     if (artistPOJO != null) {
                         articlesModels.add(artistPOJO);
                     }
@@ -307,6 +319,7 @@ public class OtherSourceModel implements
         return null;
     }
 
+    @UnstableApi
     private OtherArtistPOJO getBazaKnig(BookPOJO bookPOJO) throws IOException {
         int page = 0;
         while (true) {
@@ -804,5 +817,108 @@ public class OtherSourceModel implements
 
         return null;
 
+    }
+
+
+    @Nullable
+    private OtherArtistPOJO getBookoof(BookPOJO bookPOJO) throws IOException {
+            Connection connection = Jsoup.connect("https://bookoof.net/index.php?do=search")
+                    .userAgent(Consts.USER_AGENT)
+                    .referrer("http://www.google.com")
+                    .sslSocketFactory(Consts.socketFactory())
+                    .data("do", "search")
+                    .data("subaction", "search")
+                    .data("search_start", "1")
+                    .data("full_search", "0")
+                    .data("result_from", "11")
+                    .data("story", bookPOJO.getName())
+                    .ignoreHttpErrors(true)
+                    .maxBodySize(0);
+
+            if(App.useProxy) {
+                Proxy proxy = new Proxy(Type.SOCKS,
+                        new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+                connection.proxy(proxy);
+            }
+            Document doc = connection.post();
+        Element bookList = doc.getElementById("dle-content");
+        if (bookList != null) {
+            Elements books = bookList.getElementsByClass("short-item");
+            if (books.isEmpty()) return null;
+            for (Element book : books) {
+                String autorName = "";
+                String readerName = "";
+                String title = "";
+                String url = "";
+                Elements aTags = book.getElementsByClass("short-title");
+                if (aTags.size() != 0) {
+                    Element a = aTags.first();
+                    if (a != null) {
+                        url = a.attr("href");
+                        title = a.text();
+                    }
+                }
+
+                Elements cont = book.getElementsByClass("short-list");
+
+                Element element = cont.first();
+                if (element != null) {
+                    Elements liTag = element.getElementsByTag("li");
+                    for (Element li : liTag) {
+                        Element span = li.getElementsByTag("span").first();
+                        Element a = li.getElementsByTag("a").first();
+                        if (span != null) {
+                            String spanText = span.text();
+                            if (a != null) {
+                                if (spanText.equals("Автор:")) {
+                                    autorName = a.text();
+                                } else if (spanText.equals("Читает:")) {
+                                    readerName = a.text();
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+                String[] name = autorName.split(" ");
+                boolean authorFlag = false;
+                if (autorName.length() == bookPOJO.getAutor().length()) {
+                    authorFlag = true;
+                    for (final String s : name) {
+                        if (!bookPOJO.getAutor().toLowerCase().contains(s.toLowerCase())) {
+                            authorFlag = false;
+                            break;
+                        }
+
+                    }
+                }
+
+                String[] artist = readerName.split(" ");
+                boolean readerFlag = false;
+                if (readerName.length() == bookPOJO.getArtist().length()) {
+                    readerFlag = true;
+                    for (final String s : artist) {
+                        if (!bookPOJO.getArtist().toLowerCase().contains(s.toLowerCase())) {
+                            readerFlag = false;
+                            break;
+                        }
+
+                    }
+                }
+
+                if (!title.isEmpty() && !url.isEmpty() &&
+                        title.equalsIgnoreCase(bookPOJO.getName()) &&
+                        authorFlag && readerFlag) {
+
+                    OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+                    otherArtistPOJO.setName("Bookoof");
+                    otherArtistPOJO.setUrl(url);
+                    return otherArtistPOJO;
+                }
+
+            }
+        }
+        return null;
     }
 }

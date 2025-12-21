@@ -107,7 +107,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                     getData(mUrl + "/" +page);
                 } else if ((!mUrl.contains("genre") || mUrl.contains(Url.SERVER_IZIBUK)
                         || mUrl.contains(Url.SERVER_ABMP3)
-                        || mUrl.contains(Url.SERVER_BAZA_KNIG))
+                        || mUrl.contains(Url.SERVER_BAZA_KNIG)
+                        || mUrl.contains(Url.SERVER_BOOKOOF))
                         && !mUrl.contains(Url.SERVER_AKNIGA)) {
                     getData(mUrl + page + "/");
                 } else {
@@ -252,7 +253,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
 
         if (itemId == R.id.source_izi_book || itemId == R.id.source_kniga_v_uhe
                 || itemId == R.id.source_audio_book_mp3 || itemId == R.id.source_abook
-                || itemId == R.id.source_baza_knig||itemId == R.id.source_knigoblud) {
+                || itemId == R.id.source_baza_knig||itemId == R.id.source_knigoblud || itemId == R.id.source_bookoof) {
             SharedPreferences pref = getDefaultSharedPreferences(Objects.requireNonNull(mContext));
             SharedPreferences.Editor editor = pref.edit();
             if (itemId == R.id.source_kniga_v_uhe) {
@@ -267,6 +268,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                 editor.putString("sorce_books", getStringById(R.string.baza_knig_value));
             } else if (itemId == R.id.source_knigoblud){
                 editor.putString("sorce_books", getStringById(R.string.knigoblud_value));
+            }else if (itemId == R.id.source_bookoof){
+                editor.putString("sorce_books", getStringById(R.string.bookoof_value));
             }
             editor.commit();
             getViewState().recreate();
@@ -404,6 +407,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
             } else if (itemId == R.id.years) {
                 url = Url.YEARS_BAZA_KNIG;
             }
+        }   else if (mUrl.contains(Url.SERVER_BOOKOOF)) {
+            url = Url.INDEX_BOOKOOF;
         }
 
         if (itemId == R.id.app_bar_search) {
@@ -533,7 +538,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                 if (mUrl.contains(Url.SERVER_KNIGOBLUD)) {
                     getData(mUrl + "/" +page);
                 } else if ((!mUrl.contains("genre") || mUrl.contains(Url.SERVER_IZIBUK) || mUrl.contains(Url.SERVER_ABMP3)
-                        || mUrl.contains(Url.SERVER_BAZA_KNIG))
+                        || mUrl.contains(Url.SERVER_BAZA_KNIG)
+                        || mUrl.contains(Url.SERVER_BOOKOOF))
                         && !mUrl.contains(Url.SERVER_AKNIGA)) {
                     getData(mUrl + page + "/");
                 } else {
@@ -553,7 +559,7 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         if (!isLoading) {
             isLoading = true;
             if (mModelId == Consts.MODEL_BOOKS) {
-                mModelBook.getBooks(url, page)
+                mModelBook.getBooks(url, page, mSubTitle.trim(), mContext.getApplicationContext())
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new Observer<ArrayList<BookPOJO>>() {

@@ -7,12 +7,16 @@ import static com.fanok.audiobooks.Consts.PROXY_HOST;
 import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
 import androidx.annotation.NonNull;
+import androidx.media3.common.util.UnstableApi;
+
 import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import io.reactivex.Observable;
+import okhttp3.HttpUrl;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -27,6 +31,7 @@ import org.jsoup.select.Elements;
 public class OtherArtistModel implements
         com.fanok.audiobooks.interface_pacatge.book_content.OtherArtistModel {
 
+    @UnstableApi
     public static ArrayList<OtherArtistPOJO> loadOtherArtistABMP3(String bookName, String bookAuthor, String bookUrl,
             String bookReader) throws IOException {
         ArrayList<OtherArtistPOJO> result = new ArrayList<>();
@@ -184,6 +189,7 @@ public class OtherArtistModel implements
         return result;
     }
 
+    @UnstableApi
     public static ArrayList<OtherArtistPOJO> loadOtherArtistBazaKnig(final String baseName, final String baseAutor,
             final String baseUrl, final String baseArtist) throws IOException {
         ArrayList<OtherArtistPOJO> result = new ArrayList<>();
@@ -410,6 +416,86 @@ public class OtherArtistModel implements
         return result;
     }
 
+    @UnstableApi
+    public static ArrayList<OtherArtistPOJO> loadOtherArtistBookoof(String bookName, String bookAuthor, String bookUrl,
+                                                                      String bookReader) throws IOException {
+        ArrayList<OtherArtistPOJO> result = new ArrayList<>();
+        Connection connection = Jsoup.connect("https://bookoof.net/index.php?do=search")
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .data("do", "search")
+                .data("subaction", "search")
+                .data("search_start", String.valueOf(1))
+                .data("full_search", "0")
+                .data("result_from", String.valueOf(11))
+                .data("story", bookName)
+                .ignoreHttpErrors(true)
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.post();
+
+
+        Element bookList = doc.getElementById("dle-content");
+        if (bookList != null) {
+            Elements books = bookList.getElementsByClass("short-item");
+            if (books.isEmpty()) return result;
+            for (Element book : books) {
+                OtherArtistPOJO pojo = new OtherArtistPOJO();
+                String autorName = "";
+                String readerName = "";
+                String title = "";
+                Elements aTags = book.getElementsByClass("short-title");
+                if (aTags.size() != 0) {
+                    Element a = aTags.first();
+                    if (a != null) {
+                        pojo.setUrl(a.attr("href"));
+                        title = (a.text());
+                    }
+                }
+
+                Elements cont = book.getElementsByClass("short-list");
+
+                Element element =  cont.first();
+                if (element != null){
+                    Elements liTag = element.getElementsByTag("li");
+                    for (Element li : liTag) {
+                        Element span = li.getElementsByTag("span").first();
+                        Element a = li.getElementsByTag("a").first();
+                        if (span!=null) {
+                            String spanText = span.text();
+                            if (a != null) {
+                                if (spanText.equals("Автор:")) {
+                                    autorName = a.text();
+                                } else if (spanText.equals("Читает:")) {
+                                    readerName = a.text();
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+                pojo.setName("Исполнитель " + readerName);
+                if (!readerName.isEmpty()
+                        && bookName.equals(title)
+                        && bookAuthor.equals(autorName)
+                        && !bookUrl.equals(pojo.getUrl())
+                        && !bookReader.equals(readerName)) {
+                    result.add(pojo);
+                }
+            }
+        }
+        return result;
+    }
+
+    @UnstableApi
     @Override
     public Observable<ArrayList<OtherArtistPOJO>> getOtherArtist(@NonNull BookPOJO bookPOJO) {
         return Observable.create(observableEmitter -> {
@@ -446,6 +532,7 @@ public class OtherArtistModel implements
         });
     }
 
+    @UnstableApi
     private ArrayList<OtherArtistPOJO> loadOtherArtistIzibuk(BookPOJO bookPOJO) throws IOException {
         ArrayList<OtherArtistPOJO> result = new ArrayList<>();
         Connection connection = Jsoup.connect(

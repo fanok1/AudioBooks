@@ -46,7 +46,9 @@ public class ComentsModel implements
                     articlesModels = loadComentsListAbook(url);
                 } else if (url.contains(Url.SERVER_BAZA_KNIG)) {
                     articlesModels = loadComentsListBazaKnig(url);
-                } else {
+                } else if (url.contains(Url.SERVER_BOOKOOF)) {
+                    articlesModels = loadComentsListBookoof(url);
+                }else {
                     articlesModels = new ArrayList<>();
                 }
                 observableEmitter.onNext(articlesModels);
@@ -540,5 +542,44 @@ public class ComentsModel implements
         Collections.reverse(result);
         return result;
 
+    }
+
+
+    private ArrayList<ComentsPOJO> loadComentsListBookoof(String url) throws IOException {
+        ArrayList<ComentsPOJO> result = new ArrayList<>();
+        Document doc = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .maxBodySize(0)
+                .get();
+
+        Element comentsElement = doc.getElementById("dle-comments-list");
+
+        if (comentsElement == null) return result;
+
+        for (Element comentConteiner : comentsElement.children()) {
+            ComentsPOJO comentsPOJO = new ComentsPOJO();
+            Element conteiner = comentConteiner.getElementsByClass("comm-one nowrap").first();
+            if (conteiner!=null) {
+                Element name = conteiner.child(0);
+                comentsPOJO.setName(name.text());
+                Element time = conteiner.child(1);
+                comentsPOJO.setDate(time.text());
+            }
+
+            Element text = comentConteiner.getElementsByClass("comm-two clearfix full-text").first();
+            if (text!=null) {
+                comentsPOJO.setText(text.text());
+            }
+
+            comentsPOJO.setImage("https://placehold.net/default.png");
+
+            if (!comentsPOJO.isEmty()) {
+                result.add(comentsPOJO);
+            }
+
+        }
+        return result;
     }
 }

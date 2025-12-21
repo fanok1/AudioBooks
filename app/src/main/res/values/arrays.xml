@@ -86,6 +86,7 @@
         <item>@string/audionook_mp3</item>
         <item>@string/baza_knig</item>
         <item>@string/knigoblud</item>
+        <item>@string/bookoof</item>
     </string-array>
 
     <string-array name="sorce_books_values">
@@ -95,6 +96,7 @@
         <item>@string/audiobook_mp3_value</item>
         <item>@string/baza_knig_value</item>
         <item>@string/knigoblud_value</item>
+        <item>@string/bookoof_value</item>
     </string-array>
 
     <string-array name="vpn_titles">

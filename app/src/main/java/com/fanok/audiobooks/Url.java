@@ -62,4 +62,9 @@ public class Url {
     public static final String SERVER_KNIGOBLUD = "https://www.knigoblud.club";
     public static final String INDEX_KNIGOBLUD = SERVER_KNIGOBLUD;
     public static final String SECTIONS_KNIGOBLUD = SERVER_KNIGOBLUD + "/genres";
+
+
+    public static final String SERVER_BOOKOOF = "https://bookoof.net";
+    public static final String INDEX_BOOKOOF = SERVER_BOOKOOF + "/page/";
+
 }

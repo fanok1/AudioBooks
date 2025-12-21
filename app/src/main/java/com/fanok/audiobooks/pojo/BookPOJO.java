@@ -1,5 +1,6 @@
 package com.fanok.audiobooks.pojo;
 
+import static com.fanok.audiobooks.App.useProxy;
 import static com.fanok.audiobooks.Consts.PROXY_HOST;
 import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
@@ -10,6 +11,7 @@ import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.model.OtherArtistModel;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.reactivex.Observable;
@@ -17,6 +19,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Proxy.Type;
+import java.util.ArrayList;
+
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -519,7 +523,9 @@ public class BookPOJO {
                         articlesModels = getBookByUrlBazaKnig(url);
                     } else if (url.contains(Url.SERVER_KNIGOBLUD)) {
                         articlesModels = getBookByUrlKnigoblud(url);
-                    } else {
+                    } else if (url.contains(Url.SERVER_BOOKOOF)) {
+                        articlesModels = getBookByUrlBookoof(url);
+                    }else {
                         articlesModels = new BookPOJO();
                     }
                     observableEmitter.onNext(articlesModels);
@@ -785,6 +791,113 @@ public class BookPOJO {
             String text = coments.first().text();
             if (text != null && !text.isEmpty()) {
                 bookPOJO.setComents(text);
+            }
+        }
+        return bookPOJO;
+    }
+
+
+    @UnstableApi
+    public static BookPOJO getBookByUrlBookoof(String url) throws IOException {
+        BookPOJO bookPOJO = new BookPOJO();
+
+        Connection connection = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .sslSocketFactory(Consts.socketFactory())
+                .referrer("https://google.com/")
+                .maxBodySize(0);
+
+        if(useProxy){
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+
+        Document document = connection.get();
+
+
+
+        bookPOJO.setUrl(url);
+
+        Element imgContainer = document.getElementsByClass("fimg img-wide").first();
+        if (imgContainer != null) {
+            Element img = imgContainer.getElementsByTag("img").first();
+            if (img!=null){
+                bookPOJO.setPhoto(Url.SERVER_BOOKOOF+img.attr("data-src"));
+            }
+        }
+
+        Element desc = document.getElementsByClass("ftext full-text cleasrfix").first();
+        if (desc != null) {
+            Element p = desc.getElementsByTag("p").first();
+            if (p!=null){
+                bookPOJO.setDesc(p.text());
+            }
+        }
+
+        Element clock = document.getElementsByClass("xfvalue_duration").first();
+        if (clock != null) {
+            bookPOJO.setTime(clock.ownText());
+        }
+
+        Element seriesConteiner = document.getElementsByClass("xfvalue_series").first();
+        if (seriesConteiner!=null){
+            Element series = seriesConteiner.getElementsByTag("a").first();
+            if (series!=null){
+                bookPOJO.setSeries(series.text());
+                bookPOJO.setUrlSeries(series.attr("href"));
+            }
+        }
+
+        Element authorConteiner = document.getElementsByClass("xfvalue_author").first();
+        if (authorConteiner!=null){
+            Element author = authorConteiner.getElementsByTag("a").first();
+            if (author!=null){
+                bookPOJO.setAutor(author.text());
+                bookPOJO.setUrlAutor(author.attr("href"));
+            }
+        }
+
+        Element artistConteiner = document.getElementsByClass("xfvalue_performer").first();
+        if (artistConteiner!=null){
+            Element artist = artistConteiner.getElementsByTag("a").first();
+            if (artist!=null){
+                bookPOJO.setArtist(artist.text());
+                bookPOJO.setUrlArtist(artist.attr("href"));
+            }
+        }
+
+
+        Element genreConteiner = document.getElementsByClass("genre").first();
+        if (genreConteiner!=null){
+            Element genre = genreConteiner.getElementsByTag("a").first();
+            if (genre!=null){
+                bookPOJO.setGenre(genre.text());
+                bookPOJO.setUrlGenre(genre.attr("href"));
+            }
+        }
+
+
+        Element titleElement = document.getElementsByClass("short-title fx-1").first();
+        if (titleElement != null) {
+            String name = titleElement.ownText().trim();
+            bookPOJO.setName(name.substring(0, name.length() - 2));
+        }
+
+        Element ratingContainer = document.getElementsByClass("fal fa-eye").first();
+        if (ratingContainer != null) {
+            Element span = ratingContainer.parent();
+            if (span != null) {
+                bookPOJO.setReting(span.ownText().trim());
+            }
+        }
+
+        Element comentsConteiner = document.getElementsByClass("fal fa-comment-dots").first();
+        if (comentsConteiner != null) {
+            Element span = comentsConteiner.parent();
+            if (span != null) {
+                bookPOJO.setReting(span.ownText().trim());
             }
         }
         return bookPOJO;

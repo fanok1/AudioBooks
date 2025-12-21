@@ -67,6 +67,11 @@
             android:key="search_knigoblud"
             android:title="@string/knigoblud" />
 
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="search_bookoof"
+            android:title="@string/bookoof" />
+
     </PreferenceScreen>
 
 

@@ -6,10 +6,13 @@ package com.fanok.audiobooks.model;
 import static com.fanok.audiobooks.Consts.PROXY_HOST;
 import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
+import androidx.media3.common.util.UnstableApi;
+
 import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.AutorsSearchABMP3;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
+import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.google.gson.JsonElement;
@@ -33,11 +36,11 @@ import org.jsoup.select.Elements;
 public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.GenreModel {
 
 
+    @UnstableApi
     @Override
     public Observable<ArrayList<GenrePOJO>> getBooks(String url, int page) {
         int size = 4;
         return Observable.create(observableEmitter -> {
-            //waitVpnConetion();
             ArrayList<GenrePOJO> articlesModels;
             try {
                 if (url.contains(Url.SERVER_AKNIGA) && url.contains("ajax-search")) {
@@ -86,6 +89,8 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
                         articlesModels = loadBooksListBazaKnig(url, page);
                     } else if(url.contains(Url.SECTIONS_KNIGOBLUD)) {
                         articlesModels = loadBooksListKnigoblud();
+                    }else if(url.contains(Url.INDEX_BOOKOOF)) {
+                        articlesModels = loadBooksListBookoof(url, page);
                     }else {
                         articlesModels = new ArrayList<>();
                     }
@@ -133,6 +138,7 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
         return result;
     }
 
+    @UnstableApi
     protected ArrayList<GenrePOJO> loadBooksListABMP3(String url, int page) throws IOException {
         ArrayList<GenrePOJO> result = new ArrayList<>();
         Connection connection = Jsoup.connect(url + page)
@@ -420,5 +426,42 @@ public class GenreModel implements com.fanok.audiobooks.interface_pacatge.books.
         return result;
     }
 
+
+    @UnstableApi
+    private ArrayList<GenrePOJO> loadBooksListBookoof (String url, int page) throws IOException {
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        Connection connection = Jsoup.connect(url+page)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .data("dlenewssortby", "date")
+                .data("dledirection", "desc")
+                .data("set_new_sort", "dle_sort_main")
+                .data("set_direction_sort", "dle_direction_main")
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        Document doc = connection.post();
+
+        Element navMenu = doc.getElementsByClass("nav-menu").first();
+        if (navMenu!=null){
+            Elements liTags = navMenu.children();
+            for (Element li: liTags){
+                Element a = li.getElementsByTag("a").first();
+                if (a!=null){
+                    GenrePOJO genrePOJO = new GenrePOJO();
+                    genrePOJO.setUrl(a.attr("href") + "page/");
+                    genrePOJO.setName(a.text());
+                    result.add(genrePOJO);
+                }
+            }
+        }
+        return result;
+    }
 
 }

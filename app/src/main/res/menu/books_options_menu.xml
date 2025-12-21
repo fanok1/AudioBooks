@@ -75,6 +75,9 @@
                 <item
                     android:id="@+id/source_knigoblud"
                     android:title="@string/knigoblud" />
+                <item
+                    android:id="@+id/source_bookoof"
+                    android:title="@string/bookoof" />
             </group>
         </menu>
     </item>

@@ -4,14 +4,19 @@ package com.fanok.audiobooks.model;
 import static com.fanok.audiobooks.Consts.PROXY_HOST;
 import static com.fanok.audiobooks.Consts.PROXY_PORT;
 
+import android.content.Context;
+
 import androidx.media3.common.util.UnstableApi;
 
 import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.CookesExeption;
+import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import io.reactivex.Observable;
+import okhttp3.HttpUrl;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -39,14 +44,13 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
 
     @UnstableApi
     @Override
-    public Observable<ArrayList<BookPOJO>> getBooks(String url, int page) {
+    public Observable<ArrayList<BookPOJO>> getBooks(String url, int page, String nameModel, Context context) {
         genreName = null;
         genreSrc = null;
         authorName = null;
         authorUrl = null;
         int size = 4;
         return Observable.create(observableEmitter -> {
-            //waitVpnConetion();
             ArrayList<BookPOJO> articlesModels;
             try {
                 for (int i = 1; i <= size; i++) {
@@ -70,7 +74,11 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     } else if (url.contains(Url.SERVER_KNIGOBLUD)) {
                         articlesModels = loadBooksListKnigoblud(
                                 url.replace("/" + page, "/" + temp), temp);
-                    } else {
+                    } else if (url.contains(Url.SERVER_BOOKOOF)) {
+                        articlesModels = loadBooksListBookoof(
+                                url.replace("/page/" + page + "/", "/page/" + temp + "/"),
+                                temp, nameModel, context);
+                    }else {
                         articlesModels = new ArrayList<>();
                     }
                     observableEmitter.onNext(articlesModels);
@@ -119,6 +127,9 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                     } else if (url.contains(Url.SERVER_KNIGOBLUD)) {
                         articlesModels = loadBooksListKnigoblud(url.replace("&page" + page, "&page" + temp),
                                 temp);
+                    }else if (url.contains(Url.SERVER_BOOKOOF)) {
+                        articlesModels = loadBooksListBookoofSearch(url.replace("&page" + page, "&page" + temp),
+                                temp);
                     }
                     observableEmitter.onNext(articlesModels);
                 }
@@ -134,6 +145,8 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
             }
         });
     }
+
+
 
     private ArrayList<BookPOJO> loadBooksList(String url, int page) throws IOException {
         ArrayList<BookPOJO> result = new ArrayList<>();
@@ -1474,6 +1487,185 @@ public class BooksModel implements com.fanok.audiobooks.interface_pacatge.books.
                 }
             }
         }
+    }
+
+    @UnstableApi
+    private ArrayList<BookPOJO> loadBooksListBookoof(String url, int page, String nameModel, Context context) throws IOException {
+        Connection connection = Jsoup.connect(url)
+                .userAgent(Consts.USER_AGENT)
+                .referrer("http://www.google.com")
+                .sslSocketFactory(Consts.socketFactory())
+                .data("dledirection", "desc")
+                .data("set_new_sort", "dle_sort_main")
+                .data("set_direction_sort", "dle_direction_main")
+                .ignoreHttpErrors(true)
+                .maxBodySize(0);
+
+        if(App.useProxy) {
+            Proxy proxy = new Proxy(Type.SOCKS,
+                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+            connection.proxy(proxy);
+        }
+
+        if (nameModel.equals(context.getString(R.string.order_new))){
+            connection.data("dlenewssortby", "date");
+        }else if (nameModel.equals(context.getString(R.string.order_reting))){
+            connection.data("dlenewssortby", "rating");
+        }else if (nameModel.equals(context.getString(R.string.order_popular))){
+            connection.data("dlenewssortby", "news_read");
+        }else if (nameModel.equals(context.getString(R.string.order_coments))) {
+            connection.data("dlenewssortby", "comm_num");
+        }else {
+            connection.data("dlenewssortby", "date");
+        }
+
+        Document doc = connection.post();
+        return parceBookoof(doc, page);
+    }
+
+    @UnstableApi
+    private ArrayList<BookPOJO> loadBooksListBookoofSearch(String url, int page) throws IOException {
+
+        HttpUrl httpUrl = HttpUrl.parse(url);
+        if (httpUrl != null) {
+            String query = httpUrl.queryParameter("q");
+            HttpUrl clean = httpUrl.newBuilder()
+                    .removeAllQueryParameters("q")
+                    .removeAllQueryParameters("page")
+                    .build();
+
+            Connection connection = Jsoup.connect(clean.toString())
+                    .userAgent(Consts.USER_AGENT)
+                    .referrer("http://www.google.com")
+                    .sslSocketFactory(Consts.socketFactory())
+                    .data("do", "search")
+                    .data("subaction", "search")
+                    .data("search_start", String.valueOf(page))
+                    .data("full_search", "0")
+                    .data("result_from", String.valueOf((page-1)*10+1))
+                    .data("story", query)
+                    .ignoreHttpErrors(true)
+                    .maxBodySize(0);
+
+            if(App.useProxy) {
+                Proxy proxy = new Proxy(Type.SOCKS,
+                        new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+                connection.proxy(proxy);
+            }
+
+            Document doc = connection.post();
+            return parceBookoof(doc, page);
+        }
+        return new ArrayList<>();
+    }
+
+    private ArrayList<BookPOJO> parceBookoof(Document doc, int page){
+        ArrayList<BookPOJO> result = new ArrayList<>();
+        Elements pagesConteiner = doc.getElementsByClass("navigation fx-row fx-start");
+        if (!pagesConteiner.isEmpty()) {
+            Elements pagesElements = pagesConteiner.first().children();
+            if (!pagesElements.isEmpty()) {
+                Element lastPageElement = pagesElements.last();
+                try {
+                    int lastPage = Integer.parseInt(lastPageElement.text());
+                    if (lastPage < page) {
+                        throw new NullPointerException();
+                    }
+                } catch (NumberFormatException e) {
+                    throw new NullPointerException();
+                }
+            }
+        } else if (page > 1) throw new NullPointerException();
+
+
+
+        Element bookList = doc.getElementById("dle-content");
+        if (bookList != null) {
+            Elements books = bookList.getElementsByClass("short-item");
+            if (books.isEmpty()) return result;
+            for (Element book : books) {
+                BookPOJO bookPOJO = new BookPOJO();
+                Elements img = book.getElementsByTag("img");
+                if (img != null) {
+                    String imgUrl = img.first().attr("data-src");
+                    bookPOJO.setPhoto(Url.SERVER_BOOKOOF+imgUrl);
+                }
+                Elements aTags = book.getElementsByClass("short-title");
+                if (aTags.size() != 0) {
+                    Element a = aTags.first();
+                    if (a != null) {
+                        bookPOJO.setUrl(a.attr("href"));
+                        bookPOJO.setName(a.text());
+                    }
+                }
+
+                Elements cont = book.getElementsByClass("short-list");
+
+                Element element =  cont.first();
+                if (element != null){
+                    Elements liTag = element.getElementsByTag("li");
+                    for (Element li : liTag) {
+                        Element span = li.getElementsByTag("span").first();
+                        Element a = li.getElementsByTag("a").first();
+                        if (span!=null) {
+                            String spanText = span.text();
+                            if (a != null) {
+                                if (spanText.equals("Жанр:")) {
+                                    bookPOJO.setUrlGenre(a.attr("href") + "page/");
+                                    bookPOJO.setGenre(a.text());
+                                } else if (spanText.equals("Автор:")) {
+                                    bookPOJO.setUrlAutor(a.attr("href") + "page/");
+                                    bookPOJO.setAutor(a.text());
+                                } else if (spanText.equals("Читает:")) {
+                                    bookPOJO.setUrlArtist(a.attr("href") + "page/");
+                                    bookPOJO.setArtist(a.text());
+                                } else if (spanText.equals("Цикл:")) {
+                                    bookPOJO.setUrlSeries(a.attr("href") + "page/");
+                                    bookPOJO.setSeries(a.text());
+                                }
+                            }
+                            if (spanText.equals("Описание:")){
+                                bookPOJO.setDesc(li.ownText());
+                            }
+                        }
+
+                    }
+
+                }
+
+
+                Element e = book.getElementsByClass("short-rate-in").first();
+                if (e!=null){
+                    Element span = e.getElementsByTag("span").first();
+                    if (span!=null){
+                        bookPOJO.setTime(span.ownText().trim());
+                    }
+                }
+
+                Elements elements = book.getElementsByClass("short-meta-item");
+                for (Element el : elements) {
+                    Elements icon = el.select(".fa-eye");
+                    if (!icon.isEmpty()){
+                        bookPOJO.setReting(el.ownText());
+                    }
+                    icon = el.select(".fa-comment-dots");
+                    if (!icon.isEmpty()) {
+                        bookPOJO.setComents(el.ownText());
+                    }
+                }
+
+                if (bookPOJO.isNull()) {
+                    continue;
+                }
+                result.add(bookPOJO);
+            }
+        }
+        if (result.isEmpty()) {
+            throw new NullPointerException();
+        }
+
+
+        return result;
     }
 
 }

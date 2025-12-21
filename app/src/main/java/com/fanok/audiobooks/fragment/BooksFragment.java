@@ -195,7 +195,7 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                 int menuResId;
                 if (mUrl.contains(Url.SERVER_IZIBUK) || mUrl.contains(Url.SERVER_ABMP3)) {
                     menuResId = R.menu.books_izibuk_options_menu;
-                } else if (mUrl.contains(Url.SERVER_BAZA_KNIG)) {
+                } else if (mUrl.contains(Url.SERVER_BAZA_KNIG) || mUrl.contains(Url.SERVER_BOOKOOF)) {
                     menuResId = R.menu.books_baza_knig_options_menu;
                 } else {
                     menuResId = R.menu.books_options_menu;
@@ -215,11 +215,16 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                         (mUrl.contains(Url.SERVER_ABMP3) && mUrl.contains("genre")) ||
                         (mUrl.contains(Url.SERVER_IZIBUK) && mUrl.contains("genre")) ||
                         (mUrl.contains(Url.SERVER_BAZA_KNIG) && mUrl.contains("ispolnitel")) ||
-                        (mUrl.contains(Url.SERVER_KNIGOBLUD))) {
+                        (mUrl.contains(Url.SERVER_KNIGOBLUD)))  {
                     MenuItem orderItem = menu.findItem(R.id.order);
                     if (orderItem != null) orderItem.setVisible(false);
                 } else {
                     setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.order), requireContext());
+                }
+
+                if (mUrl.contains(Url.SERVER_BOOKOOF)){
+                    MenuItem years = menu.findItem(R.id.years);
+                    if (years != null) years.setVisible(false);
                 }
 
                 setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search), requireContext());
