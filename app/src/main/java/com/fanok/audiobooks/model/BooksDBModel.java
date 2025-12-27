@@ -1,15 +1,17 @@
 package com.fanok.audiobooks.model;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBAbstract;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBHelperInterfase;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.room.FavoriteEntity;
+import com.fanok.audiobooks.room.HistoryEntity;
+import com.fanok.audiobooks.room.SavedEntity;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterfase {
@@ -22,115 +24,132 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
 
     @Override
     public boolean inFavorite(@NonNull BookPOJO book) {
-        return booksInTable(book, "favorite");
+        return getDatabase().favoriteDao().count(book.getUrl()) > 0;
     }
 
     @Override
     public boolean inHistory(@NonNull BookPOJO book) {
-        return booksInTable(book, "history");
+        return getDatabase().historyDao().count(book.getUrl()) > 0;
     }
 
     @Override
     public boolean inSaved(@NonNull final BookPOJO book) {
-        return booksInTable(book, "saved");
+        return getDatabase().savedDao().count(book.getUrl()) > 0;
     }
 
     @Override
     public boolean inFavorite(@NonNull String url) {
-        return booksInTable(url, "favorite");
+        return getDatabase().favoriteDao().count(url) > 0;
     }
 
     @Override
     public boolean inSaved(final String url) {
-        return booksInTable(url, "saved");
-    }
-
-    private boolean booksInTable(@NonNull BookPOJO book, @NonNull String table) {
-        return booksInTable(book.getUrl(), table);
-    }
-
-    private boolean booksInTable(@NonNull String url, @NonNull String table) {
-        String builder = "select id from " + table + " where "
-                + "url_book = '" + url + "'";
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        Cursor cursor = db.rawQuery(builder, null);
-        int i = cursor.getCount();
-        cursor.close();
-        db.close();
-        return i > 0;
+        return getDatabase().savedDao().count(url) > 0;
     }
 
     @Override
     public void addFavorite(BookPOJO book) {
-        add(book, "favorite");
+        FavoriteEntity entity = new FavoriteEntity();
+        entity.fromPojo(book);
+        entity.updatedAt = System.currentTimeMillis();
+        entity.needSync = true;
+        getDatabase().favoriteDao().insert(entity);
     }
 
     @Override
     public void removeFavorite(BookPOJO book) {
-        remove(book, "favorite");
+        getDatabase().favoriteDao().deleteByUrl(book.getUrl());
     }
 
     @Override
     public void clearFavorite() {
-        clearAll("favorite");
+        getDatabase().favoriteDao().deleteAll();
     }
 
     @Override
     public void addHistory(BookPOJO book) {
         if (inHistory(book)) removeHistory(book);
-        add(book, "history");
+        HistoryEntity entity = new HistoryEntity();
+        entity.fromPojo(book);
+        entity.updatedAt = System.currentTimeMillis();
+        entity.needSync = true;
+        getDatabase().historyDao().insert(entity);
     }
 
     @Override
     public void removeHistory(BookPOJO book) {
-        remove(book, "history");
+        getDatabase().historyDao().deleteByUrl(book.getUrl());
     }
 
     @Override
     public void clearHistory() {
-        clearAll("history");
+        getDatabase().historyDao().deleteAll();
     }
 
     @Override
     public void addSaved(final BookPOJO book) {
         if (!inSaved(book)) {
-            add(book, "saved");
+            SavedEntity entity = new SavedEntity();
+            entity.fromPojo(book);
+            entity.updatedAt = System.currentTimeMillis();
+            entity.needSync = true;
+            getDatabase().savedDao().insert(entity);
         }
     }
 
     @Override
     public void removeSaved(final BookPOJO book) {
-        remove(book, "saved");
+        getDatabase().savedDao().deleteByUrl(book.getUrl());
     }
 
     @Override
     public void removeSavedById(final BookPOJO book) {
-        remove(book, "saved");
+        removeSaved(book);
     }
 
     @Override
     public ArrayList<BookPOJO> getAllFavorite() {
-        return getAll("favorite");
+        List<FavoriteEntity> entities = getDatabase().favoriteDao().getAll();
+        ArrayList<BookPOJO> list = new ArrayList<>();
+        for (FavoriteEntity entity : entities) {
+            list.add(entity.toPojo());
+        }
+        Collections.reverse(list);
+        return list;
     }
 
     @Override
     public ArrayList<BookPOJO> getAllHistory() {
-        return getAll("history");
+        List<HistoryEntity> entities = getDatabase().historyDao().getAll();
+        ArrayList<BookPOJO> list = new ArrayList<>();
+        for (HistoryEntity entity : entities) {
+            list.add(entity.toPojo());
+        }
+        Collections.reverse(list);
+        return list;
     }
 
     @Override
     public ArrayList<BookPOJO> getAllSaved() {
-        return getAll("saved");
+        List<SavedEntity> entities = getDatabase().savedDao().getAll();
+        ArrayList<BookPOJO> list = new ArrayList<>();
+        for (SavedEntity entity : entities) {
+            list.add(entity.toPojo());
+        }
+        Collections.reverse(list);
+        return list;
     }
 
     @Override
     public BookPOJO getHistory() {
-        return getLast("history");
+        HistoryEntity entity = getDatabase().historyDao().getLast();
+        return entity != null ? entity.toPojo() : null;
     }
 
     @Override
     public BookPOJO getSaved(@NonNull String url) {
-        return getByUrl(url, "saved");
+        SavedEntity entity = getDatabase().savedDao().getByUrl(url);
+        return entity != null ? entity.toPojo() : null;
     }
 
     @Override
@@ -139,205 +158,75 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
         if (bookPOJO!=null && bookPOJO.getUrl()!=null) {
             return bookPOJO;
         }
-        bookPOJO = getByUrl(url, "favorite");
+        FavoriteEntity favoriteEntity = getDatabase().favoriteDao().getByUrl(url);
+        if (favoriteEntity != null) {
+            bookPOJO = favoriteEntity.toPojo();
+        }
         if (bookPOJO!=null && bookPOJO.getUrl()!=null) {
             return bookPOJO;
         }
-        return getByUrl(url, "history");
-    }
-
-    private BookPOJO getByUrl(@NonNull final String url, @NonNull final String table) {
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-
-        String selectQuery = "SELECT * FROM " + table + " WHERE "
-                + "url_book = '" + url + "'";
-
-        BookPOJO book = null;
-        Cursor cursor = db.rawQuery(selectQuery, null);
-        if (cursor.moveToLast()) {
-            book = new BookPOJO();
-            book.setName(cursor.getString(1));
-            book.setUrl(cursor.getString(2));
-            book.setPhoto(cursor.getString(3));
-            book.setGenre(cursor.getString(4));
-            book.setUrlGenre(cursor.getString(5));
-            book.setAutor(cursor.getString(6));
-            book.setUrlAutor(cursor.getString(7));
-            book.setArtist(cursor.getString(8));
-            book.setUrlArtist(cursor.getString(9));
-            book.setSeries(cursor.getString(10));
-            book.setUrlSeries(cursor.getString(11));
-            book.setTime(cursor.getString(12));
-            book.setReting(cursor.getString(13));
-            book.setComents(cursor.getString(14));
-            book.setDesc(cursor.getString(15));
-        }
-        cursor.close();
-        db.close();
-        return book;
+        HistoryEntity historyEntity = getDatabase().historyDao().getByUrl(url);
+        return historyEntity != null ? historyEntity.toPojo() : null;
     }
 
     @Override
     public ArrayList<String> getGenre(int table) {
-        return getStringRow("genre", table);
+        List<String> list;
+        if(table == Consts.TABLE_FAVORITE){
+            list = getDatabase().favoriteDao().getGenres();
+        }else if (table == Consts.TABLE_HISTORY){
+            list = getDatabase().historyDao().getGenres();
+        }else if (table == Consts.TABLE_SAVED){
+            list = getDatabase().savedDao().getGenres();
+        }else {
+            throw new IllegalArgumentException("Incorect table id");
+        }
+        return new ArrayList<>(list);
     }
 
 
     @Override
     public ArrayList<String> getAutors(int table) {
-        return getStringRow("author", table);
+        List<String> list;
+        if(table == Consts.TABLE_FAVORITE){
+            list = getDatabase().favoriteDao().getAuthors();
+        }else if (table == Consts.TABLE_HISTORY){
+            list = getDatabase().historyDao().getAuthors();
+        }else if (table == Consts.TABLE_SAVED){
+            list = getDatabase().savedDao().getAuthors();
+        }else {
+            throw new IllegalArgumentException("Incorect table id");
+        }
+        return new ArrayList<>(list);
     }
 
     @Override
     public ArrayList<String> getArtists(int table) {
-        return getStringRow("artist", table);
+        List<String> list;
+        if(table == Consts.TABLE_FAVORITE){
+            list = getDatabase().favoriteDao().getArtists();
+        }else if (table == Consts.TABLE_HISTORY){
+            list = getDatabase().historyDao().getArtists();
+        }else if (table == Consts.TABLE_SAVED){
+            list = getDatabase().savedDao().getArtists();
+        }else {
+            throw new IllegalArgumentException("Incorect table id");
+        }
+        return new ArrayList<>(list);
     }
 
     @Override
     public ArrayList<String> getSeries(int table) {
-        return getStringRow("series", table);
-    }
-
-    private ArrayList<String> getStringRow(@NotNull String row, int table) {
-        String tableName;
+        List<String> list;
         if(table == Consts.TABLE_FAVORITE){
-            tableName = "favorite";
+            list = getDatabase().favoriteDao().getSeries();
         }else if (table == Consts.TABLE_HISTORY){
-            tableName = "history";
+            list = getDatabase().historyDao().getSeries();
         }else if (table == Consts.TABLE_SAVED){
-            tableName = "saved";
+            list = getDatabase().savedDao().getSeries();
         }else {
             throw new IllegalArgumentException("Incorect table id");
         }
-        ArrayList<String> list = new ArrayList<>();
-
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        Cursor cursor = db.rawQuery(
-                "SELECT " + row + " FROM "+tableName+" WHERE " + row + "<>\"\" GROUP BY " + row
-                        + " ORDER BY " + row + " ASC", null);
-
-        if (cursor.moveToFirst()) {
-            do {
-                list.add(cursor.getString(0));
-            } while (cursor.moveToNext());
-        }
-
-        cursor.close();
-        db.close();
-        return list;
+        return new ArrayList<>(list);
     }
-
-    private void add(BookPOJO book, String table) {
-        ContentValues values = getContentValues(book);
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        long i = db.insert(table, null, values);
-        db.close();
-    }
-
-    private void remove(BookPOJO book, String table) {
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        long i = db.delete(table, "url_book = ?", new String[]{String.valueOf(book.getUrl())});
-        db.close();
-    }
-
-    private ArrayList<BookPOJO> getAll(String table) {
-        ArrayList<BookPOJO> contactList = new ArrayList<>();
-        String selectQuery = "SELECT  * FROM " + table;
-
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, null);
-        if (cursor.moveToLast()) {
-            do {
-                BookPOJO book = new BookPOJO();
-                book.setName(cursor.getString(1));
-                book.setUrl(cursor.getString(2));
-                book.setPhoto(cursor.getString(3));
-                book.setGenre(cursor.getString(4));
-                book.setUrlGenre(cursor.getString(5));
-                book.setAutor(cursor.getString(6));
-                book.setUrlAutor(cursor.getString(7));
-                book.setArtist(cursor.getString(8));
-                book.setUrlArtist(cursor.getString(9));
-                book.setSeries(cursor.getString(10));
-                book.setUrlSeries(cursor.getString(11));
-                book.setTime(cursor.getString(12));
-                book.setReting(cursor.getString(13));
-                book.setComents(cursor.getString(14));
-                book.setDesc(cursor.getString(15));
-                contactList.add(book);
-            } while (cursor.moveToPrevious());
-        }
-        cursor.close();
-        db.close();
-        return contactList;
-    }
-
-    private ContentValues getContentValues(BookPOJO book) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("name", book.getName());
-        contentValues.put("url_book", book.getUrl());
-        contentValues.put("photo", book.getPhoto());
-        contentValues.put("genre", book.getGenre());
-        contentValues.put("url_genre", book.getUrlGenre());
-        contentValues.put("author", book.getAutor());
-        contentValues.put("url_author", book.getUrlAutor());
-        contentValues.put("artist", book.getArtist());
-        contentValues.put("url_artist", book.getUrlArtist());
-        contentValues.put("series", book.getSeries());
-        contentValues.put("url_series", book.getUrlSeries());
-        contentValues.put("time", book.getTime());
-        contentValues.put("reting", book.getReting());
-        contentValues.put("coments", book.getComents());
-        contentValues.put("description", book.getDesc());
-        return contentValues;
-    }
-
-    private void clearAll(String table) {
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        db.delete(table, null, null);
-        db.close();
-    }
-
-    private BookPOJO getLast(String table) {
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-
-        String selectQuery = "SELECT * FROM " + table + " ORDER BY id DESC LIMIT 1";
-
-        BookPOJO book = null;
-        Cursor cursor = db.rawQuery(selectQuery, null);
-        if (cursor.moveToLast()) {
-            book = new BookPOJO();
-            book.setName(cursor.getString(1));
-            book.setUrl(cursor.getString(2));
-            book.setPhoto(cursor.getString(3));
-            book.setGenre(cursor.getString(4));
-            book.setUrlGenre(cursor.getString(5));
-            book.setAutor(cursor.getString(6));
-            book.setUrlAutor(cursor.getString(7));
-            book.setArtist(cursor.getString(8));
-            book.setUrlArtist(cursor.getString(9));
-            book.setSeries(cursor.getString(10));
-            book.setUrlSeries(cursor.getString(11));
-            book.setTime(cursor.getString(12));
-            book.setReting(cursor.getString(13));
-            book.setComents(cursor.getString(14));
-            book.setDesc(cursor.getString(15));
-        }
-        cursor.close();
-        db.close();
-        return book;
-    }
-
-    private int getCount(String table) {
-        String countQuery = "SELECT  * FROM " + table;
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        Cursor cursor = db.rawQuery(countQuery, null);
-        int result = 0;
-        result = cursor.getCount();
-        cursor.close();
-        db.close();
-        return result;
-    }
-
-
 }

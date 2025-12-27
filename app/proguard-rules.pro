@@ -20,4 +20,12 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
+# Fix for org.mozilla:rhino missing classes
+-dontwarn java.beans.**
+-dontwarn java.awt.**
+-dontwarn jdk.dynalink.**
+-dontwarn org.mozilla.javascript.**
+
+# Keep Rhino classes if necessary (prevents over-stripping)
 -keep class org.mozilla.javascript.** { *; }
+

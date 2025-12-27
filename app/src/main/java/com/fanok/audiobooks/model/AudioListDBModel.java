@@ -1,14 +1,13 @@
 package com.fanok.audiobooks.model;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.interface_pacatge.books.AudioListDBHelperInterfase;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBAbstract;
 import com.fanok.audiobooks.pojo.AudioListPOJO;
+import com.fanok.audiobooks.room.BooksAudioEntity;
 import java.util.ArrayList;
+import java.util.List;
 
 public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelperInterfase {
 
@@ -16,131 +15,85 @@ public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelp
         super(context);
     }
 
-
-    private ContentValues getContentValues(@NonNull AudioListPOJO pojo) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("url_book", pojo.getBookUrl());
-        contentValues.put("books_name", pojo.getBookName());
-        contentValues.put("name_audio", pojo.getAudioName());
-        contentValues.put("url_audio", pojo.getAudioUrl());
-        contentValues.put("time", pojo.getTime());
-        contentValues.put("time_start", pojo.getTimeStart());
-        contentValues.put("time_end", pojo.getTimeEnd());
-        return contentValues;
-    }
-
     @Override
     public boolean isset(@NonNull String url) {
-        String builder = "select id from " + "books_audio" + " where "
-                + "url_book = '" + url + "'";
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        Cursor cursor = db.rawQuery(builder, null);
-        int i = cursor.getCount();
-        cursor.close();
-        db.close();
-        return i > 0;
+        return getDatabase().booksAudioDao().count(url) > 0;
     }
 
     @Override
     public void add(@NonNull AudioListPOJO audioListPOJO) {
-        ContentValues values = new ContentValues();
-        values.put("url_book", audioListPOJO.getBookUrl());
-        values.put("books_name", audioListPOJO.getBookName());
-        values.put("name_audio", audioListPOJO.getAudioName());
-        values.put("url_audio", audioListPOJO.getAudioUrl());
-        values.put("time", audioListPOJO.getTime());
-        values.put("time_start", audioListPOJO.getTimeStart());
-        values.put("time_end", audioListPOJO.getTimeEnd());
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        long i = db.insert("books_audio", null, values);
-        db.close();
+        BooksAudioEntity entity = new BooksAudioEntity();
+        entity.urlBook = audioListPOJO.getBookUrl();
+        entity.booksName = audioListPOJO.getBookName();
+        entity.nameAudio = audioListPOJO.getAudioName();
+        entity.urlAudio = audioListPOJO.getAudioUrl();
+        entity.time = audioListPOJO.getTime();
+        entity.timeStart = audioListPOJO.getTimeStart();
+        entity.timeEnd = audioListPOJO.getTimeEnd();
+        entity.updatedAt = System.currentTimeMillis();
+        entity.needSync = true;
+        getDatabase().booksAudioDao().insert(entity);
     }
 
     @Override
     public void remove(@NonNull String urlBook) {
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        long i = db.delete("books_audio", "url_book = ?", new String[]{urlBook});
-        db.close();
+        getDatabase().booksAudioDao().deleteByUrl(urlBook);
     }
 
     @Override
     public void clearAll() {
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        db.delete("books_audio", null, null);
-        db.close();
+        getDatabase().booksAudioDao().deleteAll();
     }
 
     @Override
     public ArrayList<AudioListPOJO> get(@NonNull String url) {
+        List<BooksAudioEntity> entities = getDatabase().booksAudioDao().getByBookUrl(url);
         ArrayList<AudioListPOJO> list = new ArrayList<>();
-        String selectQuery = "SELECT  * FROM books_audio WHERE url_book = ?";
-
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, new String[]{url});
-        if (cursor.moveToFirst()) {
-            do {
-                AudioListPOJO audio = new AudioListPOJO();
-                audio.setBookUrl(cursor.getString(1));
-                audio.setBookName(cursor.getString(2));
-                audio.setAudioName(cursor.getString(3));
-                audio.setAudioUrl(cursor.getString(4));
-                audio.setTime(cursor.getInt(5));
-                audio.setTimeStart(cursor.getInt(6));
-                audio.setTimeEnd(cursor.getInt(7));
-                list.add(audio);
-            } while (cursor.moveToNext());
+        for (BooksAudioEntity entity : entities) {
+            AudioListPOJO audio = new AudioListPOJO();
+            audio.setBookUrl(entity.urlBook);
+            audio.setBookName(entity.booksName);
+            audio.setAudioName(entity.nameAudio);
+            audio.setAudioUrl(entity.urlAudio);
+            audio.setTime(entity.time);
+            audio.setTimeStart(entity.timeStart);
+            audio.setTimeEnd(entity.timeEnd);
+            list.add(audio);
         }
-        cursor.close();
-        db.close();
         return list;
     }
 
     @Override
     public AudioListPOJO get(@NonNull String url, @NonNull String audioUrl) {
-        ArrayList<AudioListPOJO> list = new ArrayList<>();
-        String selectQuery = "SELECT  * FROM books_audio WHERE url_book = ? And url_audio LIKE ?";
-
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, new String[]{url, audioUrl});
+        BooksAudioEntity entity = getDatabase().booksAudioDao().getByUrlAndAudioUrl(url, audioUrl);
         AudioListPOJO audio = new AudioListPOJO();
-        if (cursor.moveToFirst()) {
-            do {
-                audio.setBookUrl(cursor.getString(1));
-                audio.setBookName(cursor.getString(2));
-                audio.setAudioName(cursor.getString(3));
-                audio.setAudioUrl(cursor.getString(4));
-                audio.setTime(cursor.getInt(5));
-                audio.setTimeStart(cursor.getInt(6));
-                audio.setTimeEnd(cursor.getInt(7));
-            } while (cursor.moveToNext());
+        if (entity != null) {
+            audio.setBookUrl(entity.urlBook);
+            audio.setBookName(entity.booksName);
+            audio.setAudioName(entity.nameAudio);
+            audio.setAudioUrl(entity.urlAudio);
+            audio.setTime(entity.time);
+            audio.setTimeStart(entity.timeStart);
+            audio.setTimeEnd(entity.timeEnd);
         }
-        cursor.close();
-        db.close();
         return audio;
     }
 
     @Override
     public ArrayList<AudioListPOJO> getAll() {
+        List<BooksAudioEntity> entities = getDatabase().booksAudioDao().getAll();
         ArrayList<AudioListPOJO> list = new ArrayList<>();
-        String selectQuery = "SELECT * FROM books_audio";
-
-        SQLiteDatabase db = getDBHelper().getWritableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, null);
-        if (cursor.moveToFirst()) {
-            do {
-                AudioListPOJO audio = new AudioListPOJO();
-                audio.setBookUrl(cursor.getString(1));
-                audio.setBookName(cursor.getString(2));
-                audio.setAudioName(cursor.getString(3));
-                audio.setAudioUrl(cursor.getString(4));
-                audio.setTime(cursor.getInt(5));
-                audio.setTimeStart(cursor.getInt(6));
-                audio.setTimeEnd(cursor.getInt(7));
-                list.add(audio);
-            } while (cursor.moveToNext());
+        for (BooksAudioEntity entity : entities) {
+            AudioListPOJO audio = new AudioListPOJO();
+            audio.setBookUrl(entity.urlBook);
+            audio.setBookName(entity.booksName);
+            audio.setAudioName(entity.nameAudio);
+            audio.setAudioUrl(entity.urlAudio);
+            audio.setTime(entity.time);
+            audio.setTimeStart(entity.timeStart);
+            audio.setTimeEnd(entity.timeEnd);
+            list.add(audio);
         }
-        cursor.close();
-        db.close();
         return list;
     }
 }

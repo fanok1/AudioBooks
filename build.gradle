@@ -3,6 +3,8 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://artifactory-external.vkpartner.ru/artifactory/vkid-sdk-android/" }
+        maven { url "https://artifactory-external.vkpartner.ru/artifactory/maven/" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.13.2'
@@ -17,6 +19,10 @@ allprojects {
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }
+        // VK ID SDK Repositories
+        maven { url "https://artifactory-external.vkpartner.ru/artifactory/vkid-sdk-android/" }
+        maven { url "https://artifactory-external.vkpartner.ru/artifactory/maven/" }
+        maven { url "https://artifactory-external.vkpartner.ru/artifactory/vk-id-captcha/android/" }
     }
 }
 

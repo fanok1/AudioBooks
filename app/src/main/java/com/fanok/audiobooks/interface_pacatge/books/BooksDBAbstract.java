@@ -1,28 +1,20 @@
 package com.fanok.audiobooks.interface_pacatge.books;
 
 import android.content.Context;
-
-import com.fanok.audiobooks.model.DBHelper;
+import com.fanok.audiobooks.room.AppDatabase;
 
 public abstract class BooksDBAbstract {
-    private DBHelper mDBHelper;
+    private final AppDatabase mDatabase;
 
     public BooksDBAbstract(Context context) {
-        setDBHelper(new DBHelper(context));
+        mDatabase = AppDatabase.getDatabase(context);
     }
 
-    protected DBHelper getDBHelper() {
-        return mDBHelper;
-    }
-
-    private void setDBHelper(DBHelper DBHelper) {
-        mDBHelper = DBHelper;
+    protected AppDatabase getDatabase() {
+        return mDatabase;
     }
 
     public void closeDB() {
-        if (mDBHelper != null) {
-            mDBHelper.close();
-        }
+        // AppDatabase is a singleton and should generally remain open
     }
-
 }

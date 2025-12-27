@@ -1,7 +1,7 @@
 <resources>
 
     <!-- DARK application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar.Bridge">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/primaryColor</item>
         <item name="colorPrimaryDark">@color/primaryDarkColor</item>
@@ -24,10 +24,10 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
 
 
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark" />
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Dark" />
 
     <style name="AppTheme.SwipeOnClose" parent="AppTheme.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
@@ -79,7 +79,7 @@
     <!-- BLACK application theme. -->
 
 
-    <style name="AppThemeBlack" parent="Theme.AppCompat.DayNight.DarkActionBar">
+    <style name="AppThemeBlack" parent="Theme.MaterialComponents.DayNight.DarkActionBar.Bridge">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/primaryColorBlack</item>
         <item name="colorPrimaryDark">@color/primaryDarkColorBlack</item>
@@ -102,10 +102,10 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppThemeBlack.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="AppThemeBlack.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
 
 
-    <style name="AppThemeBlack.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark" />
+    <style name="AppThemeBlack.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Dark" />
 
     <style name="AppThemeBlack.SwipeOnClose" parent="AppThemeBlack.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
@@ -146,7 +146,7 @@
     <!-- LIGHT application theme. -->
 
 
-    <style name="LightAppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="LightAppTheme" parent="Theme.MaterialComponents.Light.DarkActionBar.Bridge">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/primaryColorLight</item>
         <item name="colorPrimaryDark">@color/primaryDarkColorLight</item>
@@ -176,9 +176,9 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="LightAppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.ActionBar" />
+    <style name="LightAppTheme.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.ActionBar" />
 
-    <style name="LightAppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="LightAppTheme.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light" />
 
     <style name="LightAppTheme.SwipeOnClose" parent="LightAppTheme.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
@@ -190,7 +190,7 @@
     </style>
 
 
-    <style name="ImageFullScreen" parent="Theme.AppCompat.NoActionBar">
+    <style name="ImageFullScreen" parent="Theme.MaterialComponents.NoActionBar.Bridge">
         <item name="android:windowActivityTransitions">true</item>
         <item name="windowActionBarOverlay">true</item>
         <item name="android:statusBarColor">@color/actionBarTrac</item>
@@ -236,7 +236,7 @@
         <item name="android:windowCloseOnTouchOutside">true</item>
     </style>
 
-    <style name="CustomSwitch" parent="Theme.AppCompat.Light">
+    <style name="CustomSwitch" parent="Theme.MaterialComponents.Light.Bridge">
         <item name="colorControlActivated">#C95E5E</item>
         <item name="colorSwitchThumbNormal">#565656</item>
         <item name="android:colorForeground">#383838</item>

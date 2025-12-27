@@ -17,7 +17,7 @@ import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -45,7 +45,11 @@ import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.MainPresenter;
 import com.fanok.audiobooks.service.MediaPlayerService;
+import com.fanok.audiobooks.util.AvatarGenerator;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.squareup.picasso.Picasso;
+import de.hdodenhof.circleimageview.CircleImageView;
 import java.util.ArrayList;
 import java.util.Locale;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +85,11 @@ public class MainActivity extends MvpAppCompatActivity
     private boolean firstStart = true;
 
     private SharedPreferences preferences;
+    
+    private CircleImageView headerImageView;
+    private TextView headerLoginView;
+    private TextView headerEmailView;
+    private ImageView headerLogoutView;
 
     public static void setCloseApp(boolean closeApp) {
         MainActivity.closeApp = closeApp;
@@ -195,7 +204,7 @@ public class MainActivity extends MvpAppCompatActivity
         View currentFocus = getCurrentFocus();
         if (currentFocus!=null){
             if(keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (currentFocus.getId()==R.id.layout_nav_audiobooks||currentFocus.getId()==R.id.toolbar) {
+                if (currentFocus.getId()==R.id.imageViewLogout||currentFocus.getId()==R.id.toolbar) {
                     View menuItem = findViewById(R.id.app_bar_search);
                     if (menuItem != null) {
                         menuItem.requestFocus();
@@ -208,10 +217,16 @@ public class MainActivity extends MvpAppCompatActivity
                     toolbar.requestFocus();
                 }
                 if (currentFocus.getId()==R.id.toolbar){
-                    View view = findViewById(R.id.layout_nav_audiobooks);
+                    View view = findViewById(R.id.imageViewLogout);
                     if(view!=null){
                         view.requestFocus();
                     }
+                }
+            }
+
+            if(keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                if (currentFocus.getId()==R.id.imageViewLogout){
+                    mPresenter.onLoginLogoutClicked();
                 }
             }
         }
@@ -259,6 +274,33 @@ public class MainActivity extends MvpAppCompatActivity
             drawer.addDrawerListener(toggle);
             toggle.syncState();
             navigationView.setNavigationItemSelectedListener(this);
+            
+            View headerView = navigationView.getHeaderView(0);
+            headerImageView = headerView.findViewById(R.id.imageView);
+            headerLoginView = headerView.findViewById(R.id.textViewLogin);
+            headerEmailView = headerView.findViewById(R.id.textViewEmail);
+            headerLogoutView = headerView.findViewById(R.id.imageViewLogout);
+
+            
+            if (headerLogoutView != null) {
+                headerLogoutView.setOnClickListener(v -> {
+                    if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                        mPresenter.onLoginLogoutClicked();
+                    }else {
+                        new AlertDialog.Builder(this)
+                                .setTitle(R.string.exit)
+                                .setMessage(R.string.logout_text)
+                                .setPositiveButton(R.string.yes, (dialog, which) -> {
+                                    FirebaseAuth.getInstance().signOut();
+                                    updateIconLoginLogout(R.drawable.ic_menu_login);
+                                    updateUserInfo(getString(R.string.app_name), getString(R.string.nav_header_subtitle), null);
+                                })
+                                .setNegativeButton(R.string.cancel, null)
+                                .show();
+                    }
+                });
+            }
+
         } else {
             LinearLayout linearLayout = findViewById(R.id.liner_nav_view);
             if (linearLayout != null) {
@@ -346,8 +388,11 @@ public class MainActivity extends MvpAppCompatActivity
     }
 
 
-
-
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mPresenter.onResume();
+    }
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -461,4 +506,31 @@ public class MainActivity extends MvpAppCompatActivity
         if (bookPOJO == null) return;
         BookActivity.startNewActivity(this, bookPOJO);
     }
+
+    @Override
+    public void updateUserInfo(String name, String email, String photo) {
+        if (headerLoginView != null) {
+            headerLoginView.setText(name);
+        }
+        if (headerEmailView != null) {
+            headerEmailView.setText(email);
+        }
+        if (headerImageView != null && photo != null && !photo.isEmpty()) {
+            Picasso.get().load(photo).placeholder(R.mipmap.ic_launcher).into(headerImageView);
+        } else if (headerImageView != null) {
+            if (name != null && !name.isEmpty() && FirebaseAuth.getInstance().getCurrentUser() != null) {
+                headerImageView.setImageBitmap(
+                        AvatarGenerator.generateAvatar(name, 200));
+            } else {
+                headerImageView.setImageResource(R.mipmap.ic_launcher);
+            }
+        }
+    }
+
+    @Override
+    public void updateIconLoginLogout(int id) {
+        headerLogoutView.setImageResource(id);
+    }
+
+
 }
