@@ -58,12 +58,12 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
 
     @Override
     public void removeFavorite(BookPOJO book) {
-        getDatabase().favoriteDao().deleteByUrl(book.getUrl(), System.currentTimeMillis());
+        getDatabase().favoriteDao().deleteByUrl(book.getUrl());
     }
 
     @Override
     public void clearFavorite() {
-        getDatabase().favoriteDao().deleteAll(System.currentTimeMillis());
+        getDatabase().favoriteDao().deleteAll();
     }
 
     @Override
@@ -78,12 +78,12 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
 
     @Override
     public void removeHistory(BookPOJO book) {
-        getDatabase().historyDao().deleteByUrl(book.getUrl(), System.currentTimeMillis());
+        getDatabase().historyDao().deleteByUrl(book.getUrl());
     }
 
     @Override
     public void clearHistory() {
-        getDatabase().historyDao().deleteAll(System.currentTimeMillis());
+        getDatabase().historyDao().deleteAll();
     }
 
     @Override
@@ -91,6 +91,8 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
         if (!inSaved(book)) {
             SavedEntity entity = new SavedEntity();
             entity.fromPojo(book);
+            entity.updatedAt = System.currentTimeMillis();
+            entity.needSync = true;
             getDatabase().savedDao().insert(entity);
         }
     }
@@ -226,10 +228,5 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
             throw new IllegalArgumentException("Incorect table id");
         }
         return new ArrayList<>(list);
-    }
-
-    public void clearUserData() {
-        getDatabase().favoriteDao().clearTablePhysical();
-        getDatabase().historyDao().clearTablePhysical();
     }
 }

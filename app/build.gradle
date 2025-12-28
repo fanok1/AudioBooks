@@ -104,7 +104,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-inappmessaging-display'
     implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-database")
     implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
 
 

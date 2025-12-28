@@ -37,12 +37,12 @@ public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelp
 
     @Override
     public void remove(@NonNull String urlBook) {
-        getDatabase().booksAudioDao().deleteByUrl(urlBook, System.currentTimeMillis());
+        getDatabase().booksAudioDao().deleteByUrl(urlBook);
     }
 
     @Override
     public void clearAll() {
-        getDatabase().booksAudioDao().deleteAll(System.currentTimeMillis());
+        getDatabase().booksAudioDao().deleteAll();
     }
 
     @Override
@@ -95,9 +95,5 @@ public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelp
             list.add(audio);
         }
         return list;
-    }
-
-    public void clearPhysical() {
-        getDatabase().booksAudioDao().clearTablePhysical();
     }
 }

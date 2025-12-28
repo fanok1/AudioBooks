@@ -292,6 +292,8 @@ public class MainActivity extends MvpAppCompatActivity
                                 .setMessage(R.string.logout_text)
                                 .setPositiveButton(R.string.yes, (dialog, which) -> {
                                     FirebaseAuth.getInstance().signOut();
+                                    updateIconLoginLogout(R.drawable.ic_menu_login);
+                                    updateUserInfo(getString(R.string.app_name), getString(R.string.nav_header_subtitle), null);
                                 })
                                 .setNegativeButton(R.string.cancel, null)
                                 .show();
@@ -390,11 +392,6 @@ public class MainActivity extends MvpAppCompatActivity
     protected void onResume() {
         super.onResume();
         mPresenter.onResume();
-    }
-    
-    @Override
-    protected void onPause() {
-        super.onPause();
     }
 
     @Override

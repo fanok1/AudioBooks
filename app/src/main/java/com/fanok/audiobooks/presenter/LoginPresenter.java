@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -160,6 +159,7 @@ public class LoginPresenter extends MvpPresenter<LoginView> implements com.fanok
                                     String username = user.getEmail();
                                     String name = user.getDisplayName();
                                     String photo = user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : null;
+
                                     onDataReceived(method, username, name, photo);
                                     getViewState().close();
                                 }
@@ -216,6 +216,7 @@ public class LoginPresenter extends MvpPresenter<LoginView> implements com.fanok
 
                         if (jsonResponse.has("firebaseToken")) {
                             String firebaseToken = jsonResponse.get("firebaseToken").getAsString();
+                            // FirebaseAuth callbacks run on main thread
                             firebaseAuthWithToken(firebaseToken);
                         } else {
                             Log.e(TAG, "No firebaseToken in response");

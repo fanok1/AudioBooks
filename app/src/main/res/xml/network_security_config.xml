@@ -3,8 +3,4 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">mdpu.mcdir.ru</domain>
     </domain-config>
-    <!-- Allow Firebase traffic -->
-    <domain-config cleartextTrafficPermitted="true">
-         <domain includeSubdomains="true">firebaseio.com</domain>
-    </domain-config>
 </network-security-config>
