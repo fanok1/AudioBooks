@@ -27,8 +27,8 @@ public interface AudioDao {
     @Query("SELECT time FROM audio WHERE url_book = :urlBook")
     int getTime(String urlBook);
 
-    @Query("UPDATE audio SET time = :time, updated_at = :updatedAt, need_sync = :needSync WHERE url_book = :urlBook")
-    int setTime(String urlBook, int time, long updatedAt, boolean needSync);
+    @Query("UPDATE audio SET time = :time WHERE url_book = :urlBook")
+    int setTime(String urlBook, int time);
 
     @Query("SELECT * FROM audio")
     List<AudioEntity> getAll();

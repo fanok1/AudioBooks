@@ -1,11 +1,1 @@
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-        maven { url "https://artifactory-external.vkpartner.ru/artifactory/vkid-sdk-android/" }
-        maven { url "https://artifactory-external.vkpartner.ru/artifactory/maven/" }
-    }
-}
-
 include ':app'

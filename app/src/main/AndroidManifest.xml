@@ -69,23 +69,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         tools:ignore="UnusedAttribute">
-        
-        <activity
-            android:name=".activity.LoginActivity"
-            android:configChanges="locale|uiMode"
-            android:label="@string/login"
-            android:exported="true"
-            android:launchMode="singleTask"
-            android:theme="@style/AppTheme.SwipeOnClose" >
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:host="auth"
-                    android:scheme="com.fanok.audiobooks" />
-            </intent-filter>
-        </activity>
             
         <activity
             android:name=".activity.ClearSavedActivity"

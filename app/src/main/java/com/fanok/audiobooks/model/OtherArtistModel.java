@@ -15,13 +15,14 @@ import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import io.reactivex.Observable;
-import okhttp3.HttpUrl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Proxy.Type;
 import java.util.ArrayList;
+import java.util.Objects;
+
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -51,59 +52,57 @@ public class OtherArtistModel implements
         Document doc = connection.get();
 
         Elements elements = doc.getElementsByClass("b-statictop-search");
-        if (elements != null) {
-            for (Element item : elements) {
-                Elements title = item.getElementsByClass("b-statictop__title");
-                if (title != null && title.size() != 0) {
-                    if (title.first().text().contains("в книгах")) {
-                        Elements parent = item.getElementsByClass("b-statictop__items");
-                        if (parent != null && parent.size() != 0) {
-                            Elements books = parent.first().children();
-                            for (int i = 0; i < books.size(); i++) {
-                                String autorName = "";
-                                String readerName = "";
-                                String bookTitle = "";
-                                Element book = books.get(i);
-                                OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
-                                Elements aTag = book.getElementsByTag("a");
-                                if (aTag != null && aTag.size() != 0) {
-                                    String href = aTag.first().attr("href");
-                                    if (href != null && !href.isEmpty()) {
-                                        otherArtistPOJO.setUrl(Url.SERVER_ABMP3 + href);
+        for (Element item : elements) {
+            Elements title = item.getElementsByClass("b-statictop__title");
+            if (!title.isEmpty()) {
+                if (Objects.requireNonNull(title.first()).text().contains("в книгах")) {
+                    Elements parent = item.getElementsByClass("b-statictop__items");
+                    if (!parent.isEmpty()) {
+                        Elements books = Objects.requireNonNull(parent.first()).children();
+                        for (int i = 0; i < books.size(); i++) {
+                            String autorName = "";
+                            String readerName = "";
+                            String bookTitle = "";
+                            Element book = books.get(i);
+                            OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+                            Elements aTag = book.getElementsByTag("a");
+                            if (!aTag.isEmpty()) {
+                                String href = Objects.requireNonNull(aTag.first()).attr("href");
+                                if (!href.isEmpty()) {
+                                    otherArtistPOJO.setUrl(Url.SERVER_ABMP3 + href);
+                                }
+                                String fullText = Objects.requireNonNull(aTag.first()).text();
+                                if (!fullText.isEmpty()) {
+                                    String text = fullText.substring(0, fullText.indexOf(" ("));
+                                    if (!text.isEmpty()) {
+                                        bookTitle = text.trim();
                                     }
-                                    String fullText = aTag.first().text();
-                                    if (fullText != null && !fullText.isEmpty()) {
-                                        String text = fullText.substring(0, fullText.indexOf(" ("));
-                                        if (!text.isEmpty()) {
-                                            bookTitle = text.trim();
-                                        }
+                                }
+
+                                Elements info = Objects.requireNonNull(aTag.first()).getElementsByClass("add_info");
+                                if (!info.isEmpty()) {
+                                    String infoText = Objects.requireNonNull(info.first()).text();
+                                    autorName = infoText
+                                            .substring(infoText.indexOf("(") + 1, infoText.indexOf(")")).trim();
+                                    readerName = infoText
+                                            .substring(infoText.lastIndexOf("(") + 1, infoText.lastIndexOf(")"))
+                                            .trim();
+                                    if (autorName.equals(readerName)) {
+                                        readerName = "";
                                     }
+                                    otherArtistPOJO.setName("Исполнитель " + readerName);
 
-                                    Elements info = aTag.first().getElementsByClass("add_info");
-                                    if (info != null && info.size() != 0) {
-                                        String infoText = info.first().text();
-                                        autorName = infoText
-                                                .substring(infoText.indexOf("(") + 1, infoText.indexOf(")")).trim();
-                                        readerName = infoText
-                                                .substring(infoText.lastIndexOf("(") + 1, infoText.lastIndexOf(")"))
-                                                .trim();
-                                        if (autorName.equals(readerName)) {
-                                            readerName = "";
-                                        }
-                                        otherArtistPOJO.setName("Исполнитель " + readerName);
-
-
-                                    }
 
                                 }
 
-                                if (!readerName.isEmpty()
-                                        && bookName.equals(bookTitle)
-                                        && bookAuthor.equals(autorName)
-                                        && !bookUrl.equals(otherArtistPOJO.getUrl())
-                                        && !bookReader.equals(readerName)) {
-                                    result.add(otherArtistPOJO);
-                                }
+                            }
+
+                            if (!readerName.isEmpty()
+                                    && bookName.equals(bookTitle)
+                                    && bookAuthor.equals(autorName)
+                                    && !bookUrl.equals(otherArtistPOJO.getUrl())
+                                    && !bookReader.equals(readerName)) {
+                                result.add(otherArtistPOJO);
                             }
                         }
                     }
@@ -125,65 +124,59 @@ public class OtherArtistModel implements
                 .get();
 
         Elements root = doc.getElementsByClass("content__main__articles--item");
-        if (root != null) {
-            for (Element book : root) {
-                String autorName = "";
-                String readerName = "";
-                String bookTitle = "";
-                OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
-                Elements aTag = book.getElementsByClass("content__article-main-link tap-link");
-                if (aTag != null && aTag.size() != 0) {
-                    String href = aTag.first().attr("href");
-                    if (href != null && !href.isEmpty()) {
-                        otherArtistPOJO.setUrl(href);
-                    }
+        for (Element book : root) {
+            String autorName = "";
+            String readerName = "";
+            String bookTitle = "";
+            OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+            Elements aTag = book.getElementsByClass("content__article-main-link tap-link");
+            if (!aTag.isEmpty()) {
+                String href = Objects.requireNonNull(aTag.first()).attr("href");
+                if (!href.isEmpty()) {
+                    otherArtistPOJO.setUrl(href);
                 }
+            }
 
-                Elements title = book.getElementsByClass("caption__article-main");
-                if (title != null && title.size() != 0) {
-                    String text = title.first().text();
-                    if (text != null && !text.isEmpty()) {
-                        bookTitle = text.trim();
-                    }
+            Elements title = book.getElementsByClass("caption__article-main");
+            if (!title.isEmpty()) {
+                String text = Objects.requireNonNull(title.first()).text();
+                if (!text.isEmpty()) {
+                    bookTitle = text.trim();
                 }
+            }
 
-                Elements elements = book.getElementsByClass("link__action link__action--author");
-                if (elements != null) {
-                    for (Element element : elements) {
-                        Elements use = element.getElementsByTag("use");
-                        if (use != null && use.size() != 0) {
-                            String useHref = use.first().attr("xlink:href");
-                            if (useHref != null) {
-                                aTag = element.getElementsByTag("a");
-                                if (aTag != null && aTag.size() != 0) {
-                                    Element a = aTag.first();
-                                    String name = a.text();
+            Elements elements = book.getElementsByClass("link__action link__action--author");
+            for (Element element : elements) {
+                Elements use = element.getElementsByTag("use");
+                if (!use.isEmpty()) {
+                    String useHref = Objects.requireNonNull(use.first()).attr("xlink:href");
+                    aTag = element.getElementsByTag("a");
+                    if (!aTag.isEmpty()) {
+                        Element a = aTag.first();
+                        String name = Objects.requireNonNull(a).text();
 
-                                    if (name != null && !name.isEmpty()) {
-                                        switch (useHref) {
-                                            case "#author":
-                                                autorName = name;
-                                                break;
-                                            case "#performer":
-                                                readerName = name;
-                                                break;
-                                        }
-                                    }
-                                }
+                        if (!name.isEmpty()) {
+                            switch (useHref) {
+                                case "#author":
+                                    autorName = name;
+                                    break;
+                                case "#performer":
+                                    readerName = name;
+                                    break;
                             }
                         }
                     }
                 }
+            }
 
-                bookTitle = bookTitle.replace(autorName + " - ", "");
-                otherArtistPOJO.setName("Исполнитель " + readerName);
-                if (!readerName.isEmpty()
-                        && bookName.equals(bookTitle)
-                        && bookAuthor.equals(autorName)
-                        && !bookUrl.equals(otherArtistPOJO.getUrl())
-                        && !bookReader.equals(readerName)) {
-                    result.add(otherArtistPOJO);
-                }
+            bookTitle = bookTitle.replace(autorName + " - ", "");
+            otherArtistPOJO.setName("Исполнитель " + readerName);
+            if (!readerName.isEmpty()
+                    && bookName.equals(bookTitle)
+                    && bookAuthor.equals(autorName)
+                    && !bookUrl.equals(otherArtistPOJO.getUrl())
+                    && !bookReader.equals(readerName)) {
+                result.add(otherArtistPOJO);
             }
         }
         return result;
@@ -222,92 +215,91 @@ public class OtherArtistModel implements
         Element conteiner = doc.getElementById("dle-content");
         if (conteiner != null) {
             Elements bookList = conteiner.getElementsByClass("short");
-            if (bookList != null && bookList.size() > 0) {
+            if (!bookList.isEmpty()) {
                 for (Element book : bookList) {
                     String url = "";
                     Elements imgConteiner = book.getElementsByClass("short-img");
-                    if (imgConteiner != null && imgConteiner.size() > 0) {
+                    if (!imgConteiner.isEmpty()) {
                         Element element = imgConteiner.first();
-                        Elements aElement = element.getElementsByTag("a");
-                        if (aElement != null && aElement.size() > 0) {
-                            String aHref = aElement.first().attr("href");
-                            if (aHref != null && !aHref.isEmpty()) {
-                                url = aHref;
-                            } else {
-                                continue;
+                        if(element!=null) {
+                            Elements aElement = element.getElementsByTag("a");
+                            if (!aElement.isEmpty()) {
+                                String aHref = Objects.requireNonNull(aElement.first()).attr("href");
+                                if (!aHref.isEmpty()) {
+                                    url = aHref;
+                                } else {
+                                    continue;
+                                }
                             }
                         }
                     }
 
                     Elements cont = book.getElementsByClass("reset short-items");
-                    if (cont != null && cont.size() > 0) {
-                        Elements liElem = cont.first().getElementsByTag("li");
-                        if (liElem != null && liElem.size() > 0) {
+                    if (!cont.isEmpty()) {
+                        Elements liElem = Objects.requireNonNull(cont.first()).getElementsByTag("li");
+                        if (!liElem.isEmpty()) {
                             for (Element li : liElem) {
                                 String liText = li.text();
-                                if (liText != null) {
+                                if (liText.contains("Читает")) {
+                                    Elements artistElements = li.getElementsByTag("b");
+                                    if (!artistElements.isEmpty()) {
+                                        String artistName = liText.replace("Читает: ", "").trim();
+                                        if (!artistName.isEmpty()) {
+                                            if (artistName.contains("альтернативная озвучка")) {
+                                                Connection conn = Jsoup.connect(url)
+                                                        .userAgent(Consts.USER_AGENT)
+                                                        .referrer("http://www.google.com")
+                                                        .sslSocketFactory(Consts.socketFactory())
+                                                        .maxBodySize(0)
+                                                        .ignoreHttpErrors(true);
 
-                                    if (liText.contains("Читает")) {
-                                        Elements artistElements = li.getElementsByTag("b");
-                                        if (artistElements != null && artistElements.size() > 0) {
-                                            String artistName = liText.replace("Читает: ", "").trim();
-                                            if (!artistName.isEmpty()) {
-                                                if (artistName.contains("альтернативная озвучка")) {
-                                                    Connection conn = Jsoup.connect(url)
-                                                            .userAgent(Consts.USER_AGENT)
-                                                            .referrer("http://www.google.com")
-                                                            .sslSocketFactory(Consts.socketFactory())
-                                                            .maxBodySize(0)
-                                                            .ignoreHttpErrors(true);
+                                                if (App.useProxy) {
+                                                    Proxy proxy = new Proxy(Type.SOCKS,
+                                                            new InetSocketAddress(PROXY_HOST, PROXY_PORT));
+                                                    conn.proxy(proxy);
+                                                }
+                                                if (!Consts.getBazaKnigCookies().isEmpty()) {
+                                                    conn.cookie("PHPSESSID", Consts.getBazaKnigCookies());
+                                                }
+                                                Document document = conn.get();
 
-                                                    if(App.useProxy) {
-                                                        Proxy proxy = new Proxy(Type.SOCKS,
-                                                                new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-                                                        conn.proxy(proxy);
-                                                    }
-                                                    if (!Consts.getBazaKnigCookies().isEmpty()) {
-                                                        conn.cookie("PHPSESSID", Consts.getBazaKnigCookies());
-                                                    }
-                                                    Document document = conn.get();
-
-                                                    Element otherReader1 = document.getElementById("content-tab2");
-                                                    Element otherReader2 = document.getElementById("content-tab3");
-                                                    if (otherReader1 != null) {
-                                                        String text = otherReader1.ownText();
-                                                        if (text != null && text.contains("Озвучивает:")) {
-                                                            String name = text.replace("Озвучивает:", "").trim();
-                                                            if (!name.equals(baseArtist)) {
-                                                                OtherArtistPOJO otherArtistPOJO
-                                                                        = new OtherArtistPOJO();
-                                                                otherArtistPOJO.setName(name);
-                                                                otherArtistPOJO.setUrl(url + "?sorce=2");
-                                                                result.add(otherArtistPOJO);
-                                                            }
+                                                Element otherReader1 = document.getElementById("content-tab2");
+                                                Element otherReader2 = document.getElementById("content-tab3");
+                                                if (otherReader1 != null) {
+                                                    String text = otherReader1.ownText();
+                                                    if (text.contains("Озвучивает:")) {
+                                                        String name = text.replace("Озвучивает:", "").trim();
+                                                        if (!name.equals(baseArtist)) {
+                                                            OtherArtistPOJO otherArtistPOJO
+                                                                    = new OtherArtistPOJO();
+                                                            otherArtistPOJO.setName(name);
+                                                            otherArtistPOJO.setUrl(url + "?sorce=2");
+                                                            result.add(otherArtistPOJO);
                                                         }
                                                     }
-                                                    if (otherReader2 != null) {
-                                                        String text = otherReader2.ownText();
-                                                        if (text != null && text.contains("Озвучивает:")) {
-                                                            String name = text.replace("Озвучивает:", "").trim();
-                                                            if (!name.equals(baseArtist)) {
-                                                                OtherArtistPOJO otherArtistPOJO
-                                                                        = new OtherArtistPOJO();
-                                                                otherArtistPOJO.setName(name);
-                                                                otherArtistPOJO.setUrl(url + "?sorce=3");
-                                                                result.add(otherArtistPOJO);
-                                                            }
+                                                }
+                                                if (otherReader2 != null) {
+                                                    String text = otherReader2.ownText();
+                                                    if (text.contains("Озвучивает:")) {
+                                                        String name = text.replace("Озвучивает:", "").trim();
+                                                        if (!name.equals(baseArtist)) {
+                                                            OtherArtistPOJO otherArtistPOJO
+                                                                    = new OtherArtistPOJO();
+                                                            otherArtistPOJO.setName(name);
+                                                            otherArtistPOJO.setUrl(url + "?sorce=3");
+                                                            result.add(otherArtistPOJO);
                                                         }
                                                     }
-
                                                 }
 
-                                                String name = artistElements.first().text();
-                                                if (name != null && !name.isEmpty() && !baseArtist.contains(name)) {
-                                                    OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
-                                                    otherArtistPOJO.setName(name);
-                                                    otherArtistPOJO.setUrl(url);
-                                                    result.add(otherArtistPOJO);
-                                                }
+                                            }
+
+                                            String name = Objects.requireNonNull(artistElements.first()).text();
+                                            if (!name.isEmpty() && !baseArtist.contains(name)) {
+                                                OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
+                                                otherArtistPOJO.setName(name);
+                                                otherArtistPOJO.setUrl(url);
+                                                result.add(otherArtistPOJO);
                                             }
                                         }
                                     }
@@ -338,7 +330,7 @@ public class OtherArtistModel implements
         Element listParent = doc.getElementById("BL");
         if (listParent != null) {
             Elements listElements = listParent.getElementsByClass("bookListItem");
-            if (listElements != null && listElements.size() != 0) {
+            if (!listElements.isEmpty()) {
                 for (Element book : listElements) {
                     OtherArtistPOJO pojo = new OtherArtistPOJO();
                     String autorName = "";
@@ -347,56 +339,48 @@ public class OtherArtistModel implements
 
 
                     Elements urlConteiner = book.getElementsByClass("bookListItemCover");
-                    if (urlConteiner != null && urlConteiner.size() != 0) {
-                        String href = urlConteiner.first().attr("href");
-                        if (href != null && !href.isEmpty()) {
+                    if (!urlConteiner.isEmpty()) {
+                        String href = Objects.requireNonNull(urlConteiner.first()).attr("href");
+                        if (!href.isEmpty()) {
                             pojo.setUrl(Url.SERVER_KNIGOBLUD + href);
                         }
                     }
 
                     Elements metaBloks = book.getElementsByClass("bookListItemMetaBlock");
-                    if (metaBloks != null) {
-                        for (Element metaBlock : metaBloks) {
-                            String metaBlocktext = metaBlock.text();
-                            if (metaBlocktext.contains("✍") && metaBlocktext.contains("\uD83C\uDF99")) {
-                                Element element = metaBlock.child(1);
-                                if (element != null) {
-                                    String text = element.text();
-                                    if (text != null && !text.isEmpty()) {
-                                        autorName = text;
-                                    }
-                                }
-                                element = metaBlock.child(3);
-                                if (element != null) {
-                                    String text = element.text();
-                                    if (text != null && !text.isEmpty()) {
-                                        readerName = text;
-                                    }
-                                }
-                            } else if (metaBlocktext.contains("✍")) {
-                                Element element = metaBlock.child(1);
-                                if (element != null) {
-                                    String text = element.text();
-                                    if (text != null && !text.isEmpty()) {
-                                        autorName = text;
-                                    }
-                                }
-                            } else if (metaBlocktext.contains("\uD83C\uDF99")) {
-                                Element element = metaBlock.child(1);
-                                if (element != null) {
-                                    String text = element.text();
-                                    if (text != null && !text.isEmpty()) {
-                                        readerName = text;
-                                    }
-                                }
+                    for (Element metaBlock : metaBloks) {
+                        String metaBlocktext = metaBlock.text();
+                        if (metaBlocktext.contains("✍") && metaBlocktext.contains("\uD83C\uDF99")) {
+                            Element element = metaBlock.child(1);
+                            String text = element.text();
+                            if (!text.isEmpty()) {
+                                autorName = text;
+                            }
+
+                            element = metaBlock.child(3);
+                            String t = element.text();
+                            if (!t.isEmpty()) {
+                                readerName = t;
+                            }
+
+                        } else if (metaBlocktext.contains("✍")) {
+                            Element element = metaBlock.child(1);
+                            String text = element.text();
+                            if (!text.isEmpty()) {
+                                autorName = text;
+                            }
+                        } else if (metaBlocktext.contains("\uD83C\uDF99")) {
+                            Element element = metaBlock.child(1);
+                            String text = element.text();
+                            if (!text.isEmpty()) {
+                                readerName = text;
                             }
                         }
                     }
 
                     Elements nameConteiner = book.getElementsByClass("bookListItemCoverNameText");
-                    if(nameConteiner!=null&&nameConteiner.size()!=0){
-                        String text = nameConteiner.first().text();
-                        if(text!=null&&!text.isEmpty()){
+                    if(!nameConteiner.isEmpty()){
+                        String text = Objects.requireNonNull(nameConteiner.first()).text();
+                        if(!text.isEmpty()){
                             title = text;
                         }
                     }
@@ -452,7 +436,7 @@ public class OtherArtistModel implements
                 String readerName = "";
                 String title = "";
                 Elements aTags = book.getElementsByClass("short-title");
-                if (aTags.size() != 0) {
+                if (!aTags.isEmpty()) {
                     Element a = aTags.first();
                     if (a != null) {
                         pojo.setUrl(a.attr("href"));
@@ -553,29 +537,24 @@ public class OtherArtistModel implements
         Element element = doc.getElementById("books_list");
         if (element != null) {
             Elements list = element.getElementsByClass("_ccb9b7");
-            if (list != null && list.size() > 1) {
+            if (list.size() > 1) {
                 for (Element book : list) {
                     OtherArtistPOJO pojo = new OtherArtistPOJO();
                     Elements nameCobteiners = book.getElementsByClass("_3dc935");
-                    if (nameCobteiners != null && nameCobteiners.size() > 1) {
+                    if (nameCobteiners.size() > 1) {
                         Element nameConteiner = nameCobteiners.get(1);
                         String href = nameConteiner.attr("href");
-                        if (href != null) {
-                            pojo.setUrl(Url.SERVER_IZIBUK + href);
-                            Elements elements = book.getElementsByClass("_eeab32");
-                            if (elements != null) {
-                                for (Element conteiner : elements) {
-                                    Elements aTag = conteiner.getElementsByTag("a");
-                                    if (aTag != null && aTag.size() != 0) {
-                                        String name = aTag.first().text();
-                                        String urlArtist = aTag.first().attr("href");
-                                        if (urlArtist != null && urlArtist.contains("reader")) {
-                                            if (name != null && !name.equals(
-                                                    bookPOJO.getArtist())) {
-                                                pojo.setName("Исполнитель " + name);
-                                                result.add(pojo);
-                                            }
-                                        }
+                        pojo.setUrl(Url.SERVER_IZIBUK + href);
+                        Elements elements = book.getElementsByClass("_eeab32");
+                        for (Element conteiner : elements) {
+                            Elements aTag = conteiner.getElementsByTag("a");
+                            if (!aTag.isEmpty()) {
+                                String name = Objects.requireNonNull(aTag.first()).text();
+                                String urlArtist = Objects.requireNonNull(aTag.first()).attr("href");
+                                if (urlArtist.contains("reader")) {
+                                    if (!name.equals(bookPOJO.getArtist())) {
+                                        pojo.setName("Исполнитель " + name);
+                                        result.add(pojo);
                                     }
                                 }
                             }
@@ -600,15 +579,15 @@ public class OtherArtistModel implements
         Elements elements = doc.getElementsByClass("book_serie_block");
         for (Element element : elements) {
             Elements title = element.getElementsByClass("book_serie_block_title");
-            if (title.size() != 0 && title.first().text().contains("Другие варианты озвучки")
-                    ||title.first().text().contains("Другие озвучки")) {
+            if (!title.isEmpty() && Objects.requireNonNull(title.first()).text().contains("Другие варианты озвучки")
+                    || Objects.requireNonNull(title.first()).text().contains("Другие озвучки")) {
                 Elements items = element.getElementsByClass("book_serie_block_item");
                 for (Element item : items) {
                     OtherArtistPOJO otherArtistPOJO = new OtherArtistPOJO();
                     Elements a = item.getElementsByTag("a");
-                    if (a.size() != 0) {
-                        otherArtistPOJO.setUrl(Url.SERVER + a.first().attr("href"));
-                        otherArtistPOJO.setName(item.text().replace(a.first().text() + " ", ""));
+                    if (!a.isEmpty()) {
+                        otherArtistPOJO.setUrl(Url.SERVER + Objects.requireNonNull(a.first()).attr("href"));
+                        otherArtistPOJO.setName(item.text().replace(Objects.requireNonNull(a.first()).text() + " ", ""));
                     }
 
                     result.add(otherArtistPOJO);

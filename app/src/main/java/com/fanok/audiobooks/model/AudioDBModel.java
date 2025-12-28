@@ -29,8 +29,6 @@ public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterf
         entity.urlBook = urlBook;
         entity.name = name;
         entity.time = 0;
-        entity.updatedAt = System.currentTimeMillis();
-        entity.needSync = true;
         getDatabase().audioDao().insert(entity);
     }
 
@@ -40,8 +38,6 @@ public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterf
         entity.urlBook = timeStartPOJO.getUrl();
         entity.name = timeStartPOJO.getName();
         entity.time = timeStartPOJO.getTime();
-        entity.updatedAt = System.currentTimeMillis();
-        entity.needSync = true;
         getDatabase().audioDao().insert(entity);
     }
 
@@ -69,7 +65,7 @@ public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterf
     @Override
     public int setTime(@NonNull String urlBook, int time) {
         if (time < 0 || urlBook.isEmpty()) throw new IllegalArgumentException();
-        return getDatabase().audioDao().setTime(urlBook, time, System.currentTimeMillis(), true);
+        return getDatabase().audioDao().setTime(urlBook, time);
     }
 
     @Override

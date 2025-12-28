@@ -15,7 +15,7 @@ import com.fanok.audiobooks.Consts;
     SavedEntity.class,
     AudioEntity.class,
     BooksAudioEntity.class
-}, version = 18)
+}, version = 17)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract FavoriteDao favoriteDao();
     public abstract HistoryDao historyDao();
@@ -31,7 +31,7 @@ public abstract class AppDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             AppDatabase.class, Consts.DBName)
-                            .addMigrations(MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18)
+                            .addMigrations(MIGRATION_15_16, MIGRATION_16_17)
                             .fallbackToDestructiveMigration()
                             .allowMainThreadQueries()
                             .build();
@@ -106,31 +106,6 @@ public abstract class AppDatabase extends RoomDatabase {
                 // If columns mismatch or other error, we might lose data for this table, but we try our best.
             }
             database.execSQL("DROP TABLE " + tableName + "_old");
-        }
-    };
-
-    static final Migration MIGRATION_17_18 = new Migration(17, 18) {
-        @Override
-        public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Add columns to favorite
-            database.execSQL("ALTER TABLE `favorite` ADD COLUMN `updated_at` INTEGER NOT NULL DEFAULT 0");
-            database.execSQL("ALTER TABLE `favorite` ADD COLUMN `need_sync` INTEGER NOT NULL DEFAULT 0");
-
-            // Add columns to history
-            database.execSQL("ALTER TABLE `history` ADD COLUMN `updated_at` INTEGER NOT NULL DEFAULT 0");
-            database.execSQL("ALTER TABLE `history` ADD COLUMN `need_sync` INTEGER NOT NULL DEFAULT 0");
-
-            // Add columns to saved
-            database.execSQL("ALTER TABLE `saved` ADD COLUMN `updated_at` INTEGER NOT NULL DEFAULT 0");
-            database.execSQL("ALTER TABLE `saved` ADD COLUMN `need_sync` INTEGER NOT NULL DEFAULT 0");
-
-            // Add columns to audio
-            database.execSQL("ALTER TABLE `audio` ADD COLUMN `updated_at` INTEGER NOT NULL DEFAULT 0");
-            database.execSQL("ALTER TABLE `audio` ADD COLUMN `need_sync` INTEGER NOT NULL DEFAULT 0");
-
-            // Add columns to books_audio
-            database.execSQL("ALTER TABLE `books_audio` ADD COLUMN `updated_at` INTEGER NOT NULL DEFAULT 0");
-            database.execSQL("ALTER TABLE `books_audio` ADD COLUMN `need_sync` INTEGER NOT NULL DEFAULT 0");
         }
     };
 }

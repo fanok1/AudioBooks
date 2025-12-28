@@ -6,18 +6,14 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.preference.PreferenceManager;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
-import com.fanok.audiobooks.activity.LoginActivity;
 import com.fanok.audiobooks.fragment.AboutFragment;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.fragment.FavoriteFragment;
@@ -25,7 +21,6 @@ import com.fanok.audiobooks.fragment.SettingsFragment;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 @InjectViewState
@@ -38,30 +33,6 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
     public MainPresenter(@NonNull Context context) {
         mContext = context;
-    }
-
-    @Override
-    public void onResume(){
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            getViewState().updateIconLoginLogout(R.drawable.ic_logout);
-            SharedPreferences pref = PreferenceManager
-                    .getDefaultSharedPreferences(mContext);
-            String username = pref.getString("username", "");
-            String name = pref.getString("name", "");
-            String photo = pref.getString("photo", "");
-            getViewState().updateUserInfo(name, username, photo);
-
-
-        }else {
-            getViewState().updateIconLoginLogout(R.drawable.ic_menu_login);
-            SharedPreferences pref = PreferenceManager
-                    .getDefaultSharedPreferences(mContext);
-            SharedPreferences.Editor editor = pref.edit();
-            editor.remove("username");
-            editor.remove("name");
-            editor.remove("photo");
-            editor.apply();
-        }
     }
 
     @Override
@@ -398,18 +369,11 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
     @Override
     public void openSettingsOptimizeBattery(@NonNull DialogInterface dialogInterface) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            try {
-                getViewState().openActivity(
-                        new Intent(ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
-            } catch (ActivityNotFoundException e) {
-                getViewState().setBattaryOptimizeDisenbled(true);
-            }
+        try {
+            getViewState().openActivity(
+                    new Intent(ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+        } catch (ActivityNotFoundException e) {
+            getViewState().setBattaryOptimizeDisenbled(true);
         }
-    }
-
-    @Override
-    public void onLoginLogoutClicked() {
-        LoginActivity.start(mContext);
     }
 }

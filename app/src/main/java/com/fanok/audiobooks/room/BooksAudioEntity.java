@@ -32,10 +32,4 @@ public class BooksAudioEntity {
 
     @ColumnInfo(name = "time_end", defaultValue = "-1")
     public int timeEnd;
-
-    @ColumnInfo(name = "updated_at", defaultValue = "0")
-    public long updatedAt;
-
-    @ColumnInfo(name = "need_sync", defaultValue = "0")
-    public boolean needSync;
 }

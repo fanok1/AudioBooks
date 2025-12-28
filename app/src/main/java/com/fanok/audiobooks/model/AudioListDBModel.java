@@ -30,8 +30,6 @@ public class AudioListDBModel extends BooksDBAbstract implements AudioListDBHelp
         entity.time = audioListPOJO.getTime();
         entity.timeStart = audioListPOJO.getTimeStart();
         entity.timeEnd = audioListPOJO.getTimeEnd();
-        entity.updatedAt = System.currentTimeMillis();
-        entity.needSync = true;
         getDatabase().booksAudioDao().insert(entity);
     }
 

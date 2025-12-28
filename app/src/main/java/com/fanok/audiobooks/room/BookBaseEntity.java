@@ -56,12 +56,6 @@ public class BookBaseEntity {
     @ColumnInfo(name = "description")
     public String description;
 
-    @ColumnInfo(name = "updated_at", defaultValue = "0")
-    public long updatedAt;
-
-    @ColumnInfo(name = "need_sync", defaultValue = "0")
-    public boolean needSync;
-
     public BookPOJO toPojo() {
         BookPOJO book = new BookPOJO();
         book.setName(name);

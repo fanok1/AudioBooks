@@ -13,8 +13,4 @@ public interface MainPresenter {
     void startFragment(int fragmentID, boolean b);
 
     void openSettingsOptimizeBattery(@NonNull DialogInterface dialogInterface);
-
-    void onLoginLogoutClicked();
-
-    void onResume();
 }

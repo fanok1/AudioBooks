@@ -51,8 +51,6 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
     public void addFavorite(BookPOJO book) {
         FavoriteEntity entity = new FavoriteEntity();
         entity.fromPojo(book);
-        entity.updatedAt = System.currentTimeMillis();
-        entity.needSync = true;
         getDatabase().favoriteDao().insert(entity);
     }
 
@@ -71,8 +69,6 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
         if (inHistory(book)) removeHistory(book);
         HistoryEntity entity = new HistoryEntity();
         entity.fromPojo(book);
-        entity.updatedAt = System.currentTimeMillis();
-        entity.needSync = true;
         getDatabase().historyDao().insert(entity);
     }
 
@@ -91,8 +87,6 @@ public class BooksDBModel extends BooksDBAbstract implements BooksDBHelperInterf
         if (!inSaved(book)) {
             SavedEntity entity = new SavedEntity();
             entity.fromPojo(book);
-            entity.updatedAt = System.currentTimeMillis();
-            entity.needSync = true;
             getDatabase().savedDao().insert(entity);
         }
     }

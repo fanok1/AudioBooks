@@ -406,19 +406,4 @@
     <string name="download_control_button">Возобновить/Пауза</string>
     <string name="more_options">Дополнительно</string>
     <string name="bookoof">Bookoof</string>
-    <string name="nav_header_subtitle">Войдите для синхронизации</string>
-    <string name="iconprofile">Изображения пользователя</string>
-    <string name="login">Войти</string>
-    <string name="registration">Регистрация</string>
-    <string name="loginVia">или войти через</string>
-    <string name="google">Google</string>
-    <string name="yandex">Yandex</string>
-    <string name="vk">VK</string>
-    <string name="telegram">Telegram</string>
-    <string name="logo">logo</string>
-    <string name="logout_text">Вы уверены, что хотите выйти?</string>
-    <string name="failure_auth">Отказано в доступе</string>
-    <string name="error_auth">Ошибка авторизации</string>
-    <string name="default_web_client_id" translatable="false">423821423821-pv3436l051l09ksguq4nekf3bst72uup.apps.googleusercontent.com</string>
-    <string name="forgot_password">Забыли пароль?</string>
 </resources>

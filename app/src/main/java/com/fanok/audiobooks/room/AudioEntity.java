@@ -21,10 +21,4 @@ public class AudioEntity {
 
     @ColumnInfo(name = "time", defaultValue = "0")
     public int time;
-
-    @ColumnInfo(name = "updated_at", defaultValue = "0")
-    public long updatedAt;
-
-    @ColumnInfo(name = "need_sync", defaultValue = "0")
-    public boolean needSync;
 }

@@ -25,9 +25,4 @@ public interface MainView extends MvpView {
     @StateStrategyType(SkipStrategy.class)
     void showBooksActivity(BookPOJO bookPOJO);
 
-    @StateStrategyType(SkipStrategy.class)
-    void updateUserInfo(String name, String email, String photo);
-
-    @StateStrategyType(SkipStrategy.class)
-    void updateIconLoginLogout(int id);
 }
