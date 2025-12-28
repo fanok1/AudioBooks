@@ -15,7 +15,7 @@ import com.fanok.audiobooks.Consts;
     SavedEntity.class,
     AudioEntity.class,
     BooksAudioEntity.class
-}, version = 18)
+}, version = 19)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract FavoriteDao favoriteDao();
     public abstract HistoryDao historyDao();
@@ -31,7 +31,7 @@ public abstract class AppDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             AppDatabase.class, Consts.DBName)
-                            .addMigrations(MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18)
+                            .addMigrations(MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19)
                             .fallbackToDestructiveMigration()
                             .allowMainThreadQueries()
                             .build();
@@ -131,6 +131,33 @@ public abstract class AppDatabase extends RoomDatabase {
             // Add columns to books_audio
             database.execSQL("ALTER TABLE `books_audio` ADD COLUMN `updated_at` INTEGER NOT NULL DEFAULT 0");
             database.execSQL("ALTER TABLE `books_audio` ADD COLUMN `need_sync` INTEGER NOT NULL DEFAULT 0");
+        }
+    };
+
+    static final Migration MIGRATION_18_19 = new Migration(18, 19) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Add 'deleted' column to tables
+            database.execSQL("ALTER TABLE `favorite` ADD COLUMN `deleted` INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE `history` ADD COLUMN `deleted` INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE `audio` ADD COLUMN `deleted` INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE `books_audio` ADD COLUMN `deleted` INTEGER NOT NULL DEFAULT 0");
+
+            // Remove columns from saved table
+            // Create new table without updated_at and need_sync
+            database.execSQL("CREATE TABLE IF NOT EXISTS `saved_new` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `url_book` TEXT NOT NULL, `photo` TEXT, `genre` TEXT, `url_genre` TEXT, `author` TEXT, `url_author` TEXT, `artist` TEXT, `url_artist` TEXT, `series` TEXT, `url_series` TEXT, `time` TEXT, `reting` TEXT, `coments` INTEGER, `description` TEXT)");
+            
+            // Copy data
+            database.execSQL("INSERT INTO `saved_new` (`id`, `name`, `url_book`, `photo`, `genre`, `url_genre`, `author`, `url_author`, `artist`, `url_artist`, `series`, `url_series`, `time`, `reting`, `coments`, `description`) SELECT `id`, `name`, `url_book`, `photo`, `genre`, `url_genre`, `author`, `url_author`, `artist`, `url_artist`, `series`, `url_series`, `time`, `reting`, `coments`, `description` FROM `saved`");
+            
+            // Drop old table
+            database.execSQL("DROP TABLE `saved`");
+            
+            // Rename new table
+            database.execSQL("ALTER TABLE `saved_new` RENAME TO `saved`");
+            
+            // Recreate index
+            database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_saved_url_book` ON `saved` (`url_book`)");
         }
     };
 }

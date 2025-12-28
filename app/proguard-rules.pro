@@ -29,3 +29,8 @@
 # Keep Rhino classes if necessary (prevents over-stripping)
 -keep class org.mozilla.javascript.** { *; }
 
+# Keep Room entities to avoid obfuscation issues with Firebase serialization
+-keep class com.fanok.audiobooks.room.** { *; }
+
+# Keep Firebase models/helpers if needed
+-keep class com.fanok.audiobooks.model.FirebaseSyncModel { *; }

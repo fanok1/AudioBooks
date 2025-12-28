@@ -27,4 +27,7 @@ public class AudioEntity {
 
     @ColumnInfo(name = "need_sync", defaultValue = "0")
     public boolean needSync;
+
+    @ColumnInfo(name = "deleted", defaultValue = "0")
+    public boolean deleted;
 }

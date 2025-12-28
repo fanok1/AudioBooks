@@ -28,11 +28,10 @@ import com.fanok.audiobooks.pojo.BookPOJO;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
+
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> implements
         com.fanok.audiobooks.interface_pacatge.main.MainPresenter {
-
-    private static final String TAG = "MainPresenter";
 
     private final Context mContext;
 
@@ -50,8 +49,6 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             String name = pref.getString("name", "");
             String photo = pref.getString("photo", "");
             getViewState().updateUserInfo(name, username, photo);
-
-
         }else {
             getViewState().updateIconLoginLogout(R.drawable.ic_menu_login);
             SharedPreferences pref = PreferenceManager
@@ -196,7 +193,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
     @Override
     public void onDestroy() {
-
+        // Logic moved to App.java
     }
 
     @Override
