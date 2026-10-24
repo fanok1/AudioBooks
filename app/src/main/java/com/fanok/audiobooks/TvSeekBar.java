@@ -1,4 +1,4 @@
-package com.fanok.audiobooks; // Используйте ваш пакет для view
+package com.fanok.audiobooks;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -7,9 +7,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatSeekBar;
 
+/**
+ * A seek bar for D-pad use: Left/Right move the position and, once the key is released, seek there; programmatic
+ * progress updates are held off while the user is adjusting so the thumb does not jump back (UI-16).
+ */
 public class TvSeekBar extends AppCompatSeekBar {
 
-    private boolean isFocused = false;
+    private boolean adjusting = false;
     private int userProgress = -1;
     private OnSeekBarChangedByUserListener userListener;
 
@@ -33,19 +37,17 @@ public class TvSeekBar extends AppCompatSeekBar {
         init();    }
 
     private void init() {
-        // Устанавливаем слушатель изменения фокуса
         setOnFocusChangeListener((v, hasFocus) -> {
-            isFocused = hasFocus;
-            if (!hasFocus && userProgress!= -1) {
-                userProgress = -1; // Сбрасываемпользовательский прогресс
+            if (!hasFocus) {
+                commit();
             }
         });
     }
 
     @Override
     public synchronized void setProgress(int progress) {
-        // ИГНОРИРУЕМ программное обновление, если SeekBar сейчас в фокусе
-        if (isFocused) {
+        // the user's own position wins while a seek is being composed
+        if (adjusting) {
             return;
         }
         super.setProgress(progress);
@@ -53,28 +55,35 @@ public class TvSeekBar extends AppCompatSeekBar {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        // Обрабатываем нажатия "влево" и "вправо" вручную
-        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-            int newProgress = getProgress() - calculateStep();    if (newProgress < 0) newProgress = 0;
-            userProgress = newProgress; // Запоминаем пользовательский выбор
-            super.setProgress(userProgress); // Обновляем UI вручную
-            return true;
-        }
-        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT){
-            int newProgress = getProgress() + calculateStep();
-            if (newProgress > getMax()) newProgress = getMax();
-            userProgress = newProgress;
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            int base = userProgress == -1 ? getProgress() : userProgress;
+            int step = calculateStep() * (keyCode == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1);
+            userProgress = Math.max(0, Math.min(getMax(), base + step));
+            adjusting = true;
             super.setProgress(userProgress);
             return true;
         }
+        return super.onKeyDown(keyCode, event);
+    }
 
-        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER||keyCode == KeyEvent.KEYCODE_ENTER){
-            if (userListener != null && userProgress != -1) {
-                // Отправляем финальное значение, которое выбрал пользователь
-                userListener.onProgressChangedByUser(this, userProgress, true);
-            }
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            commit();
+            return true;
         }
-        return super.onKeyDown(keyCode, event);}
+        return super.onKeyUp(keyCode, event);
+    }
+
+    /** Seeks to the composed position (if any) and lets playback updates through again. */
+    private void commit() {
+        int progress = userProgress;
+        userProgress = -1;
+        adjusting = false;
+        if (progress != -1 && userListener != null) {
+            userListener.onProgressChangedByUser(this, progress, true);
+        }
+    }
 
     private int calculateStep() {
         // Шаг перемотки, например, 1% от максимального значения

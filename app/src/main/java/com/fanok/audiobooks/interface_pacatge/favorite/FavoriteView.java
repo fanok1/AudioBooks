@@ -38,6 +38,10 @@ public interface FavoriteView extends MvpView {
     @StateStrategyType(AddToEndSingleStrategy.class)
     void showProgres(boolean b);
 
+    /** The load failed: a message with a retry action instead of the list. */
+    @StateStrategyType(AddToEndSingleStrategy.class)
+    void showError(boolean b);
+
     @StateStrategyType(AddToEndSingleStrategy.class)
     void setSubTitle(@NotNull String text);
 
@@ -50,4 +54,15 @@ public interface FavoriteView extends MvpView {
     @StateStrategyType(SkipStrategy.class)
     void showSearchActivity(int modelId);
 
+    /** The long-press menu for {@code book}; the view owns the dialog. */
+    @StateStrategyType(SkipStrategy.class)
+    void showBookMenu(@NonNull BookPOJO book);
+
+    /** The values of one filter (genre, author, ...) for the view to offer. */
+    @StateStrategyType(SkipStrategy.class)
+    void showFilterValues(int filterId, @NonNull ArrayList<String> values);
+
+    /** A book was hidden; the view offers undo and reports the outcome to the presenter. */
+    @StateStrategyType(SkipStrategy.class)
+    void showUndoRemove(@NonNull BookPOJO book);
 }

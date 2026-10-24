@@ -38,8 +38,14 @@
                     android:id="@+id/source_knigoblud"
                     android:title="@string/knigoblud" />
                 <item
-                    android:id="@+id/source_bookoof"
-                    android:title="@string/bookoof" />
+                    android:id="@+id/source_audioboo"
+                    android:title="@string/audioboo" />
+                <item
+                    android:id="@+id/source_otrub"
+                    android:title="@string/otrub" />
+                <item
+                    android:id="@+id/source_poleknig"
+                    android:title="@string/poleknig" />
             </group>
         </menu>
     </item>

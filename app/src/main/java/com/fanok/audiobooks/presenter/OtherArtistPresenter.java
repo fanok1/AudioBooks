@@ -10,7 +10,6 @@ import com.fanok.audiobooks.interface_pacatge.book_content.OtherArtist;
 import com.fanok.audiobooks.interface_pacatge.book_content.OtherArtistModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.OtherArtistPOJO;
-import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
@@ -23,6 +22,10 @@ public class OtherArtistPresenter extends MvpPresenter<OtherArtist> implements
     private static final String TAG = "OtherArtistPresenter";
 
     private boolean isLoading = false;
+
+    private boolean isLoaded = false;
+
+    private Disposable mDisposable;
 
     private final BookPOJO mBookPOJO;
 
@@ -43,8 +46,20 @@ public class OtherArtistPresenter extends MvpPresenter<OtherArtist> implements
     }
 
     @Override
-    public void onDestroy() {
+    public void attachView(OtherArtist view) {
+        super.attachView(view);
+        if (!isLoaded && !isLoading) {
+            loadComents(); // a load cancelled by onDestroy (the fragment calls it when its view goes)
+        }
+    }
 
+    @Override
+    public void onDestroy() {
+        if (mDisposable != null) {
+            mDisposable.dispose();
+            mDisposable = null;
+        }
+        isLoading = false;
     }
 
     @Override
@@ -56,34 +71,24 @@ public class OtherArtistPresenter extends MvpPresenter<OtherArtist> implements
     private void getData() {
         if (!isLoading) {
             isLoading = true;
-            mComentsModel.getOtherArtist(mBookPOJO)
+            mDisposable = mComentsModel.getOtherArtist(mBookPOJO)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Observer<ArrayList<OtherArtistPOJO>>() {
-                        @Override
-                        public void onSubscribe(Disposable d) {
-                        }
-
-                        @Override
-                        public void onNext(ArrayList<OtherArtistPOJO> descriptionPOJO) {
-                            mComentsPOJOS.addAll(descriptionPOJO);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            onComplete();
-                        }
-
-                        @Override
-                        public void onComplete() {
-                            Log.d(TAG, "onComplete");
-                            getViewState().showSeries(mComentsPOJOS);
-                            getViewState().showProgress(false);
-                            isLoading = false;
-                        }
-                    });
-
+                    .subscribe(readers -> {
+                        mComentsPOJOS.clear();
+                        mComentsPOJOS.addAll(readers);
+                    }, e -> {
+                        Log.w(TAG, "other readers not loaded", e);
+                        finish();
+                    }, this::finish);
         }
+    }
+
+    private void finish() {
+        getViewState().showSeries(mComentsPOJOS);
+        getViewState().showProgress(false);
+        isLoading = false;
+        isLoaded = true;
     }
 
 }

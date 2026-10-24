@@ -61,7 +61,7 @@ public class DescriptionPOJO {
     }
 
     public void setFavorite(String favorite) {
-        if (favorite != null && !favorite.equals(0) && !favorite.isEmpty()) {
+        if (favorite != null && !favorite.equals("0") && !favorite.isEmpty()) {
             this.favorite = favorite;
         }
     }
@@ -93,7 +93,7 @@ public class DescriptionPOJO {
     }
 
     public void setPoster(String poster) {
-        if (poster != null && Consts.REGEXP_URL_PHOTO.matcher(poster).matches()) {
+        if (poster != null && !poster.isEmpty()) {
             this.poster = poster;
         } else {
             this.poster = "";
@@ -105,7 +105,7 @@ public class DescriptionPOJO {
     }
 
     public void setReiting(String reiting) {
-        this.reiting = reiting;
+        this.reiting = reiting == null ? "" : reiting;
     }
 
     public String getTime() {
@@ -113,10 +113,10 @@ public class DescriptionPOJO {
     }
 
     public void setTime(String time) {
-        if (time == null) {
+        if (time == null || time.isEmpty()) {
             this.time = "";
         } else {
-            this.time = time;
+            this.time = Consts.formatTimeDisplay(time);
         }
     }
 
@@ -173,7 +173,7 @@ public class DescriptionPOJO {
     }
 
     public void setAutorUrl(String autorUrl) {
-        if (autorUrl == null || !Consts.REGEXP_URL.matcher(autorUrl).matches()) {
+        if (autorUrl == null) {
             this.autorUrl = "";
         } else {
             this.autorUrl = autorUrl;
@@ -185,7 +185,7 @@ public class DescriptionPOJO {
     }
 
     public void setArtistUrl(String artistUrl) {
-        if (artistUrl == null || !Consts.REGEXP_URL.matcher(artistUrl).matches()) {
+        if (artistUrl == null) {
             this.artistUrl = "";
         } else {
             this.artistUrl = artistUrl;
@@ -209,7 +209,7 @@ public class DescriptionPOJO {
     }
 
     public void setGenreUrl(String genreUrl) {
-        if (genreUrl == null || !Consts.REGEXP_URL.matcher(genreUrl).matches()) {
+        if (genreUrl == null) {
             this.genreUrl = "";
         } else {
             this.genreUrl = genreUrl;
@@ -221,7 +221,7 @@ public class DescriptionPOJO {
     }
 
     public void setSeriesUrl(String seriesUrl) {
-        if (!Consts.REGEXP_URL.matcher(seriesUrl).matches()) {
+        if (seriesUrl == null) {
             this.seriesUrl = "";
         } else {
             this.seriesUrl = seriesUrl;

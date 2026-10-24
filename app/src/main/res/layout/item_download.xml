@@ -66,6 +66,23 @@
         tools:progress="60"
         tools:visibility="visible" />
 
+    <!-- what the book's download is doing now: state, chapters, bytes, speed, time left -->
+    <TextView
+        android:id="@+id/textStatus"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:textColor="?attr/subTextColor"
+        android:textSize="13sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/imageFileType"
+        app:layout_constraintTop_toBottomOf="@id/imageFileType"
+        tools:text="Скачивается · 12/40 глав · 245 МБ из ≈1,1 ГБ · 950 КБ/с · ~15 мин"
+        tools:visibility="visible" />
+
     <ImageButton
         android:id="@+id/button_control_download"
         android:layout_width="48dp"
@@ -89,7 +106,7 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@id/imageFileType"
-        app:layout_constraintTop_toBottomOf="@id/imageFileType"
+        app:layout_constraintTop_toBottomOf="@id/textStatus"
         tools:visibility="visible">
 
 
@@ -118,7 +135,14 @@
             android:id="@+id/textChapterName"
             style="@style/DownloadItemDetailText"
             app:drawableStartCompat="@drawable/ic_bookmark_outline"
-            tools:text="Глава 3 — Сердце пепла" />
+            tools:text="Главы: скачано 3 из 10, выбрано 5" />
+
+        <!-- Главы с копией в папке загрузок -->
+        <TextView
+            android:id="@+id/textExported"
+            style="@style/DownloadItemDetailText"
+            app:drawableStartCompat="@drawable/ic_download"
+            tools:text="Копии в папке: 1, 2, 5" />
 
 
         <TextView

@@ -1,109 +1,93 @@
 package com.fanok.audiobooks.pojo;
 
-import androidx.media3.exoplayer.offline.Download;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-public class DownloadItem {
-    private String fileIcon;
-    private String fileName;
-    private String bookName;
+import com.fanok.audiobooks.download.DownloadStatus;
 
-    private String author;
-    private String reader;
-    private String chapterName;
-    private String source;
-    private int progress; // 0-100
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
-    private int status;
+/**
+ * Immutable snapshot of one book on the Downloads screen. {@link #getId()} (the book's {@code DownloadIds.bookKey})
+ * is its stable identity; the state aggregates all of the book's chapters: {@code completed} have a completed
+ * download or an exported copy, {@code selected} were chosen for download, {@code total} are listed.
+ */
+public final class DownloadItem {
+    private final String id;
+    private final String bookUrl;
+    private final String fileIcon;
+    private final String bookName;
+    private final String author;
+    private final String reader;
+    private final String source;
+    private final int status;
+    private final int progress; // 0-100 over all chapters
+    private final int completed;
+    private final int selected;
+    private final int total;
+    private final List<String> downloadIds;
+    private final List<Integer> exportedChapters;
+    private final List<DownloadStatus.Part> parts;
 
-    private boolean isExpanded;
-
-    public boolean isExpanded() {
-        return isExpanded;
-    }
-
-    public void setExpanded(boolean expanded) {
-        isExpanded = expanded;
-    }
-
-    public DownloadItem(String fileIcon, String fileName, String bookName, String author, String reader, String chapterName, String source, int progress, int status) {
+    public DownloadItem(@NonNull String id, @NonNull String bookUrl, @Nullable String fileIcon, @Nullable String bookName,
+                        @Nullable String author, @Nullable String reader, @Nullable String source, int status,
+                        int progress, int completed, int selected, int total, @NonNull List<String> downloadIds,
+                        @NonNull List<Integer> exportedChapters, @NonNull List<DownloadStatus.Part> parts) {
+        this.id = id;
+        this.bookUrl = bookUrl;
         this.fileIcon = fileIcon;
-        this.fileName = fileName;
         this.bookName = bookName;
         this.author = author;
         this.reader = reader;
-        this.chapterName = chapterName;
         this.source = source;
+        this.status = status;
         this.progress = progress;
-        this.status = status;
-        this.isExpanded = false;
+        this.completed = completed;
+        this.selected = selected;
+        this.total = total;
+        this.downloadIds = Collections.unmodifiableList(new ArrayList<>(downloadIds));
+        this.exportedChapters = Collections.unmodifiableList(new ArrayList<>(exportedChapters));
+        this.parts = Collections.unmodifiableList(new ArrayList<>(parts));
     }
 
-    public DownloadItem(String fileName, int status) {
-        this.fileName = fileName;
-        this.status = status;
-        isExpanded = false;
-    }
-
-    public String getFileIcon() {
-        return fileIcon;
-    }
-
-    public void setFileIcon(String fileIcon) {
-        this.fileIcon = fileIcon;
-    }
-
-    public String getFileName() { return fileName; }
+    @NonNull
+    public String getId() { return id; }
+    @NonNull
+    public String getBookUrl() { return bookUrl; }
+    public String getFileIcon() { return fileIcon; }
     public String getBookName() { return bookName; }
-    public String getChapterName() { return chapterName; }
-    public int getProgress() { return progress; }
+    public String getAuthor() { return author; }
+    public String getReader() { return reader; }
+    public String getSource() { return source; }
     public int getStatus() { return status; }
+    public int getProgress() { return progress; }
+    public int getCompleted() { return completed; }
+    public int getSelected() { return selected; }
+    public int getTotal() { return total; }
+    /** Ids of the book's downloads in the Media3 index, for pause, resume and restart. */
+    @NonNull
+    public List<String> getDownloadIds() { return downloadIds; }
+    /** 1-based numbers of the chapters that have an exported copy in the download folder. */
+    @NonNull
+    public List<Integer> getExportedChapters() { return exportedChapters; }
+    /** The book's transfers as the index had them, the input of {@code DownloadMonitor.statusOf}. */
+    @NonNull
+    public List<DownloadStatus.Part> getParts() { return parts; }
 
-    public String getAuthor() {
-        return author;
+    /** Every listed chapter has a completed download or an exported copy. */
+    public boolean isComplete() {
+        return total > 0 && completed == total;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public boolean sameContents(@NonNull DownloadItem o) {
+        return status == o.status && progress == o.progress && completed == o.completed && selected == o.selected
+                && total == o.total && Objects.equals(bookUrl, o.bookUrl) && Objects.equals(fileIcon, o.fileIcon)
+                && Objects.equals(bookName, o.bookName) && Objects.equals(author, o.author)
+                && Objects.equals(reader, o.reader) && Objects.equals(source, o.source)
+                && downloadIds.equals(o.downloadIds) && exportedChapters.equals(o.exportedChapters)
+                && parts.equals(o.parts);
     }
-
-    public String getReader() {
-        return reader;
-    }
-
-    public void setReader(String reader) {
-        this.reader = reader;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public void setBookName(String bookName) {
-        this.bookName = bookName;
-    }
-
-    public void setChapterName(String chapterName) {
-        this.chapterName = chapterName;
-    }
-
-    public void setProgress(int progress) { this.progress = progress; }
-    public void setStatus(int status) { this.status = status; }
-
-    public DownloadItem(DownloadItem other) {
-        this.fileIcon = other.fileIcon;
-        this.fileName = other.fileName;
-        this.bookName = other.bookName;
-        this.author = other.author;
-        this.reader = other.reader;
-        this.chapterName = other.chapterName;
-        this.source = other.source;
-        this.progress = other.progress;
-        this.status = other.status;
-        this.isExpanded = other.isExpanded;
-    }
-
 }

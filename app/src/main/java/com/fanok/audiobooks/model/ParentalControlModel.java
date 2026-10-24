@@ -1,75 +1,80 @@
 package com.fanok.audiobooks.model;
 
 
-import static com.fanok.audiobooks.Consts.PROXY_HOST;
-import static com.fanok.audiobooks.Consts.PROXY_PORT;
-
-import com.fanok.audiobooks.App;
-import com.fanok.audiobooks.Consts;
+import androidx.annotation.NonNull;
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.net.SiteHttp;
+import com.fanok.audiobooks.pojo.GenrePOJO;
 import com.fanok.audiobooks.pojo.ParentControlPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Proxy.Type;
 import java.util.ArrayList;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
+import java.util.List;
+import java.util.concurrent.Callable;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+/**
+ * Loads the category lists the allow-list editor offers. A source whose list cannot be loaded is reported in
+ * {@link Loaded#failedSources}: its categories are then absent from the editor, so its books stay blocked
+ * (unknown category) rather than silently allowed.
+ */
 public class ParentalControlModel {
 
-    public Observable<ArrayList<ParentControlPOJO>> getBooks() {
-        return Observable.create(observableEmitter -> {
-            //waitVpnConetion();
-            ArrayList<ParentControlPOJO> arrayList = new ArrayList<>();
+    public static final class Loaded {
+        public final ArrayList<ParentControlPOJO> items = new ArrayList<>();
+        public final List<String> failedSources = new ArrayList<>();
+    }
 
-            try {
-                arrayList.addAll(loadBooksListAkniga());
-            } catch (Exception ignored) {
-            }
+    private interface Loader extends Callable<ArrayList<ParentControlPOJO>> {
+    }
 
-            try {
-                arrayList.addAll(loadBooksList());
-            } catch (Exception ignored) {
-            }
-
-            try {
-                arrayList.addAll(loadBooksListIziBuk());
-            } catch (Exception ignored) {
-            }
-
-            try {
-                arrayList.addAll(loadBooksListABMP3());
-            } catch (Exception ignored) {
-            }
-
-            try {
-                arrayList.addAll(loadBooksListBazaKnig());
-            } catch (Exception ignored) {
-            }
-
-            try {
-                arrayList.addAll(loadBooksListKnigablud());
-            } catch (Exception ignored) {
-            }
-
-            observableEmitter.onNext(arrayList);
-            observableEmitter.onComplete();
+    public Observable<Loaded> getBooks() {
+        return Observable.fromCallable(() -> {
+            Loaded loaded = new Loaded();
+            load(loaded, "Akniga", this::loadBooksListAkniga);
+            load(loaded, "Книга в ухе", this::loadBooksList);
+            load(loaded, "izibuk", this::loadBooksListIziBuk);
+            load(loaded, "audiobook-mp3.com", this::loadBooksListABMP3);
+            load(loaded, "База Книг", this::loadBooksListBazaKnig);
+            load(loaded, "Книгоблуд", this::loadBooksListKnigablud);
+            load(loaded, "Audioboo", () -> loadGenres("Audioboo", Url.INDEX_AUDIOBOO));
+            load(loaded, "Отрубин", () -> loadGenres("Отрубин", Url.SECTIONS_OTRUB));
+            load(loaded, "Полекниг", () -> loadGenres("Полекниг", Url.SECTIONS_POLEKNIG));
+            return loaded;
         });
+    }
+
+    private static void load(@NonNull Loaded loaded, @NonNull String source, @NonNull Loader loader) {
+        try {
+            ArrayList<ParentControlPOJO> items = loader.call();
+            if (items.isEmpty()) {
+                loaded.failedSources.add(source);
+            } else {
+                loaded.items.addAll(items);
+            }
+        } catch (Exception e) {
+            android.util.Log.w("ParentalControlModel", "Categories of " + source + " not loaded", e);
+            loaded.failedSources.add(source);
+        }
+    }
+
+    /** The categories of a source through the genre-screen loader {@link GenreModel} already has for it. */
+    private static ArrayList<ParentControlPOJO> loadGenres(@NonNull String source, @NonNull String sectionsUrl)
+            throws IOException {
+        ArrayList<ParentControlPOJO> result = new ArrayList<>();
+        for (GenrePOJO genre : new GenreModel().load(sectionsUrl, 1).items) {
+            if (genre.getUrl() != null && genre.getName() != null) {
+                result.add(new ParentControlPOJO(source, genre.getName(), genre.getUrl()));
+            }
+        }
+        return result;
     }
 
     ArrayList<ParentControlPOJO> loadBooksList() throws IOException {
         ArrayList<ParentControlPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(Url.SECTIONS)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+        Document doc = SiteHttp.get(Url.SECTIONS);
 
         Elements items = doc.getElementsByClass("genre2_item");
         for (Element item : items) {
@@ -86,38 +91,24 @@ public class ParentalControlModel {
 
     ArrayList<ParentControlPOJO> loadBooksListABMP3() throws IOException {
         ArrayList<ParentControlPOJO> result = new ArrayList<>();
-        Connection connection = Jsoup.connect(Url.SECTIONS_ABMP3)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0);
-
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
-        }
-
-        Document doc = connection.get();
+        Document doc = SiteHttp.get(Url.SECTIONS_ABMP3);
 
         Elements items = doc.getElementsByClass("b-posts");
-        if (items != null && items.size() != 0) {
+        if (items.size() != 0) {
             Elements list = items.first().children();
-            if (list != null && list.size() > 0) {
-                for (Element item : list) {
-                    String name = "";
-                    String url = "";
-                    Elements titles = item.getElementsByClass("title");
-                    if (titles != null && titles.size() != 0) {
-                        Elements aGenre = titles.first().getElementsByTag("a");
-                        if (aGenre != null && aGenre.size() != 0) {
-                            url = Url.SERVER_ABMP3 + aGenre.first().attr("href") + "?page=";
-                            name = aGenre.first().text();
-                        }
+            for (Element item : list) {
+                String name = "";
+                String url = "";
+                Elements titles = item.getElementsByClass("title");
+                if (titles.size() != 0) {
+                    Elements aGenre = titles.first().getElementsByTag("a");
+                    if (aGenre.size() != 0) {
+                        url = Url.SERVER_ABMP3 + aGenre.first().attr("href") + "?page=";
+                        name = aGenre.first().text();
                     }
-                    if (!url.isEmpty() && !name.isEmpty()) {
-                        result.add(new ParentControlPOJO("audiobook-mp3.com", name, url));
-                    }
+                }
+                if (!url.isEmpty() && !name.isEmpty()) {
+                    result.add(new ParentControlPOJO("audiobook-mp3.com", name, url));
                 }
             }
         }
@@ -126,34 +117,27 @@ public class ParentalControlModel {
 
     ArrayList<ParentControlPOJO> loadBooksListAkniga() throws IOException {
         ArrayList<ParentControlPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(Url.SECTIONS_AKNIGA)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+        Document doc = SiteHttp.get(Url.SECTIONS_AKNIGA);
 
         Elements items = doc.getElementsByClass("table-authors");
-        if (items != null && items.size() != 0) {
+        if (items.size() != 0) {
             Elements tbody = items.first().getElementsByTag("tbody");
-            if (tbody != null && tbody.size() != 0) {
+            if (tbody.size() != 0) {
                 Elements list = tbody.first().children();
-                if (list != null && list.size() > 0) {
-                    for (Element item : list) {
-                        String url = "";
-                        String name = "";
-                        Elements titles = item.getElementsByClass("name-obj");
-                        if (titles != null && titles.size() != 0) {
-                            Elements aGenre = titles.first().getElementsByTag("a");
-                            if (aGenre != null && aGenre.size() != 0) {
-                                url = aGenre.first().attr("href") + "page<page>/";
-                                name = aGenre.first().text();
-                            }
+                for (Element item : list) {
+                    String url = "";
+                    String name = "";
+                    Elements titles = item.getElementsByClass("name-obj");
+                    if (titles.size() != 0) {
+                        Elements aGenre = titles.first().getElementsByTag("a");
+                        if (aGenre.size() != 0) {
+                            url = aGenre.first().attr("href") + "page<page>/";
+                            name = aGenre.first().text();
                         }
+                    }
 
-                        if (!url.isEmpty() && !name.isEmpty()) {
-                            result.add(new ParentControlPOJO("Akniga", name, url));
-                        }
+                    if (!url.isEmpty() && !name.isEmpty()) {
+                        result.add(new ParentControlPOJO("Akniga", name, url));
                     }
                 }
             }
@@ -163,39 +147,21 @@ public class ParentalControlModel {
 
     ArrayList<ParentControlPOJO> loadBooksListBazaKnig() throws IOException {
         ArrayList<ParentControlPOJO> result = new ArrayList<>();
-        Connection connection = Jsoup.connect(Url.SECTIONS_BAZA_KNIG)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .maxBodySize(0)
-                .sslSocketFactory(Consts.socketFactory());
-
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
-        }
-
-        if (!Consts.getBazaKnigCookies().isEmpty()) {
-            connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
-        }
-
-        Document doc = connection.get();
+        Document doc = SiteHttp.get(Url.SECTIONS_BAZA_KNIG);
 
         Elements items = doc.getElementsByClass("reset left-menu-items");
-        if (items != null && items.size() != 0) {
+        if (items.size() != 0) {
             Elements list = items.first().getElementsByTag("li");
-            if (list != null && list.size() > 0) {
-                for (Element item : list) {
-                    String name = "";
-                    String url = "";
-                    Elements aGenre = item.getElementsByTag("a");
-                    if (aGenre != null && aGenre.size() != 0) {
-                        url = Url.SERVER_BAZA_KNIG + aGenre.first().attr("href") + "page/";
-                        name = item.text();
-                    }
-                    if (!name.isEmpty() && !url.isEmpty()) {
-                        result.add(new ParentControlPOJO("База Книг", name, url));
-                    }
+            for (Element item : list) {
+                String name = "";
+                String url = "";
+                Elements aGenre = item.getElementsByTag("a");
+                if (aGenre.size() != 0) {
+                    url = Url.SERVER_BAZA_KNIG + aGenre.first().attr("href") + "page/";
+                    name = item.text();
+                }
+                if (!name.isEmpty() && !url.isEmpty()) {
+                    result.add(new ParentControlPOJO("База Книг", name, url));
                 }
             }
         }
@@ -204,43 +170,26 @@ public class ParentalControlModel {
 
     ArrayList<ParentControlPOJO> loadBooksListIziBuk() throws IOException {
         ArrayList<ParentControlPOJO> result = new ArrayList<>();
-        Connection connection = Jsoup.connect(Url.SECTIONS_IZIBUK + 1)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0);
-
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
-        }
-
-        Document doc = connection.get();
+        Document doc = SiteHttp.get(Url.SECTIONS_IZIBUK + 1);
 
         Elements items = doc.getElementsByClass("_e181af");
-        if (items != null && items.size() != 0) {
+        if (items.size() != 0) {
             Elements list = items.first().children();
-            if (list != null) {
-                for (Element item : list) {
-                    String nameValue = "";
-                    String url = "";
-                    String src = item.attr("href");
-                    if (src != null) {
-                        url = Url.SERVER_IZIBUK + src + "?p=";
-                    }
+            for (Element item : list) {
+                String nameValue = "";
+                String url = "";
+                String src = item.attr("href");
+                if (!src.isEmpty()) {
+                    url = Url.SERVER_IZIBUK + src + "?p=";
+                }
 
-                    Elements children = item.children();
-                    if (children != null && children.size() == 2) {
-                        String name = children.first().text();
-                        if (name != null) {
-                            nameValue = name;
-                        }
-                    }
+                Elements children = item.children();
+                if (children.size() == 2) {
+                    nameValue = children.first().text();
+                }
 
-                    if (!nameValue.isEmpty() && !url.isEmpty()) {
-                        result.add(new ParentControlPOJO("izibuk", nameValue, url));
-                    }
+                if (!nameValue.isEmpty() && !url.isEmpty()) {
+                    result.add(new ParentControlPOJO("izibuk", nameValue, url));
                 }
             }
         }

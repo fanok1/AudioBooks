@@ -1,9 +1,8 @@
 package com.fanok.audiobooks.interface_pacatge.favorite;
 
 import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import org.jetbrains.annotations.NotNull;
+import androidx.annotation.NonNull;
+import com.fanok.audiobooks.pojo.BookPOJO;
 
 public interface FavoritePresenter {
 
@@ -11,19 +10,31 @@ public interface FavoritePresenter {
 
     void onCreate(Context context);
 
-    void onDestroy();
+    void onBookItemClick(int position);
 
-    void onBookItemClick(View view, int position);
+    void onBookItemLongClick(int position);
 
-    void onBookItemLongClick(View view, int position, LayoutInflater layoutInflater);
-
+    /** Hides the book and offers undo; the deletion runs when {@link #commitRemove()} follows. */
     void onRemove(int position);
+
+    void onRemove(@NonNull BookPOJO book);
+
+    void undoRemove();
+
+    void commitRemove();
 
     void onSearch(String qery);
 
-    void onOptionsItemSelected(@NotNull View view, int id);
+    void onOptionsItemSelected(int id);
 
+    /** A value chosen in the filter popup the view showed for {@code filterId}; null means "all". */
+    void onFilterSelected(int filterId, String value);
 
+    void onMenuGenre(@NonNull String url, String title);
 
+    void onMenuAutor(@NonNull String url, String title);
 
+    void onMenuArtist(@NonNull String url, String title);
+
+    void onMenuSeries(@NonNull String url, String title);
 }

@@ -71,8 +71,16 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
                     mText.setText(R.string.knigoblud);
                     break;
 
-                case Consts.SOURCE_BOOKOOF:
-                    mText.setText(R.string.bookoof);
+                case Consts.SOURCE_AUDIOBOO:
+                    mText.setText(R.string.audioboo);
+                    break;
+
+                case Consts.SOURCE_OTRUB:
+                    mText.setText(R.string.otrub);
+                    break;
+
+                case Consts.SOURCE_POLEKNIG:
+                    mText.setText(R.string.poleknig);
                     break;
             }
 
@@ -119,8 +127,16 @@ public class FilterAdapter extends RecyclerView.Adapter<FilterAdapter.MyHolder> 
             mData.add(Consts.SOURCE_KNIGOBLUD);
         }
 
-        if (preferences.getBoolean("search_bookoof", true)) {
-            mData.add(Consts.SOURCE_BOOKOOF);
+        if (preferences.getBoolean("search_audioboo", true)) {
+            mData.add(Consts.SOURCE_AUDIOBOO);
+        }
+
+        if (preferences.getBoolean("search_otrub", true)) {
+            mData.add(Consts.SOURCE_OTRUB);
+        }
+
+        if (preferences.getBoolean("search_poleknig", true)) {
+            mData.add(Consts.SOURCE_POLEKNIG);
         }
 
     }

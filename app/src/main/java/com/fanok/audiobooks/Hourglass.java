@@ -1,208 +1,188 @@
 package com.fanok.audiobooks;
 
-import android.annotation.SuppressLint;
 import android.os.Handler;
-import android.os.Message;
+import android.os.Looper;
+import android.os.SystemClock;
+import androidx.annotation.NonNull;
 import com.fanok.audiobooks.interface_pacatge.HourglassListener;
+import java.util.function.LongSupplier;
 
+/**
+ * Sleep timer. A countdown runs on a deadline of the injected clock ({@code SystemClock.elapsedRealtime()} by
+ * default) and counts only while resumed, so pauses and repeated resumes never change how long it lasts. In
+ * end-of-chapter mode there is no countdown: the timer is a boundary that {@link #chapterEnded()} consumes.
+ */
 public abstract class Hourglass implements HourglassListener {
 
-    private static final int INTERVAL = 1000;
+    private static final long INTERVAL = 1000;
 
-    private static final int MSG = 1;
+    /** Schedules the tick; the default posts to the main looper. */
+    public interface Ticker {
+        void schedule(@NonNull Runnable tick, long delayMs);
 
-    private Handler handler;
-
-    private long interval;
-
-    private boolean isCanseled;
-
-    /**
-     * To maintain Timer resume and pause status.
-     */
-    private boolean isPaused;
-
-    /**
-     * To maintain Timer start and stop status.
-     */
-    private boolean isRunning;
-
-    private long localTime;
-
-    /**
-     * Timer time.
-     */
-    private long time;
-
-    public Hourglass() {
-        init(0, INTERVAL);
+        void cancel(@NonNull Runnable tick);
     }
 
-    public Hourglass(long timeInMillis) {
-        init(timeInMillis, INTERVAL);
+    private final LongSupplier clock;
+
+    private final Ticker ticker;
+
+    private final long interval;
+
+    private final boolean endOfChapter;
+
+    private final Runnable tick = this::onTick;
+
+    /** Remaining time while not counting. */
+    private long remainingMs;
+
+    /** Clock value at which the countdown ends; meaningful while counting. */
+    private long deadline;
+
+    private boolean running;
+
+    private boolean counting;
+
+    /** @param endOfChapter true for the end-of-chapter boundary, false for a countdown of {@code timeInMillis} */
+    public Hourglass(long timeInMillis, boolean endOfChapter) {
+        this(timeInMillis, endOfChapter, INTERVAL, SystemClock::elapsedRealtime, new MainLooperTicker());
     }
 
-    public Hourglass(long timeInMillis, long intervalInMillis) {
-        init(timeInMillis, intervalInMillis);
+    public Hourglass(long timeInMillis, boolean endOfChapter, long intervalInMillis,
+            @NonNull LongSupplier clock, @NonNull Ticker ticker) {
+        this.remainingMs = Math.max(0, timeInMillis);
+        this.endOfChapter = endOfChapter;
+        this.interval = intervalInMillis > 0 ? intervalInMillis : INTERVAL;
+        this.clock = clock;
+        this.ticker = ticker;
     }
 
-    public synchronized final void cancel() {
-        isRunning = false;
-        isCanseled = true;
-        handler.removeMessages(MSG);
-    }
-
-    public long getTimeRemaining() {
-        if (localTime <= time) {
-            return time - localTime;
-        } else {
-            return 0;
+    /** Starts the timer counting; a started timer ignores further calls. */
+    public synchronized void startTimer() {
+        if (running) {
+            return;
         }
+        running = true;
+        resumeTimer();
     }
 
-    /**
-     * Method to check whether the timer is paused.
-     *
-     * @return: true if timer is paused else false.
-     */
-    public synchronized boolean isPaused() {
-        return isPaused;
-    }
-
-    /**
-     * To pause the timer from Main thread.
-     *
-     * @param isPaused: true to pause the timer, false to resume.
-     */
-    private synchronized void setPaused(boolean isPaused) {
-        this.isPaused = isPaused;
-    }
-
-    /**
-     * Convenience method to check whether the timer is running or not
-     *
-     * @return: true if timer is running, else false.
-     */
-    public boolean isRunning() {
-        return isRunning;
-    }
-
-    /**
-     * Convenience method to pause the timer.
-     */
+    /** Stops counting and keeps the remaining time. */
     public synchronized void pauseTimer() {
-        setPaused(true);
+        if (!counting) {
+            return;
+        }
+        remainingMs = Math.max(0, deadline - clock.getAsLong());
+        counting = false;
+        ticker.cancel(tick);
     }
 
-    /**
-     * Convenience method to resume the timer.
-     */
+    /** Counts again from where it was paused; idempotent while counting, so there is only ever one tick chain. */
     public synchronized void resumeTimer() {
-        if (!isCanseled) {
-            setPaused(false);
-            handler.sendMessage(handler.obtainMessage(MSG));
+        if (!running || counting) {
+            return;
         }
+        counting = true;
+        deadline = clock.getAsLong() + remainingMs;
+        ticker.schedule(tick, 0);
+    }
+
+    /** Stops the timer without finishing it. */
+    public synchronized final void cancel() {
+        running = false;
+        counting = false;
+        ticker.cancel(tick);
     }
 
     /**
-     * Setter for interval.
+     * To be called when the playing chapter ends.
      *
-     * @param intervalInMillis: in milliseconds
+     * @return true when an armed end-of-chapter timer finished at this boundary
      */
-    public void setInterval(long intervalInMillis) {
-        if (isRunning) {
-            return;
-        }
-
-        if (this.interval <= 0) {
-            if (intervalInMillis < 0) {
-                intervalInMillis *= -1;
+    public boolean chapterEnded() {
+        synchronized (this) {
+            if (!running || !endOfChapter) {
+                return false;
             }
+            running = false;
+            counting = false;
+            ticker.cancel(tick);
         }
-        this.interval = intervalInMillis;
-    }
-
-    /**
-     * Setter for Time.
-     *
-     * @param timeInMillis: in milliseconds
-     */
-    public void setTime(long timeInMillis) {
-        if (isRunning) {
-            return;
-        }
-
-        if (this.time <= 0) {
-            if (timeInMillis < 0) {
-                timeInMillis *= -1;
-            }
-        }
-        this.time = timeInMillis;
-    }
-
-    /**
-     * Method to start the timer.
-     */
-    public void startTimer() {
-        if (isRunning) {
-            return;
-        }
-
-        isCanseled = false;
-        isRunning = true;
-        isPaused = false;
-        localTime = 0;
-        handler.sendMessage(handler.obtainMessage(MSG));
-    }
-
-    /**
-     * Method to stop the timer.
-     */
-    public void stopTimer() {
-        isCanseled = true;
-        isRunning = false;
-        handler.removeMessages(MSG);
         onTimerFinish();
-
+        return true;
     }
 
-    /**
-     * Method to initialize HourGlass.
-     *
-     * @param time:     Time in milliseconds.
-     * @param interval: in milliseconds.
-     */
-    private void init(long time, long interval) {
-        setTime(time);
-        setInterval(interval);
-
-        initHourglass();
+    public boolean isEndOfChapter() {
+        return endOfChapter;
     }
 
-    @SuppressLint("HandlerLeak")
-    private void initHourglass() {
+    public synchronized boolean isRunning() {
+        return running;
+    }
 
-        handler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
+    public synchronized boolean isPaused() {
+        return running && !counting;
+    }
 
-                if (msg.what == MSG) {
-                    if (!isPaused) {
+    /** Remaining countdown; in end-of-chapter mode {@link #boundaryRemainingMs()}. */
+    public long getTimeRemaining() {
+        if (endOfChapter) {
+            return boundaryRemainingMs();
+        }
+        synchronized (this) {
+            return counting ? Math.max(0, deadline - clock.getAsLong()) : remainingMs;
+        }
+    }
 
-                        if (localTime <= time) {
-                            onTimerTick(time - localTime);
-                            localTime += interval;
-                            sendMessageDelayed(handler.obtainMessage(MSG), interval);
-                        } else {
-                            stopTimer();
-                        }
+    /** End-of-chapter mode: the time left to the boundary, for display only. */
+    protected long boundaryRemainingMs() {
+        return 0;
+    }
 
-                    }
+    private void onTick() {
+        boolean finished = false;
+        long remaining = 0;
+        synchronized (this) {
+            if (!counting) {
+                return;
+            }
+            if (endOfChapter) {
+                ticker.schedule(tick, interval);
+            } else {
+                remaining = deadline - clock.getAsLong();
+                if (remaining <= 0) {
+                    running = false;
+                    counting = false;
+                    finished = true;
+                } else {
+                    ticker.schedule(tick, Math.min(interval, remaining));
                 }
             }
-        };
+        }
+        if (finished) {
+            onTimerFinish();
+        } else {
+            onTimerTick(endOfChapter ? boundaryRemainingMs() : remaining);
+        }
     }
 
-}
+    /** {hours, minutes, seconds} of a duration; hours do not wrap at a day. */
+    @NonNull
+    public static long[] split(long millis) {
+        long seconds = Math.max(0, millis) / 1000;
+        return new long[]{seconds / 3600, (seconds / 60) % 60, seconds % 60};
+    }
 
+    private static final class MainLooperTicker implements Ticker {
+        private final Handler handler = new Handler(Looper.getMainLooper());
+
+        @Override
+        public void schedule(@NonNull Runnable tick, long delayMs) {
+            handler.postDelayed(tick, delayMs);
+        }
+
+        @Override
+        public void cancel(@NonNull Runnable tick) {
+            handler.removeCallbacks(tick);
+        }
+    }
+}

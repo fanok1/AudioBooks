@@ -17,6 +17,9 @@
         <item name="colorItemMenu">@color/primaryTextColor</item>
         <item name="prefIconColor">@color/primaryTextColor</item>
         <item name="deleteColor">@color/colorDelete</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
+        <item name="toolbarNavigationButtonStyle">@style/Widget.App.Toolbar.Button.Navigation</item>
+        <item name="actionButtonStyle">@style/Widget.App.ActionButton</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -95,6 +98,9 @@
         <item name="colorItemMenu">@color/primaryTextColor</item>
         <item name="prefIconColor">@color/primaryTextColor</item>
         <item name="deleteColor">@color/colorDelete</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
+        <item name="toolbarNavigationButtonStyle">@style/Widget.App.Toolbar.Button.Navigation</item>
+        <item name="actionButtonStyle">@style/Widget.App.ActionButton</item>
     </style>
 
     <style name="AppThemeBlack.NoActionBar">
@@ -164,6 +170,9 @@
         <item name="deleteColor">@color/colorDeleteLight</item>
         <item name="android:itemBackground">@drawable/custom_ripple</item>
         <item name="android:itemTextAppearance">@style/myCustomMenuTextAppearanceLight</item>
+        <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
+        <item name="toolbarNavigationButtonStyle">@style/Widget.App.Toolbar.Button.Navigation</item>
+        <item name="actionButtonStyle">@style/Widget.App.ActionButton</item>
 
     </style>
 
@@ -253,6 +262,59 @@
         <item name="android:drawablePadding">8dp</item>
     </style>
 
+
+    <!-- Compact top app bar, shared by the three themes: the title follows the 48dp navigation button with no
+         extra inset (was 72dp from the edge, now 52dp) and the 24dp action icons sit in 32dp buttons (were 48dp),
+         8dp apart instead of 24dp, so four icons take less room than three did and the title keeps its width. -->
+    <style name="Widget.App.Toolbar" parent="Widget.AppCompat.Toolbar">
+        <item name="contentInsetStartWithNavigation">0dp</item>
+        <item name="android:paddingLeft">4dp</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingRight">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+    </style>
+
+    <style name="Widget.App.Toolbar.Button.Navigation" parent="Widget.AppCompat.Toolbar.Button.Navigation">
+        <item name="android:minWidth">48dp</item>
+    </style>
+
+    <style name="Widget.App.ActionButton" parent="Widget.AppCompat.ActionButton">
+        <item name="android:minWidth">32dp</item>
+        <!-- start/end too: AppCompat's own 12dp paddingStart/End would win over left/right -->
+        <item name="android:paddingLeft">4dp</item>
+        <item name="android:paddingRight">4dp</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+    </style>
+
+    <!-- The active-filter chip above a book listing: 28dp high, no 48dp touch inset. -->
+    <style name="Widget.App.FilterChip" parent="Widget.MaterialComponents.Chip.Entry">
+        <item name="android:checkable">false</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">?attr/colorPrimaryText</item>
+        <item name="chipMinHeight">28dp</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+        <item name="chipBackgroundColor">@color/filter_accent_container</item>
+        <item name="rippleColor">@color/filter_accent_container</item>
+        <item name="chipIconSize">16dp</item>
+        <item name="chipIconTint">?attr/hrefColor</item>
+        <item name="chipStartPadding">8dp</item>
+        <item name="iconStartPadding">0dp</item>
+        <item name="iconEndPadding">0dp</item>
+        <item name="textStartPadding">6dp</item>
+        <item name="textEndPadding">4dp</item>
+        <item name="closeIconSize">16dp</item>
+        <item name="closeIconTint">?attr/colorPrimaryText</item>
+        <item name="closeIconStartPadding">0dp</item>
+        <item name="closeIconEndPadding">6dp</item>
+        <item name="chipEndPadding">2dp</item>
+    </style>
+
+    <!-- Dialog widgets in the dialogs' own accent: the slider and the outlined dropdown follow colorPrimary,
+         which is the toolbar color and too dark on a dark dialog. -->
+    <style name="ThemeOverlay.App.DialogAccent" parent="">
+        <item name="colorPrimary">?attr/colorAccent</item>
+    </style>
 
     <style name="TvOptionsMenuItem" parent="Widget.AppCompat.Button.Borderless"><item name="android:layout_width">?attr/actionBarSize</item>
         <item name="android:layout_height">match_parent</item>

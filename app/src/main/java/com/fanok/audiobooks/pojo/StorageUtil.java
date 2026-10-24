@@ -3,15 +3,18 @@ package com.fanok.audiobooks.pojo;
 import android.content.Context;
 import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.fanok.audiobooks.android_equalizer.EqualizerModel;
 import com.fanok.audiobooks.android_equalizer.Settings;
+import com.fanok.audiobooks.service.Checkpoint;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 
 public class StorageUtil {
     private final String STORAGE = "STORAGE";
+
+    /** Keys through which the player once received the chapter list and play state; dropped on the next checkpoint. */
+    private static final String[] LEGACY_PLAYBACK_KEYS = {"audioArrayList", "audioIndex", "urlBook", "imageUrl", "timeStart"};
+
     private SharedPreferences preferences;
 
     private final Context context;
@@ -21,60 +24,33 @@ public class StorageUtil {
         this.preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE);
     }
 
-    public void storeAudio(ArrayList<AudioPOJO> arrayList) {
-        SharedPreferences.Editor editor = preferences.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(arrayList);
-        editor.putString("audioArrayList", json);
-        editor.apply();
+    /** Writes the checkpoint as one record, under its book and as the latest one. */
+    public void storeCheckpoint(@NonNull Checkpoint checkpoint, boolean synchronous) {
+        String value = checkpoint.serialize();
+        SharedPreferences.Editor editor = preferences.edit()
+                .putString(Checkpoint.key(checkpoint.bookUrl), value)
+                .putString(Checkpoint.KEY_LAST, value);
+        for (String legacy : LEGACY_PLAYBACK_KEYS) {
+            editor.remove(legacy);
+        }
+        if (synchronous) {
+            editor.commit();
+        } else {
+            editor.apply();
+        }
     }
 
-    public ArrayList<AudioPOJO> loadAudio() {
-        Gson gson = new Gson();
-        String json = preferences.getString("audioArrayList", null);
-        Type type = new TypeToken<ArrayList<AudioPOJO>>() {
-        }.getType();
-        return gson.fromJson(json, type);
+    /** @return the checkpoint of {@code bookUrl}, or null when none was written */
+    @Nullable
+    public Checkpoint loadCheckpoint(@NonNull String bookUrl) {
+        Checkpoint checkpoint = Checkpoint.parse(preferences.getString(Checkpoint.key(bookUrl), null));
+        return checkpoint != null && checkpoint.bookUrl.equals(bookUrl) ? checkpoint : null;
     }
 
-    public void storeAudioIndex(int index) {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt("audioIndex", index);
-        editor.apply();
-    }
-
-    public int loadAudioIndex() {
-        return preferences.getInt("audioIndex", -1);//return -1 if no data found
-    }
-
-    public String loadUrlBook() {
-        return preferences.getString("urlBook", "");
-    }
-
-    public void storeUrlBook(@NonNull String url) {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("urlBook", url);
-        editor.apply();
-    }
-
-    public String loadImageUrl() {
-        return preferences.getString("imageUrl", "");
-    }
-
-    public void storeImageUrl(@NonNull String url) {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("imageUrl", url);
-        editor.apply();
-    }
-
-    public void storeTimeStart(int time) {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt("timeStart", time);
-        editor.apply();
-    }
-
-    public int loadTimeStart() {
-        return preferences.getInt("timeStart", 0);
+    /** @return the most recently written checkpoint, or null */
+    @Nullable
+    public Checkpoint loadLastCheckpoint() {
+        return Checkpoint.parse(preferences.getString(Checkpoint.KEY_LAST, null));
     }
 
     public void storeCountAudioListnered(int count) {
@@ -150,6 +126,9 @@ public class StorageUtil {
         Gson gson = new Gson();
         EqualizerSettings settings = gson.fromJson(preferences.getString("equalizer", "{}"),
                 EqualizerSettings.class);
+        if (settings == null) {
+            settings = new EqualizerSettings();
+        }
         EqualizerModel model = new EqualizerModel();
         model.setBassStrength(settings.bassStrength);
         model.setPresetPos(settings.presetPos);

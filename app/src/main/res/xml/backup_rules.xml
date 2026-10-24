@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto Backup up to API 30. The Room database stays in the backup; session cookies,
+     the parental-control PIN, storage paths and playlist URLs do not. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="com.fanok.audiobooks_preferences.xml" />
+    <exclude domain="sharedpref" path="Parental Control.xml" />
+    <exclude domain="sharedpref" path="STORAGE.xml" />
+    <exclude domain="root" path="app_webview/" />
+</full-backup-content>

@@ -10,7 +10,7 @@ public abstract class BooksDBAbstract {
         mDatabase = AppDatabase.getDatabase(context);
     }
 
-    protected AppDatabase getDatabase() {
+    public AppDatabase getDatabase() {
         return mDatabase;
     }
 

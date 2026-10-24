@@ -3,8 +3,6 @@ package com.fanok.audiobooks.fragment;
 import static android.content.Context.UI_MODE_SERVICE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS;
-import static com.fanok.audiobooks.Consts.PROXY_PASSWORD;
-import static com.fanok.audiobooks.Consts.PROXY_USERNAME;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -22,7 +20,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
 import android.provider.SearchRecentSuggestions;
-import android.provider.Settings;
 import android.util.Log;
 import android.util.TypedValue;
 import android.widget.TextView;
@@ -32,10 +29,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.media3.common.util.UnstableApi;
-import androidx.media3.exoplayer.offline.DownloadService;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.MultiSelectListPreference;
@@ -44,9 +39,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceGroup;
 import androidx.preference.PreferenceManager;
 import androidx.preference.PreferenceScreen;
-import com.codekidlabs.storagechooser.Content;
-import com.codekidlabs.storagechooser.StorageChooser;
-import com.fanok.audiobooks.App;
+import com.fanok.audiobooks.AppThemes;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MySuggestionProvider;
 import com.fanok.audiobooks.R;
@@ -59,8 +52,9 @@ import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.AudioListDBModel;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BackupPOJO;
+import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageUtil;
-import com.fanok.audiobooks.service.ExoDownloadService;
+import com.fanok.audiobooks.util.DownloadStorageHelper;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -71,8 +65,6 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -90,99 +82,95 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     private static final int EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 342;
 
 
+    private final ActivityResultLauncher<Intent> createBackupLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null && result.getData().getData() != null) {
+                    Uri uri = result.getData().getData();
+                    Context context = getContext();
+                    if (context == null) return;
+                    new Thread(() -> {
+                        int skipped = -1;
+                        try (java.io.OutputStream os = context.getContentResolver().openOutputStream(uri)) {
+                            if (os != null) {
+                                skipped = performBackupToStream(context, os);
+                            }
+                        } catch (Exception e) {
+                            Log.e("SettingsFragment", "Error writing backup to URI", e);
+                        }
+                        int finalSkipped = skipped;
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                Toast.makeText(getContext(), backupResultMessage(finalSkipped),
+                                        Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    }).start();
+                }
+            });
+
+    private final ActivityResultLauncher<Intent> restoreBackupLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null && result.getData().getData() != null) {
+                    Uri uri = result.getData().getData();
+                    Context context = getContext();
+                    if (context == null) return;
+                    new Thread(() -> {
+                        boolean success = false;
+                        try (java.io.InputStream is = context.getContentResolver().openInputStream(uri)) {
+                            if (is != null) {
+                                success = performRestoreFromStream(context, is);
+                            }
+                        } catch (Exception e) {
+                            Log.e("SettingsFragment", "Error reading restore from URI", e);
+                        }
+                        boolean finalSuccess = success;
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                Toast.makeText(getContext(),
+                                        finalSuccess ? getString(R.string.restored) : getString(R.string.error_restored),
+                                        Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    }).start();
+                }
+            });
+
     private final DialogInterface.OnClickListener mOnClickListener = (dialogInterface, i) -> {
-
-        Content content = new Content();
-        content.setCancelLabel(getString(R.string.cancel));
-        content.setSelectLabel(getString(R.string.select));
-        content.setOverviewHeading(getString(R.string.select_folder));
-        content.setCreateLabel(getString(R.string.create));
-        content.setFolderCreatedToastText(getString(R.string.folder_created));
-        content.setFolderErrorToastText(getString(R.string.error_folder_create));
-        content.setNewFolderLabel(getString(R.string.new_folder));
-        content.setTextfieldHintText(getString(R.string.new_folder));
-        content.setTextfieldErrorText(getString(R.string.empty_text));
-
-        StorageChooser.Builder builder = new StorageChooser.Builder()
-                .withContent(content)
-                .allowAddFolder(true)
-                .withActivity(getActivity())
-                .withMemoryBar(true)
-                .withFragmentManager(requireActivity().getFragmentManager())
-                .withPredefinedPath(Environment.getExternalStoragePublicDirectory(
-                        Environment.DIRECTORY_DOWNLOADS).getPath())
-                .allowCustomPath(true)
-                .setType(StorageChooser.DIRECTORY_CHOOSER);
-
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(requireActivity().getApplicationContext());
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_light_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
-            StorageChooser.Theme theme = new StorageChooser.Theme(
-                    requireContext().getApplicationContext());
-            theme.setScheme(getResources().getIntArray(R.array.paranoid_theme));
-            builder.setTheme(theme);
-        }
-
-        StorageChooser chooser = builder.build();
-
-        chooser.setOnSelectListener(path -> {
-            String filePath = backup(path);
-            if (filePath != null) {
-                Toast.makeText(getContext(), getString(R.string.backup_created),
-                        Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(getContext(),
-                        getString(R.string.backup_not_created),
-                        Toast.LENGTH_SHORT).show();
+        try {
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/json");
+            SimpleDateFormat formatForDateNow = new SimpleDateFormat("'AudioBook_backup_'yyyy_MM_dd_HH_mm_ss'.json'", Locale.forLanguageTag("UK"));
+            intent.putExtra(Intent.EXTRA_TITLE, formatForDateNow.format(new Date()));
+            createBackupLauncher.launch(intent);
+        } catch (Exception e) {
+            Context context = getContext();
+            if (context != null) {
+                new Thread(() -> {
+                    String path = DownloadStorageHelper.getDownloadPath(context);
+                    int skipped = backup(context, path);
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), backupResultMessage(skipped),
+                                    Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }).start();
             }
-        });
-        chooser.show();
+        }
     };
 
     private final DialogInterface.OnClickListener restoreClickListnere = (dialogInterface, i) -> {
-        Content content = new Content();
-        content.setCancelLabel(getString(R.string.cancel));
-        content.setSelectLabel(getString(R.string.select));
-        content.setOverviewHeading(getString(R.string.select_folder));
-        content.setCreateLabel(getString(R.string.create));
-        content.setFolderCreatedToastText(getString(R.string.folder_created));
-        content.setFolderErrorToastText(getString(R.string.error_folder_create));
-        content.setNewFolderLabel(getString(R.string.new_folder));
-        content.setTextfieldHintText(getString(R.string.new_folder));
-        content.setTextfieldErrorText(getString(R.string.empty_text));
-
-        StorageChooser.Builder builder = new StorageChooser.Builder()
-                .withContent(content)
-                .withActivity(getActivity())
-                .withMemoryBar(false)
-                .withFragmentManager(requireActivity().getFragmentManager())
-                .allowCustomPath(true)
-                .setType(StorageChooser.FILE_PICKER);
-
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(requireActivity().getApplicationContext());
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_light_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
-            StorageChooser.Theme theme = new StorageChooser.Theme(
-                    requireContext().getApplicationContext());
-            theme.setScheme(getResources().getIntArray(R.array.paranoid_theme));
-            builder.setTheme(theme);
+        try {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("*/*");
+            restoreBackupLauncher.launch(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        StorageChooser chooser = builder.build();
-
-        chooser.setOnSelectListener(path -> {
-            File file = new File(path);
-            if (path.contains(".json") && restore(readTextFile(file))) {
-                Toast.makeText(getContext(), getString(R.string.restored),
-                        Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(getContext(), getString(R.string.error_restored),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
-        chooser.show();
     };
 
     @Override
@@ -199,20 +187,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                     .commit();
         }
     }
-
-
-    private final ActivityResultLauncher<Intent> manageStorageLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    if (Environment.isExternalStorageManager()) {
-                        showAllert(requireContext(), R.string.confirm_restore, restoreClickListnere);
-                    } else {
-                        Toast.makeText(requireContext(), getString(R.string.worning_not_allowed_read_storege),
-                                Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
 
 
     @Override
@@ -247,7 +221,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                if (isGranted) {
+                if (isGranted || Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                    showAllert(requireContext(), R.string.confirm_backup, mOnClickListener);
                 } else {
                     Toast.makeText(getContext(),
@@ -273,61 +247,16 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 false);
         initSummary(getPreferenceScreen());
 
-        preferenceChangeListner("pref_proxy",
-                (preference, newValue) -> {
-                    App.useProxy = (boolean) newValue;
-                    if((boolean)newValue){
-                        Authenticator authenticator = new Authenticator() {
-                            public PasswordAuthentication getPasswordAuthentication() {
-                                return (new PasswordAuthentication(PROXY_USERNAME,
-                                        PROXY_PASSWORD.toCharArray()));
-                            }
-                        };
-                        Authenticator.setDefault(authenticator);
-                    }
-
-                    return true;
-                });
-
-        /*preferenceChangeListner("pref_proxy",
-                (preference, newValue) -> {
-                    if(!validateIP((String) newValue)){
-                        Toast.makeText(preference.getContext(), R.string
-                        .incorect_fomat_proxy_server, Toast.LENGTH_LONG).show();
-                        return false;
-                    }else return true;
-                });
-
-        preferenceChangeListner("pref_proxy_prot", new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                if(!validatePORT((String) newValue)){
-                    Toast.makeText(preference.getContext(), R.string.incorect_fomat_port, Toast
-                    .LENGTH_LONG).show();
-                    return false;
-                }else return true;
-            }
-        });
-
-        preferenceChangeListner("proxy_enabled", (preference, newValue) -> {
-            setProxy((Boolean) newValue);
-            return true;
-        });
-
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(requireContext());
-        setProxy(pref.getBoolean("proxy_enabled", false));
-
-*/
-
         preferenceChangeListner("pref_theme", (preference, newValue) -> {
-            if (newValue.equals(getString(R.string.theme_dark_value)) || newValue
-                    .equals(getString(R.string.theme_black_value))) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-            }
-            requireActivity().recreate();
+            // the value is stored after this returns; apply night mode and restart once it is
+            Context context = requireContext().getApplicationContext();
+            requireActivity().getWindow().getDecorView().post(() -> {
+                AppThemes.applyNightMode(context);
+                if (getActivity() != null) {
+                    // dark and black share a night mode, so the restart is not implied
+                    getActivity().recreate();
+                }
+            });
             return true;
         });
 
@@ -353,47 +282,58 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             return true;
         });
 
+        // database work on the storage worker, never on the main thread (DATA-07)
         preferenceClickListner("clear_history", preference -> {
+            final Context app = preference.getContext().getApplicationContext();
             showAllert(preference.getContext(), R.string.confirm_clear_history,
-                    (dialogInterface, i) -> {
-                        BooksDBModel booksDBModel = new BooksDBModel(preference.getContext());
+                    (dialogInterface, i) -> DownloadStorageHelper.submit(() -> {
+                        BooksDBModel booksDBModel = new BooksDBModel(app);
                         booksDBModel.clearHistory();
                         booksDBModel.closeDB();
-                        AudioDBModel audioDBModel = new AudioDBModel(preference.getContext());
+                        AudioDBModel audioDBModel = new AudioDBModel(app);
                         audioDBModel.clearAll();
                         audioDBModel.closeDB();
-                    });
+                    }));
             return true;
         });
 
         preferenceClickListner("clear_favorite", preference -> {
+            final Context app = preference.getContext().getApplicationContext();
             showAllert(preference.getContext(), R.string.confirm_clear_favorite,
-                    (dialogInterface, i) -> {
-                        BooksDBModel dbModel = new BooksDBModel(
-                                preference.getContext());
+                    (dialogInterface, i) -> DownloadStorageHelper.submit(() -> {
+                        BooksDBModel dbModel = new BooksDBModel(app);
                         dbModel.clearFavorite();
                         dbModel.closeDB();
-                    });
+                    }));
             return true;
         });
 
         preferenceClickListner("clear_audio_list", preference -> {
+            final Context app = preference.getContext().getApplicationContext();
             showAllert(preference.getContext(), R.string.confirm_clear_audio_list,
-                    (dialogInterface, i) -> {
-                        AudioListDBModel dbModel = new AudioListDBModel(
-                                preference.getContext());
+                    (dialogInterface, i) -> DownloadStorageHelper.submit(() -> {
+                        AudioListDBModel dbModel = new AudioListDBModel(app);
                         dbModel.clearAll();
                         dbModel.closeDB();
-                    });
+                    }));
             return true;
         });
 
         preferenceClickListner("clear_savind", preference -> {
+            final Context app = preference.getContext().getApplicationContext();
             showAllert(preference.getContext(), R.string.confirm_clear_saved,
-                    (dialogInterface, i) -> {
-                        DownloadService.sendRemoveAllDownloads(
-                                requireContext(), ExoDownloadService.class, false);
-                    });
+                    (dialogInterface, i) -> DownloadStorageHelper.submit(() -> {
+                        // every saved book: rows and recorded copies; imported books lose rows only
+                        BooksDBModel dbModel = new BooksDBModel(app);
+                        List<String> urls = new ArrayList<>();
+                        for (BookPOJO book : dbModel.getAllSaved()) {
+                            if (book.getUrl() != null) {
+                                urls.add(book.getUrl());
+                            }
+                        }
+                        dbModel.closeDB();
+                        DownloadStorageHelper.removeBooks(app, urls);
+                    }));
             return true;
         });
 
@@ -403,14 +343,15 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         });
 
         preferenceClickListner("backup", preference -> {
-            boolean hasPermission = (ContextCompat.checkSelfPermission(requireContext(),
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED);
-            if (!hasPermission) {
-                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            } else {
-                showAllert(preference.getContext(), R.string.confirm_backup,
-                        mOnClickListener);
+            try {
+                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("application/json");
+                SimpleDateFormat formatForDateNow = new SimpleDateFormat("'AudioBook_backup_'yyyy_MM_dd_HH_mm_ss'.json'", Locale.forLanguageTag("UK"));
+                intent.putExtra(Intent.EXTRA_TITLE, formatForDateNow.format(new Date()));
+                createBackupLauncher.launch(intent);
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), R.string.backup_not_created, Toast.LENGTH_SHORT).show();
             }
             return true;
         });
@@ -457,27 +398,14 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         }
 
         preferenceClickListner("restore", preference -> {
-
-            if (SDK_INT >= Build.VERSION_CODES.R) {
-                try {
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                    intent.addCategory("android.intent.category.DEFAULT");
-                    intent.setData(Uri.parse(String.format("package:%s", requireContext().getPackageName())));
-                    manageStorageLauncher.launch(intent);
-                } catch (Exception e) {
-                    Intent intent = new Intent();
-                    intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                    manageStorageLauncher.launch(intent);
-                }
-            } else {
-                if (!EasyPermissions.hasPermissions(requireActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                    EasyPermissions.requestPermissions(this, getString(R.string.permission_read_external_storage),
-                            EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE, Manifest.permission.READ_EXTERNAL_STORAGE);
-                } else {
-                    showAllert(preference.getContext(), R.string.confirm_restore, restoreClickListnere);
-                }
+            try {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("*/*");
+                restoreBackupLauncher.launch(intent);
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), R.string.error_restored, Toast.LENGTH_SHORT).show();
             }
-
             return true;
         });
 
@@ -495,7 +423,127 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             ClearSavedActivity.startActivity(requireActivity());
             return true;
         });
+
+        Preference downloadPathPref = findPreference(DownloadStorageHelper.PREF_DOWNLOAD_PATH);
+        if (downloadPathPref != null) {
+            downloadPathPref.setSummary(DownloadStorageHelper.getDownloadPath(requireContext()));
+        }
+
+        preferenceClickListner("pref_download_path", preference -> {
+            showDownloadFolderDialog();
+            return true;
+        });
     }
+
+    private void showDownloadFolderDialog() {
+        Context context = getContext();
+        if (context == null) return;
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 101);
+            }
+        }
+
+        CharSequence[] options = new CharSequence[]{"Выбрать папку (Проводник)", "Сбросить на стандартную"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Папка для скачивания");
+        builder.setItems(options, (dialog, which) -> {
+            if (which == 0) {
+                if (!DownloadStorageHelper.openFolderPicker(folderPickerLauncher)) {
+                    showFallbackFolderSelectionDialog(context);
+                }
+            } else if (which == 1) {
+                DownloadStorageHelper.resetToDefault(context);
+                Preference pref = findPreference(DownloadStorageHelper.PREF_DOWNLOAD_PATH);
+                if (pref != null) {
+                    pref.setSummary(DownloadStorageHelper.getDownloadPath(context));
+                }
+                DownloadStorageHelper.scanAndImportDownloadedBooks(context.getApplicationContext());
+                Toast.makeText(context, "Сброшено на стандартную папку", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.show();
+    }
+
+    private void showFallbackFolderSelectionDialog(Context context) {
+        java.util.List<DownloadStorageHelper.StorageOption> options = DownloadStorageHelper.getAvailableStorageOptions(context);
+        ArrayList<String> titles = new ArrayList<>();
+        for (DownloadStorageHelper.StorageOption opt : options) {
+            titles.add(opt.title + "\n" + opt.path);
+        }
+        titles.add("✏️ Указать свой путь вручную");
+
+        new AlertDialog.Builder(context)
+                .setTitle("Выберите место для скачивания книг")
+                .setItems(titles.toArray(new CharSequence[0]), (dialog, which) -> {
+                    if (which < options.size()) {
+                        DownloadStorageHelper.StorageOption selected = options.get(which);
+                        File dir = new File(selected.path);
+                        if (!dir.exists()) {
+                            dir.mkdirs();
+                        }
+                        DownloadStorageHelper.saveDownloadPath(context, selected.path);
+                        Preference pref = findPreference(DownloadStorageHelper.PREF_DOWNLOAD_PATH);
+                        if (pref != null) {
+                            pref.setSummary(DownloadStorageHelper.getDownloadPath(context));
+                        }
+                        DownloadStorageHelper.scanAndImportDownloadedBooks(context.getApplicationContext());
+                        Toast.makeText(context, "Папка установлена: " + selected.path, Toast.LENGTH_LONG).show();
+                    } else {
+                        showManualPathInputDialog(context);
+                    }
+                })
+                .show();
+    }
+
+    private void showManualPathInputDialog(Context context) {
+        android.widget.EditText input = new android.widget.EditText(context);
+        input.setHint("/storage/emulated/0/Download/AudioBooks");
+        input.setText(DownloadStorageHelper.getDownloadPath(context));
+        new AlertDialog.Builder(context)
+                .setTitle("Укажите путь к папке")
+                .setView(input)
+                .setPositiveButton("ОК", (dialog, which) -> {
+                    String path = input.getText().toString().trim();
+                    if (!path.isEmpty()) {
+                        File dir = new File(path);
+                        if (!dir.exists()) {
+                            dir.mkdirs();
+                        }
+                        DownloadStorageHelper.saveDownloadPath(context, path);
+                        Preference pref = findPreference(DownloadStorageHelper.PREF_DOWNLOAD_PATH);
+                        if (pref != null) {
+                            pref.setSummary(DownloadStorageHelper.getDownloadPath(context));
+                        }
+                        DownloadStorageHelper.scanAndImportDownloadedBooks(context.getApplicationContext());
+                        Toast.makeText(context, "Папка установлена: " + path, Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton("Отмена", null)
+                .show();
+    }
+
+    private final ActivityResultLauncher<Intent> folderPickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                try {
+                    if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                        Context context = getContext();
+                        if (context != null) {
+                            DownloadStorageHelper.saveDownloadUri(context.getApplicationContext(), result.getData());
+                            Preference pref = findPreference(DownloadStorageHelper.PREF_DOWNLOAD_PATH);
+                            if (pref != null) {
+                                pref.setSummary(DownloadStorageHelper.getDownloadPath(context));
+                            }
+                            DownloadStorageHelper.scanAndImportDownloadedBooks(context.getApplicationContext());
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
 
     @Override
     public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
@@ -510,15 +558,64 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         updatePrefSummary(findPreference(key));
     }
 
-    private String backup(@NotNull String dir) {
+    /** Writes a backup; returns the number of unreadable rows left out, or -1 when nothing was written. */
+    private int performBackupToStream(Context context, java.io.OutputStream os) {
+        try {
+            BackupPOJO backup = createBackup(context);
+            Gson gson = new GsonBuilder().create();
+            try (java.io.OutputStreamWriter writer = new java.io.OutputStreamWriter(os, java.nio.charset.StandardCharsets.UTF_8)) {
+                writer.write(gson.toJson(backup));
+                writer.flush();
+            }
+            return backup.getSkippedRows();
+        } catch (Exception e) {
+            Log.e("SettingsFragment", "Backup error", e);
+            return -1;
+        }
+    }
+
+    /** Every table restore reads, plus the format version; rows that cannot be read are skipped and counted. */
+    private static BackupPOJO createBackup(Context context) {
+        BooksDBModel booksDBModel = new BooksDBModel(context);
+        AudioDBModel audioDBModel = new AudioDBModel(context);
+        AudioListDBModel audioListDBModel = new AudioListDBModel(context);
         BackupPOJO backup = new BackupPOJO();
-        BooksDBModel booksDBModel = new BooksDBModel(getContext());
-        AudioDBModel audioDBModel = new AudioDBModel(getContext());
-        AudioListDBModel audioListDBModel = new AudioListDBModel(getContext());
         backup.setBooksFavorite(booksDBModel.getAllFavorite());
         backup.setBooksHistory(booksDBModel.getAllHistory());
+        backup.setBooksSaved(booksDBModel.getAllSaved());
         backup.setAudio(audioDBModel.getAll());
         backup.setAudioList(audioListDBModel.getAll());
+        backup.setSkippedRows(booksDBModel.getSkippedRows() + audioDBModel.getSkippedRows());
+        if (backup.getSkippedRows() > 0) {
+            Log.w("SettingsFragment", "Backup left out " + backup.getSkippedRows() + " unreadable rows");
+        }
+        return backup;
+    }
+
+    private String backupResultMessage(int skipped) {
+        if (skipped > 0) return getString(R.string.backup_created_skipped, skipped);
+        return getString(skipped == 0 ? R.string.backup_created : R.string.backup_not_created);
+    }
+
+    private boolean performRestoreFromStream(Context context, java.io.InputStream is) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+            }
+            return restore(context, sb.toString());
+        } catch (Exception e) {
+            Log.e("SettingsFragment", "Restore error", e);
+            return false;
+        }
+    }
+
+    /** Returns the number of unreadable rows left out of the written file, or -1 when nothing was written. */
+    private int backup(@NotNull Context context, @NotNull String dir) {
+        BackupPOJO backup = createBackup(context);
         GsonBuilder builder = new GsonBuilder();
         Gson gson = builder.create();
         FileWriter writer;
@@ -529,18 +626,37 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
         String name = dir + "/" + formatForDateNow.format(dateNow) + ".json";
 
-        booksDBModel.closeDB();
-        audioDBModel.closeDB();
-
         try {
+            File targetDir = new File(dir);
+            if (!targetDir.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                targetDir.mkdirs();
+            }
             writer = new FileWriter(name);
             writer.write(gson.toJson(backup));
             writer.close();
         } catch (IOException e) {
-            return null;
+            try {
+                Context ctx = getContext();
+                if (ctx != null) {
+                    File fallbackDir = ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+                    if (fallbackDir != null) {
+                        if (!fallbackDir.exists()) {
+                            //noinspection ResultOfMethodCallIgnored
+                            fallbackDir.mkdirs();
+                        }
+                        name = fallbackDir.getAbsolutePath() + "/" + formatForDateNow.format(dateNow) + ".json";
+                        writer = new FileWriter(name);
+                        writer.write(gson.toJson(backup));
+                        writer.close();
+                        return backup.getSkippedRows();
+                    }
+                }
+            } catch (Exception ignored) {}
+            return -1;
         }
 
-        return name;
+        return backup.getSkippedRows();
     }
 
     private void initSummary(Preference p) {
@@ -590,51 +706,67 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         return myData.toString();
     }
 
-    private boolean restore(@NotNull String file) {
-        BooksDBModel booksDBModel = new BooksDBModel(getContext());
-        AudioDBModel audioDBModel = new AudioDBModel(getContext());
-        AudioListDBModel audioListDBModel = new AudioListDBModel(getContext());
-        boolean returnValue = true;
+    /**
+     * Validates the whole document first, then replaces every table it carries in one transaction, so a bad
+     * file or a failed write leaves the database as it was. A table whose collection is absent is not touched.
+     */
+    private boolean restore(@NotNull Context context, @NotNull String file) {
+        final BackupPOJO backup;
         try {
-            Gson gson = new Gson();
-            BackupPOJO backup = gson.fromJson(file, BackupPOJO.class);
-            booksDBModel.clearFavorite();
-            if (backup.getBooksFavorite() != null) {
-                for (int i = 0; i < backup.getBooksFavorite().size(); i++) {
-                    booksDBModel.addFavorite(backup.getBooksFavorite().get(
-                            backup.getBooksFavorite().size() - 1 - i));
-                }
-            }
-
-            booksDBModel.clearHistory();
-            if (backup.getBooksHistory() != null) {
-                for (int i = 0; i < backup.getBooksHistory().size(); i++) {
-                    booksDBModel.addHistory(
-                            backup.getBooksHistory().get(backup.getBooksHistory().size() - 1 - i));
-                }
-            }
-
-            audioDBModel.clearAll();
-            if (backup.getAudio() != null) {
-                for (int i = 0; i < backup.getAudio().size(); i++) {
-                    audioDBModel.add(backup.getAudio().get(backup.getAudio().size() - 1 - i));
-                }
-            }
-
-            audioListDBModel.clearAll();
-            if (backup.getAudioList() != null) {
-                for (int i = 0; i < backup.getAudioList().size(); i++) {
-                    audioListDBModel.add(backup.getAudioList().get(i));
-                }
-            }
-
-
-        } catch (Exception e) {
-            returnValue = false;
+            backup = BackupPOJO.parse(file);
+        } catch (BackupPOJO.InvalidBackupException e) {
+            Log.w("SettingsFragment", "Backup rejected", e);
+            return false;
         }
-        audioDBModel.closeDB();
-        booksDBModel.closeDB();
-        return returnValue;
+        BooksDBModel booksDBModel = new BooksDBModel(context);
+        AudioDBModel audioDBModel = new AudioDBModel(context);
+        AudioListDBModel audioListDBModel = new AudioListDBModel(context);
+        com.fanok.audiobooks.room.AppDatabase database = booksDBModel.getDatabase();
+        try {
+            database.runInTransaction(() -> {
+                if (backup.getBooksFavorite() != null) {
+                    database.favoriteDao().deleteAll();
+                    for (int i = 0; i < backup.getBooksFavorite().size(); i++) {
+                        booksDBModel.addFavorite(backup.getBooksFavorite().get(
+                                backup.getBooksFavorite().size() - 1 - i));
+                    }
+                }
+
+                if (backup.getBooksHistory() != null) {
+                    database.historyDao().deleteAll();
+                    for (int i = 0; i < backup.getBooksHistory().size(); i++) {
+                        booksDBModel.addHistory(
+                                backup.getBooksHistory().get(backup.getBooksHistory().size() - 1 - i));
+                    }
+                }
+
+                if (backup.getBooksSaved() != null) {
+                    database.savedDao().deleteAll();
+                    for (int i = 0; i < backup.getBooksSaved().size(); i++) {
+                        booksDBModel.addSaved(
+                                backup.getBooksSaved().get(backup.getBooksSaved().size() - 1 - i));
+                    }
+                }
+
+                if (backup.getAudio() != null) {
+                    database.audioDao().deleteAll();
+                    for (int i = 0; i < backup.getAudio().size(); i++) {
+                        audioDBModel.add(backup.getAudio().get(backup.getAudio().size() - 1 - i));
+                    }
+                }
+
+                if (backup.getAudioList() != null) {
+                    audioListDBModel.clearAll();
+                    for (int i = 0; i < backup.getAudioList().size(); i++) {
+                        audioListDBModel.add(backup.getAudioList().get(i));
+                    }
+                }
+            });
+            return true;
+        } catch (RuntimeException e) {
+            Log.e("SettingsFragment", "Restore failed, database left unchanged", e);
+            return false;
+        }
     }
 
     private void showAllert(@NotNull Context context, int message,
@@ -689,39 +821,5 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                     Toast.LENGTH_SHORT).show();
         }
     }
-
-    /*private void setProxy(boolean value){
-        Preference preferenceProxy = findPreference("pref_proxy");
-        if(preferenceProxy!=null){
-            if(value){
-                preferenceProxy.setEnabled(true);
-            }else {
-                preferenceProxy.setEnabled(false);
-            }
-        }
-
-        Preference preferencePort = findPreference("pref_proxy_prot");
-        if(preferencePort!=null){
-            if(value){
-                preferencePort.setEnabled(true);
-            }else {
-                preferencePort.setEnabled(false);
-            }
-        }
-    }
-
-
-    private boolean validateIP(@NonNull String ip) {
-        if (ip.isEmpty()) return true;
-        Matcher matcher = Consts.REGEXP_IP.matcher(ip);
-        return matcher.find();
-    }
-
-    private boolean validatePORT(@NonNull String port) {
-        if (port.isEmpty()) return true;
-        Matcher matcher = Consts.REGEXP_PORT.matcher(port);
-        return matcher.find();
-    }*/
-
 
 }

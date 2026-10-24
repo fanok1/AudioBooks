@@ -1,15 +1,18 @@
 package com.fanok.audiobooks.activity;
 
 import static com.fanok.audiobooks.Consts.handleUserInput;
-import static com.fanok.audiobooks.service.MediaPlayerService.getNotificationId;
 
-import android.app.NotificationManager;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
@@ -17,6 +20,7 @@ import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,18 +40,17 @@ import androidx.preference.PreferenceManager;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
-import com.fanok.audiobooks.FragmentTagSteck;
-import com.fanok.audiobooks.LocaleManager;
+import com.fanok.audiobooks.AppThemes;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.MainPresenter;
-import com.fanok.audiobooks.service.MediaPlayerService;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
-import java.util.Locale;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -57,7 +60,8 @@ public class MainActivity extends MvpAppCompatActivity
     private static final String EXSTRA_FRAGMENT = "startFragment";
     private static final String EXSTRA_URL = "url";
     private static boolean closeApp = false;
-    private boolean isSavedInstanceState = false;
+    /** True on a fresh creation only: a restored activity keeps its fragments and has had its first-launch dialogs. */
+    private boolean freshStart = false;
 
 
 
@@ -75,12 +79,20 @@ public class MainActivity extends MvpAppCompatActivity
         return new MainPresenter(getApplicationContext());
     }
 
-    private ArrayList<FragmentTagSteck> fragmentsTag;
     private NavigationView navigationView;
-    private AlertDialog.Builder alert;
-    private boolean firstStart = true;
+    private final DialogQueue dialogs = new DialogQueue();
+    private Runnable permissionDone;
 
     private SharedPreferences preferences;
+
+    private final ActivityResultLauncher<String> notificationPermission = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), granted -> {
+                if (permissionDone != null) {
+                    Runnable done = permissionDone;
+                    permissionDone = null;
+                    done.run();
+                }
+            });
 
 
     public static void setCloseApp(boolean closeApp) {
@@ -109,11 +121,6 @@ public class MainActivity extends MvpAppCompatActivity
         context.startActivity(intent);
     }
 
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(LocaleManager.onAttach(base));
-    }
-
     public ArrayList<TextView> getTextViewArrayList() {
         return mTextViewArrayList;
     }
@@ -121,74 +128,105 @@ public class MainActivity extends MvpAppCompatActivity
     @Override
     protected void onStart() {
         super.onStart();
-        if (!isSavedInstanceState) {
-            if (firstStart) {
-                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-                if (pm != null) {
-                    if (!pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks")) {
-                        UiModeManager uiModeManager = (UiModeManager) getSystemService(
-                                UI_MODE_SERVICE);
-                        StorageUtil storageUtil = new StorageUtil(this);
-                        boolean b = storageUtil.loadBattaryOptimizeDisenbled();
-                        if (uiModeManager != null && uiModeManager.getCurrentModeType()
-                                != Configuration.UI_MODE_TYPE_TELEVISION && !b) {
-                            alert.show();
-                        }
-                    }
-                }
-
-                if (!preferences.getBoolean("first", false)) {
-
-                    AlertDialog.Builder parentalControlBuilder =
-                            new AlertDialog.Builder(this);
-                    parentalControlBuilder.setTitle(R.string.parental_control)
-                            .setMessage(R.string.enabled_parental_control)
-                            .setIcon(R.drawable.ic_lock)
-                            .setCancelable(false)
-                            .setPositiveButton(getString(R.string.yes),
-                                    (dialogInterface, i) -> {
-                                        dialogInterface.dismiss();
-                                        Intent intent = new Intent(getApplicationContext(),
-                                                ParentalControlActivity.class);
-                                        intent.putExtra("enabled", true);
-                                        startActivity(intent);
-                                    })
-                            .setNegativeButton(getString(R.string.cancel), null);
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle(getString(R.string.privacy))
-                            .setMessage(getString(R.string.privacy_message))
-                            .setIcon(R.drawable.ic_privacy)
-                            .setCancelable(false)
-                            .setPositiveButton(getString(R.string.yes),
-                                    (dialog, id) -> {
-                                        SharedPreferences.Editor editor = preferences.edit();
-                                        editor.putBoolean("first", true);
-                                        editor.apply();
-                                        dialog.cancel();
-                                        AlertDialog parentControlAlert =
-                                                parentalControlBuilder.create();
-                                        parentControlAlert.show();
-                                    });
-                    AlertDialog alert = builder.create();
-                    alert.show();
-                }
-
-                Intent intent = getIntent();
-                int fragment = intent.getIntExtra(EXSTRA_FRAGMENT, -1);
-                String url = intent.getStringExtra(EXSTRA_URL);
-                if (url != null && !url.isEmpty() && fragment != -1) {
-                    mPresenter.startFragment(fragment, url);
-                } else {
-                    SharedPreferences pref = PreferenceManager
-                            .getDefaultSharedPreferences(this);
-                    fragment = Integer.parseInt(pref.getString("pref_start_screen", "0"));
-                    mPresenter.startFragment(fragment,
-                            intent.getBooleanExtra("notificationClick", false));
-                }
-                firstStart = false;
-            }
+        if (!freshStart) {
+            return;
         }
+        freshStart = false;
+
+        Intent intent = getIntent();
+        int fragment = intent.getIntExtra(EXSTRA_FRAGMENT, -1);
+        String url = intent.getStringExtra(EXSTRA_URL);
+        if (url != null && !url.isEmpty() && fragment != -1) {
+            mPresenter.startFragment(fragment, url);
+        } else {
+            SharedPreferences pref = PreferenceManager
+                    .getDefaultSharedPreferences(this);
+            fragment = Integer.parseInt(pref.getString("pref_start_screen", "0"));
+            mPresenter.startFragment(fragment,
+                    intent.getBooleanExtra("notificationClick", false));
+        }
+
+        // one decision at a time, each with its reason (UI-18)
+        if (!preferences.getBoolean("first", false)) {
+            dialogs.add(this::showPrivacyDialog);
+            dialogs.add(this::showParentalControlDialog);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            dialogs.add(this::showNotificationRationale);
+        }
+        if (shouldAskBatteryOptimization()) {
+            dialogs.add(this::showBatteryDialog);
+        }
+    }
+
+    private boolean shouldAskBatteryOptimization() {
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (pm == null || pm.isIgnoringBatteryOptimizations("com.fanok.audiobooks")) {
+            return false;
+        }
+        UiModeManager uiModeManager = (UiModeManager) getApplicationContext().getSystemService(UI_MODE_SERVICE);
+        boolean dontShow = new StorageUtil(this).loadBattaryOptimizeDisenbled();
+        return uiModeManager != null
+                && uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION && !dontShow;
+    }
+
+    private void showPrivacyDialog(@NonNull Runnable done) {
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.privacy))
+                .setMessage(getString(R.string.privacy_message))
+                .setIcon(R.drawable.ic_privacy)
+                .setCancelable(false)
+                .setPositiveButton(getString(R.string.yes), (dialog, id) -> {
+                    preferences.edit().putBoolean("first", true).apply();
+                    dialog.cancel();
+                })
+                .setOnDismissListener(dialog -> done.run())
+                .show();
+    }
+
+    private void showParentalControlDialog(@NonNull Runnable done) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.parental_control)
+                .setMessage(R.string.enabled_parental_control)
+                .setIcon(R.drawable.ic_lock)
+                .setCancelable(false)
+                .setPositiveButton(getString(R.string.yes), (dialogInterface, i) -> {
+                    dialogInterface.dismiss();
+                    Intent intent = new Intent(getApplicationContext(), ParentalControlActivity.class);
+                    intent.putExtra("enabled", true);
+                    startActivity(intent);
+                })
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setOnDismissListener(dialog -> done.run())
+                .show();
+    }
+
+    private void showNotificationRationale(@NonNull Runnable done) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.app_name)
+                .setMessage(R.string.notification_permission_rationale)
+                .setCancelable(false)
+                .setPositiveButton(R.string.continue_, (dialog, which) -> {
+                    permissionDone = done;
+                    notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+                })
+                .setNegativeButton(R.string.cancel, (dialog, which) -> done.run())
+                .show();
+    }
+
+    private void showBatteryDialog(@NonNull Runnable done) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.app_name)
+                .setMessage(R.string.setIgnoredBatteryOptimyze)
+                .setNegativeButton(R.string.cancel, null)
+                .setCancelable(true)
+                .setNeutralButton(R.string.do_not_how, (dialogInterface, i) -> setBattaryOptimizeDisenbled(true))
+                .setPositiveButton(R.string.ok,
+                        (dialogInterface, i) -> mPresenter.openSettingsOptimizeBattery(dialogInterface))
+                .setOnDismissListener(dialog -> done.run())
+                .show();
     }
 
     @Override
@@ -221,31 +259,16 @@ public class MainActivity extends MvpAppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // the style before any inflation; the preference is read once here (UI-19)
+        AppThemes.apply(this, R.style.AppTheme_NoAnimTheme, R.style.LightAppTheme_NoAnimTheme,
+                R.style.AppThemeBlack_NoAnimTheme);
         super.onCreate(savedInstanceState);
         closeApp = false;
         Log.d(TAG, "onCreate: called");
 
         setContentView(R.layout.activity_main);
 
-
-
-
-
-
-
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-
         preferences = getSharedPreferences("FIRST", Context.MODE_PRIVATE);
-
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
-            setTheme(R.style.AppTheme_NoAnimTheme);
-        } else if (themeName.equals(getString(R.string.theme_light_value))) {
-            setTheme(R.style.LightAppTheme_NoAnimTheme);
-        } else if (themeName.equals(getString(R.string.theme_black_value))) {
-            setTheme(R.style.AppThemeBlack_NoAnimTheme);
-        }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -287,17 +310,7 @@ public class MainActivity extends MvpAppCompatActivity
         }
 
 
-        fragmentsTag = new ArrayList<>();
-        isSavedInstanceState = savedInstanceState != null;
-        alert = new AlertDialog.Builder(this);
-        alert.setTitle(R.string.app_name);
-        alert.setMessage(R.string.setIgnoredBatteryOptimyze);
-        alert.setNegativeButton(R.string.cancel, null);
-        alert.setCancelable(true);
-        alert.setNeutralButton(R.string.do_not_how,
-                (dialogInterface, i) -> setBattaryOptimizeDisenbled(true));
-        alert.setPositiveButton("OK",
-                (dialogInterface, i) -> mPresenter.openSettingsOptimizeBattery(dialogInterface));
+        freshStart = savedInstanceState == null;
 
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -326,17 +339,7 @@ public class MainActivity extends MvpAppCompatActivity
                             }
                         }
                     }
-                    if (!fragmentsTag.isEmpty()) fragmentsTag.remove(fragmentsTag.size() - 1);
                     getSupportFragmentManager().popBackStack();
-                    while (true) {
-                        if (!fragmentsTag.isEmpty() && fragmentsTag.get(
-                                fragmentsTag.size() - 1).isSkip()) {
-                            fragmentsTag.remove(fragmentsTag.size() - 1);
-                            getSupportFragmentManager().popBackStack();
-                        } else {
-                            break;
-                        }
-                    }
                     return;
                 }
                 setEnabled(false);
@@ -362,22 +365,42 @@ public class MainActivity extends MvpAppCompatActivity
         startActivity(intent);
     }
 
+    /**
+     * Shows {@code fragment} under {@code tag}. The fragment manager's back stack is the only navigation state
+     * (UI-03): a screen already on top is kept, an older copy of the same screen leaves the stack before the new
+     * one is pushed, and nothing is committed after the state was saved.
+     */
     @Override
     public void showFragment(@NotNull Fragment fragment, @NonNull String tag) {
-        if (!fragmentsTag.isEmpty() && tag.equals(
-                fragmentsTag.get(fragmentsTag.size() - 1).getTag())
-                && !tag.equals("searchebleBooks")) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (fragmentManager.isStateSaved()) {
             return;
         }
-        addFragmentTag(tag);
-        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment current = fragmentManager.findFragmentById(R.id.container);
+        // the same tag on another URL (a filter-bar period rewrote the current one) is a different listing
+        if (current != null && tag.equals(current.getTag()) && !tag.equals("searchebleBooks")
+                && Objects.equals(urlArg(current), urlArg(fragment))) {
+            return;
+        }
+        fragmentManager.popBackStackImmediate(tag, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        Fragment top = fragmentManager.findFragmentById(R.id.container);
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         transaction.replace(R.id.container, fragment, tag);
-        if (fragmentsTag.size() > 1) {
+        // the root screen still on top after the pop and re-opened on the URL it was opened on (a filter-bar
+        // period rewrote its current one) is replaced in place, so Back does not show a copy of it; another
+        // listing under the same tag (an author's, opened from a book) is pushed
+        String opened = top != null && top.getArguments() != null
+                ? top.getArguments().getString(BooksFragment.ARG_OPENED_URL) : null;
+        if (top != null && !(tag.equals(top.getTag()) && opened != null && opened.equals(urlArg(fragment)))) {
             transaction.addToBackStack(tag);
         }
         transaction.commit();
 
+    }
+
+    private static String urlArg(Fragment fragment) {
+        Bundle args = fragment.getArguments();
+        return args == null ? null : args.getString("url");
     }
 
     @Override
@@ -390,63 +413,18 @@ public class MainActivity extends MvpAppCompatActivity
         new StorageUtil(this).storeBattaryOptimizeDisenbled(b);
     }
 
-    private void addFragmentTag(@NonNull String tag) {
-        for (int i = 0; i < fragmentsTag.size(); i++) {
-            if (fragmentsTag.get(i).getTag().equals(tag)) {
-                fragmentsTag.get(i).setSkip(true);
-            }
-        }
-        fragmentsTag.add(new FragmentTagSteck(tag));
-    }
-
-    @Override
-    public Resources.Theme getTheme() {
-        Resources.Theme theme = super.getTheme();
-
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
-            theme.applyStyle(R.style.AppTheme_NoActionBar, true);
-        } else if (themeName.equals(getString(R.string.theme_light_value))) {
-            theme.applyStyle(R.style.LightAppTheme_NoActionBar, true);
-        } else if (themeName.equals(getString(R.string.theme_black_value))) {
-            theme.applyStyle(R.style.AppThemeBlack_NoActionBar, true);
-        }
-
-
-        return theme;
-    }
-
-    @Override
-    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-
-        String lang = pref.getString("pref_lang", "ru");
-        Locale locale = new Locale(lang);
-        newConfig.setLocale(locale);
-        super.onConfigurationChanged(newConfig);
-    }
-
     @Override
     protected void onDestroy() {
-        sendBroadcast(new Intent(MediaPlayerService.Broadcast_CloseIfPause));
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (notificationManager != null) {
-            notificationManager.cancel(getNotificationId());
-        }
+        //playback belongs to the player service: closing (or rotating) this screen neither stops nor hides it
         super.onDestroy();
-        mPresenter.onDestroy();
         closeApp = true;
     }
 
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+        // media keys are not shortcuts while the user types (UI-16)
+        if (event.getAction() == KeyEvent.ACTION_DOWN && !(getCurrentFocus() instanceof EditText)) {
             if (handleUserInput(getApplicationContext(), event.getKeyCode())) {
                 return true;
             }

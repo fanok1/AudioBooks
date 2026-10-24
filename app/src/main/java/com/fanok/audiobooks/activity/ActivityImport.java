@@ -20,7 +20,6 @@ import androidx.preference.PreferenceManager;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
-import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.databinding.ActivityImportBinding;
 import com.fanok.audiobooks.interface_pacatge.import_favorite.ActivityImportInterface;
@@ -159,10 +158,5 @@ public class ActivityImport extends MvpAppCompatActivity implements ActivityImpo
         if (binding.username.getError() == null && binding.password.getError() == null) {
             mPresenter.login(binding.username.getText().toString(), binding.password.getText().toString());
         }
-    }
-
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(LocaleManager.onAttach(base));
     }
 }

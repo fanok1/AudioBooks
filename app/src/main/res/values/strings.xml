@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Audio Books</string>
+    <string name="app_name" translatable="false">Аудиокниги</string>
     <string name="navigation_drawer_open">Открыть меню</string>
     <string name="navigation_drawer_close">Закрыть меню</string>
 
@@ -31,6 +31,8 @@
     <string name="order_new">Новое</string>
     <string name="order_reting">Рейтинг</string>
     <string name="order_popular">Популярное</string>
+    <string name="abmp3_top100">Топ100</string>
+    <string name="abmp3_random">Случайная книга</string>
     <string name="open">Открыть</string>
     <string name="add_to_favorite">Добавить в избранное</string>
     <string name="open_author">Перейти к автору</string>
@@ -68,6 +70,9 @@
     <string name="error_load_coments">Не удалось загрузить комментарии</string>
     <string name="error_load_books">Не удалось загрузить книги</string>
     <string name="in_day">За день</string>
+    <string name="in_year">За год</string>
+    <string name="order_discussed">Обсуждаемые</string>
+    <string name="order_collections">Подборки</string>
     <string name="tab_text_4">Другие озвучки</string>
     <string name="file_not_dowland">Файл еще не загрузился полностью</string>
     <string name="notification_channel_name" translatable="false">channelId</string>
@@ -85,11 +90,7 @@
     <string name="theme_light_value" translatable="false">light</string>
     <string name="theme_black_value" translatable="false">black</string>
 
-    <string name="setting_lang">Язык</string>
 
-    <string name="lang_ru" translatable="false">Русский</string>
-    <string name="lang_ua" translatable="false">Українська</string>
-    <string name="lang_en" translatable="false">English</string>
 
 
     <string name="setting_start_menu">Категория по умолчанию</string>
@@ -135,6 +136,8 @@
     <string name="clear">Очистить</string>
     <string name="backup_created">Резервная копия создана.</string>
     <string name="backup_not_created">Не удалось создать резервную копию!</string>
+    <string name="import_partial">Импорт выполнен частично: достигнут лимит страниц.</string>
+    <string name="backup_created_skipped">Резервная копия создана. Пропущено повреждённых записей: %1$d.</string>
     <string name="worning_not_allowed_write_storege">Приложению не было разрешено записывать данные хранилище.</string>
     <string name="restored">Данные успешно восстановлены.</string>
     <string name="error_restored">Ошибка восстановления!</string>
@@ -227,8 +230,15 @@
     <string name="incorect_email">Неверный адрес электронной почты</string>
     <string name="sending_email">Отправка сообщения…</string>
     <string name="no_books">Поиск не дал результатов.</string>
+    <plurals name="search_sources_failed">
+        <item quantity="one">%d источник недоступен</item>
+        <item quantity="few">%d источника недоступны</item>
+        <item quantity="many">%d источников недоступны</item>
+        <item quantity="other">%d источников недоступны</item>
+    </plurals>
+    <string name="retry">Повторить</string>
+    <string name="unknown_source">Неизвестный источник</string>
     <string name="error_send_mail">Не удалось отправить сообщение!</string>
-    <string name="email_send">Сообщение отправлено</string>
     <string name="message_help_disable_battery_optimisetion">Здравствуйте! Помогите пожалуйста отключить режим экономии заряда батареи на моем устройстве.</string>
     <string name="icon" translatable="false">icon</string>
     <string name="support_project">Поддержка проекта</string>
@@ -302,6 +312,8 @@
     <string name="open_4pda">Открыть тему на 4pda</string>
     <string name="dowland_delete">Скачать/Удалить</string>
     <string name="delete_complite">Удаление завершено</string>
+    <string name="delete_result">Удалено %1$d из %2$d</string>
+    <string name="remove_partial">Удалено книг: %1$d из %2$d. Не удалось удалить глав: %3$d, они остались в списке</string>
     <string name="seekTo">Перемотка</string>
     <string name="seekToPauseDesc">Снимать плеер с паузы во время перемотки</string>
     <string name="scrollToSelected">Переход к активному файлу</string>
@@ -309,6 +321,8 @@
     <string name="offline">Офлайн</string>
     <string name="ofline_desc">Скрывать незагруженные главы из списка в офлайн режиме</string>
     <string name="go_offline">Переход в офлайн режим</string>
+    <string name="book_taken_down">Удалена правообладателем. Поищите на другом источнике</string>
+    <string name="book_taken_down_partial">Удалена правообладателем. Доступны скачанные главы</string>
     <string name="clear_saving">Очистить сохраненное</string>
     <string name="saved_file_not_found">Сохраненные файлы не найдены</string>
     <string name="no_selecetd">Нет выбранных элементов</string>
@@ -345,16 +359,12 @@
     <string name="baza_knig">База Книг</string>
     <string name="baza_knig_value" translatable="false">baza_knig</string>
     <string name="knigoblud_value" translatable="false">knigoblud</string>
-    <string name="bookoof_value" translatable="false">bookoof</string>
+    <string name="audioboo_value" translatable="false">audioboo</string>
     <string name="menu_saved">Загруженные</string>
     <string name="clear_audio_list">Очистить список аудио файлов</string>
     <string name="confirm_clear_audio_list">Вы уверены что хотите очистить список аудио файлов</string>
     <string name="history_procent">Отобразить процент прослушанного</string>
     <string name="history_procent_desc">Отображать процент прослушанного в избранном и в истории</string>
-    <string name="proxy_desc">Использовать прокси для обхода блокировок</string>
-    <string name="proxy">Прокси</string>
-    <string name="incorect_fomat_proxy_server">Неверный формат IP адреса</string>
-    <string name="incorect_fomat_port">Неверный порт</string>
     <string name="rewind">Перемотка</string>
     <string name="rewind_desc">Перемотка назад во время долгой паузы</string>
     <string name="source">Источник</string>
@@ -371,7 +381,46 @@
     <string name="years">Год</string>
     <string name="order_coments">Комментарии</string>
     <string name="order_year">По годам</string>
-    <string name="error_decode">Не удалось расшифровать данные</string>
+    <string name="order_title">По алфавиту</string>
+    <string name="order_duration">По длительности</string>
+    <string name="knigoblud_today">Слушают сегодня</string>
+    <string name="knigoblud_trending">В тренде</string>
+    <string name="knigoblud_finished">Дослушивают до конца</string>
+    <string name="filter_duration">Длительность</string>
+    <string name="duration_any">Любая длительность</string>
+    <string name="duration_under_30m">До 30 мин</string>
+    <string name="duration_30m_1h">30–60 мин</string>
+    <string name="duration_1h_2h">1–2 ч</string>
+    <string name="duration_over_2h">От 2 ч</string>
+    <string name="in_3_days">За 3 дня</string>
+    <string name="in_2_weeks">За 2 недели</string>
+    <string name="in_quarter">За 3 месяца</string>
+    <string name="in_half_year">За полгода</string>
+    <string name="filter_status">Подходит %1$d из %2$d</string>
+    <string name="filter_status_end">Подходит %1$d из %2$d — весь список</string>
+    <string name="filter_more">Искать дальше</string>
+    <string name="filter_clear">Сбросить фильтр</string>
+    <string name="filter_duration_menu">Длительность…</string>
+    <string name="filter_duration_menu_on">Длительность: %s</string>
+    <string name="duration_presets">Быстрый выбор</string>
+    <string name="duration_custom">Свой диапазон</string>
+    <string name="duration_range">Диапазон</string>
+    <string name="duration_scale_start">0</string>
+    <string name="duration_unbounded">∞</string>
+    <string name="duration_minutes">%d мин</string>
+    <string name="duration_hours">%d ч</string>
+    <string name="duration_hours_minutes">%1$d ч %2$d мин</string>
+    <string name="duration_minutes_range">%1$d–%2$d мин</string>
+    <string name="duration_hours_range">%1$d–%2$d ч</string>
+    <string name="duration_from">От %s</string>
+    <string name="duration_to">До %s</string>
+    <string name="duration_between">%1$s – %2$s</string>
+    <string name="duration_bounds_any">без ограничений</string>
+    <string name="duration_bounds_from">от %s</string>
+    <string name="duration_bounds_to">до %s</string>
+    <string name="duration_bounds_between">от %1$s до %2$s</string>
+    <string name="apply">Применить</string>
+    <string name="reset">Сбросить</string>
     <string name="use_vpn">Использовать VPN</string>
     <string name="antizapret">Антизапрет (Россия)</string>
     <string name="zaborona">Заборона (Украина)</string>
@@ -382,7 +431,8 @@
     <string name="vpn_zaborona_value" translatable="false">zaborona</string>
     <string name="vpn_zaborona_europe_value" translatable="false">zaborona_europe</string>
     <string name="vpn_ukrane_value" translatable="false">vpn_ukrane</string>
-    <string name="cookes_baza_knig_exeption">У источника База Книг сработала защита от DDoS атак, для ее обхода перезагрузите или выберете другой сервер VPN</string>
+    <string name="cookes_baza_knig_exeption">Сайт требует проверку в браузере. Откройте его в настройках (Cookies сайта) или попробуйте позже</string>
+    <string name="site_challenge">Сайт временно не пускает приложение (защита от ботов или перегрузка). Попробуйте позже</string>
     <string name="getCookies">Получить Cookies</string>
     <string name="cookies_info_baza_knig">Для доступа к источнику База Книг необходимо обновить Cookies</string>
     <string name="error_cookies_load">Не удалось обновить cookies</string>
@@ -390,6 +440,12 @@
     <string name="wait_loading">Подождите пока страница закончится, а затем закройте окно</string>
     <string name="end_chapter">Конец главы</string>
     <string name="sleep_timer_started">Таймер сна запущен, обратній отчет пойдет после того как книга будет снята с паузы</string>
+    <string name="sleep_timer_no_playback">Сначала откройте книгу: таймер сна работает с плеером</string>
+    <string name="playback_error_retry">Не удалось загрузить главу. Нажмите «Воспроизвести», чтобы повторить</string>
+    <string name="playback_stalled">Нет данных от сети. Воспроизведение продолжится само</string>
+    <string name="playback_stalled_title">Загрузка… %1$s</string>
+    <string name="playback_error_skip">Эту главу не удаётся воспроизвести. Нажмите «Следующий», чтобы пропустить её</string>
+    <string name="playback_rewind_30">Назад на 30 секунд</string>
     <string name="multithreading">Многопоточность</string>
     <string name="search_multithreading">Использовать многопоточность для поиска</string>
     <string name="cutting_file">Разделить файл на разделы</string>
@@ -405,5 +461,105 @@
     <string name="toggle_details">Показать детали</string>
     <string name="download_control_button">Возобновить/Пауза</string>
     <string name="more_options">Дополнительно</string>
-    <string name="bookoof">Bookoof</string>
+    <string name="audioboo">Audioboo</string>
+    <string name="otrub">Отрубин</string>
+    <string name="otrub_value" translatable="false">otrub</string>
+    <string name="poleknig">Полекниг</string>
+    <string name="poleknig_value" translatable="false">poleknig</string>
+    <string name="download_chapters_label">Главы:</string>
+    <string name="download_chapters_value">скачано %1$d из %2$d, выбрано %3$d</string>
+    <string name="download_exported_label">Копии в папке:</string>
+    <string name="download_exported_none">нет</string>
+    <string name="download_cancel_failed">Ошибка очистки незавершённых</string>
+    <string name="export_to_folder">Экспорт в папку</string>
+    <string name="export_started">Экспорт в папку загрузок…</string>
+    <string name="export_done">Экспортировано глав: %1$d</string>
+    <string name="export_failed">Экспортировано: %1$d, ошибок: %2$d. %3$s</string>
+    <string name="export_nothing">Нечего экспортировать: у скачанных глав уже есть копии или это поток HLS</string>
+    <string name="ok">ОК</string>
+    <string name="continue_">Продолжить</string>
+    <string name="undo">Отменить</string>
+    <string name="book_removed">Книга удалена</string>
+    <string name="list_empty">Здесь пока пусто</string>
+    <string name="no_other_readers">Других чтецов нет</string>
+    <string name="no_other_sources">Других источников нет</string>
+    <string name="notification_permission_rationale">Разрешение на уведомления нужно, чтобы показывать плеер и ход загрузок в шторке</string>
+    <string name="pin_locked">Слишком много попыток. Повторите через %1$d с</string>
+    <string name="parental_control_sources_failed">Не удалось загрузить жанры: %1$s. Книги этих источников остаются заблокированы</string>
+    <string name="equalizer_unavailable">Эквалайзер недоступен на этом устройстве</string>
+    <string name="equalizer_custom">Свой</string>
+    <string name="equalizer_bass">Бас</string>
+    <string name="equalizer_3d" translatable="false">3D</string>
+    <string name="equalizer_error">Ошибка эквалайзера</string>
+    <string name="equalizer_band_description">Полоса %1$s</string>
+    <string name="download_state_partial">Скачано частично</string>
+    <string name="download_state_full">Скачано полностью</string>
+    <string name="cookies_site">Cookies сайта</string>
+    <string name="cookies_site_summary">Пройти проверку сайта База Книг в браузере</string>
+    <string name="downloads_summary">Скачанные книги и ход загрузок</string>
+    <string name="cookies_not_verified">Сессия не подтверждена: прежняя сохранена</string>
+    <string name="proxy_title">Прокси</string>
+    <string name="proxy_summary">Встроенный прокси для сайтов, недоступных в вашей стране: страницы, аудио, скачивание и обложки</string>
+    <string name="browser_not_found">Браузер не найден</string>
+    <!-- download status line: "<state> · 12/40 глав · 245 МБ из ≈1,1 ГБ · 950 КБ/с · ~15 мин" -->
+    <string name="download_status_downloading">Скачивается</string>
+    <string name="download_status_stalled">Нет данных от сервера</string>
+    <string name="download_status_queued">В очереди</string>
+    <string name="download_status_waiting_network">Ждём сеть</string>
+    <string name="download_status_paused">Пауза</string>
+    <string name="download_status_failed">Ошибка</string>
+    <string name="download_status_failed_reason">Ошибка: %1$s</string>
+    <string name="download_status_complete_all">Скачано полностью</string>
+    <string name="download_status_complete_part">Выбранные главы скачаны</string>
+    <plurals name="download_chapters_of">
+        <item quantity="one">%1$d/%2$d глава</item>
+        <item quantity="few">%1$d/%2$d главы</item>
+        <item quantity="many">%1$d/%2$d глав</item>
+        <item quantity="other">%1$d/%2$d глав</item>
+    </plurals>
+    <plurals name="download_chapters_count">
+        <item quantity="one">%d глава</item>
+        <item quantity="few">%d главы</item>
+        <item quantity="many">%d глав</item>
+        <item quantity="other">%d глав</item>
+    </plurals>
+    <plurals name="download_more_books">
+        <item quantity="one">ещё %d книга</item>
+        <item quantity="few">ещё %d книги</item>
+        <item quantity="many">ещё %d книг</item>
+        <item quantity="other">ещё %d книг</item>
+    </plurals>
+    <string name="download_bytes_of">%1$s из %2$s</string>
+    <string name="download_speed">%1$s/с</string>
+    <string name="download_eta">~%1$s</string>
+    <string name="download_errors_count">ошибок: %1$d</string>
+    <string name="download_failure_no_space">нет места на диске</string>
+    <string name="download_failure_network">нет соединения</string>
+    <string name="download_failure_http">сервер ответил %1$d</string>
+    <string name="download_notification_title">Скачивание аудиокниги</string>
+    <string name="download_notification_paused">Загрузка приостановлена</string>
+    <string name="download_notification_waiting">Загрузка ждёт</string>
+    <string name="download_notification_pause">Пауза</string>
+    <string name="download_notification_resume">Возобновить</string>
+    <string name="download_notification_pause_all">Приостановить все</string>
+    <string name="download_notification_resume_all">Возобновить все</string>
+    <string name="download_notification_cancel">Отмена</string>
+    <string name="download_notification_failed">Загрузка не удалась</string>
+    <string name="download_notification_removing">Удаление загрузок</string>
+    <string name="download_menu_status">Скачать/Удалить · %1$s</string>
+    <string name="download_chapter_queued">В очереди на скачивание</string>
+    <string name="download_chapter_progress">Скачивается</string>
+    <string name="listened_label">прослушано</string>
+    <string name="offline_description">Офлайн: описание недоступно</string>
+    <string-array name="download_byte_units">
+        <item>Б</item>
+        <item>КБ</item>
+        <item>МБ</item>
+        <item>ГБ</item>
+    </string-array>
+    <string-array name="download_time_units">
+        <item>с</item>
+        <item>мин</item>
+        <item>ч</item>
+    </string-array>
 </resources>

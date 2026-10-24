@@ -13,19 +13,6 @@
     </string-array>
 
 
-    <string-array name="settings_lang_titles">
-        <item>@string/lang_ru</item>
-        <item>@string/lang_ua</item>
-        <item>@string/lang_en</item>
-    </string-array>
-
-    <string-array name="settings_lang_values">
-        <item>ru</item>
-        <item>uk</item>
-        <item>en</item>
-    </string-array>
-
-
     <string-array name="settings_start_screen_titles">
         <item>@string/menu_audiobooks</item>
         <item>@string/menu_genre</item>
@@ -86,7 +73,9 @@
         <item>@string/audionook_mp3</item>
         <item>@string/baza_knig</item>
         <item>@string/knigoblud</item>
-        <item>@string/bookoof</item>
+        <item>@string/audioboo</item>
+        <item>@string/otrub</item>
+        <item>@string/poleknig</item>
     </string-array>
 
     <string-array name="sorce_books_values">
@@ -96,7 +85,9 @@
         <item>@string/audiobook_mp3_value</item>
         <item>@string/baza_knig_value</item>
         <item>@string/knigoblud_value</item>
-        <item>@string/bookoof_value</item>
+        <item>@string/audioboo_value</item>
+        <item>@string/otrub_value</item>
+        <item>@string/poleknig_value</item>
     </string-array>
 
     <string-array name="vpn_titles">
@@ -129,25 +120,5 @@
         <item>@string/excellent</item>
     </string-array>
 
-    <array name="paranoid_theme">
-        <!-- Overview -->
-        <item>#151515</item> <!--  Top Header bg -->
-        <item>#2c9633</item> <!-- header text   -->
-        <item>#252525</item> <!-- list bg  -->
-        <item>@android:color/white</item> <!--  storage list name text  -->
-        <item>#e1e1e1</item> <!-- free space text  -->
-        <item>#2c9633</item> <!-- memory bar -->
-
-        <!-- secondary dialog colors -->
-        <item>#e1e1e1</item> <!-- folder tint -->
-        <item>#252525</item> <!-- list bg -->
-        <item>@android:color/white</item> <!-- list text -->
-        <item>#151515</item> <!-- address bar tint -->
-        <item>@color/chevronBgColor</item> <!-- new folder hint tint -->
-        <item>#2c9633</item> <!-- select button color -->
-        <item>#2c9633</item> <!-- new folder layour bg -->
-        <item>#2c9633</item> <!-- fab multiselect color -->
-        <item>#151515</item> <!-- address bar bg -->
-    </array>
     <string name="knigoblud">Книгоблуд</string>
 </resources>

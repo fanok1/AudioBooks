@@ -1,85 +1,61 @@
 package com.fanok.audiobooks;
 
-import static com.fanok.audiobooks.Consts.PROXY_HOST;
-import static com.fanok.audiobooks.Consts.PROXY_PORT;
-
+import com.fanok.audiobooks.net.SiteHttp;
 import com.fanok.audiobooks.pojo.GenrePOJO;
+import com.fanok.audiobooks.search.ProviderPage;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Proxy.Type;
 import java.util.ArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+/** The author block of ABMP3's one-page search, sliced into pages of {@link #PAGE_SIZE}. */
 public class AutorsSearchABMP3 {
 
-    public ArrayList<GenrePOJO> getAutors(@NotNull String url, int page) throws IOException {
-        ArrayList<GenrePOJO> result = new ArrayList<>();
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0);
+    public static final int PAGE_SIZE = 40;
 
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
-        }
+    public ProviderPage<GenrePOJO> getAutors(@NotNull String url, int page) throws IOException {
+        return parse(SiteHttp.get(url), page);
+    }
 
-        Document doc = connection.get();
-
-        Elements elements = doc.getElementsByClass("b-statictop-search");
-        if (elements != null) {
-            for (Element item : elements) {
-                Elements title = item.getElementsByClass("b-statictop__title");
-                if (title != null && title.size() != 0) {
-                    if (title.first().text().contains("по авторам")) {
-                        Elements parent = item.getElementsByClass("b-statictop__items");
-                        if (parent != null && parent.size() != 0) {
-                            Elements books = parent.first().children();
-                            for (int i = (page - 1) * 40; i < page * 40; i++) {
-                                if (i >= books.size()) {
-                                    break;
-                                }
-                                Element book = books.get(i);
-                                GenrePOJO genrePOJO = new GenrePOJO();
-                                Elements aTag = book.getElementsByTag("a");
-                                if (aTag != null && aTag.size() != 0) {
-                                    String href = aTag.first().attr("href");
-                                    if (href != null && !href.isEmpty()) {
-                                        genrePOJO.setUrl(Url.SERVER_ABMP3 + href + "?page=");
-                                    }
-                                    String fullText = aTag.first().text();
-                                    if (fullText != null && !fullText.isEmpty()) {
-                                        genrePOJO.setName(fullText.trim());
-                                    }
-
-                                    Elements raitings = book.getElementsByClass("rate");
-                                    if (raitings != null && raitings.size() != 0) {
-                                        String text = raitings.first().text().trim();
-                                        if (!text.isEmpty()) {
-                                            genrePOJO.setDescription(text);
-                                        }
-                                    }
-
-                                }
-
-                                if (!genrePOJO.isNull()) {
-                                    result.add(genrePOJO);
-                                }
-                            }
-                        }
-                    }
-                }
+    public static ProviderPage<GenrePOJO> parse(Document doc, int page) {
+        Elements hits = new Elements();
+        for (Element item : doc.getElementsByClass("b-statictop-search")) {
+            Element title = item.selectFirst(".b-statictop__title");
+            Element parent = item.selectFirst(".b-statictop__items");
+            if (title != null && title.text().contains("по авторам") && parent != null) {
+                hits = parent.children();
+                break;
             }
         }
-
-        return result;
+        int from = Math.min((page - 1) * PAGE_SIZE, hits.size());
+        int to = Math.min(page * PAGE_SIZE, hits.size());
+        ArrayList<GenrePOJO> result = new ArrayList<>();
+        for (Element book : hits.subList(from, to)) {
+            try {
+                Element aTag = book.selectFirst("a");
+                if (aTag == null) {
+                    continue;
+                }
+                GenrePOJO genrePOJO = new GenrePOJO();
+                if (!aTag.attr("href").isEmpty()) {
+                    genrePOJO.setUrl(Url.SERVER_ABMP3 + aTag.attr("href") + "?page=");
+                }
+                if (!aTag.text().trim().isEmpty()) {
+                    genrePOJO.setName(aTag.text().trim());
+                }
+                Element rating = book.selectFirst(".rate");
+                if (rating != null && !rating.text().trim().isEmpty()) {
+                    genrePOJO.setDescription(rating.text().trim());
+                }
+                if (!genrePOJO.isNull()) {
+                    result.add(genrePOJO);
+                }
+            } catch (RuntimeException ignored) {
+                // one malformed row is skipped, not the page
+            }
+        }
+        return ProviderPage.of(result, hits.size() > to);
     }
 }

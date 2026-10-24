@@ -1,31 +1,40 @@
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# App POJOs, Room Entities, Models & Presenters (prevents Gson/Room stripping)
+-keep class com.fanok.audiobooks.pojo.** { *; }
+-keep class com.fanok.audiobooks.room.** { *; }
+-keep class com.fanok.audiobooks.model.** { *; }
+-keep class com.fanok.audiobooks.presenter.** { *; }
+-keep class com.fanok.audiobooks.interface_pacatge.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Media3 & ExoPlayer
+-keep class androidx.media3.** { *; }
+-dontwarn androidx.media3.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Room Database
+-keep class * extends androidx.room.RoomDatabase
+-dontwarn androidx.room.**
 
-# Fix for org.mozilla:rhino missing classes
--dontwarn java.beans.**
--dontwarn java.awt.**
--dontwarn jdk.dynalink.**
--dontwarn org.mozilla.javascript.**
+# Gson serialization
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+-keepclassmembers class * implements java.io.Serializable { *; }
 
-# Keep Rhino classes if necessary (prevents over-stripping)
--keep class org.mozilla.javascript.** { *; }
+# Moxy MVP
+-keep class com.arellomobile.mvp.** { *; }
+-keep class tech.schoolhelper.moxy.** { *; }
 
+# JSoup
+-keep class org.jsoup.** { *; }
+
+# Glide (if AppGlideModule is ever added)
+-keep public class * implements com.bumptech.glide.module.GlideModule
+-keep class * extends com.bumptech.glide.module.AppGlideModule
+-keep class com.bumptech.glide.GeneratedAppGlideModuleImpl { *; }
+
+# Release builds drop debug/verbose logging (search queries, URLs).
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+}

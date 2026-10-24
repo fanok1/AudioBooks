@@ -1,20 +1,12 @@
 package com.fanok.audiobooks.presenter;
 
 
-import static com.fanok.audiobooks.util.DownloadUtil.getDownloadManager;
-
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
-import androidx.appcompat.widget.PopupMenu;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.media3.common.util.UnstableApi;
-import androidx.media3.exoplayer.offline.Download;
-import androidx.media3.exoplayer.offline.DownloadIndex;
 import androidx.preference.PreferenceManager;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
@@ -23,40 +15,38 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
 import com.fanok.audiobooks.model.AudioDBModel;
-import com.fanok.audiobooks.model.AudioListDBModel;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.model.FavoriteModel;
-import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.squareup.picasso.Picasso;
-import io.reactivex.Observer;
+import com.fanok.audiobooks.util.DownloadStorageHelper;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.Objects;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 import org.jetbrains.annotations.NotNull;
 
 @InjectViewState
-public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
+@OptIn(markerClass = UnstableApi.class)
+public class FavoritePresenter
+ extends MvpPresenter<FavoriteView> implements
         com.fanok.audiobooks.interface_pacatge.favorite.FavoritePresenter {
 
-    public static final int NOT_SAVED = -1;
+    public static final int NOT_SAVED = FavoriteModel.NOT_SAVED;
 
-    public static final int SAVED = 0;
+    public static final int SAVED = FavoriteModel.SAVED;
 
-    public static final int SAVED_ALL = 1;
+    public static final int SAVED_ALL = FavoriteModel.SAVED_ALL;
 
 
     private ArrayList<BookPOJO> books;
 
     private ArrayList<BookPOJO> flter = null;
-
-    private AudioDBModel mAudioDBModel;
 
     private BooksDBModel mBooksDBModel;
 
@@ -74,9 +64,16 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
 
     private boolean firstOpen;
 
-    private AudioListDBModel mAudioListDBModel;
+    private boolean scanScheduled = false;
 
     private boolean isFilterSaved;
+
+    /** The book hidden by the last swipe, until the undo offer ends. */
+    @Nullable
+    private BookPOJO pendingRemoval;
+    private int pendingRemovalIndex;
+
+    private final CompositeDisposable disposables = new CompositeDisposable();
 
 
     public FavoritePresenter(int table) {
@@ -86,262 +83,249 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
     }
 
 
-    @UnstableApi
     @Override
     public void loadBooks() {
-        if (!isLoading) {
-            getViewState().showProgres(true);
-            isLoading = true;
-            filterSearch.clear();
-            mFavoriteModel.getBooks(table)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Observer<ArrayList<BookPOJO>>() {
-                        @Override
-                        public void onSubscribe(Disposable d) {
-                        }
-
-                        @Override
-                        public void onNext(ArrayList<BookPOJO> bookPOJOS) {
-                            books = bookPOJOS;
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            getViewState().showToast(R.string.error_load_data);
-                            onComplete();
-                        }
-
-                        @Override
-                        public void onComplete() {
-                            if (flter == null) {
-                                if (firstOpen) {
-                                    firstOpen = false;
-                                    if(mContext!=null) {
-                                        if(table != Consts.TABLE_HISTORY) {
-                                            SharedPreferences pref = PreferenceManager
-                                                    .getDefaultSharedPreferences(mContext);
-                                            String sort = pref.getString("pref_sort_favorite",
-                                                    mContext.getString(R.string.sort_value_date));
-                                            String sortSaved = mContext.getString(R.string.sort_value_saved);
-                                            if (table == Consts.TABLE_SAVED && sortSaved.equals(sort)) {
-                                                sort = mContext.getString(R.string.sort_value_date);
-                                            }
-                                            Comparator<BookPOJO> comparator = getComparator(sort);
-                                            if (!sort.equals(
-                                                    mContext.getString(R.string.sort_value_date))) {
-                                                books.sort(comparator);
-                                            }
-                                        }
-                                    }
-                                }
-                                getViewState().showData(books);
-                            } else {
-                                ArrayList<BookPOJO> newFilter = new ArrayList<>();
-                                for (BookPOJO bookPOJO : books) {
-                                    for (BookPOJO filterPojo : flter) {
-                                        if (filterPojo.getUrl().equals(bookPOJO.getUrl())) {
-                                            newFilter.add(bookPOJO);
-                                        }
-                                    }
-                                }
-                                flter = newFilter;
-                                getViewState().showData(flter);
-                            }
-                            getViewState().showProgres(false);
-                            getViewState().updateFilter();
-                            isLoading = false;
-                        }
-                    });
-
+        if (table == Consts.TABLE_SAVED && mContext != null && !scanScheduled) {
+            scanScheduled = true;
+            DownloadStorageHelper.scanAndImportDownloadedBooks(mContext, () -> {
+                scanScheduled = false;
+                loadBooksInternal();
+            });
+            return;
         }
+        loadBooksInternal();
     }
+
+    private void loadBooksInternal() {
+        if (isLoading || mFavoriteModel == null) {
+            return;
+        }
+        commitRemove();
+        getViewState().showError(false);
+        getViewState().showProgres(true);
+        isLoading = true;
+        filterSearch.clear();
+        disposables.add(mFavoriteModel.getBooks(table)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(bookPOJOS -> {
+                    books = bookPOJOS;
+                    onBooksLoaded();
+                }, e -> {
+                    isLoading = false;
+                    getViewState().showProgres(false);
+                    getViewState().showError(true);
+                }));
+    }
+
+    private void onBooksLoaded() {
+        if (flter != null) {
+            ArrayList<BookPOJO> newFilter = new ArrayList<>();
+            for (BookPOJO bookPOJO : books) {
+                for (BookPOJO filterPojo : flter) {
+                    if (filterPojo.getUrl().equals(bookPOJO.getUrl())) {
+                        newFilter.add(bookPOJO);
+                    }
+                }
+            }
+            flter = newFilter;
+            finishLoad(flter);
+            return;
+        }
+        if (firstOpen && mContext != null && table != Consts.TABLE_HISTORY) {
+            firstOpen = false;
+            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(mContext);
+            String sort = pref.getString("pref_sort_favorite", mContext.getString(R.string.sort_value_date));
+            if (mContext.getString(R.string.sort_value_saved).equals(sort) && table != Consts.TABLE_SAVED) {
+                // the "saved" order needs the download state of every book: one worker pass, then sort
+                sortBySavedState(books, () -> finishLoad(books));
+                return;
+            }
+            if (!mContext.getString(R.string.sort_value_date).equals(sort)) {
+                books.sort(getComparator(sort));
+            }
+        }
+        firstOpen = false;
+        finishLoad(books);
+    }
+
+    private void finishLoad(ArrayList<BookPOJO> list) {
+        getViewState().showData(list);
+        getViewState().showProgres(false);
+        getViewState().updateFilter();
+        isLoading = false;
+    }
+
     @Override
     public void onCreate(Context context) {
+        if (mContext != null) {
+            return; // the presenter outlives the view; models are made once
+        }
         mContext = context;
         mBooksDBModel = new BooksDBModel(context);
-        mAudioDBModel = new AudioDBModel(context);
         mFavoriteModel = new FavoriteModel(context);
     }
 
 
     @Override
+    public void detachView(FavoriteView view) {
+        // the undo offer leaves with the view; the deletion the user asked for still happens
+        commitRemove();
+        super.detachView(view);
+    }
+
+    @Override
     public void onDestroy() {
-        mAudioDBModel.closeDB();
-        mBooksDBModel.closeDB();
-        mFavoriteModel.closeDB();
-        if (mAudioListDBModel != null) {
-            mAudioListDBModel.closeDB();
+        commitRemove();
+        disposables.dispose();
+        if (mBooksDBModel != null) {
+            mBooksDBModel.closeDB();
+        }
+        if (mFavoriteModel != null) {
+            mFavoriteModel.closeDB();
         }
         mContext = null;
+        super.onDestroy();
+    }
+
+    @Nullable
+    private BookPOJO bookAt(int position) {
+        List<BookPOJO> list = filterSearch.isEmpty() ? books : filterSearch;
+        if (list == null || position < 0 || position >= list.size()) {
+            return null;
+        }
+        return list.get(position);
     }
 
     @Override
-    public void onBookItemClick(View view, int position) {
-        if (filterSearch.isEmpty()) {
-            getViewState().showBooksActivity(books.get(position));
-        } else {
-            getViewState().showBooksActivity(filterSearch.get(position));
-        }
-    }
-
-    @Override
-    public void onBookItemLongClick(View view, int position, LayoutInflater layoutInflater) {
-        @SuppressLint("InflateParams") View layout = layoutInflater.inflate(
-                R.layout.bootom_sheet_books_menu, null);
-        final BottomSheetDialog dialog = new BottomSheetDialog(view.getContext());
-        dialog.setContentView(layout);
-
-        TextView open = layout.findViewById(R.id.open);
-        TextView add = layout.findViewById(R.id.addFavorite);
-        TextView remove = layout.findViewById(R.id.removeFavorite);
-        TextView genre = layout.findViewById(R.id.genre);
-        TextView author = layout.findViewById(R.id.author);
-        TextView artist = layout.findViewById(R.id.artist);
-        TextView series = layout.findViewById(R.id.series);
-        BookPOJO book;
-        if (filterSearch.isEmpty()) {
-            book = books.get(position);
-        } else {
-            book = filterSearch.get(position);
-        }
-
-        ImageView imageView = layout.findViewById(R.id.imageView);
-        Picasso.get()
-                .load(book.getPhoto())
-                .error(android.R.drawable.ic_menu_gallery)
-                .placeholder(android.R.drawable.ic_menu_gallery)
-                .into(imageView);
-
-        TextView title = layout.findViewById(R.id.title);
-        title.setText(book.getName());
-
-        TextView authorName = layout.findViewById(R.id.authorName);
-        if (book.getAutor() != null) {
-            authorName.setText(book.getAutor());
-            authorName.setVisibility(View.VISIBLE);
-        } else {
-            authorName.setVisibility(View.GONE);
-        }
-
-        if (book.getSeries() == null || book.getUrlSeries() == null) {
-            series.setVisibility(View.GONE);
-        } else {
-            series.setVisibility(View.VISIBLE);
-        }
-
-        add.setVisibility(View.GONE);
-        remove.setVisibility(View.VISIBLE);
-        remove.setText(R.string.remove);
-        remove.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_minus_circle, 0, 0, 0);
-
-        open.setOnClickListener(view1 -> {
-            dialog.dismiss();
+    public void onBookItemClick(int position) {
+        BookPOJO book = bookAt(position);
+        if (book != null) {
             getViewState().showBooksActivity(book);
-        });
-
-        remove.setOnClickListener(view1 -> {
-            dialog.dismiss();
-            onRemove(position);
-        });
-
-        if (book.getUrlGenre() != null) {
-            genre.setVisibility(View.VISIBLE);
-            genre.setOnClickListener(view1 -> {
-                dialog.dismiss();
-                getViewState().showFragment(BooksFragment.newInstance(
-                        book.getUrlGenre(),
-                        R.string.menu_audiobooks,
-                        book.getGenre(), Consts.MODEL_BOOKS),
-                        "genreBooks");
-            });
-        } else {
-            genre.setVisibility(View.GONE);
         }
-
-        if (book.getUrlAutor() != null) {
-            author.setVisibility(View.VISIBLE);
-            author.setOnClickListener(view1 -> {
-                dialog.dismiss();
-                if (!book.getUrlAutor().isEmpty()) {
-                    getViewState().showFragment(BooksFragment.newInstance(
-                            book.getUrlAutor(),
-                            R.string.menu_audiobooks,
-                            book.getAutor(), Consts.MODEL_BOOKS),
-                            "autorBooks");
-                }
-            });
-        } else {
-            author.setVisibility(View.GONE);
-        }
-
-        if (book.getUrlArtist() != null) {
-            artist.setVisibility(View.VISIBLE);
-            artist.setOnClickListener(view1 -> {
-                dialog.dismiss();
-                getViewState().showFragment(BooksFragment.newInstance(
-                        book.getUrlArtist(),
-                        R.string.menu_audiobooks,
-                        book.getArtist(), Consts.MODEL_BOOKS),
-                        "artistBooks");
-            });
-        } else {
-            artist.setVisibility(View.GONE);
-        }
-
-        series.setOnClickListener(view12 -> {
-            dialog.dismiss();
-            getViewState().showFragment(BooksFragment.newInstance(
-                    book.getUrlSeries() + "?page=",
-                    R.string.menu_audiobooks,
-                    book.getSeries(), Consts.MODEL_BOOKS),
-                    "seriesBooks");
-        });
-        dialog.show();
     }
 
+    @Override
+    public void onBookItemLongClick(int position) {
+        BookPOJO book = bookAt(position);
+        if (book != null) {
+            getViewState().showBookMenu(book);
+        }
+    }
+
+    @Override
+    public void onMenuGenre(@NonNull String url, String title) {
+        getViewState().showFragment(BooksFragment.newInstance(url, R.string.menu_audiobooks, title,
+                Consts.MODEL_BOOKS), "genreBooks");
+    }
+
+    @Override
+    public void onMenuAutor(@NonNull String url, String title) {
+        if (!url.isEmpty()) {
+            getViewState().showFragment(BooksFragment.newInstance(url, R.string.menu_audiobooks, title,
+                    Consts.MODEL_BOOKS), "autorBooks");
+        }
+    }
+
+    @Override
+    public void onMenuArtist(@NonNull String url, String title) {
+        getViewState().showFragment(BooksFragment.newInstance(url, R.string.menu_audiobooks, title,
+                Consts.MODEL_BOOKS), "artistBooks");
+    }
+
+    @Override
+    public void onMenuSeries(@NonNull String url, String title) {
+        getViewState().showFragment(BooksFragment.newInstance(url + "?page=", R.string.menu_audiobooks, title,
+                Consts.MODEL_BOOKS), "seriesBooks");
+    }
+
+    /** Hides the book at {@code position}; it is deleted only when the undo offer ends (UI-10). */
     @Override
     public void onRemove(int position) {
-        BookPOJO book;
-        if (filterSearch.isEmpty()) {
-            book = books.get(position);
-        } else {
-            book = filterSearch.get(position);
+        BookPOJO book = bookAt(position);
+        if (book != null) {
+            onRemove(book);
         }
+    }
 
-        if (table == Consts.TABLE_FAVORITE) {
-            mBooksDBModel.removeFavorite(book);
-        } else if (table == Consts.TABLE_HISTORY) {
-            mBooksDBModel.removeHistory(book);
-            mAudioDBModel.remove(book.getUrl());
-        } else if (table == Consts.TABLE_SAVED){
-            mBooksDBModel.removeSaved(book);
-            //
+    @Override
+    public void onRemove(@NonNull BookPOJO book) {
+        if (books == null || !books.contains(book)) {
+            return;
+        }
+        commitRemove();
+        pendingRemoval = book;
+        pendingRemovalIndex = books.indexOf(book);
+        books.remove(book);
+        if (flter != null) {
+            flter.remove(book);
+        }
+        filterSearch.remove(book);
+        getViewState().showData(filterSearch.isEmpty() && mQuery.isEmpty()
+                ? (flter == null ? books : flter) : filterSearch);
+        getViewState().showUndoRemove(book);
+    }
 
+    @Override
+    public void undoRemove() {
+        BookPOJO book = pendingRemoval;
+        if (book == null) {
+            return;
         }
-        if (filterSearch.isEmpty()) {
-            books.remove(position);
-            getViewState().showData(books);
-        } else {
-            books.remove(filterSearch.get(position));
-            filterSearch.remove(position);
-            getViewState().showData(filterSearch);
+        pendingRemoval = null;
+        int index = Math.min(Math.max(pendingRemovalIndex, 0), books.size());
+        books.add(index, book);
+        if (flter != null) {
+            flter.add(Math.min(index, flter.size()), book);
         }
+        onSearch(mQuery);
+    }
+
+    @Override
+    public void commitRemove() {
+        final BookPOJO book = pendingRemoval;
+        if (book == null || mContext == null) {
+            pendingRemoval = null;
+            return;
+        }
+        pendingRemoval = null;
+        final Context app = mContext.getApplicationContext();
+        if (table == Consts.TABLE_SAVED) {
+            if (book.getUrl() != null) {
+                // rows and the recorded copies, on the storage worker
+                DownloadStorageHelper.removeBooks(app, Collections.singletonList(book.getUrl()),
+                        (removed, total, failed) -> {
+                            if (failed > 0) {
+                                android.widget.Toast.makeText(app, app.getString(R.string.remove_partial, removed, total, failed),
+                                        android.widget.Toast.LENGTH_LONG).show();
+                                loadBooksInternal();
+                            }
+                        });
+            }
+            return;
+        }
+        DownloadStorageHelper.submit(() -> {
+            BooksDBModel booksDBModel = new BooksDBModel(app);
+            if (table == Consts.TABLE_FAVORITE) {
+                booksDBModel.removeFavorite(book);
+            } else if (table == Consts.TABLE_HISTORY) {
+                booksDBModel.removeHistory(book);
+                AudioDBModel audioDBModel = new AudioDBModel(app);
+                audioDBModel.remove(book.getUrl());
+                audioDBModel.closeDB();
+            }
+            booksDBModel.closeDB();
+        });
     }
 
     @Override
     public void onSearch(String qery) {
-        mQuery = qery;
+        mQuery = qery == null ? "" : qery;
         filterSearch.clear();
-        if (flter != null) {
-            for (BookPOJO book : flter) {
-                if (book.getName().toLowerCase().contains(qery.toLowerCase())) {
-                    filterSearch.add(book);
-                }
-            }
-        } else if (books != null && !books.isEmpty()) {
-            for (BookPOJO book : books) {
-                if (book.getName().toLowerCase().contains(qery.toLowerCase())) {
+        List<BookPOJO> source = flter != null ? flter : books;
+        if (source != null) {
+            for (BookPOJO book : source) {
+                if (book.getName().toLowerCase().contains(mQuery.toLowerCase())) {
                     filterSearch.add(book);
                 }
             }
@@ -349,123 +333,139 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
         getViewState().showData(filterSearch);
     }
 
-    @UnstableApi
     @Override
-    public void onOptionsItemSelected(@NotNull View view, int id) {
-        if (books != null && id != R.id.filter && id != R.id.order) {
-            if (id == R.id.genre_filter || id == R.id.autor_filter ||
-                    id == R.id.artist_filter || id == R.id.series_filter) {
-                showPopupMenu(view, id);
-            } else if (id == R.id.date) {
-                loadBooks();
-            } else if (id == R.id.saved_filter) {
-                if (!isFilterSaved) {
-                    flter = new ArrayList<>();
-                    if (mAudioListDBModel == null) {
-                        mAudioListDBModel = new AudioListDBModel(mContext);
-                    }
-                    for (BookPOJO bookPOJO : books) {
-                        ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(bookPOJO.getUrl());
-                        if (!arrayList.isEmpty()) {
-                            DownloadIndex downloadIndex = getDownloadManager().getDownloadIndex();
-                            try {
-                                for (AudioListPOJO pojo : arrayList) {
-                                    Download download = downloadIndex.getDownload(pojo.getCleanAudioUrl());
-                                    if (download != null && download.state == Download.STATE_COMPLETED) {
-                                        flter.add(bookPOJO);
-                                        break;
-                                    }
-                                }
-                            } catch (IOException e) {
-                                // ignore
-                            }
+    public void onOptionsItemSelected(int id) {
+        if (books == null || id == R.id.filter || id == R.id.order) {
+            return;
+        }
+        if (id == R.id.genre_filter || id == R.id.autor_filter ||
+                id == R.id.artist_filter || id == R.id.series_filter) {
+            loadFilterValues(id);
+        } else if (id == R.id.date) {
+            loadBooks();
+        } else if (id == R.id.saved_filter) {
+            if (!isFilterSaved) {
+                final ArrayList<BookPOJO> all = new ArrayList<>(books);
+                withSavedStates(all, states -> {
+                    ArrayList<BookPOJO> saved = new ArrayList<>();
+                    for (BookPOJO bookPOJO : all) {
+                        Integer state = states.get(bookPOJO.getUrl());
+                        if (state != null && state != NOT_SAVED) {
+                            saved.add(bookPOJO);
                         }
-
-
-
-
                     }
+                    flter = saved;
+                    isFilterSaved = true;
                     getViewState().setSubTitle(mContext.getString(R.string.menu_saved));
-                } else {
-                    getViewState().setSubTitle("");
-                    flter = null;
-                }
-                isFilterSaved = !isFilterSaved;
-                onSearch(mQuery);
+                    onSearch(mQuery);
+                });
             } else {
-                Comparator<BookPOJO> comparator = getComparator(id);
-                if (flter == null) {
-                    books.sort(comparator);
-                } else {
-                    flter.sort(comparator);
-                }
+                getViewState().setSubTitle("");
+                flter = null;
+                isFilterSaved = false;
                 onSearch(mQuery);
             }
-
+        } else if (id == R.id.saved) {
+            ArrayList<BookPOJO> target = flter == null ? books : flter;
+            sortBySavedState(target, () -> onSearch(mQuery));
+        } else {
+            Comparator<BookPOJO> comparator = getComparator(id);
+            if (flter == null) {
+                books.sort(comparator);
+            } else {
+                flter.sort(comparator);
+            }
+            onSearch(mQuery);
         }
-
     }
 
-    private void showPopupMenu(@NotNull View view, int id) {
-        ArrayList<String> arrayList;
+    private interface StatesCallback {
+        void onStates(@NonNull Map<String, Integer> states);
+    }
 
-        if (id == R.id.genre_filter) {
-            arrayList = mBooksDBModel.getGenre(table);
-        } else if (id == R.id.autor_filter){
-            arrayList = mBooksDBModel.getAutors(table);
-        } else if (id == R.id.artist_filter) {
-            arrayList = mBooksDBModel.getArtists(table);
-        } else if (id == R.id.series_filter) {
-            arrayList = mBooksDBModel.getSeries(table);
-        } else {
-            arrayList = new ArrayList<>();
-        }
-
-        if (arrayList.isEmpty()) {
+    private void withSavedStates(@NonNull List<BookPOJO> list, @NonNull StatesCallback callback) {
+        if (mFavoriteModel == null) {
             return;
-        } else {
-            arrayList.add(0, "Все");
         }
+        getViewState().showProgres(true);
+        disposables.add(mFavoriteModel.savedStates(list)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(states -> {
+                    getViewState().showProgres(false);
+                    callback.onStates(states);
+                }, e -> {
+                    getViewState().showProgres(false);
+                    getViewState().showToast(R.string.error_load_data);
+                }));
+    }
 
-        PopupMenu popupMenu = new PopupMenu(view.getContext(), view, Gravity.END);
-        for (int i = 0; i < arrayList.size(); i++) {
-            popupMenu.getMenu().add(1, i, 0, arrayList.get(i));
-        }
-        popupMenu.setOnMenuItemClickListener(item -> {
-            if (books != null) {
-                if (Objects.requireNonNull(item.getTitle()).equals("Все")) {
-                    getViewState().setSubTitle("");
-                    this.flter = null;
-                    onSearch(mQuery);
-                    return false;
-                } else {
-                    getViewState().setSubTitle(item.getTitle().toString());
-                }
-                ArrayList<BookPOJO> filter = new ArrayList<>();
-                for (BookPOJO book : books) {
-                    String text;
-                    if (id == R.id.genre_filter) {
-                        text = book.getGenre();
-                    } else if (id == R.id.autor_filter) {
-                        text = book.getAutor();
-                    } else if (id == R.id.artist_filter) {
-                        text = book.getArtist();
-                    } else if (id == R.id.series_filter) {
-                        text = book.getSeries();
-                    } else {
-                        return false;
-                    }
-                    if (item.getTitle().equals(text)) {
-                        filter.add(book);
-                    }
-                }
-                this.flter = filter;
-                onSearch(mQuery);
-            }
-            return false;
+    /** Sorts {@code list} in place by the precomputed download state, most complete first, then {@code then}. */
+    private void sortBySavedState(@NonNull ArrayList<BookPOJO> list, @NonNull Runnable then) {
+        withSavedStates(list, states -> {
+            list.sort((a, b) -> Integer.compare(stateOf(states, b), stateOf(states, a)));
+            then.run();
         });
-        popupMenu.show();
+    }
 
+    private static int stateOf(@NonNull Map<String, Integer> states, @NonNull BookPOJO book) {
+        Integer state = states.get(book.getUrl());
+        return state == null ? NOT_SAVED : state;
+    }
+
+    private void loadFilterValues(final int id) {
+        final Callable<ArrayList<String>> query;
+        if (id == R.id.genre_filter) {
+            query = () -> mBooksDBModel.getGenre(table);
+        } else if (id == R.id.autor_filter) {
+            query = () -> mBooksDBModel.getAutors(table);
+        } else if (id == R.id.artist_filter) {
+            query = () -> mBooksDBModel.getArtists(table);
+        } else {
+            query = () -> mBooksDBModel.getSeries(table);
+        }
+        disposables.add(io.reactivex.Single.fromCallable(query)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(values -> {
+                    if (!values.isEmpty()) {
+                        getViewState().showFilterValues(id, values);
+                    }
+                }, e -> getViewState().showToast(R.string.error_load_data)));
+    }
+
+    @Override
+    public void onFilterSelected(int filterId, String value) {
+        if (books == null) {
+            return;
+        }
+        if (value == null) {
+            getViewState().setSubTitle("");
+            flter = null;
+            onSearch(mQuery);
+            return;
+        }
+        getViewState().setSubTitle(value);
+        ArrayList<BookPOJO> filter = new ArrayList<>();
+        for (BookPOJO book : books) {
+            String text;
+            if (filterId == R.id.genre_filter) {
+                text = book.getGenre();
+            } else if (filterId == R.id.autor_filter) {
+                text = book.getAutor();
+            } else if (filterId == R.id.artist_filter) {
+                text = book.getArtist();
+            } else if (filterId == R.id.series_filter) {
+                text = book.getSeries();
+            } else {
+                return;
+            }
+            if (value.equals(text)) {
+                filter.add(book);
+            }
+        }
+        flter = filter;
+        onSearch(mQuery);
     }
 
     private Comparator<BookPOJO> getComparator(@NotNull String sort) {
@@ -479,152 +479,46 @@ public class FavoritePresenter extends MvpPresenter<FavoriteView> implements
             return getComparator(R.id.artist);
         } else if (mContext.getString(R.string.sort_value_series).equals(sort)) {
             return getComparator(R.id.series);
-        } else if (mContext.getString(R.string.sort_value_saved).equals(sort)) {
-            return getComparator(R.id.saved);
         } else {
             return getComparator(R.id.date);
         }
     }
 
+    private interface Field {
+        String of(BookPOJO book);
+    }
 
+    /** Orders by one text field; books without it go last. */
+    private static Comparator<BookPOJO> byField(@NonNull Field field) {
+        return (bookPOJO, t1) -> {
+            String a = field.of(bookPOJO);
+            String b = field.of(t1);
+            boolean aEmpty = a == null || a.isEmpty();
+            boolean bEmpty = b == null || b.isEmpty();
+            if (aEmpty && bEmpty) {
+                return 0;
+            } else if (aEmpty) {
+                return 1;
+            } else if (bEmpty) {
+                return -1;
+            }
+            return a.compareTo(b);
+        };
+    }
 
     private Comparator<BookPOJO> getComparator(int sort) {
         if (sort == R.id.name) {
-            return (bookPOJO, t1) -> {
-                if ((bookPOJO.getName() == null || bookPOJO.getName().isEmpty()) && (
-                        t1.getName() == null || t1.getName().isEmpty())) {
-                    return 0;
-                } else if ((bookPOJO.getName() != null && !bookPOJO.getName().isEmpty()) && (
-                        t1.getName() != null && !t1.getName().isEmpty())) {
-                    return bookPOJO.getName().compareTo(t1.getName());
-                } else if ((bookPOJO.getName() != null && !bookPOJO.getName().isEmpty()) &&
-                        (t1.getName() == null || t1.getName().isEmpty())) {
-                    return -11;
-                } else if ((bookPOJO.getName() == null || bookPOJO.getName().isEmpty()) &&
-                        (t1.getName() != null && !t1.getName().isEmpty())) {
-                    return 11;
-                } else {
-                    return 0;
-                }
-            };
+            return byField(BookPOJO::getName);
         } else if (sort == R.id.genre) {
-            return (bookPOJO, t1) -> {
-                if ((bookPOJO.getGenre() == null || bookPOJO.getGenre().isEmpty()) && (
-                        t1.getGenre() == null || t1.getGenre().isEmpty())) {
-                    return 0;
-                } else if ((bookPOJO.getGenre() != null && !bookPOJO.getGenre().isEmpty()) && (
-                        t1.getGenre() != null && !t1.getGenre().isEmpty())) {
-                    return bookPOJO.getGenre().compareTo(t1.getGenre());
-                } else if ((bookPOJO.getGenre() != null && !bookPOJO.getGenre().isEmpty()) &&
-                        (t1.getGenre() == null || t1.getGenre().isEmpty())) {
-                    return -11;
-                } else if ((bookPOJO.getGenre() == null || bookPOJO.getGenre().isEmpty()) &&
-                        (t1.getGenre() != null && !t1.getGenre().isEmpty())) {
-                    return 11;
-                } else {
-                    return 0;
-                }
-
-            };
+            return byField(BookPOJO::getGenre);
         } else if (sort == R.id.autor) {
-            return (bookPOJO, t1) -> {
-                if ((bookPOJO.getAutor() == null || bookPOJO.getAutor().isEmpty()) && (
-                        t1.getAutor() == null || t1.getAutor().isEmpty())) {
-                    return 0;
-                } else if ((bookPOJO.getAutor() != null && !bookPOJO.getAutor().isEmpty()) && (
-                        t1.getAutor() != null && !t1.getAutor().isEmpty())) {
-                    return bookPOJO.getAutor().compareTo(t1.getAutor());
-                } else if ((bookPOJO.getAutor() != null && !bookPOJO.getAutor().isEmpty()) &&
-                        (t1.getAutor() == null || t1.getAutor().isEmpty())) {
-                    return -11;
-                } else if ((bookPOJO.getAutor() == null || bookPOJO.getAutor().isEmpty()) &&
-                        (t1.getAutor() != null && !t1.getAutor().isEmpty())) {
-                    return 11;
-                } else {
-                    return 0;
-                }
-            };
+            return byField(BookPOJO::getAutor);
         } else if (sort == R.id.artist) {
-            return (bookPOJO, t1) -> {
-                if ((bookPOJO.getArtist() == null || bookPOJO.getArtist().isEmpty()) && (
-                        t1.getArtist() == null || t1.getArtist().isEmpty())) {
-                    return 0;
-                } else if ((bookPOJO.getArtist() != null && !bookPOJO.getArtist().isEmpty()) && (
-                        t1.getArtist() != null && !t1.getArtist().isEmpty())) {
-                    return bookPOJO.getArtist().compareTo(t1.getArtist());
-                } else if ((bookPOJO.getArtist() != null && !bookPOJO.getArtist().isEmpty()) &&
-                        (t1.getArtist() == null || t1.getArtist().isEmpty())) {
-                    return -11;
-                } else if ((bookPOJO.getArtist() == null || bookPOJO.getArtist().isEmpty()) &&
-                        (t1.getArtist() != null && !t1.getArtist().isEmpty())) {
-                    return 11;
-                } else {
-                    return 0;
-                }
-            };
+            return byField(BookPOJO::getArtist);
         } else if (sort == R.id.series) {
-            return (bookPOJO, t1) -> {
-                if ((bookPOJO.getSeries() == null || bookPOJO.getSeries().isEmpty()) && (
-                        t1.getSeries() == null || t1.getSeries().isEmpty())) {
-                    return 0;
-                } else if ((bookPOJO.getSeries() != null && !bookPOJO.getSeries().isEmpty()) && (
-                        t1.getSeries() != null && !t1.getSeries().isEmpty())) {
-                    return bookPOJO.getSeries().compareTo(t1.getSeries());
-                } else if ((bookPOJO.getSeries() != null && !bookPOJO.getSeries().isEmpty()) &&
-                        (t1.getSeries() == null || t1.getSeries().isEmpty())) {
-                    return -11;
-                } else if ((bookPOJO.getSeries() == null || bookPOJO.getSeries().isEmpty()) &&
-                        (t1.getSeries() != null && !t1.getSeries().isEmpty())) {
-                    return 11;
-                } else {
-                    return 0;
-                }
-            };
-        } else if (sort == R.id.saved) {
-
-            return (bookPOJO, t1) -> {
-                int number1 = getSavedAudioNumber(bookPOJO);
-                int number2 = getSavedAudioNumber(t1);
-                if (number1 > number2) {
-                    return -11;
-                } else if (number1 < number2) {
-                    return 11;
-                } else {
-                    return 0;
-                }
-            };
-
+            return byField(BookPOJO::getSeries);
         } else {
             return (bookPOJO, t1) -> 0;
         }
     }
-
-    @SuppressLint("UnsafeOptInUsageError")
-    private int getSavedAudioNumber(BookPOJO book) {
-        if (mAudioListDBModel == null) {
-            mAudioListDBModel = new AudioListDBModel(mContext);
-        }
-        DownloadIndex downloadIndex = getDownloadManager().getDownloadIndex();
-        ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(book.getUrl());
-        int downloadedCount = 0;
-        try {
-            for (AudioListPOJO pojo : arrayList) {
-                Download download = downloadIndex.getDownload(pojo.getCleanAudioUrl());
-                if (download != null && download.state == Download.STATE_COMPLETED) {
-                    downloadedCount++;
-                }
-            }
-        } catch (IOException e) {
-            // ignore
-        }
-
-        if (downloadedCount == 0) {
-            return NOT_SAVED;
-        } else if (downloadedCount >= arrayList.size()) {
-            return SAVED_ALL;
-        } else {
-            return SAVED;
-        }
-    }
-
 }

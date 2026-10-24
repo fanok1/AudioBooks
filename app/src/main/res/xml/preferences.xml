@@ -18,10 +18,13 @@
         android:key="sorce_books"
         android:title="@string/sorce_books" />
 
+
+
     <Preference
         android:icon="@drawable/ic_download"
-        android:key="download"
-        android:title="@string/download" />
+        android:key="pref_download_path"
+        android:summary="@string/select_folder"
+        android:title="Папка для скачивания" />
 
     <CheckBoxPreference
         android:defaultValue="true"
@@ -69,26 +72,21 @@
 
         <CheckBoxPreference
             android:defaultValue="true"
-            android:key="search_bookoof"
-            android:title="@string/bookoof" />
+            android:key="search_audioboo"
+            android:title="@string/audioboo" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="search_otrub"
+            android:title="@string/otrub" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="search_poleknig"
+            android:title="@string/poleknig" />
 
     </PreferenceScreen>
 
-
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:icon="@drawable/vpn"
-        android:key="pref_proxy"
-        android:summary="@string/proxy_desc"
-        android:title="@string/proxy" />
-
-
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:icon="@drawable/ic_speedometer"
-        android:key="speed_up_search_abmp3"
-        android:summary="@string/speed_up_search_abmp3_desc"
-        android:title="@string/speed_up_search_abmp3" />
 
     <ListPreference
         android:defaultValue="@string/books_adapter_layout_list_value"
@@ -165,13 +163,6 @@
         android:summary="@string/scrollToSelectedDesc"
         android:title="@string/scrollToSelected" />
 
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:icon="@drawable/ic_waves"
-        android:key="search_multithreading"
-        android:summary="@string/search_multithreading"
-        android:title="@string/multithreading" />
-
     <EditTextPreference
         android:defaultValue="60"
         android:icon="@drawable/ic_buffer"
@@ -182,6 +173,25 @@
         android:icon="@drawable/ic_lock"
         android:key="parentalControl"
         android:title="@string/parental_control" />
+
+    <Preference
+        android:icon="@drawable/ic_download"
+        android:key="download"
+        android:summary="@string/downloads_summary"
+        android:title="@string/download" />
+
+    <Preference
+        android:icon="@drawable/ic_web"
+        android:key="cookies"
+        android:summary="@string/cookies_site_summary"
+        android:title="@string/cookies_site" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:icon="@drawable/ic_web"
+        android:key="pref_proxy"
+        android:summary="@string/proxy_summary"
+        android:title="@string/proxy_title" />
 
     <ListPreference
         android:defaultValue="@string/sort_value_date"
@@ -208,35 +218,6 @@
             android:summary="@string/abook_description"
             android:title="@string/abook" />
     </PreferenceScreen>
-
-    <!--
-    <PreferenceScreen
-        android:icon="@drawable/ic_proxy"
-        android:key="proxy"
-        android:persistent="true"
-        android:summary="@string/proxy_desc"
-        android:title="@string/proxy">
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="proxy_enabled"
-            android:title="@string/proxy_enabled" />
-
-        <EditTextPreference
-            android:dialogTitle="@string/proxy"
-            android:key="pref_proxy"
-            android:title="@string/proxy_server"
-            android:enabled="false">
-        </EditTextPreference>
-
-        <EditTextPreference
-            android:dialogTitle="@string/port"
-            android:key="pref_proxy_prot"
-            android:title="@string/port"
-            android:enabled="false">
-        </EditTextPreference>
-
-    </PreferenceScreen>
-    -->
 
 
     <Preference

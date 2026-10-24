@@ -1,7 +1,5 @@
 package com.fanok.audiobooks.adapter;
 
-import static java.lang.Integer.MAX_VALUE;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -17,6 +15,8 @@ import com.fanok.audiobooks.pojo.ComentsPOJO;
 import com.squareup.picasso.Picasso;
 import de.hdodenhof.circleimageview.CircleImageView;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /** @noinspection ClassEscapesDefinedScope*/
 public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsListBazaKnigAddapter.MyHolder> {
@@ -39,8 +39,6 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
 
         private final TextView mTime;
 
-        private boolean showMore;
-
         MyHolder(@NonNull final View itemView) {
             super(itemView);
 
@@ -52,12 +50,31 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
             mQuoteText = itemView.findViewById(R.id.quoteText);
             mQuoteName = itemView.findViewById(R.id.quoteName);
             mQuoteParent = itemView.findViewById(R.id.quoteParent);
+
+            mQuoteParent.setOnClickListener(view -> {
+                int position = getBindingAdapterPosition();
+                if (mListener != null && position != RecyclerView.NO_POSITION) {
+                    mListener.onItemSelected(view, position);
+                }
+            });
+            mReadMore.setOnClickListener(view -> {
+                int position = getBindingAdapterPosition();
+                if (position == RecyclerView.NO_POSITION) {
+                    return;
+                }
+                if (!expanded.remove(position)) {
+                    expanded.add(position);
+                }
+                notifyItemChanged(position);
+            });
         }
 
-        void bind(ComentsPOJO comentsPOJO) {
-
+        void bind(ComentsPOJO comentsPOJO, boolean isExpanded) {
+            Picasso.get().cancelRequest(mImageView);
             if (!comentsPOJO.getImage().isEmpty()) {
                 Picasso.get().load(comentsPOJO.getImage()).into(mImageView);
+            } else {
+                mImageView.setImageDrawable(null);
             }
             mName.setText(comentsPOJO.getName());
             mTime.setText(comentsPOJO.getDate());
@@ -82,32 +99,7 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
                 }
             }
 
-            mQuoteParent.setOnClickListener(view -> {
-                if (mListener != null) {
-                    mListener.onItemSelected(view, getBindingAdapterPosition());
-                }
-            });
-
-            mText.setMaxLines(MAX_VALUE);
-            mText.setText(comentsPOJO.getText());
-            if (mText.getLineCount() <= MAX_LINES) {
-                mReadMore.setVisibility(View.GONE);
-            } else {
-                mReadMore.setVisibility(View.VISIBLE);
-            }
-            mText.setMaxLines(MAX_LINES);
-            showMore = false;
-
-            mReadMore.setOnClickListener(view -> {
-                if (!showMore) {
-                    mText.setMaxLines(MAX_VALUE);
-                    mReadMore.setText(R.string.show_less);
-                } else {
-                    mText.setMaxLines(MAX_LINES);
-                    mReadMore.setText(R.string.show_more);
-                }
-                showMore = !showMore;
-            });
+            ExpandableText.bind(mText, mReadMore, comentsPOJO.getText(), MAX_LINES, isExpanded);
         }
     }
 
@@ -119,6 +111,9 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
 
     private ArrayList<ComentsPOJO> mModel;
 
+    /** Positions whose text is expanded; cleared with the data (UI-09). */
+    private final Set<Integer> expanded = new HashSet<>();
+
     public ComentsListBazaKnigAddapter(Context context) {
         mModel = new ArrayList<>();
         mContext = context;
@@ -126,6 +121,7 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
 
     public void clearItem() {
         int oldSize = mModel.size();
+        expanded.clear();
         if (oldSize > 0) {
             mModel.clear();
             notifyItemRangeRemoved(0, oldSize);
@@ -155,7 +151,7 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
 
     @Override
     public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
-        myHolder.bind(mModel.get(i));
+        myHolder.bind(mModel.get(i), expanded.contains(i));
     }
 
     @NonNull
@@ -168,7 +164,8 @@ public class ComentsListBazaKnigAddapter extends RecyclerView.Adapter<ComentsLis
 
     @SuppressLint("NotifyDataSetChanged")
     public void setItem(ArrayList<ComentsPOJO> newModel) {
-        mModel = newModel;
+        mModel = newModel == null ? new ArrayList<>() : new ArrayList<>(newModel);
+        expanded.clear();
         notifyDataSetChanged();
     }
 

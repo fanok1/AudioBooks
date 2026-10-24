@@ -24,7 +24,7 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
 
     @SuppressLint("NotifyDataSetChanged")
     public void setItem(ArrayList<GenrePOJO> newModel) {
-        mModel = newModel;
+        mModel = newModel == null ? new ArrayList<>() : new ArrayList<>(newModel);
         notifyDataSetChanged();
     }
 
@@ -82,8 +82,9 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
             mReting = itemView.findViewById(R.id.reting);
             mDescription = itemView.findViewById(R.id.desc);
             itemView.setOnClickListener(view -> {
-                if (listner != null) {
-                    listner.onClickItem(itemView, getBindingAdapterPosition());
+                int position = getBindingAdapterPosition();
+                if (listner != null && position != RecyclerView.NO_POSITION) {
+                    listner.onClickItem(itemView, position);
                 }
             });
         }

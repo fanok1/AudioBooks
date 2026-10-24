@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/app_bar_search"
+        android:icon="@drawable/ic_search_black_24dp"
+        android:title="@string/search"
+        app:showAsAction="always" />
+    <!-- duration range and ranking period; its submenu is filled and shown by BooksFragment -->
+    <item
+        android:id="@+id/filter"
+        android:icon="@drawable/ic_filter"
+        android:title="@string/filter"
+        android:visible="false"
+        app:showAsAction="always">
+        <menu />
+    </item>
+    <item
+        android:id="@+id/order"
+        android:icon="@drawable/ic_sort"
+        android:title="@string/order"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/new_data"
+                android:title="@string/new_data" />
+            <item
+                android:id="@+id/sort_title"
+                android:title="@string/order_title" />
+            <item
+                android:id="@+id/reting"
+                android:title="@string/reting" />
+            <item
+                android:id="@+id/popular"
+                android:title="@string/popular" />
+            <item
+                android:id="@+id/coments"
+                android:title="@string/comets" />
+            <item
+                android:id="@+id/sort_duration"
+                android:title="@string/order_duration" />
+        </menu>
+    </item>
+    <item
+        android:id="@+id/source"
+        android:icon="@drawable/ic_web"
+        android:title="@string/source"
+        app:showAsAction="always">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/source_abook"
+                    android:title="@string/abook" />
+                <item
+                    android:id="@+id/source_kniga_v_uhe"
+                    android:title="@string/kniga_v_uhe" />
+                <item
+                    android:id="@+id/source_izi_book"
+                    android:title="@string/izibuc" />
+                <item
+                    android:id="@+id/source_audio_book_mp3"
+                    android:title="@string/audionook_mp3" />
+                <item
+                    android:id="@+id/source_baza_knig"
+                    android:title="@string/baza_knig" />
+                <item
+                    android:id="@+id/source_knigoblud"
+                    android:title="@string/knigoblud" />
+                <item
+                    android:id="@+id/source_audioboo"
+                    android:title="@string/audioboo" />
+                <item
+                    android:id="@+id/source_otrub"
+                    android:title="@string/otrub" />
+                <item
+                    android:id="@+id/source_poleknig"
+                    android:title="@string/poleknig" />
+            </group>
+        </menu>
+    </item>
+</menu>

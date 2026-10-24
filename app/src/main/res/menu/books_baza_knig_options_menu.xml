@@ -5,12 +5,21 @@
         android:id="@+id/app_bar_search"
         android:icon="@drawable/ic_search_black_24dp"
         android:title="@string/search"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
+    <!-- duration range and ranking period; its submenu is filled and shown by BooksFragment -->
+    <item
+        android:id="@+id/filter"
+        android:icon="@drawable/ic_filter"
+        android:title="@string/filter"
+        android:visible="false"
+        app:showAsAction="always">
+        <menu />
+    </item>
     <item
         android:id="@+id/order"
         android:icon="@drawable/ic_sort"
         android:title="@string/order"
-        app:showAsAction="ifRoom">
+        app:showAsAction="always">
         <menu>
             <item
                 android:id="@+id/new_data"
@@ -33,7 +42,7 @@
         android:id="@+id/source"
         android:icon="@drawable/ic_web"
         android:title="@string/source"
-        app:showAsAction="ifRoom">
+        app:showAsAction="always">
         <menu>
             <group android:checkableBehavior="single">
                 <item
@@ -55,8 +64,14 @@
                     android:id="@+id/source_knigoblud"
                     android:title="@string/knigoblud" />
                 <item
-                    android:id="@+id/source_bookoof"
-                    android:title="@string/bookoof" />
+                    android:id="@+id/source_audioboo"
+                    android:title="@string/audioboo" />
+                <item
+                    android:id="@+id/source_otrub"
+                    android:title="@string/otrub" />
+                <item
+                    android:id="@+id/source_poleknig"
+                    android:title="@string/poleknig" />
             </group>
         </menu>
     </item>

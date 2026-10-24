@@ -73,6 +73,39 @@
     </LinearLayout>
 
 
+    <!-- what the book's download is doing: state, chapters, bytes, speed, time left; opens the Downloads screen -->
+    <LinearLayout
+        android:id="@+id/downloadStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?android:selectableItemBackground"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/text_margin"
+        android:paddingEnd="@dimen/text_margin"
+        android:paddingBottom="6dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/downloadStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="?attr/subTextColor"
+            android:textSize="@dimen/subTextSize"
+            tools:text="Скачивается · 12/40 глав · 245 МБ из ≈1,1 ГБ · 950 КБ/с · ~15 мин" />
+
+        <ProgressBar
+            android:id="@+id/downloadStatusBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_marginTop="4dp"
+            android:max="100"
+            tools:progress="30" />
+    </LinearLayout>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"

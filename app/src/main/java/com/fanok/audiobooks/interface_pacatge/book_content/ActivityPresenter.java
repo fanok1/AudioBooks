@@ -53,8 +53,6 @@ public interface ActivityPresenter {
 
     void delete(HashSet<String> data);
 
-    void addDecodeData(String string);
-
     void onCreate(Context context);
 
 
