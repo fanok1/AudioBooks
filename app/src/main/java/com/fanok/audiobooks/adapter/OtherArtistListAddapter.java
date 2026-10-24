@@ -27,7 +27,7 @@ public class OtherArtistListAddapter extends
 
     @SuppressLint("NotifyDataSetChanged")
     public void setItem(ArrayList<OtherArtistPOJO> newModel) {
-        mModel = newModel;
+        mModel = newModel == null ? new ArrayList<>() : new ArrayList<>(newModel);
         notifyDataSetChanged();
     }
 
@@ -83,7 +83,10 @@ public class OtherArtistListAddapter extends
             mText = itemView.findViewById(R.id.text);
 
             itemView.setOnClickListener(view -> {
-                if (mListener != null) mListener.onItemSelected(view, getBindingAdapterPosition());
+                int position = getBindingAdapterPosition();
+                if (mListener != null && position != RecyclerView.NO_POSITION) {
+                    mListener.onItemSelected(view, position);
+                }
             });
 
 

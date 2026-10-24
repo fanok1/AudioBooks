@@ -3,7 +3,6 @@ package com.fanok.audiobooks.android_equalizer;
 
 import static com.fanok.audiobooks.android_equalizer.EqualizerFragment.Broadcast_EqualizerEnabled;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -16,13 +15,11 @@ import android.media.audiofx.PresetReverb;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -40,11 +37,15 @@ import com.db.chart.view.ChartView;
 import com.db.chart.view.LineChartView;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.pojo.StorageUtil;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import java.util.ArrayList;
+import java.util.Locale;
 import org.jetbrains.annotations.NotNull;
 
 
+/**
+ * The equalizer dialog. Bands come from the device ({@link Equalizer#getNumberOfBands()}), one column each; when
+ * the audio effects cannot be created the dialog says so and closes instead of crashing (UI-06).
+ */
 public class DialogEqualizerFragment extends DialogFragment {
     public static final String ARG_AUDIO_SESSIOIN_ID = "audio_session_id";
     private static final String TAG = DialogEqualizerFragment.class.getSimpleName();
@@ -71,7 +72,7 @@ public class DialogEqualizerFragment extends DialogFragment {
 
     private int y = 0;
 
-    private final SeekBar[] seekBarFinal = new SeekBar[5];
+    private SeekBar[] seekBarFinal = new SeekBar[0];
 
     private Spinner presetSpinner;
 
@@ -85,16 +86,15 @@ public class DialogEqualizerFragment extends DialogFragment {
 
     private AnalogController reverbController;
 
+    private int[] levels = new int[0];
 
     public DialogEqualizerFragment() {
         // Required empty public constructor
     }
 
-    private static DialogEqualizerFragment newInstance(int audioSessionId) {
-
+    public static DialogEqualizerFragment newInstance(int audioSessionId) {
         Bundle args = new Bundle();
         args.putInt(ARG_AUDIO_SESSIOIN_ID, audioSessionId);
-
         DialogEqualizerFragment fragment = new DialogEqualizerFragment();
         fragment.setArguments(args);
         return fragment;
@@ -119,16 +119,20 @@ public class DialogEqualizerFragment extends DialogFragment {
         ctx = context;
     }
 
+    private void sendEqualizerEnabled(boolean enabled) {
+        Intent intent = new Intent(Broadcast_EqualizerEnabled);
+        intent.putExtra("enabled", enabled);
+        intent.setPackage(requireContext().getPackageName());
+        requireContext().sendBroadcast(intent.setPackage(requireContext().getPackageName()));
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         new StorageUtil(requireContext()).loadEqualizerSettings();
-        Intent intent = new Intent(Broadcast_EqualizerEnabled);
-        intent.putExtra("enabled", false);
-        requireContext().sendBroadcast(intent);
+        sendEqualizerEnabled(false);
 
-        Settings.isEqualizerEnabled = true;
         Settings.isEditing = true;
 
         if (getArguments() != null && getArguments().containsKey(ARG_AUDIO_SESSIOIN_ID)) {
@@ -141,38 +145,53 @@ public class DialogEqualizerFragment extends DialogFragment {
             Settings.equalizerModel.setBassStrength((short) (1000 / 19));
         }
 
-        mEqualizer = new Equalizer(0, audioSesionId);
+        try {
+            mEqualizer = new Equalizer(0, audioSesionId);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "No equalizer for session " + audioSesionId, e);
+            return; // onViewCreated closes the dialog with a message
+        }
+        try {
+            bassBoost = new BassBoost(0, audioSesionId);
+            BassBoost.Settings bassBoostSetting = new BassBoost.Settings(bassBoost.getProperties().toString());
+            bassBoostSetting.strength = Settings.equalizerModel.getBassStrength();
+            bassBoost.setProperties(bassBoostSetting);
+            bassBoost.setEnabled(Settings.isEqualizerEnabled);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "No bass boost", e);
+            bassBoost = null;
+        }
+        try {
+            presetReverb = new PresetReverb(0, audioSesionId);
+            presetReverb.setPreset(Settings.equalizerModel.getReverbPreset());
+            presetReverb.setEnabled(Settings.isEqualizerEnabled);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "No reverb", e);
+            presetReverb = null;
+        }
 
-        bassBoost = new BassBoost(0, audioSesionId);
-        bassBoost.setEnabled(true);
-        BassBoost.Settings bassBoostSettingTemp = bassBoost.getProperties();
-        BassBoost.Settings bassBoostSetting = new BassBoost.Settings(
-                bassBoostSettingTemp.toString());
-        bassBoostSetting.strength = Settings.equalizerModel.getBassStrength();
-        bassBoost.setProperties(bassBoostSetting);
-
-        presetReverb = new PresetReverb(0, audioSesionId);
-        presetReverb.setPreset(Settings.equalizerModel.getReverbPreset());
-        presetReverb.setEnabled(true);
-
-        mEqualizer.setEnabled(true);
+        mEqualizer.setEnabled(Settings.isEqualizerEnabled);
+        short bands = mEqualizer.getNumberOfBands();
+        levels = Settings.bandLevels(bands);
 
         if (Settings.presetPos == 0) {
-            for (short bandIdx = 0; bandIdx < mEqualizer.getNumberOfBands(); bandIdx++) {
-                mEqualizer.setBandLevel(bandIdx, (short) Settings.seekbarpos[bandIdx]);
-            }
+            applyLevels(bands);
         } else {
             try {
-                mEqualizer.usePreset((short) (Settings.presetPos-1));
-            }catch (IllegalArgumentException e){
-                FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
-                crashlytics.setCustomKey("presetPos", Settings.presetPos);
-                crashlytics.recordException(e);
+                mEqualizer.usePreset((short) (Settings.presetPos - 1));
+            } catch (IllegalArgumentException e) {
                 Settings.presetPos = 0;
-                for (short bandIdx = 0; bandIdx < mEqualizer.getNumberOfBands(); bandIdx++) {
-                    mEqualizer.setBandLevel(bandIdx, (short) Settings.seekbarpos[bandIdx]);
-                }
+                applyLevels(bands);
             }
+        }
+    }
+
+    private void applyLevels(short bands) {
+        short min = mEqualizer.getBandLevelRange()[0];
+        short max = mEqualizer.getBandLevelRange()[1];
+        for (short bandIdx = 0; bandIdx < bands; bandIdx++) {
+            short level = (short) Math.max(min, Math.min(max, levels[bandIdx]));
+            mEqualizer.setBandLevel(bandIdx, level);
         }
     }
 
@@ -182,10 +201,15 @@ public class DialogEqualizerFragment extends DialogFragment {
         return inflater.inflate(R.layout.dialog_fragment_equalizer, container, false);
     }
 
-    @SuppressLint("SetTextI18n")
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        if (mEqualizer == null) {
+            Toast.makeText(ctx, R.string.equalizer_unavailable, Toast.LENGTH_SHORT).show();
+            dismissAllowingStateLoss();
+            return;
+        }
 
         ImageView backBtn = view.findViewById(R.id.equalizer_back_btn);
         backBtn.setOnClickListener(v -> dismiss());
@@ -204,11 +228,15 @@ public class DialogEqualizerFragment extends DialogFragment {
             titleTextView.setText(titleString);
         }
         SwitchCompat equalizerSwitch = view.findViewById(R.id.equalizer_switch);
-        equalizerSwitch.setChecked(true);
+        equalizerSwitch.setChecked(Settings.isEqualizerEnabled);
         equalizerSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             mEqualizer.setEnabled(isChecked);
-            bassBoost.setEnabled(isChecked);
-            presetReverb.setEnabled(isChecked);
+            if (bassBoost != null) {
+                bassBoost.setEnabled(isChecked);
+            }
+            if (presetReverb != null) {
+                presetReverb.setEnabled(isChecked);
+            }
             Settings.isEqualizerEnabled = isChecked;
         });
 
@@ -222,8 +250,10 @@ public class DialogEqualizerFragment extends DialogFragment {
         bassController = view.findViewById(R.id.controllerBass);
         reverbController = view.findViewById(R.id.controller3D);
 
-        bassController.setLabel("BASS");
-        reverbController.setLabel("3D");
+        bassController.setLabel(getString(R.string.equalizer_bass));
+        reverbController.setLabel(getString(R.string.equalizer_3d));
+        bassController.setEnabled(bassBoost != null);
+        reverbController.setEnabled(presetReverb != null);
 
 
         bassController.circlePaint2.setColor(themeColor);
@@ -233,8 +263,8 @@ public class DialogEqualizerFragment extends DialogFragment {
         reverbController.linePaint.setColor(themeColor);
         reverbController.invalidate();
 
+        int x = 0;
         if (!Settings.isEqualizerReloaded) {
-            int x = 0;
             if (bassBoost != null) {
                 try {
                     x = ((bassBoost.getRoundedStrength() * 19) / 1000);
@@ -250,39 +280,20 @@ public class DialogEqualizerFragment extends DialogFragment {
                     Log.e(TAG, "onViewCreated: " + e.getLocalizedMessage());
                 }
             }
-
-            if (x == 0) {
-                bassController.setProgress(1);
-            } else {
-                bassController.setProgress(x);
-            }
-
-            if (y == 0) {
-                reverbController.setProgress(1);
-            } else {
-                reverbController.setProgress(y);
-            }
         } else {
-            int x = ((Settings.bassStrength * 19) / 1000);
+            x = ((Settings.bassStrength * 19) / 1000);
             y = (Settings.reverbPreset * 19) / 6;
-            if (x == 0) {
-                bassController.setProgress(1);
-            } else {
-                bassController.setProgress(x);
-            }
-
-            if (y == 0) {
-                reverbController.setProgress(1);
-            } else {
-                reverbController.setProgress(y);
-            }
         }
+        bassController.setProgress(x == 0 ? 1 : x);
+        reverbController.setProgress(y == 0 ? 1 : y);
 
         bassController.setOnProgressChangedListener(
                 progress -> {
                     Settings.bassStrength = (short) (((float) 1000 / 19) * (progress));
                     try {
-                        bassBoost.setStrength(Settings.bassStrength);
+                        if (bassBoost != null) {
+                            bassBoost.setStrength(Settings.bassStrength);
+                        }
                         Settings.equalizerModel.setBassStrength(Settings.bassStrength);
                     } catch (Exception e) {
                         Log.e(TAG, "onViewCreated: " + e.getLocalizedMessage());
@@ -293,7 +304,9 @@ public class DialogEqualizerFragment extends DialogFragment {
                 progress -> {
                     Settings.reverbPreset = (short) ((progress * 6) / 19);
                     try {
-                        presetReverb.setPreset(Settings.reverbPreset);
+                        if (presetReverb != null) {
+                            presetReverb.setPreset(Settings.reverbPreset);
+                        }
                         Settings.equalizerModel.setReverbPreset(Settings.reverbPreset);
                     } catch (Exception e) {
                         Log.e(TAG, "onViewCreated: " + e.getLocalizedMessage());
@@ -301,114 +314,55 @@ public class DialogEqualizerFragment extends DialogFragment {
                     y = progress;
                 });
 
-        TextView equalizerHeading = new TextView(ctx);
-        equalizerHeading.setText(R.string.equalizer);
-        equalizerHeading.setTextSize(20);
-        equalizerHeading.setGravity(Gravity.CENTER_HORIZONTAL);
-
-        short numberOfFrequencyBands = 5;
-
+        final short numberOfFrequencyBands = mEqualizer.getNumberOfBands();
         points = new float[numberOfFrequencyBands];
+        seekBarFinal = new SeekBar[numberOfFrequencyBands];
 
         final short lowerEqualizerBandLevel = mEqualizer.getBandLevelRange()[0];
         final short upperEqualizerBandLevel = mEqualizer.getBandLevelRange()[1];
 
+        LinearLayout bandsContainer = view.findViewById(R.id.equalizerContainer);
+        bandsContainer.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(ctx);
+
         for (short i = 0; i < numberOfFrequencyBands; i++) {
             final short equalizerBandIndex = i;
-            final TextView frequencyHeaderTextView = new TextView(ctx);
-            frequencyHeaderTextView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
-            frequencyHeaderTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-            frequencyHeaderTextView.setTextColor(textColor);
-            frequencyHeaderTextView.setText(
-                    (mEqualizer.getCenterFreq(equalizerBandIndex) / 1000) + "Hz");
+            final int bandPosition = i;
+            View column = inflater.inflate(R.layout.equalizer_band, bandsContainer, false);
+            bandsContainer.addView(column);
+            SeekBar seekBar = column.findViewById(R.id.bandSeekBar);
+            TextView textView = column.findViewById(R.id.bandLabel);
+            String label = frequencyLabel(mEqualizer.getCenterFreq(equalizerBandIndex));
 
-            LinearLayout seekBarRowLayout = new LinearLayout(ctx);
-            seekBarRowLayout.setOrientation(LinearLayout.VERTICAL);
-
-            TextView lowerEqualizerBandLevelTextView = new TextView(ctx);
-            lowerEqualizerBandLevelTextView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-            ));
-            lowerEqualizerBandLevelTextView.setTextColor(textColor);
-            lowerEqualizerBandLevelTextView.setText((lowerEqualizerBandLevel / 100) + "dB");
-
-            TextView upperEqualizerBandLevelTextView = new TextView(ctx);
-            lowerEqualizerBandLevelTextView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
-            upperEqualizerBandLevelTextView.setTextColor(textColor);
-            upperEqualizerBandLevelTextView.setText((upperEqualizerBandLevel / 100) + "dB");
-
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-            layoutParams.weight = 1;
-
-            SeekBar seekBar = new SeekBar(ctx);
-            TextView textView = new TextView(ctx);
-            switch (i) {
-                case 0:
-                    seekBar = view.findViewById(R.id.seekBar1);
-                    textView = view.findViewById(R.id.textView1);
-                    break;
-                case 1:
-                    seekBar = view.findViewById(R.id.seekBar2);
-                    textView = view.findViewById(R.id.textView2);
-                    break;
-                case 2:
-                    seekBar = view.findViewById(R.id.seekBar3);
-                    textView = view.findViewById(R.id.textView3);
-                    break;
-                case 3:
-                    seekBar = view.findViewById(R.id.seekBar4);
-                    textView = view.findViewById(R.id.textView4);
-                    break;
-                case 4:
-                    seekBar = view.findViewById(R.id.seekBar5);
-                    textView = view.findViewById(R.id.textView5);
-                    break;
-            }
             seekBarFinal[i] = seekBar;
             seekBar.getProgressDrawable().setColorFilter(
                     new PorterDuffColorFilter(Color.DKGRAY, PorterDuff.Mode.SRC_IN));
             seekBar.getThumb().setColorFilter(
                     new PorterDuffColorFilter(themeColor, PorterDuff.Mode.SRC_IN));
-            seekBar.setId(i);
-//            seekBar.setLayoutParams(layoutParams);
             seekBar.setMax(upperEqualizerBandLevel - lowerEqualizerBandLevel);
+            seekBar.setContentDescription(getString(R.string.equalizer_band_description, label));
 
-            textView.setText(frequencyHeaderTextView.getText());
+            textView.setText(label);
             textView.setTextColor(textColor);
             textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
             if (Settings.isEqualizerReloaded) {
-                points[i] = Settings.seekbarpos[i] - lowerEqualizerBandLevel;
-                dataset.addPoint(frequencyHeaderTextView.getText().toString(), points[i]);
-                seekBar.setProgress(Settings.seekbarpos[i] - lowerEqualizerBandLevel);
+                points[i] = levels[i] - lowerEqualizerBandLevel;
+                seekBar.setProgress(levels[i] - lowerEqualizerBandLevel);
             } else {
                 points[i] = mEqualizer.getBandLevel(equalizerBandIndex) - lowerEqualizerBandLevel;
-                dataset.addPoint(frequencyHeaderTextView.getText().toString(), points[i]);
-                seekBar.setProgress(
-                        mEqualizer.getBandLevel(equalizerBandIndex) - lowerEqualizerBandLevel);
-                Settings.seekbarpos[i] = mEqualizer.getBandLevel(equalizerBandIndex);
-                Settings.isEqualizerReloaded = true;
+                seekBar.setProgress(mEqualizer.getBandLevel(equalizerBandIndex) - lowerEqualizerBandLevel);
+                levels[i] = mEqualizer.getBandLevel(equalizerBandIndex);
             }
+            dataset.addPoint(label, points[i]);
             seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     mEqualizer.setBandLevel(equalizerBandIndex,
                             (short) (progress + lowerEqualizerBandLevel));
-                    points[seekBar.getId()] = mEqualizer.getBandLevel(equalizerBandIndex)
+                    points[bandPosition] = mEqualizer.getBandLevel(equalizerBandIndex)
                             - lowerEqualizerBandLevel;
-                    Settings.seekbarpos[seekBar.getId()] = (progress + lowerEqualizerBandLevel);
-                    Settings.equalizerModel.getSeekbarpos()[seekBar.getId()] =
-                            (progress + lowerEqualizerBandLevel);
+                    levels[bandPosition] = progress + lowerEqualizerBandLevel;
                     dataset.updateValues(points);
                     chart.notifyDataUpdate();
                 }
@@ -427,6 +381,7 @@ public class DialogEqualizerFragment extends DialogFragment {
             });
 
         }
+        Settings.isEqualizerReloaded = true;
 
         equalizeSound();
 
@@ -444,16 +399,23 @@ public class DialogEqualizerFragment extends DialogFragment {
         chart.setXLabels(AxisController.LabelPosition.NONE);
         chart.setGrid(ChartView.GridType.NONE, 7, 10, paint);
 
-        chart.setAxisBorderValues(-300, 3300);
+        chart.setAxisBorderValues(Math.min(-300, lowerEqualizerBandLevel - 300),
+                Math.max(3300, upperEqualizerBandLevel - lowerEqualizerBandLevel + 300));
 
         chart.addData(dataset);
         chart.show();
+    }
 
-        Button mEndButton = new Button(ctx);
-        mEndButton.setBackgroundColor(themeColor);
-        mEndButton.setTextColor(textColor);
-
-
+    /** "60 Hz", "3.6 kHz": the band's centre frequency given in millihertz. */
+    static String frequencyLabel(int centerFreqMilliHz) {
+        int hz = centerFreqMilliHz / 1000;
+        if (hz < 1000) {
+            return hz + " Hz";
+        }
+        if (hz % 1000 == 0) {
+            return (hz / 1000) + " kHz";
+        }
+        return String.format(Locale.ROOT, "%.1f kHz", hz / 1000f);
     }
 
 
@@ -477,14 +439,15 @@ public class DialogEqualizerFragment extends DialogFragment {
                 equalizerPresetNames);
         equalizerPresetSpinnerAdapter.setDropDownViewResource(
                 android.R.layout.simple_spinner_dropdown_item);
-        equalizerPresetNames.add("Custom");
+        equalizerPresetNames.add(getString(R.string.equalizer_custom));
 
         for (short i = 0; i < mEqualizer.getNumberOfPresets(); i++) {
             equalizerPresetNames.add(mEqualizer.getPresetName(i));
         }
 
         presetSpinner.setAdapter(equalizerPresetSpinnerAdapter);
-        if (Settings.isEqualizerReloaded && Settings.presetPos != 0) {
+        if (Settings.isEqualizerReloaded && Settings.presetPos != 0
+                && Settings.presetPos < equalizerPresetNames.size()) {
             presetSpinner.setSelection(Settings.presetPos);
         }
 
@@ -495,23 +458,20 @@ public class DialogEqualizerFragment extends DialogFragment {
                     if (position != 0) {
                         mEqualizer.usePreset((short) (position - 1));
                         Settings.presetPos = position;
-                        short numberOfFreqBands = 5;
 
                         final short lowerEqualizerBandLevel = mEqualizer.getBandLevelRange()[0];
 
-                        for (short i = 0; i < numberOfFreqBands; i++) {
+                        for (short i = 0; i < seekBarFinal.length; i++) {
                             seekBarFinal[i].setProgress(
                                     mEqualizer.getBandLevel(i) - lowerEqualizerBandLevel);
                             points[i] = mEqualizer.getBandLevel(i) - lowerEqualizerBandLevel;
-                            Settings.seekbarpos[i] = mEqualizer.getBandLevel(i);
-                            Settings.equalizerModel.getSeekbarpos()[i] = mEqualizer.getBandLevel(i);
+                            levels[i] = mEqualizer.getBandLevel(i);
                         }
                         dataset.updateValues(points);
                         chart.notifyDataUpdate();
                     }
                 } catch (Exception e) {
-                    Toast.makeText(ctx, "Error while updating Equalizer",
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ctx, R.string.equalizer_error, Toast.LENGTH_SHORT).show();
                 }
                 Settings.equalizerModel.setPresetPos(position);
             }
@@ -524,18 +484,12 @@ public class DialogEqualizerFragment extends DialogFragment {
     }
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-
-    }
-
-    @Override
     public void onDestroy() {
 
-        new StorageUtil(requireContext()).saveEqualizerSettings();
-        Intent intent = new Intent(Broadcast_EqualizerEnabled);
-        intent.putExtra("enabled", true);
-        requireContext().sendBroadcast(intent);
+        if (mEqualizer != null) {
+            new StorageUtil(requireContext()).saveEqualizerSettings();
+        }
+        sendEqualizerEnabled(true);
 
         if (mEqualizer != null) {
             mEqualizer.release();

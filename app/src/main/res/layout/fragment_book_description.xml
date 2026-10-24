@@ -135,7 +135,7 @@
                         android:singleLine="true"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/textSizeBookDescription"
-                        app:drawableStartCompat="@drawable/ic_rating_2"
+
                         tools:text="+4972" />
 
                 </LinearLayout>

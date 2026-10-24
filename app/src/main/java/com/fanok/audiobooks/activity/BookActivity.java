@@ -4,9 +4,6 @@ import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
 import static com.fanok.audiobooks.Consts.handleUserInput;
 import static com.fanok.audiobooks.Consts.isServiceRunning;
-import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_ENABLED;
-import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
-import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_PASSWORD;
 import static com.fanok.audiobooks.presenter.BookPresenter.Broadcast_SHOW_TITLE;
 import static com.fanok.audiobooks.service.MediaPlayerService.countAudioWereShowingRatingPopUp;
 
@@ -29,7 +26,6 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -59,6 +55,7 @@ import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.media3.common.util.UnstableApi;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -69,19 +66,19 @@ import com.alimuzaffar.lib.pin.PinEntryEditText;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
-import com.evgenii.jsevaluator.JsEvaluator;
-import com.evgenii.jsevaluator.interfaces.JsCallback;
 import com.fanok.audiobooks.Consts;
-import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.TvSeekBar;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.adapter.AudioAdapter;
+import com.fanok.audiobooks.download.DownloadStatus;
+import com.fanok.audiobooks.download.DownloadStatusText;
 import com.fanok.audiobooks.adapter.SectionsPagerAdapter;
 import com.fanok.audiobooks.interface_pacatge.book_content.Activity;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageUtil;
+import com.fanok.audiobooks.policy.ParentalControl;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.fanok.audiobooks.service.MediaPlayerService;
 import com.fanok.audiobooks.android_equalizer.DialogEqualizerFragment;
@@ -106,7 +103,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     private static final String TAG = "BookActivity";
 
-    public static final String Broadcast_PLAY_NEW_AUDIO = "PlayNewAudio";
     public static final String Broadcast_SET_IMAGE = "SetImage";
     public static final String Broadcast_SET_PROGRESS = "SetProgress";
     public static final String Broadcast_SET_SELECTION = "SetSelection";
@@ -138,6 +134,11 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     private RecyclerView mList;
     private TextView mNameCurent;
     private ProgressBar mProgressBar;
+    private View mDownloadStatus;
+    private TextView mDownloadStatusText;
+    private ProgressBar mDownloadStatusBar;
+    /** The book's download status as the chapter list last computed it; drives the status row and the menu title. */
+    private DownloadStatus mLastDownloadStatus;
     private ImageButton mPreviousTop;
     private ImageButton mPlayTop;
     private ImageButton mNextTop;
@@ -208,25 +209,38 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     };
 
 
+    /** The player's audio session for an equalizer dialog that arrived while this screen was not resumed, or 0. */
+    private int pendingEqualizerSession;
+
     private final BroadcastReceiver showEqualizer = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             int sessionId = intent.getIntExtra("id", 0);
-            if (sessionId > 0) {
-                try {
-                    DialogEqualizerFragment fragment = DialogEqualizerFragment.newBuilder()
-                            .setAudioSessionId(sessionId)
-                            .themeColor(ContextCompat.getColor(context, R.color.primaryColorEq))
-                            .textColor(ContextCompat.getColor(context, R.color.textColor))
-                            .setAccentColor(ContextCompat.getColor(context, R.color.secondaryColor))
-                            .build();
-
-                    fragment.show(getSupportFragmentManager(), "eq");
-                } catch (IllegalStateException ignored) {
-                }
+            if (sessionId <= 0) {
+                return;
+            }
+            if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) {
+                showEqualizer(sessionId);
+            } else {
+                //a dialog cannot be shown now: onResume shows it
+                pendingEqualizerSession = sessionId;
             }
         }
     };
+
+    private void showEqualizer(int sessionId) {
+        try {
+            DialogEqualizerFragment fragment = DialogEqualizerFragment.newBuilder()
+                    .setAudioSessionId(sessionId)
+                    .themeColor(ContextCompat.getColor(this, R.color.primaryColorEq))
+                    .textColor(ContextCompat.getColor(this, R.color.textColor))
+                    .setAccentColor(ContextCompat.getColor(this, R.color.secondaryColor))
+                    .build();
+
+            fragment.show(getSupportFragmentManager(), "eq");
+        } catch (IllegalStateException ignored) {
+        }
+    }
 
 
     private final BroadcastReceiver updateAdapter = new BroadcastReceiver() {
@@ -248,10 +262,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         intent.putExtra("notificationClick", notificationClick);
         String json = new GsonBuilder().serializeNulls().create().toJson(bookPOJO);
         intent.putExtra(ARG_BOOK, json);
-        SharedPreferences preferences =
-                context.getSharedPreferences(PARENTAL_CONTROL_PREFERENCES, MODE_PRIVATE);
-        if (preferences.getBoolean(PARENTAL_CONTROL_ENABLED, false) &&
-                !preferences.getBoolean(bookPOJO.getGenre(), false) && !notificationClick) {
+        //one policy for every way in; a "notificationClick" extra is never a reason to skip it
+        if (!ParentalControl.isAllowed(context, bookPOJO)) {
 
             XmlPullParser parser = context.getResources().getXml(R.xml.pin_entry);
             try {
@@ -278,18 +290,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                 editText.requestFocus();
                 Button b = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
                 b.setEnabled(false);
-                b.setOnClickListener(view -> {
-                    if (preferences.getInt(PARENTAL_PASSWORD, 0) == Integer.parseInt(
-                            editText.getText().toString())) {
-                        dialog.cancel();
-                        context.startActivity(intent);
-                    } else {
-                        Toast.makeText(context,
-                                context.getString(R.string.incorect_password),
-                                Toast.LENGTH_SHORT).show();
-                        editText.getText().clear();
-                    }
-                });
+                b.setOnClickListener(view -> openWithPin(context, editText, dialog, intent));
             });
 
             editText.addTextChangedListener(new TextWatcher() {
@@ -310,24 +311,40 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                 }
             });
 
-            editText.setOnPinEnteredListener(str -> {
-                if (preferences.getInt(PARENTAL_PASSWORD, 0) == Integer.parseInt(
-                        Objects.requireNonNull(editText.getText()).toString())) {
-                    dialog.cancel();
-                    context.startActivity(intent);
-                } else {
-                    Toast.makeText(context,
-                            context.getString(R.string.incorect_password),
-                            Toast.LENGTH_SHORT).show();
-                    editText.getText().clear();
-                }
-            });
+            editText.setOnPinEnteredListener(str -> openWithPin(context, editText, dialog, intent));
 
             dialog.show();
 
         } else {
             context.startActivity(intent);
         }
+    }
+
+    /** Opens the book when the PIN is right; otherwise says why not (wrong, or locked for a while). */
+    private static void openWithPin(@NonNull Context context, @NonNull PinEntryEditText editText,
+            @NonNull AlertDialog dialog, @NonNull Intent intent) {
+        ParentalControl.Verdict verdict = ParentalControl.verifyPin(context,
+                Objects.requireNonNull(editText.getText()).toString());
+        if (verdict.result == ParentalControl.Result.OK) {
+            dialog.cancel();
+            context.startActivity(intent);
+        } else {
+            Toast.makeText(context, ParentalControlActivity.pinMessage(context, verdict), Toast.LENGTH_SHORT).show();
+            editText.getText().clear();
+        }
+    }
+
+    /**
+     * The player notification's content intent: the book screen from the saved book itself, no page fetch. Single
+     * top, so tapping it while this book's screen is on top only brings it forward.
+     */
+    @NonNull
+    public static Intent notificationIntent(@NonNull Context context, @NonNull BookPOJO bookPOJO) {
+        Intent intent = new Intent(context, BookActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra("notificationClick", true);
+        intent.putExtra(ARG_BOOK, new GsonBuilder().serializeNulls().create().toJson(bookPOJO));
+        return intent;
     }
 
     private static void refreshActivity(@NonNull Context context, @NonNull BookPOJO bookPOJO,
@@ -350,13 +367,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         return new BookPresenter(BookPOJO.parceJsonToBookPojo(json), getApplicationContext());
     }
 
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(LocaleManager.onAttach(base));
-    }
-
     @UnstableApi
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -371,7 +382,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                 .getDefaultSharedPreferences(this);
 
         int isTablet = getResources().getInteger(R.integer.isTablet);
-        UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+        UiModeManager uiModeManager = (UiModeManager) getApplicationContext().getSystemService(UI_MODE_SERVICE);
         setContentView(R.layout.activity_book);
         mButtonCollapse = findViewById(R.id.buttonCollapse);
         mTopButtonsControls = findViewById(R.id.topButtonsControls);
@@ -383,6 +394,12 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         mList = findViewById(R.id.list);
         mNameCurent = findViewById(R.id.name_curent);
         mProgressBar = findViewById(R.id.progressBar);
+        mDownloadStatus = findViewById(R.id.downloadStatus);
+        mDownloadStatusText = findViewById(R.id.downloadStatusText);
+        mDownloadStatusBar = findViewById(R.id.downloadStatusBar);
+        if (mDownloadStatus != null) {
+            mDownloadStatus.setOnClickListener(view -> ClearSavedActivity.startActivity(this));
+        }
         mPreviousTop = findViewById(R.id.previousTop);
         mPlayTop = findViewById(R.id.playTop);
         mNextTop = findViewById(R.id.nextTop);
@@ -438,46 +455,6 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         }
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(setImage, new IntentFilter(Broadcast_SET_IMAGE), RECEIVER_EXPORTED);
-        }else {
-            registerReceiver(setImage, new IntentFilter(Broadcast_SET_IMAGE));
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(setProgress, new IntentFilter(Broadcast_SET_PROGRESS), RECEIVER_EXPORTED);
-        }else {
-            registerReceiver(setProgress, new IntentFilter(Broadcast_SET_PROGRESS));
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(setSelectionBroadcast, new IntentFilter(Broadcast_SET_SELECTION), RECEIVER_EXPORTED);
-        }else {
-            registerReceiver(setSelectionBroadcast, new IntentFilter(Broadcast_SET_SELECTION));
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(setTitleBroadcast, new IntentFilter(Broadcast_SET_TITLE), RECEIVER_EXPORTED);
-        }else{
-            registerReceiver(setTitleBroadcast, new IntentFilter(Broadcast_SET_TITLE));
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(showRating, new IntentFilter(Broadcast_SHOW_RATING), RECEIVER_EXPORTED);
-        }else {
-            registerReceiver(showRating, new IntentFilter(Broadcast_SHOW_RATING));
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(updateAdapter, new IntentFilter(Broadcast_UPDATE_ADAPTER), RECEIVER_EXPORTED);
-        }else {
-            registerReceiver(updateAdapter, new IntentFilter(Broadcast_UPDATE_ADAPTER));
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(showEqualizer, new IntentFilter(Broadcast_SHOW_EQUALIZER), RECEIVER_EXPORTED);
-        }else {
-            registerReceiver(showEqualizer, new IntentFilter(Broadcast_SHOW_EQUALIZER));
-        }
-
-
 
 
 
@@ -497,6 +474,11 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                             }
 
                             if (BottomSheetBehavior.STATE_EXPANDED == newState) {
+                                if (mPlayer != null && mPlayer.getParent() instanceof View) {
+                                    View parent = (View) mPlayer.getParent();
+                                    parent.bringToFront();
+                                    androidx.core.view.ViewCompat.setZ(parent, 32f);
+                                }
                                 mPresenter.stateExpanded();
                             } else {
                                 mPresenter.stateElse();
@@ -639,12 +621,26 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             }
         });
 
-        mDownland.setOnClickListener(view -> mPresenter.dowland(mAudioAdapter.getSelectedItems()));
+        mDownland.setOnClickListener(view -> mPresenter.dowland(new java.util.HashSet<>(mAudioAdapter.getSelectedItems())));
 
-        mDelete.setOnClickListener(view -> mPresenter.delete(mAudioAdapter.getSelectedItems()));
+        mDelete.setOnClickListener(view -> {
+            if (mAudioAdapter != null && mAudioAdapter.getSelectedItemsSize() > 0) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Удаление загрузок")
+                        .setMessage("Вы уверены, что хотите удалить выбранные файлы (" + mAudioAdapter.getSelectedItemsSize() + ")?")
+                        .setPositiveButton("ОК", (dialog, which) -> {
+                            mPresenter.delete(new java.util.HashSet<>(mAudioAdapter.getSelectedItems()));
+                            mAudioAdapter.clearSelected();
+                        })
+                        .setNegativeButton("Отмена", null)
+                        .show();
+            }
+        });
 
         mAudioAdapter = new AudioAdapter();
+        mAudioAdapter.setBookUrl(mBookPOJO.getUrl());
         mAudioAdapter.setListener((view, position) -> mPresenter.onItemSelected(view, position));
+        mAudioAdapter.setStatusListener(this::showDownloadStatus);
         mList.setAdapter(mAudioAdapter);
         mLinearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         mList.setLayoutManager(mLinearLayoutManager);
@@ -941,14 +937,24 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         return (super.onOptionsItemSelected(menuItem));
     }
 
+    /** The player UI listens only while visible; on the way back the service resends chapter, icon and progress. */
     @Override
-    protected void onStop() {
-        mPresenter.onStop();
-        super.onStop();
+    protected void onStart() {
+        super.onStart();
+        registerInternalReceiver(setImage, Broadcast_SET_IMAGE);
+        registerInternalReceiver(setProgress, Broadcast_SET_PROGRESS);
+        registerInternalReceiver(setSelectionBroadcast, Broadcast_SET_SELECTION);
+        registerInternalReceiver(setTitleBroadcast, Broadcast_SET_TITLE);
+        registerInternalReceiver(showRating, Broadcast_SHOW_RATING);
+        registerInternalReceiver(updateAdapter, Broadcast_UPDATE_ADAPTER);
+        registerInternalReceiver(showEqualizer, Broadcast_SHOW_EQUALIZER);
+        broadcastSend(new Intent(Broadcast_SHOW_TITLE));
+        if (mAudioAdapter != null) mAudioAdapter.startLive();
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onStop() {
+        if (mAudioAdapter != null) mAudioAdapter.stopLive();
         unregisterReceiver(setImage);
         unregisterReceiver(setProgress);
         unregisterReceiver(setSelectionBroadcast);
@@ -956,8 +962,20 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         unregisterReceiver(showRating);
         unregisterReceiver(updateAdapter);
         unregisterReceiver(showEqualizer);
+        mPresenter.onStop();
+        super.onStop();
+    }
+
+    /** App-internal actions are never exported: other apps must not be able to feed or read the player UI. */
+    private void registerInternalReceiver(BroadcastReceiver receiver, String action) {
+        ContextCompat.registerReceiver(this, receiver, new IntentFilter(action),
+                ContextCompat.RECEIVER_NOT_EXPORTED);
+    }
+
+    @Override
+    protected void onDestroy() {
         showingView = "";
-        mPresenter.onDestroy();
+        //Moxy destroys the presenter (and its player binding) when this screen is finished for good
         super.onDestroy();
     }
 
@@ -1065,12 +1083,46 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 
+    @Override
+    public void showLongToast(int id) {
+        Toast.makeText(this, id, Toast.LENGTH_LONG).show();
+    }
+
     @UnstableApi
     @Override
     public void updateAdapter() {
         if (mAudioAdapter != null) {
             mAudioAdapter.refresh();
         }
+    }
+
+    /**
+     * The row above the chapter list: what the book's download is doing (state, chapters, bytes, speed, time left),
+     * hidden while nothing is selected for download. Tapping it opens the Downloads screen.
+     */
+    private void showDownloadStatus(@NonNull DownloadStatus status) {
+        mLastDownloadStatus = status;
+        if (mDownloadStatus == null) return;
+        String line = DownloadStatusText.line(this, status);
+        if (line.isEmpty()) {
+            mDownloadStatus.setVisibility(View.GONE);
+            return;
+        }
+        mDownloadStatusText.setText(line);
+        mDownloadStatusBar.setProgress(status.percent());
+        mDownloadStatusBar.setVisibility(status.state == DownloadStatus.COMPLETE ? View.GONE : View.VISIBLE);
+        mDownloadStatus.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem download = menu.findItem(R.id.download_delete);
+        if (download != null) {
+            String brief = mLastDownloadStatus == null ? null : DownloadStatusText.brief(this, mLastDownloadStatus);
+            download.setTitle(brief == null ? getString(R.string.dowland_delete)
+                    : getString(R.string.download_menu_status, brief));
+        }
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -1080,44 +1132,12 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
 
     public void showRatingDialog() {
-        ReviewManager manager = ReviewManagerFactory.create(this);
-        Task<ReviewInfo> request = manager.requestReviewFlow();
-        request.addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                // We can get the ReviewInfo object
-                new StorageUtil(this).storeShowRating(false);
-                // Создаем намерение для открытия ссылки
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://4pda.to/forum/index.php?showtopic=978445"));
-                Intent chooser = Intent.createChooser(browserIntent, "Открыть с помощью...");
-                startActivity(chooser);
-            } else {
-                new StorageUtil(this).storeCountAudioListneredForRating(
-                        countAudioWereShowingRatingPopUp - 1);
-            }
-        });
+        new StorageUtil(this).storeShowRating(false);
     }
 
     @Override
     public void showProgres(boolean b) {
 
-    }
-
-    @Override
-    public void decode(@NotNull @NonNull final String key) {
-        JsEvaluator jsEvaluator = new JsEvaluator(this);
-        jsEvaluator.callFunction(Consts.decodeScript,
-                new JsCallback() {
-                    @Override
-                    public void onError(String errorMessage) {
-                        showToast(R.string.error_decode);
-                    }
-
-                    @Override
-                    public void onResult(String result) {
-                        mPresenter.addDecodeData(result);
-                    }
-                }, "strDecode", key);
     }
 
     @Override
@@ -1127,9 +1147,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @UnstableApi
     @Override
-    public void showData(@NonNull ArrayList<AudioPOJO> data, @NonNull String bookUrl) {
+    public void showData(@NonNull ArrayList<AudioPOJO> data, @NonNull String bookUrl, int chaptersTotal) {
         if (mAudioAdapter != null) {
-            mAudioAdapter.setData(data);
+            mAudioAdapter.setData(data, chaptersTotal);
         }
     }
 
@@ -1166,23 +1186,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @Override
     public void setImageDrawable(int id) {
+        String label = getString(id == R.drawable.ic_pause ? R.string.pause : R.string.play);
         if (mPlayTop != null) {
             mPlayTop.setImageResource(id);
+            mPlayTop.setContentDescription(label);
         }
         mPlayBottom.setImageResource(id);
-    }
-
-    @Override
-    public void onSaveInstanceState(@NotNull Bundle outState,
-            @NotNull PersistableBundle outPersistentState) {
-        super.onSaveInstanceState(outState, outPersistentState);
-        outState.putBoolean("serviceStatus", mPresenter.isServiceBound());
-    }
-
-    @Override
-    protected void onRestoreInstanceState(@NotNull Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        mPresenter.setServiceBound(savedInstanceState.getBoolean("serviceStatus"));
+        mPlayBottom.setContentDescription(label);
     }
 
     @UnstableApi
@@ -1199,21 +1209,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @Override
     public void broadcastSend(@NotNull Intent intent) {
+        intent.setPackage(getPackageName());
         sendBroadcast(intent);
     }
 
     @Override
     public void activityStart(@NotNull Intent intent) {
         startActivity(intent);
-    }
-
-    @Override
-    public void myUnbindService(@NotNull ServiceConnection serviceConnection) {
-        try {
-            unbindService(serviceConnection);
-        } catch (Exception ignored) {
-        }
-
     }
 
     @Override
@@ -1291,10 +1293,28 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         return parent != null && parent.getParent() == tabs;
     }
 
+    /** The notification of another book reached this single-top screen: open that book's own screen. */
+    @Override
+    protected void onNewIntent(@NonNull Intent intent) {
+        super.onNewIntent(intent);
+        String json = intent.getStringExtra(ARG_BOOK);
+        BookPOJO other = json != null ? BookPOJO.parceJsonToBookPojo(json) : null;
+        if (other != null && other.getUrl() != null && !other.getUrl().equals(mBookPOJO.getUrl())) {
+            Intent fresh = new Intent(intent);
+            fresh.setFlags(intent.getFlags() & ~(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK));
+            startActivity(fresh);
+        }
+    }
+
     @UnstableApi
     @Override
     protected void onResume() {
         super.onResume();
+        if (pendingEqualizerSession > 0) {
+            int sessionId = pendingEqualizerSession;
+            pendingEqualizerSession = 0;
+            showEqualizer(sessionId);
+        }
         showingView = mBookPOJO.getUrl();
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;

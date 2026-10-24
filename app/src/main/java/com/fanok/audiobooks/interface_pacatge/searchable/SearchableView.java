@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 
 import com.arellomobile.mvp.MvpView;
 import com.arellomobile.mvp.viewstate.strategy.AddToEndSingleStrategy;
+import com.arellomobile.mvp.viewstate.strategy.OneExecutionStateStrategy;
 import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.fanok.audiobooks.pojo.BookPOJO;
@@ -30,10 +31,10 @@ public interface SearchableView extends MvpView {
     @StateStrategyType(AddToEndSingleStrategy.class)
     void clearData();
 
-    @StateStrategyType(AddToEndSingleStrategy.class)
+    @StateStrategyType(OneExecutionStateStrategy.class)
     void showToast(int message);
 
-    @StateStrategyType(AddToEndSingleStrategy.class)
+    @StateStrategyType(OneExecutionStateStrategy.class)
     void showToast(String message);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
@@ -53,5 +54,9 @@ public interface SearchableView extends MvpView {
 
     @StateStrategyType(AddToEndSingleStrategy.class)
     void setNotFoundVisibile(boolean b);
+
+    /** How many sources failed in the last pass (0 hides the line and its retry action). */
+    @StateStrategyType(AddToEndSingleStrategy.class)
+    void showSourcesFailed(int count);
 
 }

@@ -1,585 +1,371 @@
 package com.fanok.audiobooks.model;
 
 
-
-
-import static com.fanok.audiobooks.Consts.PROXY_HOST;
-import static com.fanok.audiobooks.Consts.PROXY_PORT;
-
+import android.util.Log;
 import androidx.annotation.NonNull;
-import com.fanok.audiobooks.App;
-import com.fanok.audiobooks.Consts;
+import androidx.annotation.Nullable;
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.net.SiteHttp;
 import com.fanok.audiobooks.pojo.ComentsPOJO;
+import com.fanok.audiobooks.pojo.ContentParentPOJO;
 import com.fanok.audiobooks.pojo.SubComentsPOJO;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.reactivex.Observable;
+import io.reactivex.functions.BooleanSupplier;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Proxy.Type;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
+/**
+ * Comments of a book page. Fetching (through {@link SiteHttp}) is kept apart from parsing: the
+ * {@code parseComments*} functions take already-fetched content, never touch Android APIs and skip
+ * (and count) a comment they cannot read instead of failing the whole list.
+ */
 public class ComentsModel implements
         com.fanok.audiobooks.interface_pacatge.book_content.ComentsModel {
 
+    private static final String TAG = "ComentsModel";
+
+    /** baza-knig serves 30 comments per page; the bound stops the walk on a site that never sends an empty page. */
+    static final int BAZA_KNIG_MAX_PAGES = 50;
+
+    private static final Pattern BAZA_KNIG_NEWS_ID = Pattern.compile("/(\\d+)[^/]*/?$");
+
+    private static final Pattern AKNIGA_FEED_ID = Pattern.compile("#comment(\\d+)$");
+
+    /** Comments read from one page and how many malformed ones were skipped. */
+    static final class Parsed {
+
+        final ArrayList<ComentsPOJO> comments = new ArrayList<>();
+
+        int skipped;
+
+        void add(Parsed more) {
+            comments.addAll(more.comments);
+            skipped += more.skipped;
+        }
+    }
+
+    /** Fills a POJO from one comment element; leaves the text empty (or throws) when the markup is unexpected. */
+    private interface CommentReader {
+
+        void read(Element comment, ContentParentPOJO into);
+    }
+
+    /** GETs one baza-knig comments page (JSON); a seam so the paging walk is testable without the network. */
+    interface PageSource {
+
+        String get(String url) throws IOException;
+    }
 
     @Override
     public Observable<ArrayList<ComentsPOJO>> getComents(@NonNull String url) {
-
-        return Observable.create(observableEmitter -> {
-            //waitVpnConetion();
-            ArrayList<ComentsPOJO> articlesModels;
+        return Observable.create(emitter -> {
+            ArrayList<ComentsPOJO> comments;
             try {
-                if (url.contains(Url.SERVER)) {
-                    articlesModels = loadComentsList(url);
-                } else if (url.contains(Url.SERVER_ABMP3)) {
-                    articlesModels = loadComentsListABMP3(url);
-                } else if (url.contains(Url.SERVER_AKNIGA)) {
-                    articlesModels = loadComentsListAbook(url);
-                } else if (url.contains(Url.SERVER_BAZA_KNIG)) {
-                    articlesModels = loadComentsListBazaKnig(url);
-                } else if (url.contains(Url.SERVER_BOOKOOF)) {
-                    articlesModels = loadComentsListBookoof(url);
-                }else {
-                    articlesModels = new ArrayList<>();
-                }
-                observableEmitter.onNext(articlesModels);
+                comments = load(url, emitter::isDisposed);
             } catch (Exception e) {
-                observableEmitter.onError(e);
-            } finally {
-                observableEmitter.onComplete();
+                emitter.tryOnError(e);
+                return;
+            }
+            if (!emitter.isDisposed()) {
+                emitter.onNext(comments);
+                emitter.onComplete();
             }
         });
     }
 
-    private ArrayList<SubComentsPOJO> getChildCOments(Element child, String parent) {
-        ArrayList<SubComentsPOJO> result = new ArrayList<>();
-        SubComentsPOJO subComentsPOJO = new SubComentsPOJO();
-        Elements imageConteiner = child.getElementsByTag("img");
-        if (imageConteiner.size() != 0) {
-            subComentsPOJO.setImage(imageConteiner.first().attr("src"));
+    static ArrayList<ComentsPOJO> load(String url, BooleanSupplier cancelled) throws Exception {
+        url = Url.canonical(url);
+        Parsed parsed;
+        if (Url.isHost(url, Url.SERVER)) {
+            parsed = parseCommentsKnigavuhe(SiteHttp.get(url), url);
+        } else if (Url.isHost(url, Url.SERVER_ABMP3)) {
+            parsed = parseCommentsAbmp3(SiteHttp.get(url), url);
+        } else if (Url.isHost(url, Url.SERVER_AKNIGA)) {
+            parsed = loadAkniga(url);
+        } else if (Url.isHost(url, Url.SERVER_BAZA_KNIG)) {
+            parsed = loadBazaKnig(url, ComentsModel::getJson, cancelled);
+        } else if (Url.isHost(url, Url.SERVER_AUDIOBOO)) {
+            parsed = parseCommentsAudioboo(SiteHttp.get(url), url);
+        } else if (Url.isHost(url, Url.SERVER_IZIBUK) || Url.isHost(url, Url.SERVER_KNIGOBLUD)
+                || Url.isHost(url, Url.SERVER_OTRUB) || Url.isHost(url, Url.SERVER_POLEKNIG)) {
+            return new ArrayList<>(); // the app reads no comments from these sites
+        } else {
+            throw new IllegalArgumentException("unsupported host: " + Url.hostOf(url));
         }
-        subComentsPOJO.setParentName(parent);
-
-        Elements nameConteiner = child.getElementsByClass("comment_head_user");
-        if (nameConteiner.size() != 0) {
-            subComentsPOJO.setName(nameConteiner.first().text());
+        if (parsed.skipped > 0) {
+            Log.w(TAG, "skipped " + parsed.skipped + " malformed comments on " + url);
         }
-
-        Elements reting = child.getElementsByClass("comment_head_votes_count");
-        if (reting.size() != 0) {
-            subComentsPOJO.setReting(reting.first().text());
-        }
-
-        Elements time = child.getElementsByClass("comment_head_time");
-        if (time.size() != 0) {
-            subComentsPOJO.setDate(time.first().text());
-        }
-
-        Elements text = child.getElementsByClass("comment_body");
-        if (text.size() != 0) {
-            subComentsPOJO.setText(text.first().text());
-        }
-
-        if (!subComentsPOJO.isEmty()) {
-            result.add(subComentsPOJO);
-        }
-
-        Elements elements = child.children();
-
-        for (int i = 1; i < elements.size(); i++) {
-            if (elements.get(i).attr("class").contains("comments_list")) {
-                result.addAll(getChildCOments(elements.get(i), subComentsPOJO.getName()));
-            }
-        }
-
-        return result;
+        return parsed.comments;
     }
 
-    private ArrayList<ComentsPOJO> loadComentsList(String url) throws IOException {
-        ArrayList<ComentsPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
-
-        Element comentsElement = doc.getElementById("comments_list");
-
-        if (comentsElement == null) return result;
-
-        for (Element comentConteiner : comentsElement.children()) {
-            ComentsPOJO comentsPOJO = new ComentsPOJO();
-            Elements imageConteiner = comentConteiner.getElementsByTag("img");
-            if (imageConteiner.size() != 0) {
-                comentsPOJO.setImage(imageConteiner.first().attr("src"));
-            }
-            Elements nameConteiner = comentConteiner.getElementsByClass("comment_head_user");
-            if (nameConteiner.size() != 0) {
-                comentsPOJO.setName(nameConteiner.first().text());
-            }
-
-            Elements time = comentConteiner.getElementsByClass("comment_head_time");
-            if (time.size() != 0) {
-                comentsPOJO.setDate(time.first().text());
-            }
-
-            Elements reting = comentConteiner.getElementsByClass("comment_head_votes_count");
-            if (reting.size() != 0) {
-                comentsPOJO.setReting(reting.first().text());
-            }
-
-            Elements text = comentConteiner.getElementsByClass("comment_body");
-            if (text.size() != 0) {
-                comentsPOJO.setText(text.first().text());
-            }
-
-
-            Elements children = comentConteiner.children();
-
-            for (int i = 1; i < children.size(); i++) {
-                if (children.get(i).attr("class").contains("comments_list")) {
-                    comentsPOJO.setChildComents(
-                            getChildCOments(children.get(i), comentsPOJO.getName()));
-                }
-            }
-            if (!comentsPOJO.isEmty()) {
-                result.add(comentsPOJO);
-            }
-
+    static Parsed parseCommentsKnigavuhe(Document doc, String bookUrl) {
+        Element list = doc.getElementById("comments_list");
+        if (list == null) {
+            return new Parsed();
         }
-        return result;
+        return nest(list.select("div.comment"), "div.comment", (comment, pojo) -> {
+            Element head = comment.selectFirst("> .comment_head");
+            pojo.setName(text(head, ".comment_head_user"));
+            pojo.setDate(text(head, ".comment_head_time"));
+            pojo.setReting(text(head, ".comment_head_votes_count"));
+            pojo.setImage(absUrl(head, ".comment_head_userpic img", "src"));
+            pojo.setText(text(comment, "> .comment_body_wrap > .comment_body"));
+        });
     }
 
-    private SubComentsPOJO getChildCOmentsABMP3(Element comentConteiner, String parent) {
-
-        SubComentsPOJO comentsPOJO = new SubComentsPOJO();
-        Elements imageConteiner = comentConteiner.getElementsByTag("img");
-        if (imageConteiner != null && imageConteiner.size() != 0) {
-            comentsPOJO.setImage(imageConteiner.first().attr("src"));
+    static Parsed parseCommentsAbmp3(Document doc, String bookUrl) {
+        Element list = doc.getElementById("w0");
+        if (list == null) {
+            return new Parsed();
         }
-        Elements nameConteiner = comentConteiner.getElementsByClass("comment-author-name");
-        if (nameConteiner != null && nameConteiner.size() != 0) {
-            Element child = nameConteiner.first().child(0);
-            if (child != null) {
-                comentsPOJO.setName(child.text());
-            }
-
-            Element time = nameConteiner.first().child(1);
-            if (time != null) {
-                comentsPOJO.setDate(time.text());
-            }
-        }
-
-        Elements text = comentConteiner.getElementsByClass("comment-body");
-        if (text.size() != 0) {
-            comentsPOJO.setText(text.first().text());
-        }
-
-        comentsPOJO.setParentName(parent);
-
-        return comentsPOJO;
-
-
+        return nest(list.select("li.comment"), "li.comment", (comment, pojo) -> {
+            Element content = comment.selectFirst("> .comment-content");
+            pojo.setImage(absUrl(content, ".comment-author-avatar img", "src"));
+            pojo.setName(text(content, ".comment-author-name > span:not(.comment-date)"));
+            pojo.setDate(text(content, ".comment-date"));
+            pojo.setText(text(content, ".comment-body"));
+        });
     }
 
-    private ArrayList<ComentsPOJO> loadComentsListABMP3(String url) throws IOException {
-        ArrayList<ComentsPOJO> result = new ArrayList<>();
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0);
-
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
+    static Parsed parseCommentsAkniga(Document doc, String bookUrl) {
+        Element list = doc.getElementById("comments");
+        if (list == null) {
+            return new Parsed();
         }
-
-        Document doc = connection.get();
-
-        Element comentsElement = doc.getElementById("w0");
-        if (comentsElement == null) {
-            return result;
-        }
-
-        Elements empty = comentsElement.getElementsByClass("empty");
-        if (empty != null && empty.size() != 0) {
-            return result;
-        }
-
-        for (Element comentConteiner : comentsElement.children()) {
-            ComentsPOJO comentsPOJO = new ComentsPOJO();
-            Elements imageConteiner = comentConteiner.getElementsByTag("img");
-            if (imageConteiner != null && imageConteiner.size() != 0) {
-                comentsPOJO.setImage(imageConteiner.first().attr("src"));
-            }
-            Elements nameConteiner = comentConteiner.getElementsByClass("comment-author-name");
-            if (nameConteiner != null && nameConteiner.size() != 0) {
-                Element child = nameConteiner.first().child(0);
-                if (child != null) {
-                    comentsPOJO.setName(child.text());
-                }
-
-                Element time = nameConteiner.first().child(1);
-                if (time != null) {
-                    comentsPOJO.setDate(time.text());
-                }
-            }
-
-            Elements text = comentConteiner.getElementsByClass("comment-body");
-            if (text.size() != 0) {
-                comentsPOJO.setText(text.first().text());
-            }
-
-            Elements childrenConteiner = comentConteiner.getElementsByClass("children");
-            if (childrenConteiner != null && childrenConteiner.size() != 0) {
-                Elements children = childrenConteiner.first().getElementsByClass("item");
-                if (children != null) {
-                    ArrayList<SubComentsPOJO> subComentsPOJOS = new ArrayList<>();
-                    for (int i = 0; i < children.size(); i++) {
-                        SubComentsPOJO subComentsPOJO = getChildCOmentsABMP3(children.get(i), comentsPOJO.getName());
-                        if (!subComentsPOJO.isEmty()) {
-                            subComentsPOJOS.add(subComentsPOJO);
-                        }
-                    }
-                    if (subComentsPOJOS.size() != 0) {
-                        comentsPOJO.setChildComents(subComentsPOJOS);
-                    }
-                }
-            }
-
-            if (!comentsPOJO.isEmty()) {
-                result.add(comentsPOJO);
-            }
-
-        }
-        return result;
+        return nest(list.select(".js-comment-wrapper"), ".js-comment-wrapper", (wrapper, pojo) -> {
+            Element section = wrapper.selectFirst("> section");
+            Element name = section == null ? null : section.selectFirst(".comments__block--item--name");
+            pojo.setName(name == null ? "" : name.ownText());
+            String image = absUrl(section, "img.comments__block--item--avatar", "src");
+            pojo.setImage(image.isEmpty() ? absUrl(section, "img.comments__block--item--avatar", "data-src") : image);
+            pojo.setDate(text(section, "time"));
+            pojo.setText(text(section, ".comments__block--item--comment"));
+            String rating = wrapper.attr("data-rating");
+            pojo.setReting(rating.equals("0") ? "" : rating);
+        });
     }
 
-    private ArrayList<ComentsPOJO> loadComentsListAbook(String url) throws IOException {
-        ArrayList<ComentsPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
-
-        Element comentsElement = doc.getElementById("comments");
-        if (comentsElement != null) {
-            Elements elements = comentsElement.getElementsByClass("caption--inline js-comments-title");
-            if (elements != null && elements.size() != 0) {
-                String text = elements.first().text();
-                if (text != null) {
-                    if (text.equals("Нет комментариев")) {
-                        return result;
-                    }
-                    Elements comentsList = comentsElement.getElementsByClass("comments__block js-comment-list");
-                    if (comentsList != null && comentsList.size() != 0) {
-                        for (Element comentConteiner : comentsList.first().children()) {
-                            ComentsPOJO comentsPOJO = new ComentsPOJO();
-                            Element conteiner = comentConteiner.child(0);
-                            if (conteiner != null) {
-                                Elements comentsText = conteiner.getElementsByClass("comments__block--item--comment");
-                                if (comentsText != null && comentsText.size() != 0) {
-                                    comentsPOJO.setText(comentsText.first().text());
-                                }
-
-                                Elements autorInfos = conteiner.getElementsByClass("comments__block--item-content");
-                                if (autorInfos != null && autorInfos.size() != 0) {
-                                    Element autorInfo = autorInfos.first();
-                                    Elements imageConteiner = autorInfo.getElementsByTag("img");
-                                    if (imageConteiner != null && imageConteiner.size() != 0) {
-                                        comentsPOJO.setImage(imageConteiner.first().attr("data-src"));
-                                    }
-
-                                    Elements nameConteiner = autorInfo
-                                            .getElementsByClass("comments__block--item--name");
-                                    if (nameConteiner != null && nameConteiner.size() != 0) {
-                                        comentsPOJO.setName(nameConteiner.first().ownText());
-                                    }
-
-                                    Elements time = autorInfo.getElementsByTag("time");
-                                    if (time != null && time.size() != 0) {
-                                        comentsPOJO.setDate(time.first().text());
-                                    }
-
-                                    int up = 0;
-                                    int down = 0;
-
-                                    Elements upElements = autorInfo.getElementsByClass("js-vote-rating-up");
-                                    if (upElements != null && upElements.size() != 0) {
-                                        text = upElements.first().text();
-                                        if (text != null && !text.isEmpty()) {
-                                            up = Integer.parseInt(text);
-                                        }
-                                    }
-
-                                    Elements downElements = autorInfo.getElementsByClass("js-vote-rating-down");
-                                    if (downElements != null && downElements.size() != 0) {
-                                        text = downElements.first().text();
-                                        if (text != null && !text.isEmpty()) {
-                                            down = Integer.parseInt(text);
-                                        }
-                                    }
-
-                                    int raiting = up - down;
-                                    if (raiting != 0) {
-                                        comentsPOJO.setReting(String.valueOf(raiting));
-                                    }
-
-                                }
-
-                                Elements childrenConteiner = comentConteiner.getElementsByClass("has-parent");
-                                if (childrenConteiner != null) {
-                                    ArrayList<SubComentsPOJO> arrayList = new ArrayList<>();
-                                    for (Element child : childrenConteiner) {
-                                        SubComentsPOJO subComentsPOJO = new SubComentsPOJO();
-                                        conteiner = child.child(0);
-                                        if (conteiner != null) {
-                                            comentsText = conteiner
-                                                    .getElementsByClass("comments__block--item--comment");
-                                            if (comentsText != null && comentsText.size() != 0) {
-                                                subComentsPOJO.setText(comentsText.first().text());
-                                            }
-
-                                            autorInfos = conteiner
-                                                    .getElementsByClass("comments__block--item-content");
-                                            if (autorInfos != null && autorInfos.size() != 0) {
-                                                Element autorInfo = autorInfos.first();
-                                                Elements imageConteiner = autorInfo.getElementsByTag("img");
-                                                if (imageConteiner != null && imageConteiner.size() != 0) {
-                                                    subComentsPOJO.setImage(imageConteiner.first().attr("data-src"));
-                                                }
-
-                                                Elements nameConteiner = autorInfo
-                                                        .getElementsByClass("comments__block--item--name");
-                                                if (nameConteiner != null && nameConteiner.size() != 0) {
-                                                    subComentsPOJO.setName(nameConteiner.first().ownText());
-                                                }
-
-                                                Elements time = autorInfo.getElementsByTag("time");
-                                                if (time != null && time.size() != 0) {
-                                                    subComentsPOJO.setDate(time.first().text());
-                                                }
-
-                                                int up = 0;
-                                                int down = 0;
-
-                                                Elements upElements = autorInfo
-                                                        .getElementsByClass("js-vote-rating-up");
-                                                if (upElements != null && upElements.size() != 0) {
-                                                    text = upElements.first().text();
-                                                    if (text != null && !text.isEmpty()) {
-                                                        up = Integer.parseInt(text);
-                                                    }
-                                                }
-
-                                                Elements downElements = autorInfo
-                                                        .getElementsByClass("js-vote-rating-down");
-                                                if (downElements != null && downElements.size() != 0) {
-                                                    text = downElements.first().text();
-                                                    if (text != null && !text.isEmpty()) {
-                                                        down = Integer.parseInt(text);
-                                                    }
-                                                }
-
-                                                int raiting = up - down;
-                                                if (raiting != 0) {
-                                                    subComentsPOJO.setReting(String.valueOf(raiting));
-                                                }
-
-                                                Elements replyto = conteiner.getElementsByClass("replyto");
-                                                if (replyto != null && replyto.size() != 0) {
-                                                    text = replyto.first().text();
-                                                    if (text != null && !text.isEmpty()) {
-                                                        subComentsPOJO.setParentName(text);
-                                                    }
-                                                }
-
-                                                if (!subComentsPOJO.isEmty()) {
-                                                    arrayList.add(subComentsPOJO);
-                                                }
-
-                                            }
-                                        }
-
-                                    }
-
-                                    if (!arrayList.isEmpty()) {
-                                        comentsPOJO.setChildComents(arrayList);
-                                    }
-
-                                }
-
-                                if (!comentsPOJO.isEmty()) {
-                                    result.add(comentsPOJO);
-                                }
-                            }
-
-                        }
-
-
-                    }
-                }
-            }
-
+    /** The comments feed when the page holds only part of the comments; null when it holds them all. */
+    @Nullable
+    static String aknigaFeedUrl(Document doc) {
+        Element more = doc.selectFirst(".js-comments-load-more");
+        Element list = doc.getElementById("comments");
+        if (more == null || list == null) {
+            return null;
         }
-
-        return result;
+        String target = list.attr("data-target-id");
+        if (toInt(more.attr("data-total")) <= toInt(more.attr("data-loaded")) || !target.matches("\\d+")) {
+            return null;
+        }
+        return Url.SERVER_AKNIGA + "/rss/comments/" + target + "/";
     }
 
-    private ArrayList<ComentsPOJO> loadComentsListBazaKnig(String url) throws IOException {
-        ArrayList<ComentsPOJO> result = new ArrayList<>();
-        int page = 0;
-        url = url.substring(url.lastIndexOf("/") + 1);
-        url = url.substring(0, url.indexOf("-"));
-        String id = url;
-        String baseUrl
-                = Url.SERVER_BAZA_KNIG
-                + "/engine/ajax/controller.php?mod=comments&cstart=<page>&news_id=<bookId>&skin=knigi-pk&massact=disable";
-        while (true) {
-            page++;
-            Connection connection = Jsoup
-                    .connect(baseUrl.replace("<page>", String.valueOf(page)).replace("<bookId>", id))
-                    .userAgent(Consts.USER_AGENT)
-                    .referrer("http://www.google.com")
-                    .sslSocketFactory(Consts.socketFactory())
-                    .maxBodySize(0)
-                    .ignoreContentType(true);
-
-            if(App.useProxy) {
-                Proxy proxy = new Proxy(Type.SOCKS,
-                        new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-                connection.proxy(proxy);
+    /** Feed items that are not on {@code page}, as top-level comments (the feed carries no reply structure). */
+    static Parsed parseCommentsAknigaFeed(Document feed, Document page) {
+        Parsed parsed = new Parsed();
+        for (Element item : feed.select("item")) {
+            Matcher id = AKNIGA_FEED_ID.matcher(text(item, "guid"));
+            if (id.find() && page.getElementById("comment" + id.group(1)) != null) {
+                continue;
             }
-
-            if (!Consts.getBazaKnigCookies().isEmpty()) {
-                connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
-            }
-
-            String text = connection.execute().body();
-            JsonElement json = JsonParser.parseString(text.replaceAll("\\n", "").replaceAll("\\t", ""));
-            if (json.isJsonObject()) {
-                String comentsList = json.getAsJsonObject().get("comments").getAsString();
-                if (comentsList.isEmpty()) {
-                    break;
-                } else {
-                    Document doc = Jsoup.parse(comentsList);
-                    Elements elements = doc.body().children();
-                    for (Element element : elements) {
-                        ComentsPOJO comentsPOJO = new ComentsPOJO();
-                        Elements imgConteiner = element.getElementsByClass("comm-ava");
-                        if (imgConteiner != null && imgConteiner.size() > 0) {
-                            Elements img = imgConteiner.first().getElementsByTag("img");
-                            if (img != null && img.size() > 0) {
-                                String src = img.first().attr("src");
-                                if (src != null && !src.isEmpty()) {
-                                    comentsPOJO.setImage(src);
-                                }
-                            }
-
-                            Elements commInfo = element.getElementsByClass("comm-info");
-                            if (commInfo != null && commInfo.size() > 0) {
-                                Elements b = commInfo.first().getElementsByTag("b");
-                                if (b != null && b.size() > 0) {
-                                    String name = b.first().ownText();
-                                    if (name != null && !name.isEmpty()) {
-                                        comentsPOJO.setName(name);
-                                    }
-                                }
-                                String date = commInfo.first().ownText();
-                                if (date != null && !date.isEmpty()) {
-                                    comentsPOJO.setDate(date);
-                                }
-                            }
-                        }
-                        Elements comText = element.getElementsByClass("comm-text");
-                        if (comText != null && comText.size() != 0) {
-                            Element parent = comText.first().child(0);
-                            if (parent != null) {
-                                String textComent = parent.ownText();
-                                if (textComent != null && !textComent.isEmpty()) {
-                                    comentsPOJO.setText(textComent);
-                                }
-                                Elements quoteTitle = parent.getElementsByClass("title_quote");
-                                if (quoteTitle != null && quoteTitle.size() > 0) {
-                                    String name = quoteTitle.first().text();
-                                    if (name != null && !name.isEmpty()) {
-                                        comentsPOJO.setQuoteName(name.replace("Цитата: ", ""));
-                                    }
-                                }
-                                Elements quote = parent.getElementsByClass("quote");
-                                if (quote != null && quote.size() > 0) {
-                                    String quoteText = quote.first().text();
-                                    if (quoteText != null && !quoteText.isEmpty()) {
-                                        comentsPOJO.setQuoteText(quoteText);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (!comentsPOJO.isEmty()) {
-                            result.add(comentsPOJO);
-                        }
-                    }
-                }
+            ComentsPOJO pojo = new ComentsPOJO();
+            String creator = text(item, "dc|creator");
+            pojo.setName(creator.isEmpty() ? text(item, "author") : creator);
+            // the XML parser keeps the CDATA description, which is HTML, as text
+            pojo.setText(Jsoup.parseBodyFragment(text(item, "description")).text());
+            pojo.setDate(text(item, "pubDate").replaceAll(" [+-]\\d{4}$", ""));
+            if (pojo.isEmty()) {
+                parsed.skipped++;
             } else {
+                parsed.comments.add(pojo);
+            }
+        }
+        return parsed;
+    }
+
+    /** One page of baza-knig comments: flat, newest first; a reply quotes the comment it answers. */
+    static Parsed parseCommentsBazaKnig(Document doc, String bookUrl) {
+        return nest(doc.select("div.comm"), null, (comment, pojo) -> {
+            pojo.setImage(absUrl(comment, ".comm-ava img", "src"));
+            Element info = comment.selectFirst(".comm-info");
+            pojo.setName(text(info, "b"));
+            pojo.setDate(info == null ? "" : info.ownText());
+            Element body = comment.selectFirst(".comm-text > div");
+            if (body == null) {
+                return;
+            }
+            Element quoteTitle = body.selectFirst(".title_quote");
+            if (quoteTitle != null) {
+                String user = quoteTitle.attr("data-commentuser");
+                pojo.setQuoteName(user.isEmpty() ? quoteTitle.text().replace("Цитата: ", "") : user);
+            }
+            Element quote = body.selectFirst(".quote");
+            if (quote != null) {
+                pojo.setQuoteText(withoutQuotes(quote));
+            }
+            pojo.setText(withoutQuotes(body));
+        });
+    }
+
+    /** The HTML of one baza-knig comments page from the site's JSON answer; empty past the last page. */
+    static String bazaKnigCommentsHtml(String json) {
+        JsonElement root = JsonParser.parseString(json);
+        if (!root.isJsonObject()) {
+            return "";
+        }
+        JsonElement comments = root.getAsJsonObject().get("comments");
+        return comments != null && comments.isJsonPrimitive() ? comments.getAsString() : "";
+    }
+
+    /** The DLE news id of a baza-knig book URL ({@code .../182353-name.html} → {@code 182353}). */
+    static String bazaKnigNewsId(String url) {
+        String path = URI.create(url.trim()).getPath();
+        Matcher matcher = BAZA_KNIG_NEWS_ID.matcher(path == null ? "" : path);
+        if (!matcher.find()) {
+            throw new IllegalArgumentException("no book id in " + url);
+        }
+        return matcher.group(1);
+    }
+
+    /** Walks the comment pages until an empty or repeated page, at most {@link #BAZA_KNIG_MAX_PAGES}; oldest first. */
+    static Parsed loadBazaKnig(String url, PageSource source, BooleanSupplier cancelled) throws Exception {
+        String newsId = bazaKnigNewsId(url);
+        Parsed all = new Parsed();
+        String previous = "";
+        for (int page = 1; page <= BAZA_KNIG_MAX_PAGES && !cancelled.getAsBoolean(); page++) {
+            String pageUrl = Url.SERVER_BAZA_KNIG + "/engine/ajax/controller.php?mod=comments&cstart=" + page
+                    + "&news_id=" + newsId + "&skin=knigi-pk&massact=disable";
+            String html = bazaKnigCommentsHtml(source.get(pageUrl));
+            if (html.isEmpty() || html.equals(previous)) {
                 break;
             }
+            previous = html;
+            all.add(parseCommentsBazaKnig(Jsoup.parseBodyFragment(html, pageUrl), url));
         }
-        Collections.reverse(result);
-        return result;
-
+        Collections.reverse(all.comments);
+        return all;
     }
 
-
-    private ArrayList<ComentsPOJO> loadComentsListBookoof(String url) throws IOException {
-        ArrayList<ComentsPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
-
-        Element comentsElement = doc.getElementById("dle-comments-list");
-
-        if (comentsElement == null) return result;
-
-        for (Element comentConteiner : comentsElement.children()) {
-            ComentsPOJO comentsPOJO = new ComentsPOJO();
-            Element conteiner = comentConteiner.getElementsByClass("comm-one nowrap").first();
-            if (conteiner!=null) {
-                Element name = conteiner.child(0);
-                comentsPOJO.setName(name.text());
-                Element time = conteiner.child(1);
-                comentsPOJO.setDate(time.text());
-            }
-
-            Element text = comentConteiner.getElementsByClass("comm-two clearfix full-text").first();
-            if (text!=null) {
-                comentsPOJO.setText(text.text());
-            }
-
-            comentsPOJO.setImage("https://placehold.net/default.png");
-
-            if (!comentsPOJO.isEmty()) {
-                result.add(comentsPOJO);
-            }
-
+    static Parsed parseCommentsAudioboo(Document doc, String bookUrl) {
+        Element list = doc.getElementById("dle-comments-list");
+        if (list == null) {
+            return new Parsed();
         }
-        return result;
+        //a reply sits inside the block of the comment it answers
+        String block = "div[id^=comment-id-]";
+        return nest(list.select(block), block, (comment, pojo) -> {
+            pojo.setName(text(comment, ".comment-item__author"));
+            pojo.setDate(text(comment, ".comment-item__date"));
+            pojo.setText(text(comment, ".comment-item__main"));
+        });
+    }
+
+    /**
+     * Builds the comment list: an element inside no other {@code commentQuery} element (every element when the
+     * query is null) is a top-level comment; any other becomes a reply of its top-level comment, in page order,
+     * naming the comment it answers. A comment that cannot be read is skipped and counted, and so are the
+     * replies of a skipped top-level comment.
+     */
+    private static Parsed nest(Elements comments, @Nullable String commentQuery, CommentReader reader) {
+        Parsed parsed = new Parsed();
+        Map<Element, ComentsPOJO> rootOf = new IdentityHashMap<>();
+        Map<Element, String> nameOf = new IdentityHashMap<>();
+        for (Element comment : comments) {
+            Element parent = commentQuery == null || comment.parent() == null
+                    ? null : comment.parent().closest(commentQuery);
+            ComentsPOJO root = parent == null ? null : rootOf.get(parent);
+            if (parent != null && root == null) {
+                parsed.skipped++;
+                continue;
+            }
+            ContentParentPOJO pojo = root == null ? new ComentsPOJO() : new SubComentsPOJO();
+            try {
+                reader.read(comment, pojo);
+            } catch (RuntimeException e) {
+                pojo.setText("");
+            }
+            nameOf.put(comment, pojo.getName());
+            if (root != null) {
+                rootOf.put(comment, root); // replies to a skipped reply still belong to the thread
+            }
+            if (pojo.isEmty()) {
+                parsed.skipped++;
+            } else if (root == null) {
+                rootOf.put(comment, (ComentsPOJO) pojo);
+                parsed.comments.add((ComentsPOJO) pojo);
+            } else {
+                ((SubComentsPOJO) pojo).setParentName(nameOf.get(parent));
+                root.setChildComents((SubComentsPOJO) pojo);
+            }
+        }
+        return parsed;
+    }
+
+    private static Parsed loadAkniga(String url) throws IOException {
+        Document page = SiteHttp.get(url);
+        Parsed parsed = parseCommentsAkniga(page, url);
+        String feedUrl = aknigaFeedUrl(page);
+        if (feedUrl != null) {
+            try {
+                Connection feed = SiteHttp.connect(feedUrl).parser(Parser.xmlParser());
+                parsed.add(parseCommentsAknigaFeed(SiteHttp.parse(SiteHttp.execute(feed)), page));
+            } catch (IOException e) {
+                Log.w(TAG, "akniga comments feed failed; showing the comments on the page", e);
+            }
+        }
+        return parsed;
+    }
+
+    private static String getJson(String url) throws IOException {
+        Connection.Response response = SiteHttp.execute(SiteHttp.connect(url).ignoreContentType(true));
+        String body = response.body();
+        if (response.statusCode() >= 400 || !body.trim().startsWith("{")) {
+            SiteHttp.parse(response); // throws for a challenge or an HTTP error page
+            throw new IOException("not a comments page: " + url);
+        }
+        return body;
+    }
+
+    /** Text of a baza-knig comment body (or quote) without the quotes nested in it. */
+    private static String withoutQuotes(Element body) {
+        Element copy = body.clone();
+        for (Element nested : copy.select(".quote_block, .title_quote, .quote")) {
+            if (nested != copy) {
+                nested.remove();
+            }
+        }
+        return copy.text();
+    }
+
+    private static String text(@Nullable Element scope, String query) {
+        Element element = scope == null ? null : scope.selectFirst(query);
+        return element == null ? "" : element.text();
+    }
+
+    private static String absUrl(@Nullable Element scope, String query, String attribute) {
+        Element element = scope == null ? null : scope.selectFirst(query);
+        return element == null ? "" : element.absUrl(attribute);
+    }
+
+    private static int toInt(String value) {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 }

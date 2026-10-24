@@ -85,7 +85,6 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
 
     @Override
     public void onDestroyView() {
-        mPresenter.onDestroy();
         super.onDestroyView();
         binding = null;
     }
@@ -123,7 +122,8 @@ public class OtherArtistFragment extends MvpAppCompatFragment implements OtherAr
     @Override
     public void showSeries(ArrayList<OtherArtistPOJO> data) {
         if (data.isEmpty()) {
-            binding.placeholder.setText(R.string.error_load_data);
+            // an empty answer is not a load error
+            binding.placeholder.setText(R.string.no_other_readers);
             binding.placeholder.setVisibility(View.VISIBLE);
         } else {
             binding.placeholder.setVisibility(View.GONE);

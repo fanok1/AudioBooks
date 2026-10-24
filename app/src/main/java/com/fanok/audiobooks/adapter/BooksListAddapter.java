@@ -2,16 +2,13 @@ package com.fanok.audiobooks.adapter;
 
 import static android.content.Context.MODE_PRIVATE;
 import static android.content.Context.UI_MODE_SERVICE;
-import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_ENABLED;
 import static com.fanok.audiobooks.activity.ParentalControlActivity.PARENTAL_CONTROL_PREFERENCES;
 
 import android.annotation.SuppressLint;
 import android.app.UiModeManager;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.offline.Download;
@@ -33,15 +31,11 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.model.AudioDBModel;
 import com.fanok.audiobooks.model.AudioListDBModel;
+import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.AudioListPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.util.DownloadUtil;
 import com.github.lzyzsd.circleprogress.DonutProgress;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Proxy.Type;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -57,6 +51,9 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
     private AudioDBModel mAudioDBModel;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final android.os.Handler mainHandler = new android.os.Handler(Looper.getMainLooper());
+    private final java.util.Map<String, Integer> progressCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Map<String, Integer> downloadCache = new java.util.concurrent.ConcurrentHashMap<>();
     @UnstableApi
     class MyHolder extends RecyclerView.ViewHolder {
 
@@ -67,6 +64,11 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
         private final TextView mComents;
 
         private final DonutProgress mDonutProgress;
+
+        /** The percent with its "listened" label inside the ring; null where the ring draws the percent (TV). */
+        private final View mListened;
+
+        private final TextView mListenedPercent;
 
         private final TextView mGenre;
 
@@ -104,6 +106,8 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             LinearLayout linearLayout = itemView.findViewById(R.id.contentConteiner);
             mSource = itemView.findViewById(R.id.source);
             mDonutProgress = itemView.findViewById(R.id.donutProgress);
+            mListened = itemView.findViewById(R.id.listened);
+            mListenedPercent = itemView.findViewById(R.id.listenedPercent);
             mPreferences = mArtist.getContext().getSharedPreferences(PARENTAL_CONTROL_PREFERENCES,
                     MODE_PRIVATE);
             linearLayout.setOnClickListener(view -> {
@@ -132,37 +136,20 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
                 throw new NullPointerException();
             }
 
-            if (mPreferences.getBoolean(PARENTAL_CONTROL_ENABLED, false) && (book.getGenre() == null
-                    || book.getGenre().isEmpty() ||
-                    !mPreferences.getBoolean(book.getUrlGenre(), false))) {
-                Glide.with(mImageView).load(R.drawable.ic_parental_control).into(mImageView);
+            android.graphics.drawable.Drawable mask =
+                    com.fanok.audiobooks.policy.ParentalControl.coverMask(mImageView.getContext(), book);
+            if (mask != null) {
+                Glide.with(mImageView).load(mask).into(mImageView);
 
             } else {
                 if (book.getPhoto() != null && !book.getPhoto().isEmpty()) {
-                    if(App.useProxy&&book.getPhoto().contains(Url.SERVER_BAZA_KNIG)){
-
-                        final Bitmap[] bmp = {null};
-                        Handler handler = new Handler(Looper.getMainLooper());
-                        executor.execute(() -> {
-
-                            try {
-                                URL url = new URL(book.getPhoto());
-                                Proxy proxy = new Proxy(Type.SOCKS, new InetSocketAddress(Consts.PROXY_HOST, Consts.PROXY_PORT));
-                                bmp[0] = BitmapFactory.decodeStream(url.openConnection(proxy).getInputStream());
-                            } catch (IOException ignored) {
-                            }
-                            handler.post(() -> {
-                                if(bmp[0] !=null) {
-                                    mImageView.setImageBitmap(bmp[0]);
-                                }
-                            });
-                        });
-
-
-                    }else {
-                        Glide.with(mImageView).load(book.getPhoto())
-                                .override(mImageView.getWidth(), mImageView.getHeight()).into(
-                                        mImageView);
+                    String photoPath = book.getPhoto();
+                    if (photoPath.startsWith("content://")) {
+                        Glide.with(mImageView).load(android.net.Uri.parse(photoPath)).into(mImageView);
+                    } else if (photoPath.startsWith("/") || photoPath.contains(":\\")) {
+                        Glide.with(mImageView).load(new java.io.File(photoPath)).into(mImageView);
+                    } else {
+                        Glide.with(mImageView).load(photoPath).into(mImageView);
                     }
                 } else {
                     mImageView.setImageDrawable(
@@ -188,15 +175,26 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             } else if (book.getUrl().contains(Url.SERVER_KNIGOBLUD)) {
                 mSource.setText(R.string.knigoblud);
                 mSource.setVisibility(View.VISIBLE);
-            } else if (book.getUrl().contains(Url.SERVER_BOOKOOF)) {
-                mSource.setText(R.string.bookoof);
+            } else if (book.getUrl().contains(Url.SERVER_AUDIOBOO)) {
+                mSource.setText(R.string.audioboo);
+                mSource.setVisibility(View.VISIBLE);
+            } else if (book.getUrl().contains(Url.SERVER_OTRUB)) {
+                mSource.setText(R.string.otrub);
+                mSource.setVisibility(View.VISIBLE);
+            } else if (book.getUrl().contains(Url.SERVER_POLEKNIG)) {
+                mSource.setText(R.string.poleknig);
                 mSource.setVisibility(View.VISIBLE);
             }else {
                 mSource.setVisibility(View.GONE);
             }
 
 
-            mTitle.setText(book.getName());
+            String titleStr = book.getName();
+            if (titleStr != null) {
+                mTitle.setText(titleStr.trim().replace("\n", " "));
+            } else {
+                mTitle.setText("");
+            }
 
             if (book.getGenre() != null && !book.getGenre().isEmpty()) {
                 mGenre.setVisibility(View.VISIBLE);
@@ -204,8 +202,9 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             } else {
                 mGenre.setVisibility(View.GONE);
             }
-            if (!book.getReting().equals("0")) {
-                mReting.setText(book.getReting());
+            String retingStr = book.getReting();
+            if (retingStr != null && !retingStr.equals("0")) {
+                mReting.setText(retingStr);
                 mReting.setVisibility(View.VISIBLE);
             } else {
                 mReting.setVisibility(View.GONE);
@@ -226,104 +225,60 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
             }
             mArtist.setText(book.getArtist());
             if (book.getTime() != null && !book.getTime().isEmpty()) {
-                mTime.setText(book.getTime());
+                mTime.setText(Consts.formatTimeDisplay(book.getTime()));
                 mTime.setVisibility(View.VISIBLE);
             } else {
                 mTime.setVisibility(View.GONE);
             }
-            if (book.getSeries() != null && book.getUrlSeries() != null &&
-                    !book.getSeries().isEmpty() && !book.getUrlSeries().isEmpty()) {
-                mSiresle.setText(book.getSeries());
+            if (book.getSeries() != null && !book.getSeries().isEmpty()) {
+                android.text.SpannableStringBuilder ssb = new android.text.SpannableStringBuilder(" \u00A0 " + book.getSeries());
+                android.graphics.drawable.Drawable drawable = androidx.core.content.ContextCompat.getDrawable(itemView.getContext(), R.drawable.ic_book);
+                if (drawable != null) {
+                    drawable.setBounds(0, 0, (int)mSiresle.getTextSize(), (int)mSiresle.getTextSize());
+                    android.text.style.ImageSpan imageSpan = new android.text.style.ImageSpan(drawable, android.text.style.ImageSpan.ALIGN_BOTTOM);
+                    ssb.setSpan(imageSpan, 0, 1, android.text.Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                }
+                mSiresle.setText(ssb);
                 mSiresle.setVisibility(View.VISIBLE);
             } else {
                 mSiresle.setVisibility(View.GONE);
             }
 
             if (procent) {
-                if (mAudioDBModel != null && mAudioListDBModel != null) {
-                    ArrayList<AudioListPOJO> audioListPOJOS;
-                    audioListPOJOS = mAudioListDBModel.get(book.getUrl());
-                    if (audioListPOJOS.isEmpty()) {
-                        setVisible(false);
-                    } else {
-                        String last = mAudioDBModel.getName(book.getUrl());
-                        if (last == null || last.isEmpty()) {
-                            mDonutProgress.setText("0%");
-                            mDonutProgress.setProgress(0);
-                            setVisible(true);
-                        } else {
-                            int timeCurent = 0;
-                            int timeDuration = 0;
-                            boolean b = true;
-                            for (AudioListPOJO pojo : audioListPOJOS) {
-                                if (b) {
-                                    if (pojo.getAudioName().equals(last)) {
-                                        b = false;
-                                        timeCurent += mAudioDBModel.getTime(book.getUrl());
-                                    } else {
-                                        timeCurent += pojo.getTime();
-                                    }
-                                }
-                                timeDuration += pojo.getTime();
-
-                            }
-                            if (timeDuration != 0) {
-                                int procent = timeCurent * 100 / timeDuration;
-                                mDonutProgress.setProgress(procent);
-                                mDonutProgress.setText(procent + "%");
-                                setVisible(true);
-                            } else {
-                                setVisible(false);
-                            }
-                        }
-                    }
-
-                } else {
+                Integer pct = progressCache.get(book.getUrl());
+                if (pct == null || pct == -1) {
                     setVisible(false);
+                } else {
+                    mDonutProgress.setProgress(pct);
+                    mDonutProgress.setText(pct + "%");
+                    if (mListenedPercent != null) mListenedPercent.setText(pct + "%");
+                    setVisible(true);
                 }
             } else {
                 setVisible(false);
             }
 
-            if (mAudioListDBModel != null) {
-                ArrayList<AudioListPOJO> arrayList = mAudioListDBModel.get(book.getUrl());
-                if (!arrayList.isEmpty()) {
-                    DownloadIndex downloadIndex = DownloadUtil.getDownloadManager().getDownloadIndex();
-                    int downloadedCount = 0;
-                    try {
-                        for (AudioListPOJO pojo : arrayList) {
-                            Download download = downloadIndex.getDownload(pojo.getCleanAudioUrl());
-                            if (download != null && download.state == Download.STATE_COMPLETED) {
-                                downloadedCount++;
-                            }
-                        }
-                    } catch (IOException e) {
-                        // ignore
-                    }
-
-                    if (downloadedCount == 0) {
-                        mIsDownload.setVisibility(View.GONE);
-                    } else {
-                        if (downloadedCount >= arrayList.size()) {
-                            mIsDownload.setImageDrawable(
-                                    ContextCompat.getDrawable(mIsDownload.getContext(), R.drawable.ic_check_all));
-                        } else {
-                            mIsDownload.setImageDrawable(
-                                    ContextCompat.getDrawable(mIsDownload.getContext(), R.drawable.ic_check_1));
-                        }
-                        mIsDownload.setVisibility(View.VISIBLE);
-                    }
-                } else {
-                    mIsDownload.setVisibility(View.GONE);
-                }
-            } else {
+            boolean isImported = book != null && book.getUrl() != null && book.getUrl().contains("/imported/");
+            Integer dlStatus = downloadCache.get(book.getUrl());
+            if (isImported || dlStatus == null || dlStatus == 0) {
                 mIsDownload.setVisibility(View.GONE);
+            } else if (dlStatus == 1) {
+                mIsDownload.setImageDrawable(
+                        ContextCompat.getDrawable(mIsDownload.getContext(), R.drawable.ic_check_1));
+                mIsDownload.setContentDescription(mIsDownload.getContext().getString(R.string.download_state_partial));
+                mIsDownload.setVisibility(View.VISIBLE);
+            } else {
+                mIsDownload.setImageDrawable(
+                        ContextCompat.getDrawable(mIsDownload.getContext(), R.drawable.ic_check_all));
+                mIsDownload.setContentDescription(mIsDownload.getContext().getString(R.string.download_state_full));
+                mIsDownload.setVisibility(View.VISIBLE);
             }
 
 
         }
 
         private void setVisible(boolean b) {
+            if (mListened != null) mListened.setVisibility(b ? View.VISIBLE : View.GONE);
             if (b) {
                 mImageView.setColorFilter(
                         ContextCompat.getColor(mImageView.getContext(), R.color.imageTint));
@@ -414,8 +369,151 @@ public class BooksListAddapter extends RecyclerView.Adapter<BooksListAddapter.My
 
     @SuppressLint("NotifyDataSetChanged")
     public void setItem(ArrayList<BookPOJO> newModel) {
-        mModel = newModel;
+        // a copy: the presenter keeps appending to its own list, the adapter must not see that
+        mModel = newModel == null ? new ArrayList<>() : new ArrayList<>(newModel);
+        preloadStatuses(mModel);
         notifyDataSetChanged();
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void refreshItem() {
+        notifyDataSetChanged();
+    }
+
+    @OptIn(markerClass = UnstableApi.class)
+    private void preloadStatuses(ArrayList<BookPOJO> newModel) {
+        if (newModel == null || newModel.isEmpty()) {
+            progressCache.clear();
+            downloadCache.clear();
+            return;
+        }
+        executor.execute(() -> {
+            BooksDBModel dbModel = null;
+            AudioListDBModel audioListModel = null;
+            AudioDBModel audioModel = null;
+            DownloadIndex downloadIndex = null;
+            try {
+                Context ctx = App.getInstance();
+                dbModel = new BooksDBModel(ctx);
+                audioListModel = new AudioListDBModel(ctx);
+                audioModel = new AudioDBModel(ctx);
+                downloadIndex = DownloadUtil.getDownloadManager().getDownloadIndex();
+
+                for (BookPOJO b : newModel) {
+                    String url = b.getUrl();
+                    if (url == null) continue;
+
+                    boolean saved = dbModel.inSaved(url);
+
+                    int progress = -1;
+                    if (procent && audioListModel != null) {
+                        ArrayList<AudioListPOJO> pos = audioListModel.get(url);
+                        if (pos.isEmpty()) {
+                            progress = -1;
+                        } else {
+                            String last = audioModel.getName(url);
+                            if (last == null || last.isEmpty()) {
+                                progress = 0;
+                            } else {
+                                int current = 0;
+                                int total = 0;
+                                boolean bFound = false;
+                                for (AudioListPOJO po : pos) {
+                                    if (!bFound) {
+                                        if (po.getAudioName().equals(last)) {
+                                            bFound = true;
+                                            current += audioModel.getTime(url);
+                                        } else {
+                                            current += po.getTime();
+                                        }
+                                    }
+                                    total += po.getTime();
+                                }
+                                if (total != 0) {
+                                    progress = current * 100 / total;
+                                } else {
+                                    progress = 0;
+                                }
+                            }
+                        }
+                    }
+                    progressCache.put(url, progress);
+
+                    int dl = 0;
+                    if (saved) {
+                        if (url.contains("/imported/")) {
+                            dl = 2;
+                        } else if (audioListModel != null) {
+                            ArrayList<AudioListPOJO> list = audioListModel.get(url);
+                            if (list != null && !list.isEmpty()) {
+                                int count = 0;
+                                // A chapter counts as downloaded when its row records an app-written copy, when it is an
+                                // imported local file, or when its Media3 download (resolved by chapter identity) is complete.
+                                java.util.Set<String> withCopy = new java.util.HashSet<>();
+                                for (com.fanok.audiobooks.room.BooksAudioEntity row : audioListModel.getRows(url)) {
+                                    if (row.localUri != null && !row.localUri.isEmpty()) withCopy.add(row.urlAudio);
+                                }
+                                java.util.Map<String, Download> downloads = java.util.Collections.emptyMap();
+                                if (downloadIndex != null) {
+                                    java.util.List<String> urls = new java.util.ArrayList<>();
+                                    for (AudioListPOJO pojo : list) {
+                                        if (pojo != null && pojo.getAudioUrl() != null) urls.add(pojo.getAudioUrl());
+                                    }
+                                    try {
+                                        downloads = DownloadUtil.downloadsByChapterUrl(ctx, downloadIndex, url, urls);
+                                    } catch (Exception ignored) {}
+                                }
+                                for (AudioListPOJO pojo : list) {
+                                    if (pojo == null) continue;
+                                    String aUrl = pojo.getAudioUrl();
+                                    boolean isTrackDownloaded = withCopy.contains(aUrl);
+                                    if (!isTrackDownloaded && aUrl != null && !aUrl.isEmpty()) {
+                                        if (aUrl.startsWith("content://") || aUrl.startsWith("file://")) {
+                                            isTrackDownloaded = true;
+                                        } else if (aUrl.startsWith("/")) {
+                                            isTrackDownloaded = new java.io.File(aUrl).exists();
+                                        }
+                                    }
+                                    if (!isTrackDownloaded) {
+                                        Download d = downloads.get(aUrl);
+                                        isTrackDownloaded = d != null && d.state == Download.STATE_COMPLETED;
+                                    }
+                                    if (isTrackDownloaded) {
+                                        count++;
+                                    }
+                                }
+
+                                if (count >= list.size() && count > 0) {
+                                    dl = 2;
+                                } else if (count > 0) {
+                                    dl = 1;
+                                } else {
+                                    dl = 0;
+                                }
+                            } else {
+                                dl = 0;
+                            }
+                        } else {
+                            dl = 0;
+                        }
+                    } else {
+                        dl = 0;
+                    }
+                    downloadCache.put(url, dl);
+                }
+            } catch (Exception e) {
+                android.util.Log.e("ADAPT", "prefetch error", e);
+            } finally {
+                if (dbModel != null) dbModel.closeDB();
+                if (audioListModel != null) audioListModel.closeDB();
+                if (audioModel != null) audioModel.closeDB();
+            }
+            mainHandler.post(() -> {
+                if (mModel != null) {
+                    notifyDataSetChanged();
+                }
+            });
+        });
     }
 
     public void setListener(

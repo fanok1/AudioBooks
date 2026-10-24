@@ -5,17 +5,28 @@
         android:id="@+id/app_bar_search"
         android:icon="@drawable/ic_search_black_24dp"
         android:title="@string/search"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
+    <!-- duration range and ranking period; its submenu is filled and shown by BooksFragment -->
+    <item
+        android:id="@+id/filter"
+        android:icon="@drawable/ic_filter"
+        android:title="@string/filter"
+        android:visible="false"
+        app:showAsAction="always">
+        <menu />
+    </item>
     <item
         android:id="@+id/order"
         android:icon="@drawable/ic_sort"
         android:title="@string/order"
-        app:showAsAction="ifRoom">
+        app:showAsAction="always">
         <menu>
             <item
                 android:id="@+id/new_data"
                 android:title="@string/new_data" />
-            <item android:title="@string/popular">
+            <item
+            android:id="@+id/popular_parent"
+            android:title="@string/popular">
                 <menu>
                     <item
                         android:id="@+id/popular_all_time"
@@ -32,7 +43,9 @@
                         android:title="@string/in_day" />
                 </menu>
             </item>
-            <item android:title="@string/reting">
+            <item
+                android:id="@+id/reting"
+                android:title="@string/reting">
                 <menu>
                     <item
                         android:id="@+id/reting_all_time"
@@ -48,13 +61,28 @@
                         android:title="@string/in_day" />
                 </menu>
             </item>
+            <item
+                android:id="@+id/knigoblud_today"
+                android:title="@string/knigoblud_today" />
+            <item
+                android:id="@+id/knigoblud_trending"
+                android:title="@string/knigoblud_trending" />
+            <item
+                android:id="@+id/knigoblud_finished"
+                android:title="@string/knigoblud_finished" />
+            <item
+                android:id="@+id/abmp3_top100"
+                android:title="@string/abmp3_top100" />
+            <item
+                android:id="@+id/abmp3_random"
+                android:title="@string/abmp3_random" />
         </menu>
     </item>
     <item
         android:id="@+id/source"
         android:icon="@drawable/ic_web"
         android:title="@string/source"
-        app:showAsAction="ifRoom">
+        app:showAsAction="always">
         <menu>
             <group android:checkableBehavior="single">
                 <item
@@ -76,8 +104,14 @@
                     android:id="@+id/source_knigoblud"
                     android:title="@string/knigoblud" />
                 <item
-                    android:id="@+id/source_bookoof"
-                    android:title="@string/bookoof" />
+                    android:id="@+id/source_audioboo"
+                    android:title="@string/audioboo" />
+                <item
+                    android:id="@+id/source_otrub"
+                    android:title="@string/otrub" />
+                <item
+                    android:id="@+id/source_poleknig"
+                    android:title="@string/poleknig" />
             </group>
         </menu>
     </item>

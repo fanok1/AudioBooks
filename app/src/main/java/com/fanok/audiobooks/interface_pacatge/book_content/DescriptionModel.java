@@ -5,10 +5,14 @@ import com.fanok.audiobooks.pojo.DescriptionPOJO;
 
 import java.util.ArrayList;
 
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
 
 public interface DescriptionModel {
     Observable<DescriptionPOJO> getDescription();
 
     Observable<ArrayList<BookPOJO>> getBooks();
+
+    /** The locally saved copy of the book, used when the page cannot be loaded. */
+    Maybe<DescriptionPOJO> getSavedDescription();
 }

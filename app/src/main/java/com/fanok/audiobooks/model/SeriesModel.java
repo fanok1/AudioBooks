@@ -1,473 +1,334 @@
 package com.fanok.audiobooks.model;
 
 
-
-
-import static com.fanok.audiobooks.Consts.PROXY_HOST;
-import static com.fanok.audiobooks.Consts.PROXY_PORT;
+import static com.fanok.audiobooks.model.OtherSourceModel.each;
+import static com.fanok.audiobooks.model.OtherSourceModel.href;
+import static com.fanok.audiobooks.model.OtherSourceModel.text;
 
 import androidx.annotation.NonNull;
-import com.fanok.audiobooks.App;
-import com.fanok.audiobooks.Consts;
+import androidx.annotation.Nullable;
 import com.fanok.audiobooks.Url;
-import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.model.OtherSourceModel.Site;
+import com.fanok.audiobooks.net.SiteHttp;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 import io.reactivex.Observable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Proxy.Type;
 import java.util.ArrayList;
 import java.util.Collections;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
+import okhttp3.HttpUrl;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+/** The series ("цикл") tab: the other books of the book's series, as each provider lists them. */
 public class SeriesModel implements
         com.fanok.audiobooks.interface_pacatge.book_content.SeriesModel {
 
+    /** baza-knig series listing pages read at most. */
+    static final int MAX_SERIES_PAGES = 10;
 
     @Override
     public Observable<ArrayList<SeriesPOJO>> getSeries(@NonNull String url) {
-
-        return Observable.create(observableEmitter -> {
-            //waitVpnConetion();
-            ArrayList<SeriesPOJO> articlesModels;
+        return Observable.create(emitter -> {
             try {
-                if (url.contains(Url.SERVER)) {
-                    articlesModels = loadSeriesList(url);
-                } else if (url.contains(Url.SERVER_IZIBUK)) {
-                    articlesModels = loadSeriesListIzibuk(url);
-                } else if (url.contains(Url.SERVER_AKNIGA)) {
-                    articlesModels = loadSeriesListAbook(url);
-                } else if (url.contains(Url.SERVER_BAZA_KNIG)) {
-                    articlesModels = loadSeriesListBazaKnig(url);
-                } else if (url.contains(Url.SERVER_KNIGOBLUD)) {
-                    articlesModels = loadSeriesListKnigoblud(url);
-                } else if (url.contains(Url.SERVER_BOOKOOF)) {
-                    articlesModels = loadSeriesListBookoof(url);
-                }else {
-                    articlesModels = new ArrayList<>();
+                ArrayList<SeriesPOJO> series = loadSeries(url);
+                if (!emitter.isDisposed()) {
+                    emitter.onNext(series);
+                    emitter.onComplete();
                 }
-                observableEmitter.onNext(articlesModels);
             } catch (Exception e) {
-                observableEmitter.onError(e);
-            } finally {
-                observableEmitter.onComplete();
+                emitter.tryOnError(e); // disposed meanwhile: dropped, not an undeliverable crash
             }
         });
     }
 
-    private ArrayList<SeriesPOJO> loadSeriesList(String url) throws IOException {
-        ArrayList<SeriesPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
-
-        Elements seriesConteiner = doc.getElementsByClass("book_blue_block book_serie_block");
-        for (int i = 0; i < seriesConteiner.size(); i++) {
-            Elements elementsTitle = seriesConteiner.get(i).getElementsByClass(
-                    "book_serie_block_title");
-            if (elementsTitle.size() != 0 && elementsTitle.first().text().contains("Цикл")) {
-                Elements series = seriesConteiner.get(i).getElementsByClass(
-                        "book_serie_block_item");
-                for (Element item : series) {
-                    SeriesPOJO seriesPOJO = new SeriesPOJO();
-                    Elements indexElements = item.getElementsByClass("book_serie_block_item_index");
-                    if (indexElements.size() != 0) {
-                        seriesPOJO.setNumber(indexElements.first().text());
-                    }
-
-                    Elements strongElements = item.getElementsByTag("strong");
-                    if (strongElements.size() != 0) {
-                        seriesPOJO.setName(strongElements.first().text());
-                    }
-
-                    Elements aElements = item.getElementsByTag("a");
-                    if (aElements.size() != 0) {
-                        seriesPOJO.setName(aElements.first().text());
-                        seriesPOJO.setUrl(Url.SERVER + aElements.first().attr("href"));
-                    }
-
-                    result.add(seriesPOJO);
-                }
+    /** Fetches and parses the series of the book at {@code bookUrl}; an unknown host throws IllegalArgumentException. */
+    static ArrayList<SeriesPOJO> loadSeries(String bookUrl) throws IOException {
+        String url = Url.canonical(bookUrl);
+        switch (Site.of(url)) {
+            case KNIGAVUHE:
+                return parseKnigavuheSeries(SiteHttp.get(url));
+            case IZIBUK:
+                return parseIzibukSeries(SiteHttp.get(url));
+            case AKNIGA:
+                return loadAknigaSeries(url);
+            case BAZA_KNIG:
+                return loadBazaKnigSeries(url);
+            case KNIGOBLUD:
+                return parseKnigobludSeries(SiteHttp.get(url));
+            case AUDIOBOO: {
+                String series = parseAudiobooSeriesUrl(SiteHttp.get(url));
+                return series.isEmpty() ? new ArrayList<>() : parseAudiobooSeriesPage(SiteHttp.get(series));
             }
+            case OTRUB: {
+                String series = parseSeriesLink(SiteHttp.get(url));
+                return series.isEmpty() ? new ArrayList<>() : parseOtrubSeriesPage(SiteHttp.get(series));
+            }
+            case POLEKNIG: {
+                String series = parseSeriesLink(SiteHttp.get(url));
+                return series.isEmpty() ? new ArrayList<>() : parsePoleknigSeriesPage(SiteHttp.get(series));
+            }
+            default:
+                return new ArrayList<>(); // audiobook-mp3 has no series
         }
-
-        return result;
     }
 
-    private ArrayList<SeriesPOJO> loadSeriesListAbook(String url) throws IOException {
+    static ArrayList<SeriesPOJO> parseKnigavuheSeries(Document doc) {
         ArrayList<SeriesPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
-
-        Elements parents = doc.getElementsByClass("content__main__book--item--series-list");
-        if (parents != null && parents.size() != 0) {
-            Elements series = parents.first().children();
-            if (series != null) {
-                for (Element serie : series) {
-                    SeriesPOJO seriesPOJO = new SeriesPOJO();
-                    Elements namberConteiner = serie.getElementsByTag("b");
-                    if (namberConteiner != null && namberConteiner.size() != 0) {
-                        String number = namberConteiner.first().text();
-                        if (number != null) {
-                            seriesPOJO.setNumber(number);
-                        }
-                    }
-
-                    String href = serie.attr("href");
-                    if (href != null && !href.isEmpty()) {
-                        seriesPOJO.setUrl(href);
-                    }
-                    Elements stringTag = serie.getElementsByClass("caption");
-                    if (stringTag != null && stringTag.size() != 0) {
-                        String text = stringTag.first().text();
-                        if (text != null && !text.isEmpty()) {
-                            seriesPOJO.setName(text);
-                        }
-                    }
-                    result.add(seriesPOJO);
-                }
+        for (Element block : doc.getElementsByClass("book_serie_block")) {
+            if (!text(block, ".book_serie_block_title").contains("Цикл")) {
+                continue;
             }
-        }
-
-        return result;
-    }
-
-    private ArrayList<SeriesPOJO> loadSeriesListBazaKnig(String url) throws IOException {
-
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .ignoreHttpErrors(true);
-
-
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
-        }
-
-        if (!Consts.getBazaKnigCookies().isEmpty()) {
-            connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
-        }
-
-        Document document = connection.get();
-        String urlSeries = "";
-
-        Elements conteiners = document.getElementsByClass("reset full-items");
-        if (conteiners != null && conteiners.size() > 0) {
-            Elements liElem = conteiners.first().getElementsByTag("li");
-            if (liElem != null && liElem.size() > 0) {
-                for (Element li : liElem) {
-                    String liText = li.text();
-                    if (liText != null) {
-                        if (liText.contains("Цикл")) {
-                            Elements seriesConteiner = li.getElementsByTag("a");
-                            if (seriesConteiner != null && seriesConteiner.size() > 0) {
-                                Element a = seriesConteiner.first();
-                                String href = a.attr("href");
-                                if (href != null) {
-                                    urlSeries = href;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        ArrayList<SeriesPOJO> result = new ArrayList<>();
-        int page = 0;
-        String bookName = "";
-        while (true) {
-            page++;
-            Document doc = Jsoup.connect(urlSeries + "/page/" + page + "/")
-                    .userAgent(Consts.USER_AGENT)
-                    .referrer("http://www.google.com")
-                    .sslSocketFactory(Consts.socketFactory())
-                    .ignoreHttpErrors(true)
-                    .maxBodySize(0)
-                    .get();
-
-            Elements navConteiner = doc.getElementsByClass("page-nav");
-            if (page > 1) {
-                if (navConteiner != null && navConteiner.size() > 0) {
-                    Elements navigainClass = navConteiner.first().getElementsByClass("navigation");
-                    if (navigainClass != null && navigainClass.size() > 0) {
-                        Elements children = navigainClass.first().children();
-                        if (children != null && children.size() > 0) {
-                            int last = Integer.parseInt(children.last().text());
-                            if (page > last) {
-                                break;
-                            }
-                        } else {
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
+            result.addAll(each(block.getElementsByClass("book_serie_block_item"), item -> {
+                SeriesPOJO seriesPOJO = new SeriesPOJO();
+                seriesPOJO.setNumber(text(item, ".book_serie_block_item_index"));
+                Element a = item.selectFirst("a");
+                if (a != null) {
+                    seriesPOJO.setName(a.text().trim());
+                    setUrl(seriesPOJO, a.absUrl("href"));
                 } else {
-                    break;
+                    seriesPOJO.setName(text(item, "strong")); // the current book: no link
                 }
+                return seriesPOJO;
+            }));
+        }
+        return result;
+    }
+
+    static ArrayList<SeriesPOJO> parseIzibukSeries(Document doc) {
+        Element block = doc.selectFirst("._b264b2._49d1b4");
+        if (block == null) {
+            return new ArrayList<>();
+        }
+        return each(block.getElementsByClass("_f61db9"), item -> {
+            SeriesPOJO seriesPOJO = new SeriesPOJO();
+            String number = text(item, "._bb8bca");
+            seriesPOJO.setNumber(number);
+            Element a = item.selectFirst("a");
+            if (a != null) {
+                setUrl(seriesPOJO, a.absUrl("href"));
+                seriesPOJO.setName(item.text().replace(number, "").trim());
+            } else {
+                seriesPOJO.setName(text(item, "strong"));
             }
+            return seriesPOJO;
+        });
+    }
 
-            Element conteiner = doc.getElementById("dle-content");
-            if (conteiner != null) {
-                Elements bookList = conteiner.getElementsByClass("short");
-                if (bookList != null && bookList.size() > 0) {
-                    for (Element book : bookList) {
-                        SeriesPOJO seriesPOJO = new SeriesPOJO();
-                        Elements imgConteiner = book.getElementsByClass("short-img");
-                        if (imgConteiner != null && imgConteiner.size() > 0) {
-                            Element element = imgConteiner.first();
-                            Elements aElement = element.getElementsByTag("a");
-                            if (aElement != null && aElement.size() > 0) {
-                                String aHref = aElement.first().attr("href");
-                                if (aHref != null && !aHref.isEmpty()) {
-                                    seriesPOJO.setUrl(aHref);
-                                } else {
-                                    continue;
-                                }
-                            }
-                        }
+    private static ArrayList<SeriesPOJO> loadAknigaSeries(String url) throws IOException {
+        Document doc = SiteHttp.get(url);
+        ArrayList<SeriesPOJO> result = parseAknigaSeries(doc);
+        if (!result.isEmpty()) {
+            return result;
+        }
+        if (url.contains("/series/")) {
+            return parseAknigaSeriesPage(doc);
+        }
+        String series = href(doc, "a[href*=/series/]");
+        return series.isEmpty() ? result : parseAknigaSeriesPage(SiteHttp.get(series));
+    }
 
-                        Elements nameConteiner = book.getElementsByClass("short-title");
-                        if (nameConteiner != null && nameConteiner.size() > 0) {
-                            Elements aTag = nameConteiner.first().getElementsByTag("a");
-                            if (aTag != null && aTag.size() > 0) {
-                                String name = aTag.first().ownText();
-                                if (name != null && !name.isEmpty()) {
-                                    bookName = name;
-                                } else {
-                                    continue;
-                                }
-                                Elements b = aTag.first().getElementsByTag("b");
-                                if (b != null && b.size() != 0) {
-                                    String number = b.first().text();
-                                    if (number != null && !number.isEmpty()) {
-                                        seriesPOJO.setNumber(number);
-                                    }
-                                }
-                            }
-                        }
-
-                        Elements cont = book.getElementsByClass("reset short-items");
-                        if (cont != null && cont.size() > 0) {
-                            Elements liElem = cont.first().getElementsByTag("li");
-                            if (liElem != null && liElem.size() > 0) {
-                                for (Element li : liElem) {
-                                    String liText = li.text();
-                                    if (liText != null) {
-                                        if (liText.contains("Читает")) {
-                                            seriesPOJO.setName(bookName + " " + liText);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        result.add(seriesPOJO);
-                    }
-
-                }
+    static ArrayList<SeriesPOJO> parseAknigaSeries(Document doc) {
+        Element list = doc.selectFirst(".content__main__book--item--series-list");
+        if (list == null) {
+            return new ArrayList<>();
+        }
+        return each(list.children(), item -> {
+            String link = item.absUrl("href");
+            if (link.isEmpty()) {
+                return null; // "Показать весь список" toggle
             }
-            if (result.size() == 0) {
-                throw new NullPointerException();
+            SeriesPOJO seriesPOJO = new SeriesPOJO();
+            seriesPOJO.setUrl(link);
+            seriesPOJO.setNumber(text(item, "b"));
+            String caption = text(item, ".caption");
+            seriesPOJO.setName(caption.isEmpty() ? item.text().trim() : caption);
+            seriesPOJO.setPhoto(imgSrc(item.selectFirst("img")));
+            return seriesPOJO;
+        });
+    }
+
+    /** A series listing page (cards, like search results). */
+    static ArrayList<SeriesPOJO> parseAknigaSeriesPage(Document doc) {
+        return each(doc.select(".content__main__articles--item"), card -> {
+            Element a = card.selectFirst(".caption__article-main a, h2 a, h3 a");
+            if (a == null) {
+                a = card.selectFirst("a[href]");
+            }
+            String link = a == null ? "" : a.absUrl("href");
+            if (link.isEmpty() || link.contains("/author/") || link.contains("/performer/")
+                    || link.contains("/section/")) {
+                return null;
+            }
+            SeriesPOJO seriesPOJO = new SeriesPOJO();
+            seriesPOJO.setUrl(link);
+            String caption = text(card, ".caption__article-main");
+            seriesPOJO.setName(caption.isEmpty() ? a.text().trim() : caption);
+            seriesPOJO.setPhoto(imgSrc(card.selectFirst("img")));
+            return seriesPOJO;
+        });
+    }
+
+    /** Book page → cycle link → listing pages; every request goes through SiteHttp (PHPSESSID, cookie jar). */
+    private static ArrayList<SeriesPOJO> loadBazaKnigSeries(String url) throws IOException {
+        ArrayList<SeriesPOJO> result = new ArrayList<>();
+        String series = parseBazaKnigSeriesUrl(SiteHttp.get(url));
+        if (series.isEmpty()) {
+            return result;
+        }
+        for (int page = 1; page <= MAX_SERIES_PAGES; page++) {
+            Document doc = SiteHttp.get(bazaKnigPageUrl(series, page));
+            result.addAll(parseBazaKnigSeriesPage(doc));
+            if (page >= OtherSourceModel.lastPage(doc)) {
+                break;
             }
         }
-
         Collections.reverse(result);
         return result;
     }
 
-    private ArrayList<SeriesPOJO> loadSeriesListIzibuk(String url) throws IOException {
-        ArrayList<SeriesPOJO> result = new ArrayList<>();
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0);
-
-
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
-        }
-
-        Document doc = connection.get();
-
-        Elements parents = doc.getElementsByClass("_b264b2 _49d1b4");
-        if (parents != null && parents.size() != 0) {
-            Elements series = parents.first().getElementsByClass("_f61db9");
-            if (series != null) {
-                for (Element serie : series) {
-                    SeriesPOJO seriesPOJO = new SeriesPOJO();
-                    Elements namberConteiner = serie.getElementsByClass("_bb8bca");
-                    if (namberConteiner != null && namberConteiner.size() != 0) {
-                        String number = namberConteiner.first().text();
-                        if (number != null) {
-                            seriesPOJO.setNumber(number);
-                        }
-                    }
-                    Elements aTag = serie.getElementsByTag("a");
-                    if (aTag != null && aTag.size() != 0) {
-                        Element a = aTag.first();
-                        String href = a.attr("href");
-                        if (href != null) {
-                            seriesPOJO.setUrl(Url.SERVER_IZIBUK + href);
-                        }
-                        String text = serie.text();
-                        if (text != null) {
-                            seriesPOJO.setName(text.replace(seriesPOJO.getNumber(), ""));
-                        }
-                    } else {
-                        Elements stringTag = serie.getElementsByTag("strong");
-                        if (stringTag != null && stringTag.size() != 0) {
-                            String text = stringTag.first().text();
-                            if (text != null) {
-                                seriesPOJO.setName(text);
-                            }
-                        }
-                    }
-                    result.add(seriesPOJO);
-                }
+    /** The "Цикл:" link of a baza-knig book page; "" when the book is not part of a cycle. */
+    static String parseBazaKnigSeriesUrl(Document doc) {
+        for (Element li : doc.select(".full-items li")) {
+            String link = href(li, "a");
+            if (li.text().contains("Цикл") && !link.isEmpty()) {
+                return link;
             }
         }
-
-        return result;
+        return "";
     }
 
-    private ArrayList<SeriesPOJO> loadSeriesListKnigoblud(String url) throws IOException {
-        ArrayList<SeriesPOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .ignoreHttpErrors(true)
-                .get();
-
-        Elements elements = doc.getElementsByClass("BookDescription BookSeries");
-        if(elements!=null&&elements.size()>0){
-            Elements seriesConteiner = elements.first().getElementsByClass("BookDescriptionSeriesItem");
-            if(seriesConteiner!=null){
-                for (Element series:seriesConteiner){
-                    SeriesPOJO seriesPOJO = new SeriesPOJO();
-                    Elements indexElements = series.getElementsByClass("BookDescriptionSeriesItemIndex");
-                    if (indexElements!=null&&indexElements.size() != 0) {
-                        seriesPOJO.setNumber(indexElements.first().text());
-                    }
-
-                    String text = series.text();
-                    if (text!=null&&!text.isEmpty()){
-                        seriesPOJO.setName(text.replace(seriesPOJO.getNumber(), "").trim());
-                    }
-
-                    Elements aElements = series.getElementsByTag("a");
-                    if (aElements!=null&&aElements.size() != 0) {
-                        seriesPOJO.setUrl(Url.SERVER + aElements.first().attr("href"));
-                    }
-
-                    result.add(seriesPOJO);
-
-                }
-            }
+    /** Page {@code page} of a DLE listing: the listing itself for page 1, {@code …/page/N/} after it. */
+    static String bazaKnigPageUrl(String seriesUrl, int page) {
+        if (page <= 1) {
+            return seriesUrl;
         }
-        return result;
+        return HttpUrl.get(seriesUrl).newBuilder().addPathSegment("page").addPathSegment(String.valueOf(page))
+                .addPathSegment("").build().toString();
     }
 
-
-    private ArrayList<SeriesPOJO> loadSeriesListBookoof(String url) throws IOException {
-        ArrayList<SeriesPOJO> result = new ArrayList<>();
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0);
-
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
+    static ArrayList<SeriesPOJO> parseBazaKnigSeriesPage(Document doc) {
+        Element content = doc.getElementById("dle-content");
+        if (content == null) {
+            return new ArrayList<>();
         }
-
-        Document doc = connection.get();
-
-        String seriesUrl = "";
-
-        Element seriesConteiner = doc.getElementsByClass("xfvalue_series").first();
-        if (seriesConteiner!=null){
-            Element series = seriesConteiner.getElementsByTag("a").first();
-            if (series!=null){
-                seriesUrl = series.attr("href");
+        return each(content.getElementsByClass("short"), book -> {
+            String link = href(book, ".short-img a");
+            Element title = book.selectFirst(".short-title a");
+            String name = title == null ? "" : title.ownText().trim();
+            if (link.isEmpty() || name.isEmpty()) {
+                return null;
             }
-        }
-
-        if (!seriesUrl.isEmpty()){
-            Connection conn = Jsoup.connect(seriesUrl)
-                    .userAgent(Consts.USER_AGENT)
-                    .referrer("http://www.google.com")
-                    .sslSocketFactory(Consts.socketFactory())
-                    .maxBodySize(0);
-
-            if(App.useProxy) {
-                Proxy proxy = new Proxy(Type.SOCKS,
-                        new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-                conn.proxy(proxy);
-            }
-
-            Document document = conn.get();
-            Element bookList = document.getElementById("dle-content");
-            if (bookList != null) {
-                Elements books = bookList.getElementsByClass("short-item");
-                if (books.isEmpty()) return result;
-                for (Element book : books) {
-                    SeriesPOJO seriesPOJO = new SeriesPOJO();
-                    Elements aTags = book.getElementsByClass("short-title");
-                    if (!aTags.isEmpty()) {
-                        Element a = aTags.first();
-                        if (a != null) {
-                            seriesPOJO.setUrl(a.attr("href"));
-                            seriesPOJO.setName(a.text());
-                        }
-                    }
-
-                    Elements cont = book.getElementsByClass("short-list");
-
-                    Element element =  cont.first();
-                    if (element != null){
-                        Elements liTag = element.getElementsByTag("li");
-                        for (Element li : liTag) {
-                            Element span = li.getElementsByTag("span").first();
-                            if (span!=null) {
-                                String spanText = span.text();
-                                if (spanText.equals("№ в цикле:")){
-                                    seriesPOJO.setNumber(li.ownText());
-                                }
-                            }
-
-                        }
-
-                    }
-                    result.add(seriesPOJO);
+            SeriesPOJO seriesPOJO = new SeriesPOJO();
+            seriesPOJO.setUrl(link);
+            seriesPOJO.setNumber(text(title, "b"));
+            seriesPOJO.setName(name);
+            for (Element li : book.select(".short-items li")) {
+                if (li.text().contains("Читает")) {
+                    seriesPOJO.setName(name + " " + li.text());
                 }
             }
+            seriesPOJO.setPhoto(imgSrc(book.selectFirst(".short-img img")));
+            return seriesPOJO;
+        });
+    }
 
+    static ArrayList<SeriesPOJO> parseKnigobludSeries(Document doc) {
+        Element block = doc.selectFirst(".BookSeries");
+        if (block == null) {
+            return new ArrayList<>();
         }
-        return result;
+        return each(block.getElementsByClass("BookDescriptionSeriesItem"), item -> {
+            SeriesPOJO seriesPOJO = new SeriesPOJO();
+            String number = text(item, ".BookDescriptionSeriesItemIndex");
+            seriesPOJO.setNumber(number);
+            seriesPOJO.setName(item.text().replace(number, "").trim());
+            Element a = item.tagName().equals("a") ? item : item.selectFirst("a");
+            if (a != null) {
+                setUrl(seriesPOJO, a.absUrl("href"));
+            }
+            return seriesPOJO;
+        });
+    }
+
+    /** The cycle link of an audioboo book page, resolved against audioboo itself; "" when there is none. */
+    static String parseAudiobooSeriesUrl(Document doc) {
+        Element a = doc.selectFirst("a[href*=/xfsearch/cikl/]");
+        if (a == null) {
+            a = doc.selectFirst(".xfvalue_series a");
+        }
+        return a == null ? "" : a.absUrl("href");
+    }
+
+    static ArrayList<SeriesPOJO> parseAudiobooSeriesPage(Document doc) {
+        Elements cards = doc.select(".card");
+        if (!cards.isEmpty()) {
+            return each(cards, card -> {
+                Element a = card.selectFirst(".card__title a");
+                if (a == null) {
+                    a = card.selectFirst("a[href*=.html]");
+                }
+                return bookLink(a, card.selectFirst("img"));
+            });
+        }
+        Element list = doc.getElementById("dle-content");
+        if (list == null) {
+            return new ArrayList<>();
+        }
+        return each(list.getElementsByClass("short-item"),
+                book -> bookLink(book.selectFirst("a.short-title, .short-title a"), book.selectFirst("img")));
+    }
+
+    /** The first series link of an otrub or poleknig book page; "" when there is none. */
+    static String parseSeriesLink(Document doc) {
+        return href(doc, "a[href*=/series/]");
+    }
+
+    static ArrayList<SeriesPOJO> parseOtrubSeriesPage(Document doc) {
+        return each(doc.select("._3dc935 a"), a -> {
+            Element card = a.closest("._dad4fa");
+            return bookLink(a, card == null ? null : card.selectFirst("img"));
+        });
+    }
+
+    static ArrayList<SeriesPOJO> parsePoleknigSeriesPage(Document doc) {
+        return each(doc.select(".media-body"), body -> {
+            Element card = body.parent();
+            return bookLink(body.selectFirst("a[href*=/books/]"), card == null ? null : card.selectFirst("img"));
+        });
+    }
+
+    /** A series entry from a book link and its cover; null when the link is missing. */
+    @Nullable
+    private static SeriesPOJO bookLink(@Nullable Element a, @Nullable Element img) {
+        String link = a == null ? "" : a.absUrl("href");
+        if (link.isEmpty()) {
+            return null;
+        }
+        SeriesPOJO seriesPOJO = new SeriesPOJO();
+        seriesPOJO.setUrl(link);
+        seriesPOJO.setName(a.text().trim());
+        seriesPOJO.setPhoto(imgSrc(img));
+        return seriesPOJO;
+    }
+
+    /** Absolute cover of a lazy-loaded image (data-original, data-src, then src), skipping placeholders. */
+    static String imgSrc(@Nullable Element img) {
+        if (img == null) {
+            return "";
+        }
+        for (String attr : new String[]{"data-original", "data-src", "src"}) {
+            String src = img.absUrl(attr);
+            if (!src.isEmpty() && !src.contains("placeholder")) {
+                return src;
+            }
+        }
+        return "";
+    }
+
+    private static void setUrl(SeriesPOJO seriesPOJO, String url) {
+        if (!url.isEmpty()) {
+            seriesPOJO.setUrl(url);
+        }
     }
 }

@@ -1,15 +1,11 @@
 package com.fanok.audiobooks.fragment;
 
 import static android.content.Context.UI_MODE_SERVICE;
-import static java.lang.Integer.MAX_VALUE;
 
 import android.app.UiModeManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,39 +18,30 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
-import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.MarginItemDecoration;
 import com.fanok.audiobooks.R;
-import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.activity.BookActivity;
 import com.fanok.audiobooks.activity.ImageFullScreenActivity;
 import com.fanok.audiobooks.activity.MainActivity;
 import com.fanok.audiobooks.adapter.BooksOtherAdapter;
+import com.fanok.audiobooks.adapter.ExpandableText;
 import com.fanok.audiobooks.interface_pacatge.book_content.Description;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.DescriptionPOJO;
 import com.fanok.audiobooks.presenter.BookDescriptionPresenter;
 import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Proxy.Type;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class DescriptionBookFragment extends MvpAppCompatFragment implements Description {
 
+    private static final String TAG = "DescriptionBookFragment";
     private static final String ARG_BOOK_POJO = "arg_book_pojo";
     private static final int MAX_LINES = 4;
 
@@ -81,9 +68,8 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
     @InjectPresenter
     BookDescriptionPresenter mPresenter;
     private BooksOtherAdapter mAdapterBooksRecomended;
-    private boolean showMore;
-
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    /** Whether the description is unfolded; survives re-binds of the same view. */
+    private boolean descExpanded;
 
     public static DescriptionBookFragment newInstance(@NonNull BookPOJO pojo) {
         Bundle args = new Bundle();
@@ -91,6 +77,24 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
         DescriptionBookFragment fragment = new DescriptionBookFragment();
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @Nullable
+    private String getLocalCoverFallback() {
+        try {
+            Bundle args = getArguments();
+            if (args != null && args.containsKey(ARG_BOOK_POJO)) {
+                BookPOJO pojo = new Gson().fromJson(args.getString(ARG_BOOK_POJO), BookPOJO.class);
+                if (pojo != null && getContext() != null) {
+                    String cover = com.fanok.audiobooks.util.DownloadStorageHelper.findLocalCoverForBook(getContext(), pojo);
+                    if (cover != null && !cover.isEmpty()) {
+                        return cover;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     @Nullable
@@ -133,44 +137,42 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
 
             // Вешаем слушатель на ПОСЛЕДНИЙ интерактивный элемент в этом фрагменте.
             // В данном случае, это RecyclerView с рекомендованными книгами.
-            if (mRecommendedBooks != null) {
-                mRecommendedBooks.setOnKeyListener((v, keyCode, event) -> {
-                    // Реагируем только на нажатие кнопки
-                    if (event.getAction() != KeyEvent.ACTION_DOWN) {
-                        return false;
-                    }
-
-                    RecyclerView.LayoutManager layoutManager = mRecommendedBooks.getLayoutManager();
-                    if (layoutManager == null) {
-                        return false;
-                    }
-
-                    // Получаем позицию текущего сфокусированного элемента
-                    View focusedChild = layoutManager.getFocusedChild();
-                    if (focusedChild == null) {
-                        return false;
-                    }
-                    int focusedPos = layoutManager.getPosition(focusedChild);
-
-                    // Получаем общее количество элементов
-                    int itemCount = layoutManager.getItemCount();
-
-                    // Если нажата кнопка "ВНИЗ" и фокус на ПОСЛЕДНЕМ элементе списка
-                    if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && focusedPos == itemCount - 1) {
-                        // Находим плеер в родительской Activity
-                        View playerView = requireActivity().findViewById(R.id.player);
-                        if (playerView != null) {
-                            // Передаем фокус плееру
-                            playerView.requestFocus();
-                        }
-                        // Возвращаем true, говоря, что мы обработали это событие
-                        return true;
-                    }
-
-                    // Для всех остальных случаев позволяем RecyclerView работать как обычно
+            mRecommendedBooks.setOnKeyListener((v, keyCode, event) -> {
+                // Реагируем только на нажатие кнопки
+                if (event.getAction() != KeyEvent.ACTION_DOWN) {
                     return false;
-                });
-            }
+                }
+
+                RecyclerView.LayoutManager layoutManager = mRecommendedBooks.getLayoutManager();
+                if (layoutManager == null) {
+                    return false;
+                }
+
+                // Получаем позицию текущего сфокусированного элемента
+                View focusedChild = layoutManager.getFocusedChild();
+                if (focusedChild == null) {
+                    return false;
+                }
+                int focusedPos = layoutManager.getPosition(focusedChild);
+
+                // Получаем общее количество элементов
+                int itemCount = layoutManager.getItemCount();
+
+                // Если нажата кнопка "ВНИЗ" и фокус на ПОСЛЕДНЕМ элементе списка
+                if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && focusedPos == itemCount - 1) {
+                    // Находим плеер в родительской Activity
+                    View playerView = requireActivity().findViewById(R.id.player);
+                    if (playerView != null) {
+                        // Передаем фокус плееру
+                        playerView.requestFocus();
+                    }
+                    // Возвращаем true, говоря, что мы обработали это событие
+                    return true;
+                }
+
+                // Для всех остальных случаев позволяем RecyclerView работать как обычно
+                return false;
+            });
         }
 
 
@@ -179,21 +181,39 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
 
     @Override
     public void onDestroyView() {
-        mPresenter.onDestroy();
+        // the presenter outlives this view: drop every reference to the destroyed tree (UI-12)
+        if (mImageView != null) {
+            Picasso.get().cancelRequest(mImageView);
+        }
+        mTitle = null;
+        mImageView = null;
+        mReting = null;
+        mGenre = null;
+        mTime = null;
+        mAuthor = null;
+        mArtist = null;
+        mSeries = null;
+        mSeriesConteiner = null;
+        mDesc = null;
+        mShowMore = null;
+        mRecommendedBooks = null;
+        mRecommendedBooksTitle = null;
+        mScrollView = null;
+        mProgressBar = null;
+        mFavorite = null;
+        mLike = null;
+        mDisLike = null;
+        mDescLine = null;
+        mOtherBookLine = null;
+        mAdapterBooksRecomended = null;
         super.onDestroyView();
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (executor != null) {
-            executor.shutdown();
-        }
-    }
-
-    @UnstableApi
-    @Override
     public void showDescription(@NonNull DescriptionPOJO description) {
+        if (mTitle == null) {
+            return; // no view attached; Moxy re-delivers on the next attach
+        }
 
         UiModeManager uiModeManager = (UiModeManager) requireContext().getSystemService(UI_MODE_SERVICE);
         if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
@@ -207,103 +227,87 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
             mShowMore.setBackgroundResource(R.drawable.focusable);
         }
         try {
-            if (mTitle != null && description.getTitle() != null
-                    && !description.getTitle().isEmpty()) {
+            if (description.getTitle() != null && !description.getTitle().isEmpty()) {
                 mTitle.setText(description.getTitle());
             }
 
-            if (mImageView != null) {
-
-                if(!description.getPoster().isEmpty()) {
-                    if(App.useProxy&&description.getPoster().contains(Url.SERVER_BAZA_KNIG)){
-
-                        final Bitmap[] bmp = {null};
-                        Handler handler = new Handler(Looper.getMainLooper());
-                        executor.execute(() -> {
-
-                            try {
-                                URL url = new URL(description.getPoster());
-                                Proxy proxy = new Proxy(Type.SOCKS, new InetSocketAddress(Consts.PROXY_HOST, Consts.PROXY_PORT));
-                                bmp[0] = BitmapFactory.decodeStream(url.openConnection(proxy).getInputStream());
-                            } catch (IOException ignored) {
-                            }
-                            handler.post(() -> {
-                                if(bmp[0] !=null) {
-                                    mImageView.setImageBitmap(bmp[0]);
-                                }
-                            });
-                        });
-
-
-                    }else {
-                        Picasso.get()
-                                .load(description.getPoster())
-                                .placeholder(android.R.drawable.ic_menu_gallery)
-                                .error(android.R.drawable.ic_menu_gallery)
-                                .into(mImageView);
-                    }
-                }else {
-                    Picasso.get().load(android.R.drawable.ic_menu_gallery)
+            String poster = description.getPoster();
+            String localCover = getLocalCoverFallback();
+            if (localCover != null && !localCover.isEmpty()) {
+                poster = localCover;
+            }
+            if (poster != null && !poster.trim().isEmpty()) {
+                if (poster.startsWith("content://")) {
+                    Picasso.get()
+                            .load(android.net.Uri.parse(poster))
+                            .placeholder(android.R.drawable.ic_menu_gallery)
+                            .error(android.R.drawable.ic_menu_gallery)
+                            .into(mImageView);
+                } else if (poster.startsWith("/") || poster.contains(":\\")) {
+                    Picasso.get()
+                            .load(new java.io.File(poster))
+                            .placeholder(android.R.drawable.ic_menu_gallery)
+                            .error(android.R.drawable.ic_menu_gallery)
+                            .into(mImageView);
+                } else {
+                    Picasso.get()
+                            .load(poster)
+                            .placeholder(android.R.drawable.ic_menu_gallery)
+                            .error(android.R.drawable.ic_menu_gallery)
                             .into(mImageView);
                 }
+            } else {
+                Picasso.get().load(android.R.drawable.ic_menu_gallery)
+                        .into(mImageView);
             }
 
             BookActivity activity = (BookActivity) getActivity();
 
-            if (activity != null && mImageView != null && !description.getPoster().isEmpty()) {
+            String remotePoster = description.getPoster();
+            if (activity != null && remotePoster != null && !remotePoster.trim().isEmpty()) {
                 mImageView.setOnClickListener(view ->
                         ImageFullScreenActivity.start(activity,
-                                description.getPoster(), description.getTitle(),
+                                remotePoster, description.getTitle(),
                                 mImageView));
             }
 
-            if (mGenre != null) {
-                if (description.getGenre() != null && !description.getGenre().isEmpty()) {
-                    mGenre.setText(description.getGenre());
-                } else if (mGenre.getVisibility() != View.GONE) {
-                    mGenre.setVisibility(View.GONE);
-                }
+            if (description.getGenre() != null && !description.getGenre().isEmpty()) {
+                mGenre.setText(description.getGenre());
+            } else if (mGenre.getVisibility() != View.GONE) {
+                mGenre.setVisibility(View.GONE);
             }
 
-            if (mReting != null) {
-                if (!description.getReiting().equals("0") && !description.getReiting().isEmpty()) {
-                    String reting = String.valueOf(description.getReiting());
-                    mReting.setText(reting);
-                    mReting.setVisibility(View.VISIBLE);
-                } else {
-                    mReting.setVisibility(View.GONE);
-                }
+            String retingStr = description.getReiting();
+            if (retingStr != null && !retingStr.equals("0") && !retingStr.isEmpty()) {
+                mReting.setText(retingStr);
+                mReting.setVisibility(View.VISIBLE);
+            } else {
+                mReting.setVisibility(View.GONE);
             }
 
-            if (mTime != null) {
-                if (!description.getTime().isEmpty()) {
-                    mTime.setText(description.getTime());
-                    mTime.setVisibility(View.VISIBLE);
-                } else if (mTime.getVisibility() != View.GONE) {
-                    mTime.setVisibility(View.GONE);
-                }
+            String timeStr = description.getTime();
+            if (timeStr != null && !timeStr.isEmpty()) {
+                mTime.setText(timeStr);
+                mTime.setVisibility(View.VISIBLE);
+            } else if (mTime.getVisibility() != View.GONE) {
+                mTime.setVisibility(View.GONE);
             }
 
 
-            if (mAuthor != null && description.getAutor() != null) {
+            if (description.getAutor() != null) {
                 mAuthor.setText(description.getAutor());
             }
-            if (mArtist != null && description.getArtist() != null) {
+            if (description.getArtist() != null) {
                 mArtist.setText(description.getArtist());
             }
 
-            if (mSeries != null) {
-                if (!description.getSeries().isEmpty()) {
-                    mSeries.setText(description.getSeries());
-                    if (activity != null) {
-                        activity.showSiries();
-                    }
-                } else {
-                    if (mSeriesConteiner != null && mSeriesConteiner.getVisibility() != View.GONE) {
-                        mSeriesConteiner.setVisibility(View.GONE);
-                    }
+            String seriesStr = description.getSeries();
+            if (seriesStr != null && !seriesStr.isEmpty()) {
+                mSeries.setText(seriesStr);
+                if (activity != null) {
+                    activity.showSiries();
                 }
-            } else if (mSeriesConteiner != null && mSeriesConteiner.getVisibility() != View.GONE) {
+            } else if (mSeriesConteiner.getVisibility() != View.GONE) {
                 mSeriesConteiner.setVisibility(View.GONE);
             }
 
@@ -314,59 +318,27 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
             }
 
 
-            if (mDesc != null) {
-                mDesc.setMaxLines(MAX_VALUE);
-                if (description.getDescription() != null) {
-                    mDesc.setText(description.getDescription());
-                } else {
-                    mDesc.setText("");
+            final String text = description.getDescription();
+            ExpandableText.bind(mDesc, mShowMore, text, MAX_LINES, descExpanded);
+            mShowMore.setOnClickListener(view1 -> {
+                descExpanded = !descExpanded;
+                if (mDesc != null) {
+                    ExpandableText.bind(mDesc, mShowMore, text, MAX_LINES, descExpanded);
                 }
+            });
+            if (text == null || text.isEmpty()) {
+                mDescLine.setVisibility(View.GONE);
+            }
 
-                if (mShowMore != null) {
-                    if (mDesc == null || mDesc.getLineCount() <= MAX_LINES) {
-                        mShowMore.setVisibility(View.GONE);
-                    } else {
-                        mShowMore.setVisibility(View.VISIBLE);
-                    }
-                    mShowMore.setOnClickListener(view1 -> {
-                        if (!showMore) {
-                            mDesc.setMaxLines(MAX_VALUE);
-                            mShowMore.setText(R.string.show_less);
-                        } else {
-                            mDesc.setMaxLines(MAX_LINES);
-                            mShowMore.setText(R.string.show_more);
-                        }
-                        showMore = !showMore;
-                    });
-                }
-                mDesc.setMaxLines(MAX_LINES);
-                showMore = false;
 
-                if (description.getDescription() == null
-                        || description.getDescription().isEmpty()) {
-                    mDescLine.setVisibility(View.GONE);
-                }
+            if (!description.getFavorite().equals("0")) {
+                mFavorite.setText(description.getFavorite());
+                mFavorite.setVisibility(View.VISIBLE);
             } else {
-                if (mShowMore != null && mShowMore.getVisibility() != View.GONE) {
-                    mShowMore.setVisibility(View.GONE);
-                }
+                mFavorite.setVisibility(View.GONE);
             }
-
-
-            if (mFavorite != null) {
-                if (!description.getFavorite().equals("0")) {
-                    mFavorite.setText(description.getFavorite());
-                    mFavorite.setVisibility(View.VISIBLE);
-                } else {
-                    mFavorite.setVisibility(View.GONE);
-                }
-            }
-            if (mLike != null) {
-                mLike.setText(String.valueOf(description.getLike()));
-            }
-            if (mDisLike != null) {
-                mDisLike.setText(String.valueOf(description.getDisLike()));
-            }
+            mLike.setText(String.valueOf(description.getLike()));
+            mDisLike.setText(String.valueOf(description.getDisLike()));
 
             if (description.getDisLike().equals("0") && description.getLike().equals("0")) {
                 mDisLike.setVisibility(View.GONE);
@@ -376,42 +348,41 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
                 mLike.setVisibility(View.VISIBLE);
             }
 
-            if (mGenre != null && description.getGenreUrl() != null && !description.getGenreUrl().isEmpty()) {
+            if (description.getGenreUrl() != null && !description.getGenreUrl().isEmpty()) {
                 mGenre.setOnClickListener(
                         view -> MainActivity.startMainActivity(requireContext(),
                                 Consts.FRAGMENT_AUDIOBOOK, description.getGenreUrl()));
             }
 
-            if (mAuthor != null && description.getAutorUrl() != null && !description.getAutorUrl().isEmpty()) {
+            if (description.getAutorUrl() != null && !description.getAutorUrl().isEmpty()) {
                 mAuthor.setOnClickListener(
                         view -> MainActivity.startMainActivity(requireContext(),
                                 Consts.FRAGMENT_AUDIOBOOK, description.getAutorUrl()));
             }
 
-            if (mArtist != null && description.getArtistUrl() != null && !description.getArtistUrl().isEmpty()) {
+            if (description.getArtistUrl() != null && !description.getArtistUrl().isEmpty()) {
                 mArtist.setOnClickListener(
                         view -> MainActivity.startMainActivity(requireContext(),
                                 Consts.FRAGMENT_AUDIOBOOK, description.getArtistUrl()));
             }
 
-            if (mSeries != null) {
-                mSeries.setOnClickListener(view -> {
-                    if (activity != null) {
-                        activity.setTabPostion(getResources().getString(R.string.tab_text_3));
-                    }
-                });
-            }
-        } catch (Exception e) {
-            if (getActivity() != null) {
-                getActivity().recreate();
-            }
+            mSeries.setOnClickListener(view -> {
+                if (activity != null) {
+                    activity.setTabPostion(getResources().getString(R.string.tab_text_3));
+                }
+            });
+        } catch (RuntimeException e) {
+            // a bad field must not take the screen down, and never restart it: the same data would come back
+            Log.e(TAG, "showDescription: ", e);
+            showToast(R.string.error_load_data);
         }
     }
 
     public void showOtherBooks(@NonNull ArrayList<BookPOJO> data) {
-        if (mAdapterBooksRecomended != null) {
-            mAdapterBooksRecomended.setData(data);
+        if (mAdapterBooksRecomended == null || mRecommendedBooks == null) {
+            return;
         }
+        mAdapterBooksRecomended.setData(data);
         if (!data.isEmpty()) {
             mRecommendedBooks.setVisibility(View.VISIBLE);
             mRecommendedBooksTitle.setVisibility(View.VISIBLE);
@@ -426,6 +397,9 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
 
     @Override
     public void showProgress(boolean b) {
+        if (mProgressBar == null) {
+            return;
+        }
         if (b) {
             mProgressBar.setVisibility(View.VISIBLE);
             mScrollView.setVisibility(View.INVISIBLE);
@@ -443,10 +417,8 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
 
     @Override
     public void showOtherBooksLine(boolean b) {
-        if (b) {
-            mOtherBookLine.setVisibility(View.VISIBLE);
-        } else {
-            mOtherBookLine.setVisibility(View.GONE);
+        if (mOtherBookLine != null) {
+            mOtherBookLine.setVisibility(b ? View.VISIBLE : View.GONE);
         }
     }
 

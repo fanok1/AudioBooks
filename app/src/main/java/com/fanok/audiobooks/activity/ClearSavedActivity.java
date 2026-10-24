@@ -11,17 +11,20 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.os.Build;
 import android.os.Bundle;
-import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import android.net.Uri;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.OnBackPressedCallback;
+import com.fanok.audiobooks.util.DownloadStorageHelper;
 import androidx.activity.OnBackPressedDispatcher;
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
@@ -37,10 +40,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
-import com.fanok.audiobooks.LocaleManager;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.DownloadAdapter;
 import com.fanok.audiobooks.databinding.ActivityClearSavedBinding;
+import com.fanok.audiobooks.download.DownloadMonitor;
 import com.fanok.audiobooks.interface_pacatge.clearSeved.ClearSavedView;
 import com.fanok.audiobooks.pojo.DownloadItem;
 import com.fanok.audiobooks.presenter.ClearSavedPresenter;
@@ -48,7 +51,8 @@ import com.r0adkll.slidr.Slidr;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
@@ -57,14 +61,44 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
     @InjectPresenter
     ClearSavedPresenter mPresenter;
 
+    private boolean isReceiverRegistered = false;
+
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unregisterReceiver(updateAdapter);
-        mPresenter.onDestroy();
+    protected void onStart() {
+        super.onStart();
+        if (!isReceiverRegistered) {
+            // Only this app announces download changes; listened to while visible (UI-13).
+            ContextCompat.registerReceiver(this, updateAdapter, new IntentFilter(Broadcast_UPDATE_ADAPTER),
+                    ContextCompat.RECEIVER_NOT_EXPORTED);
+            isReceiverRegistered = true;
+        }
+        // live speed, bytes and reasons of the rows in flight, every second while something downloads
+        DownloadMonitor.get().addListener(liveStatus);
+    }
+
+    /** Back from another screen: transfers that ended meanwhile are no longer live, so the rows are read again. */
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        mPresenter.updateData();
+    }
+
+    @Override
+    protected void onStop() {
+        DownloadMonitor.get().removeListener(liveStatus);
+        if (isReceiverRegistered) {
+            unregisterReceiver(updateAdapter);
+            isReceiverRegistered = false;
+        }
+        super.onStop();
     }
 
     private DownloadAdapter mAdapter;
+
+    private final DownloadMonitor.Listener liveStatus = () -> {
+        if (mAdapter != null) mAdapter.refreshLive();
+    };
+    private static final int MENU_EXPORT = Menu.FIRST + 100;
 
 
 
@@ -73,11 +107,6 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
         return new ClearSavedPresenter(getApplicationContext());
     }
 
-
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(LocaleManager.onAttach(base));
-    }
 
     @Override
     public Resources.Theme getTheme() {
@@ -101,7 +130,7 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
         activity.overridePendingTransition(R.anim.enter, R.anim.exit);
     }
 
-    @SuppressLint({"UnsafeOptInUsageError", "UnspecifiedRegisterReceiverFlag"})
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -120,6 +149,8 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
+        DownloadStorageHelper.scanAndImportDownloadedBooks(getApplicationContext());
+
 
         OnBackPressedDispatcher dispatcher = getOnBackPressedDispatcher();
         dispatcher.addCallback(this, new OnBackPressedCallback(true /* enabled by default */) {
@@ -134,18 +165,30 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new DownloadAdapter(new DownloadAdapter.OnDownloadControlClickListener() {
             @Override
-            public void onRestartClick(DownloadItem item, int position) {
-                mPresenter.restart(item.getFileName());
+            public void onRestartClick(DownloadItem item) {
+                mPresenter.restart(item);
             }
 
             @Override
-            public void onPauseClick(DownloadItem item, int position) {
-                mPresenter.pause(item.getFileName());
+            public void onPauseClick(DownloadItem item) {
+                mPresenter.pause(item);
             }
 
             @Override
-            public void onResumeClick(DownloadItem item, int position) {
-                mPresenter.resume(item.getFileName());
+            public void onResumeClick(DownloadItem item) {
+                mPresenter.resume(item);
+            }
+
+            @Override
+            public void onOpenClick(DownloadItem item) {
+                if (item != null) {
+                    com.fanok.audiobooks.model.BooksDBModel dbModel = new com.fanok.audiobooks.model.BooksDBModel(ClearSavedActivity.this);
+                    com.fanok.audiobooks.pojo.BookPOJO book = dbModel.getSomewhere(item.getBookUrl());
+                    dbModel.closeDB();
+                    if (book != null) {
+                        BookActivity.startNewActivity(ClearSavedActivity.this, book);
+                    }
+                }
             }
         });
 
@@ -160,9 +203,9 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                final int position = viewHolder.getBindingAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    showDeleteConfirmationDialog(position);
+                DownloadItem item = mAdapter.getItem(viewHolder.getBindingAdapterPosition());
+                if (item != null) {
+                    showDeleteConfirmationDialog(item);
                 }
             }
 
@@ -178,19 +221,13 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
             }
         };
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(updateAdapter, new IntentFilter(Broadcast_UPDATE_ADAPTER), RECEIVER_EXPORTED);
-        }else {
-            registerReceiver(updateAdapter, new IntentFilter(Broadcast_UPDATE_ADAPTER));
-        }
-
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
 
     }
 
     private final BroadcastReceiver updateAdapter = new BroadcastReceiver() {
-        @UnstableApi
+        @OptIn(markerClass = UnstableApi.class)
         @Override
         public void onReceive(Context context, Intent intent) {
             updateAdapter();
@@ -208,28 +245,30 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
 
 
     @SuppressLint("NotifyDataSetChanged")
-    @UnstableApi
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     public void updateAdapter() {
         mPresenter.updateData();
     }
 
-    private void showDeleteConfirmationDialog(int position) {
+    /** The swiped row is resolved when it is swiped; OK deletes exactly that book even if the list changed since. */
+    private void showDeleteConfirmationDialog(@NonNull DownloadItem item) {
+        final List<DownloadItem> chosen = Collections.singletonList(item);
+        String name = item.getBookName() != null ? item.getBookName() : "";
+        String message = name.isEmpty() ? "Удалить эту загрузку?" : "Удалить загрузку \"" + name + "\"?";
         new AlertDialog.Builder(this)
-                .setTitle("Подтверждение")
-                .setMessage("Вы уверены, что хотите удалить этот файл?")
-                .setPositiveButton("Да", (dialog, which) -> {
-                    mPresenter.remove(position);
-                    mAdapter.notifyItemRemoved(position);
-                })
-                .setNegativeButton("Нет", (dialog, which) -> mAdapter.notifyItemChanged(position))
-                .setOnCancelListener(dialog -> mAdapter.notifyItemChanged(position))
+                .setTitle("Удаление загрузки")
+                .setMessage(message)
+                .setPositiveButton("ОК", (dialog, which) -> mPresenter.remove(chosen))
+                .setNegativeButton("Отмена", (dialog, which) -> mAdapter.restore(item))
+                .setOnCancelListener(dialog -> mAdapter.restore(item))
                 .show();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.download_selection_menu, menu);
+        menu.add(Menu.NONE, MENU_EXPORT, Menu.NONE, R.string.export_to_folder);
         return true;
     }
 
@@ -240,6 +279,10 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
         if (checkboxItem != null && delete!=null && mAdapter!=null) {
             checkboxItem.setVisible(mAdapter.getSelectedItemsSize()>0);
             delete.setVisible(mAdapter.getSelectedItemsSize()>0);
+        }
+        MenuItem export = menu.findItem(MENU_EXPORT);
+        if (export != null && mAdapter != null) {
+            export.setVisible(mAdapter.getSelectedItemsSize() > 0);
         }
         return super.onPrepareOptionsMenu(menu);
     }
@@ -263,15 +306,26 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
             }
         }
 
-        if(item.getItemId()==R.id.action_delete_selected){
-            final SparseBooleanArray selectedItems = mAdapter.getSelectedItems();
-            ArrayList<DownloadItem> arrayList = new ArrayList<>();
-            for (int i = 0; i < selectedItems.size(); i++) {
-                arrayList.add(mAdapter.getItem(selectedItems.keyAt(i)));
-
-            }
-            mPresenter.remove(arrayList);
+        if (item.getItemId() == MENU_EXPORT && mAdapter != null) {
+            List<DownloadItem> chosen = mAdapter.getSelectedItems();
             mAdapter.clearSelection();
+            mPresenter.export(chosen);
+        }
+
+        if (item.getItemId() == R.id.action_delete_selected) {
+            // Resolved now into an immutable list: a refresh while the dialog is open cannot change what OK deletes.
+            final List<DownloadItem> chosen = mAdapter.getSelectedItems();
+            if (!chosen.isEmpty()) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Удаление загрузок")
+                        .setMessage("Удалить выбранные загрузки (" + chosen.size() + ")?")
+                        .setPositiveButton("ОК", (dialog, which) -> {
+                            mPresenter.remove(chosen);
+                            mAdapter.clearSelection();
+                        })
+                        .setNegativeButton("Отмена", null)
+                        .show();
+            }
         }
 
 
@@ -279,23 +333,27 @@ public class ClearSavedActivity extends MvpAppCompatActivity implements ClearSav
     }
 
     @Override
-    public void showData(@NonNull ArrayList<DownloadItem> downloads) {
-        ArrayList<DownloadItem> arrayList = new ArrayList<>();
-        for (DownloadItem item : downloads) {
-            arrayList.add(new DownloadItem(item));
-        }
+    public void showData(@NonNull List<DownloadItem> downloads) {
+        mAdapter.submit(downloads);
+    }
 
-
-        if(mAdapter.getItemCount()>0){
-            mAdapter.updateItems(new ArrayList<>(arrayList));
-        }else {
-            mAdapter.setItemList(new ArrayList<>(arrayList));
-        }
+    @Override
+    public void showMessage(@NonNull String message) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
     @Override
     public void showToast(int message) {
         Toast.makeText(this, getResources().getText(message),
                 Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void showLogsDialog(String logs) {
+        new AlertDialog.Builder(this)
+                .setTitle("Логи удаления файлов")
+                .setMessage(logs != null ? logs : "Логи пусты")
+                .setPositiveButton("ОК", null)
+                .show();
     }
 }

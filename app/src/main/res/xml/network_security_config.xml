@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">mdpu.mcdir.ru</domain>
-    </domain-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <!-- ISRG Root X1 (SHA-256 96:BC:EC:06:...:BD:DF:08:C6), absent from the API 23-24 system store -->
+            <certificates src="@raw/isrg_root_x1" />
+        </trust-anchors>
+    </base-config>
 </network-security-config>

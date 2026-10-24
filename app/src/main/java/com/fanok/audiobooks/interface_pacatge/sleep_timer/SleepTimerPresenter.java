@@ -9,8 +9,6 @@ public interface SleepTimerPresenter {
 
     void endChapterClick(View view);
 
-    void setEndCapterTime(long time);
-
     void clear(View view);
 
     void start();

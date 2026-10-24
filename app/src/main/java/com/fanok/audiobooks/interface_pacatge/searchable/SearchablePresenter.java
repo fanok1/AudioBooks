@@ -11,6 +11,8 @@ public interface SearchablePresenter {
 
     void loadNext();
 
+    void retryFailed();
+
     void onGenreItemClick(View view, int position);
 
     void onBookItemClick(View view, int position);

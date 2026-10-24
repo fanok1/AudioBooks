@@ -1,6 +1,6 @@
 package com.fanok.audiobooks.pojo;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import java.util.ArrayList;
 
 public class ComentsPOJO extends ContentParentPOJO {
@@ -14,11 +14,15 @@ public class ComentsPOJO extends ContentParentPOJO {
         return childComents;
     }
 
-    public void setChildComents(@NonNull ArrayList<SubComentsPOJO> childComents) {
-        this.childComents.addAll(childComents);
+    public void setChildComents(@Nullable ArrayList<SubComentsPOJO> childComents) {
+        if (childComents != null) {
+            this.childComents.addAll(childComents);
+        }
     }
 
-    public void setChildComents(@NonNull SubComentsPOJO childComents) {
-        this.childComents.add(childComents);
+    public void setChildComents(@Nullable SubComentsPOJO childComents) {
+        if (childComents != null) {
+            this.childComents.add(childComents);
+        }
     }
 }

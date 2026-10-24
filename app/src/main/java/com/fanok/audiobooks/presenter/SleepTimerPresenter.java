@@ -1,6 +1,5 @@
 package com.fanok.audiobooks.presenter;
 
-import static com.fanok.audiobooks.activity.SleepTimerActivity.Broadcast_GET_TIME_LEFT;
 import static com.fanok.audiobooks.activity.SleepTimerActivity.Broadcast_UPDATE_TIMER_START;
 
 import android.content.Intent;
@@ -19,6 +18,7 @@ public class SleepTimerPresenter extends MvpPresenter<SleepTimerView>
         implements com.fanok.audiobooks.interface_pacatge.sleep_timer.SleepTimerPresenter {
 
 
+    /** Extras: "start" (boolean), "time" (ms, countdown) or "endOfChapter" (boolean). */
     public static final String Broadcast_SleepTimer = "SleepTimerStart";
     private static boolean timerStarted = false;
     private ArrayList<Character> time;
@@ -27,6 +27,7 @@ public class SleepTimerPresenter extends MvpPresenter<SleepTimerView>
         return timerStarted;
     }
 
+    /** The player service resets this when the timer fires, is replaced or the service ends. */
     public static void setTimerStarted(boolean timerStarted) {
         SleepTimerPresenter.timerStarted = timerStarted;
     }
@@ -53,20 +54,18 @@ public class SleepTimerPresenter extends MvpPresenter<SleepTimerView>
         }
     }
 
+    /** Arms the end-of-chapter boundary: playback pauses when the current chapter ends, at any speed. */
     @Override
     public void endChapterClick(final View view) {
-        Intent intent = new Intent(Broadcast_GET_TIME_LEFT);
-        getViewState().brodcastSend(intent);
-    }
-
-    @Override
-    public void setEndCapterTime(final long t) {
+        if (!playerRunning()) {
+            return;
+        }
         timerStarted = true;
+        getViewState().setSrcToStartButton(true);
         Intent intent = new Intent(Broadcast_SleepTimer);
-        intent.putExtra("time", t);
-        getViewState().setSrcToStartButton(timerStarted);
+        intent.putExtra("start", true);
+        intent.putExtra("endOfChapter", true);
         getViewState().brodcastSend(intent);
-
     }
 
     @Override
@@ -74,13 +73,26 @@ public class SleepTimerPresenter extends MvpPresenter<SleepTimerView>
         if (!timerStarted && time.size() == 0) {
             return;
         }
+        if (!timerStarted && !playerRunning()) {
+            return;
+        }
         timerStarted = !timerStarted;
         getViewState().setSrcToStartButton(timerStarted);
         Intent intent = new Intent(Broadcast_SleepTimer);
+        intent.putExtra("start", timerStarted);
         getViewState().broadcastStartTimer(intent);
         if (!MediaPlayerService.isPlay() && timerStarted) {
             getViewState().showToast(R.string.sleep_timer_started);
         }
+    }
+
+    /** Only the player service runs the timer: without it nothing would count down or stop. */
+    private boolean playerRunning() {
+        if (MediaPlayerService.isRunning() && MediaPlayerService.currentBookUrl() != null) {
+            return true;
+        }
+        getViewState().showToast(R.string.sleep_timer_no_playback);
+        return false;
     }
 
     @Override

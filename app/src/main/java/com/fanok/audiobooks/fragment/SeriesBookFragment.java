@@ -98,7 +98,6 @@ public class SeriesBookFragment extends MvpAppCompatFragment implements Series {
 
     @Override
     public void onDestroyView() {
-        mPresenter.onDestroy();
         super.onDestroyView();
         mSeriesListAddapter = null;
         binding = null;

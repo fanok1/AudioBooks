@@ -1,46 +1,65 @@
 package com.fanok.audiobooks.model;
 
-
-
-
-import static com.fanok.audiobooks.App.useProxy;
-import static com.fanok.audiobooks.Consts.PROXY_HOST;
-import static com.fanok.audiobooks.Consts.PROXY_PORT;
-
 import android.content.Context;
-import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
-import androidx.preference.PreferenceManager;
-import com.fanok.audiobooks.App;
-import com.fanok.audiobooks.Consts;
-import com.fanok.audiobooks.EncodingExeption;
+import com.fanok.audiobooks.BookRemovedException;
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.interface_pacatge.book_content.AudioModelInterfece;
+import com.fanok.audiobooks.net.JsonSlice;
+import com.fanok.audiobooks.net.SiteHttp;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import io.reactivex.Observable;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Proxy.Type;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Connection;
-import org.jsoup.Connection.Method;
-import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.mozilla.javascript.Function;
-import org.mozilla.javascript.Scriptable;
 
-public class AudioModel implements
-        com.fanok.audiobooks.interface_pacatge.book_content.AudioModelInterfece {
+/**
+ * Chapter lists for all sources. Fetching ({@link SiteHttp}) is kept apart from parsing: every
+ * {@code parseXxx} takes already-fetched content, calls no Android API and runs in JVM tests.
+ * Failures are errors, never fake chapters: an unknown host, a page without the player or a page
+ * that yields no playable chapter make {@link #getAudio} emit {@code onError}, so the caller can
+ * fall back to offline chapters. One malformed chapter is skipped and counted, not fatal.
+ */
+public class AudioModel implements AudioModelInterfece {
+
+    /** Fetches a provider page: {@link #fetchPage} in production, fixtures in tests. */
+    interface PageSource {
+        Document get(String url) throws IOException;
+    }
+
+    static final String BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    private static final String BAZA_KNIG_BASE64 = "Z83UhncLHApBrM7GvdqT4tNWRjemgak9oVzwK1PXDfY5bQOSlsF26yi0JCIuxE+/";
+    /** Passphrase reverse-engineered from akniga's obfuscated player script. */
+    private static final String AKNIGA_PASSPHRASE = "EKxtcg46V";
+    private static final String ACCEPT_LANGUAGE = "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3";
+    private static final Pattern PLAYERJS_FILE = Pattern.compile("[\"']?\\bfile[\"']?\\s*:\\s*");
+    private static final Pattern AKNIGA_SECURITY_KEY
+            = Pattern.compile("LIVESTREET_SECURITY_KEY\\s*=\\s*['\"]([^'\"]+)['\"]");
+    private static final Pattern BAZA_KNIG_STR_DECODE = Pattern.compile("strDecode\\(\\s*([\"'])");
+    private static final Pattern BAZA_KNIG_VOICE = Pattern.compile("[?&]sorce=(\\d{1,3})");
 
     Context mContext;
 
@@ -48,672 +67,862 @@ public class AudioModel implements
         mContext = context;
     }
 
-    private static final String TAG = "AudioModel";
-
-    public static String runScript(Context context, String fileName, String key, String functionName) {
-        String resultStr = null;
-        // Get the JavaScript in previous section
-        try {
-
-            InputStream inputStream = context.getResources().openRawResource(
-                    context.getResources().getIdentifier(fileName,
-                            "raw", context.getPackageName()));
-            String data = convertStreamToString(inputStream);
-
-            Object[] functionParams = new Object[]{key};
-
-            org.mozilla.javascript.Context rhino = org.mozilla.javascript.Context.enter();
-            rhino.setOptimizationLevel(-1);
-            Scriptable scope = rhino.initStandardObjects();
-            rhino.evaluateString(scope, data, "JavaScript", 0, null);
-            Object obj = scope.get(functionName, scope);
-
-            if (obj instanceof Function) {
-                Function function = (Function) obj;
-                Object result = function.call(rhino, scope, scope, functionParams);
-                resultStr = org.mozilla.javascript.Context.toString(result);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            // We must exit the Rhino VM
-            org.mozilla.javascript.Context.exit();
-        }
-
-        return resultStr;
-    }
-
     @Override
     public Observable<ArrayList<AudioPOJO>> getAudio(@NonNull String url) {
+        return audio(url, AudioModel::fetchPage);
+    }
 
-        return Observable.create(observableEmitter -> {
-            //waitVpnConetion();
-            ArrayList<AudioPOJO> articlesModels;
+    static Observable<ArrayList<AudioPOJO>> audio(String url, PageSource pages) {
+        return Observable.create(emitter -> {
+            ArrayList<AudioPOJO> chapters;
             try {
-                if (url.contains(Url.SERVER)) {
-                    articlesModels = loadSeriesList(url);
-                } else if (url.contains(Url.SERVER_IZIBUK)) {
-                    articlesModels = loadSeriesListIzibuk(url);
-                } else if (url.contains(Url.SERVER_ABMP3)) {
-                    articlesModels = loadSeriesListADMP3(url);
-                } else if (url.contains(Url.SERVER_AKNIGA)) {
-                    articlesModels = loadSeriesListAbook(url);
-                } else if (url.contains(Url.SERVER_BAZA_KNIG)) {
-                    articlesModels = loadSeriesListBazaKnig(url);
-                } else if (url.contains(Url.SERVER_KNIGOBLUD)) {
-                    articlesModels = loadSeriesKnigoblud(url);
-                } else if (url.contains(Url.SERVER_BOOKOOF)) {
-                    articlesModels = loadSeriesBookoof(url);
-                }else {
-                    articlesModels = new ArrayList<>();
-                }
-                observableEmitter.onNext(articlesModels);
+                chapters = load(url, pages);
             } catch (Exception e) {
-                observableEmitter.onError(e);
-            } finally {
-                observableEmitter.onComplete();
+                emitter.tryOnError(e);
+                return;
+            }
+            if (!emitter.isDisposed()) {
+                emitter.onNext(chapters);
+                emitter.onComplete();
             }
         });
     }
 
-    private String deleteComnets(@NonNull String str) {
-        int firstIndex = str.indexOf("/*");
-        if (firstIndex != -1) {
-            int lastIndex = str.indexOf("*/");
-            if (lastIndex == -1) {
-                lastIndex = str.length() - 1;
-            }
-            String subString = str.substring(firstIndex, lastIndex + 2);
-            str = str.replace(subString, "");
-            return deleteComnets(str);
-        }
-        return str;
+    /** A provider's parser: {@code base} is the page's final URL, which relative media URLs resolve against. */
+    private interface PageParser {
+        ArrayList<AudioPOJO> parse(Document doc, String base) throws IOException;
     }
 
-    private ArrayList<AudioPOJO> loadSeriesList(String url) throws IOException {
-        ArrayList<AudioPOJO> result = new ArrayList<>();
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .maxBodySize(0)
-                .sslSocketFactory(Consts.socketFactory());
-
-        Document doc = connection.get();
-
-        Elements titleElement = doc.getElementsByClass("book_title_elem book_title_name");
-        String bookName = "";
-        if (titleElement.size() != 0) {
-            bookName = titleElement.first().text().trim();
+    /** Selects the parser by host (moved hosts are rewritten first); never returns an empty list. */
+    static ArrayList<AudioPOJO> load(String rawUrl, PageSource pages) throws IOException {
+        String url = Url.canonical(rawUrl);
+        PageParser parser = parser(url);
+        if (parser == null) {
+            throw new IllegalArgumentException("unsupported host: " + Url.hostOf(rawUrl));
         }
-        Elements sriptElements = doc.getElementsByTag("script");
-        for (Element script : sriptElements) {
-            String value = script.toString();
-            if (value.contains("domReady")) {
-                value = deleteComnets(value);
-                value = value.substring(value.indexOf("var player = new BookPlayer"));
-                value = value.substring(0, value.indexOf("\n"));
-                String json = value.substring(value.indexOf("["), value.indexOf("], ") + 1);
-                JsonElement jsonTree = JsonParser.parseString(json);
-                if (jsonTree.isJsonArray()) {
-                    JsonArray jsonArray = jsonTree.getAsJsonArray();
-                    for (JsonElement element : jsonArray) {
-                        if (element.isJsonObject()) {
-                            JsonObject jsonObject = element.getAsJsonObject();
-                            AudioPOJO audioPOJO = new AudioPOJO();
-                            audioPOJO.setName(jsonObject.get("title").getAsString());
-                            audioPOJO.setUrl(jsonObject.get("url").getAsString());
-                            audioPOJO.setTime(jsonObject.get("duration").getAsInt());
-                            audioPOJO.setBookName(bookName);
-                            result.add(audioPOJO);
-                        }
-                    }
-                }
-
+        Document doc = pages.get(url);
+        try {
+            return parser.parse(doc, location(doc, url));
+        } catch (IllegalStateException e) {
+            if (BookRemovedException.isNotice(doc.text())) {
+                throw new BookRemovedException(url);
             }
+            throw e;
         }
-
-        return result;
     }
 
-    private ArrayList<AudioPOJO> loadSeriesBookoof(String url) throws IOException {
-        ArrayList<AudioPOJO> result = new ArrayList<>();
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .ignoreHttpErrors(true);
-
-        if(useProxy){
-            Proxy proxy = new Proxy(Type.SOCKS, new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
+    private static PageParser parser(String url) {
+        if (Url.isHost(url, Url.SERVER)) {
+            return AudioModel::parseKnigavuhe;
+        } else if (Url.isHost(url, Url.SERVER_IZIBUK)) {
+            return AudioModel::parseIzibuk;
+        } else if (Url.isHost(url, Url.SERVER_ABMP3)) {
+            return (doc, base) -> loadPlayerjs(doc, base, parseAbmp3BookName(doc));
+        } else if (Url.isHost(url, Url.SERVER_AKNIGA)) {
+            return AudioModel::loadAkniga;
+        } else if (Url.isHost(url, Url.SERVER_BAZA_KNIG)) {
+            // the voice is the requested one even when a redirect drops the query
+            return (doc, base) -> loadBazaKnig(doc, base, url);
+        } else if (Url.isHost(url, Url.SERVER_KNIGOBLUD)) {
+            return AudioModel::parseKnigoblud;
+        } else if (Url.isHost(url, Url.SERVER_AUDIOBOO)) {
+            return AudioModel::parseAudioboo;
+        } else if (Url.isHost(url, Url.SERVER_OTRUB)) {
+            return AudioModel::parseOtrub;
+        } else if (Url.isHost(url, Url.SERVER_POLEKNIG)) {
+            return (doc, base) -> loadPlayerjs(doc, base, text(doc.selectFirst("h1")));
         }
-        Document doc = connection.get();
-
-        String bookName = "";
-        Element titleElement = doc.getElementsByClass("short-title fx-1").first();
-        if (titleElement != null) {
-            String name = titleElement.ownText().trim();
-            bookName = name.substring(0, name.length() - 2);
-        }
-
-        Element sriptParent = doc.getElementById("player");
-        if (sriptParent!=null) {
-            String value = sriptParent.toString();
-            value = deleteComnets(value);
-            value = value.substring(value.indexOf("var player = new Playerjs"));
-            value = value.substring(0, value.indexOf("\n"));
-            String json = value.substring(value.indexOf("["), value.indexOf("]") + 1);
-            JsonElement jsonTree = JsonParser.parseString(json);
-            if (jsonTree.isJsonArray()) {
-                JsonArray jsonArray = jsonTree.getAsJsonArray();
-                for (JsonElement element : jsonArray) {
-                    if (element.isJsonObject()) {
-                        JsonObject jsonObject = element.getAsJsonObject();
-                        AudioPOJO audioPOJO = new AudioPOJO();
-                        audioPOJO.setName(jsonObject.get("title").getAsString());
-                        audioPOJO.setUrl(jsonObject.get("file").getAsString());
-                        audioPOJO.setBookName(bookName);
-                        result.add(audioPOJO);
-                    }
-                }
-            }
-
-
-        }
-
-        return result;
+        return null;
     }
 
-    private ArrayList<AudioPOJO> loadSeriesListADMP3(String url) throws IOException {
-        ArrayList<AudioPOJO> result = new ArrayList<>();
-        String autor = "";
-        String bookName = "";
+    /** Where {@code doc} was served from after redirects ({@code fallback} when unknown). */
+    private static String location(Document doc, String fallback) {
+        String location = doc.location();
+        return location == null || location.isEmpty() ? fallback : location;
+    }
 
-        Connection connection = Jsoup.connect(url)
-                .method(Connection.Method.GET)
-                .userAgent(Consts.USER_AGENT)
-                .referrer(Url.SERVER_ABMP3 + "/")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0);
+    private static Document fetchPage(String url) throws IOException {
+        return SiteHttp.parse(SiteHttp.execute(SiteHttp.connect(url).header("Accept-Language", ACCEPT_LANGUAGE)));
+    }
 
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
+    /** Body of a JSON/text response, classified like a page (challenge, HTTP ≥ 400 → exception). */
+    private static String fetchBody(Connection connection) throws IOException {
+        Connection.Response response = SiteHttp.execute(connection.ignoreContentType(true)).bufferUp();
+        SiteHttp.parse(response);
+        return response.body();
+    }
+
+    // ---- knigavuhe, izibuk, knigoblud, otrub: player JSON inside a page script ----
+
+    static ArrayList<AudioPOJO> parseKnigavuhe(Document doc, String bookUrl) {
+        Chapters chapters = new Chapters(text(doc.selectFirst(".book_title_name")), bookUrl);
+        chapters.each(array(playerScript(doc, "new BookPlayer(", '[')), item -> {
+            JsonObject o = item.getAsJsonObject();
+            return chapters.chapter(string(o, "title"), string(o, "url"), seconds(o.get("duration")));
+        });
+        return chapters.done("knigavuhe player");
+    }
+
+    static ArrayList<AudioPOJO> parseIzibuk(Document doc, String bookUrl) {
+        Chapters chapters = new Chapters(text(doc.selectFirst("[itemprop=name]")), bookUrl);
+        JsonObject player = object(playerScript(doc, "new XSPlayer(", '{'));
+        String prefix = string(player, "mp3_url_prefix");
+        if (prefix.isEmpty()) {
+            throw new IllegalStateException("izibuk player has no mp3_url_prefix");
         }
+        String base = prefix.matches("(?i)^https?://.*") ? prefix : "https://" + prefix.replaceFirst("^/+", "");
+        String sign = string(player, "sign");
+        String query = sign.isEmpty() || sign.startsWith("?") || sign.startsWith("&") ? sign : "?" + sign;
+        chapters.each(arrayOf(player, "tracks"), item -> {
+            JsonArray track = item.getAsJsonArray(); // [id, title, seconds, ?, file]
+            String file = string(track.get(4));
+            return chapters.chapter(string(track.get(1)), file.isEmpty() ? "" : base + "/" + file + query,
+                    seconds(track.get(2)));
+        });
+        return chapters.done("izibuk player");
+    }
 
-        Connection.Response res = connection.execute();
+    static ArrayList<AudioPOJO> parseKnigoblud(Document doc, String bookUrl) {
+        return parseXsPlaylist(object(playerScript(doc, "KB.playerInit(", '{')), bookUrl,
+                text(doc.selectFirst("h1")), "knigoblud player");
+    }
 
-        Document doc = res.parse();
+    static ArrayList<AudioPOJO> parseOtrub(Document doc, String bookUrl) {
+        String bookName = text(doc.selectFirst("h1"));
+        String player = findPlayerScript(doc, "XSPlayer(", '{');
+        if (player == null) {
+            return parseInlinePlayerjs(doc, bookUrl, bookName);
+        }
+        return parseXsPlaylist(object(player), bookUrl, bookName, "otrub player");
+    }
 
-        Elements infos = doc.getElementsByClass("panel-item");
-        if (infos != null) {
-            for (Element info : infos) {
-                if (info.text().contains("Автор")) {
-                    Elements element = info.getElementsByTag("a");
-                    if (element != null && element.size() != 0) {
-                        autor = element.first().text();
-                    }
+    private static ArrayList<AudioPOJO> parseXsPlaylist(JsonObject player, String bookUrl, String bookName,
+            String what) {
+        Chapters chapters = new Chapters(bookName, bookUrl);
+        chapters.each(arrayOf(player, "playlist"), item -> {
+            JsonObject o = item.getAsJsonObject();
+            return chapters.chapter(string(o, "title"), string(o, "src"), seconds(o.get("duration")));
+        });
+        return chapters.done(what);
+    }
+
+    /** The JSON literal after {@code marker} in the first script that has one; other scripts are skipped. */
+    static String playerScript(Document doc, String marker, char open) {
+        String json = findPlayerScript(doc, marker, open);
+        if (json == null) {
+            throw new IllegalStateException("player script not found: " + marker);
+        }
+        return json;
+    }
+
+    private static String findPlayerScript(Document doc, String marker, char open) {
+        for (Element script : doc.select("script")) {
+            String data = script.data();
+            if (data.contains(marker)) {
+                try {
+                    return JsonSlice.after(data, marker, open);
+                } catch (IllegalStateException notThisOne) {
+                    // a loader script that only mentions the marker; keep looking
                 }
             }
         }
+        return null;
+    }
 
-        Elements titleElement = doc.getElementsByTag("h1");
-        if (titleElement.size() != 0) {
-            String name = titleElement.first().text().trim();
-            if (autor.isEmpty()) {
-                bookName = name;
-            } else {
-                bookName = name.replace(autor + " - ", "");
+    // ---- Playerjs (ABMP3, audioboo, otrub, poleknig) ----
+
+    static ArrayList<AudioPOJO> parseAudioboo(Document doc, String bookUrl) {
+        return parseInlinePlayerjs(doc, bookUrl, text(doc.selectFirst("h1")));
+    }
+
+    private static ArrayList<AudioPOJO> parseInlinePlayerjs(Document doc, String bookUrl, String bookName) {
+        String file = playerjsFile(doc);
+        if (!file.trim().startsWith("[")) {
+            throw new IllegalStateException("Playerjs playlist is not inline");
+        }
+        return parsePlayerjsPlaylist(file, bookUrl, bookName);
+    }
+
+    /** Playerjs page whose {@code file} is an inline list or the URL of a JSON playlist. */
+    private static ArrayList<AudioPOJO> loadPlayerjs(Document doc, String bookUrl, String bookName)
+            throws IOException {
+        String file = playerjsFile(doc);
+        if (file.trim().startsWith("[")) {
+            return parsePlayerjsPlaylist(file, bookUrl, bookName);
+        }
+        String playlistUrl = resolve(bookUrl, file);
+        if (playlistUrl.isEmpty()) {
+            throw new IllegalStateException("Playerjs file is neither a list nor a URL");
+        }
+        return parsePlayerjsPlaylist(fetchBody(SiteHttp.connect(playlistUrl).referrer(bookUrl)), playlistUrl,
+                bookName);
+    }
+
+    /** The Playerjs {@code file} option of the first script that has a literal one (list text or string). */
+    static String playerjsFile(Document doc) {
+        for (Element script : doc.select("script")) {
+            String data = script.data();
+            if (data.contains("Playerjs")) {
+                String file = playerjsFile(data);
+                if (file != null) {
+                    return file;
+                }
             }
         }
+        throw new IllegalStateException("Playerjs script with a file option not found");
+    }
 
-        Elements sriptElements = doc.getElementsByTag("script");
-        for (Element script : sriptElements) {
-            String value = script.toString();
-            if (value.contains("var player = new Playerjs")) {
-                value = value.substring(value.indexOf("file:"));
-                String urlJson = value.substring(value.indexOf("\"") + 1, value.lastIndexOf("\""));
-
-
-
-                Connection connection1 = Jsoup.connect(urlJson)
-                        .userAgent(Consts.USER_AGENT)
-                        .referrer(Url.SERVER_ABMP3 + "/")
-                        .sslSocketFactory(Consts.socketFactory())
-                        //.cookies(res.cookies())
-                        .maxBodySize(0);
-
-                if(App.useProxy) {
-                    Proxy proxy = new Proxy(Type.SOCKS,
-                            new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-                    connection.proxy(proxy);
-                }
-
-                Document document = connection1.get();
-
-                String json = document.body().text();
-
-                JsonElement jsonTree = JsonParser.parseString(json);
-                if (jsonTree.isJsonArray()) {
-                    JsonArray jsonArray = jsonTree.getAsJsonArray();
-                    for (JsonElement element : jsonArray) {
-                        if (element.isJsonObject()) {
-                            JsonObject jsonObject = element.getAsJsonObject();
-                            AudioPOJO audioPOJO = new AudioPOJO();
-                            audioPOJO.setName(jsonObject.get("title").getAsString());
-                            audioPOJO.setUrl(jsonObject.get("file").getAsString());
-                            audioPOJO.setBookName(bookName);
-                            result.add(audioPOJO);
-                        }
-                    }
-                }
-
+    private static String playerjsFile(String script) {
+        Matcher m = PLAYERJS_FILE.matcher(script);
+        while (m.find()) {
+            int at = m.end();
+            if (at >= script.length()) {
                 break;
-
+            }
+            char c = script.charAt(at);
+            try {
+                if (c == '[') {
+                    return JsonSlice.from(script, at, '[');
+                } else if (c == '"' || c == '\'') {
+                    return stringLiteral(script, at);
+                }
+            } catch (IllegalStateException malformed) {
+                // try the next occurrence
             }
         }
-
-        return result;
+        return null;
     }
 
-    private ArrayList<AudioPOJO> loadSeriesListAbook(String url) throws IOException {
-        ArrayList<AudioPOJO> result = new ArrayList<>();
+    /** A Playerjs playlist: {@code [{title, file, folder?}]}; folders are flattened, URLs resolved. */
+    static ArrayList<AudioPOJO> parsePlayerjsPlaylist(String json, String baseUrl, String bookName) {
+        Chapters chapters = new Chapters(bookName, baseUrl);
+        addPlayerjsItems(chapters, array(json));
+        return chapters.done("Playerjs playlist");
+    }
 
-        Response response = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer(Url.SERVER_AKNIGA + "/performers/")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .execute();
-        Map<String, String> cookies = response.cookies();
+    private static void addPlayerjsItems(Chapters chapters, JsonArray items) {
+        chapters.each(items, item -> {
+            JsonObject o = item.getAsJsonObject();
+            JsonElement folder = o.get("folder");
+            if (folder != null && folder.isJsonArray()) {
+                addPlayerjsItems(chapters, folder.getAsJsonArray());
+                return null;
+            }
+            return chapters.chapter(string(o, "title"), oneOf(playerjsUrl(string(o, "file"))),
+                    seconds(o.get("duration")));
+        });
+    }
 
-        Document doc = response.parse();
+    /**
+     * Playerjs "{@code a or b}" lists equivalent mirrors, and some sites (poleknig) shuffle their order on every load.
+     * A fixed pick keeps the chapter's URL, which the saved rows, downloads and deletion match it by, the same.
+     */
+    static String oneOf(String file) {
+        String[] alternatives = file.trim().split("\\s+or\\s+");
+        Arrays.sort(alternatives);
+        return alternatives[0];
+    }
 
-        Elements sriptTag = doc.getElementsByTag("script");
-        String key = "";
-        if (sriptTag != null) {
-            for (Element script : sriptTag) {
-                String text = script.data();
-                if (text != null && text.contains("LIVESTREET_SECURITY_KEY")) {
-                    text = text.substring(text.indexOf("LIVESTREET_SECURITY_KEY"));
-                    text = text.replace("LIVESTREET_SECURITY_KEY = '", "");
-                    key = text.substring(0, text.indexOf("'"));
+    /**
+     * Decodes the obfuscated Playerjs forms ({@code #2…}/{@code //_//}-separated base64 and
+     * {@code /engine/go.php?url=<base64>}). The {@code //_//} form is tried with each
+     * {@code //_//junk//_//} pair cut out, then with only the markers removed; a value that decodes
+     * to no absolute URL either way is dropped (the junk is site-specific and cannot be told apart).
+     */
+    static String playerjsUrl(String file) {
+        String f = file.trim();
+        List<String> candidates = new ArrayList<>();
+        int go = f.indexOf("/engine/go.php?url=");
+        if (f.startsWith("#") || f.contains("//_//")) {
+            String body = f.replaceFirst("^#\\w", "");
+            candidates.add(body.replaceAll("//_//.*?//_//", "").replace("//_//", ""));
+            candidates.add(body.replace("//_//", ""));
+        } else if (go >= 0) {
+            // the raw query value: a '+' in it is a base64 letter, not an encoded space
+            String value = f.substring(go + 19).replaceFirst("[&#].*$", "").replace("+", "%2B");
+            try {
+                candidates.add(URLDecoder.decode(value, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                throw new IllegalStateException(e);
+            }
+        } else {
+            return f;
+        }
+        for (String candidate : candidates) {
+            String decoded = base64Text(candidate);
+            if (decoded.matches("(?is)^(https?:)?//.+")) {
+                return decoded;
+            }
+        }
+        return "";
+    }
+
+    // ---- ABMP3 ----
+
+    static String parseAbmp3BookName(Document doc) {
+        String author = "";
+        for (Element info : doc.select(".panel-item")) {
+            Element link = info.selectFirst("a");
+            if (info.text().contains("Автор") && link != null) {
+                author = link.text();
+            }
+        }
+        String title = text(doc.selectFirst("h1"));
+        return author.isEmpty() ? title : title.replace(author + " - ", "");
+    }
+
+    // ---- akniga: page → token → book JSON with an encrypted HLS URL ----
+
+    private static ArrayList<AudioPOJO> loadAkniga(Document doc, String url) throws IOException {
+        String key = aknigaSecurityKey(doc);
+        String bid = aknigaBid(doc);
+        String book = null;
+        if (!key.isEmpty() && !bid.isEmpty()) {
+            String token = string(object(fetchBody(aknigaPost(url, "/ajax/player/token")
+                    .data("security_ls_key", key)
+                    .data("bid", bid)
+                    .data("ts", String.valueOf(System.currentTimeMillis())))), "token");
+            book = fetchBody(aknigaPost(url, "/ajax/b/" + bid)
+                    .data("security_ls_key", key)
+                    .data("bid", bid)
+                    .data("token", token)
+                    .data("hls", "true"));
+        }
+        return parseAkniga(doc, book, url);
+    }
+
+    /** Session cookies of the book page come from the {@link SiteHttp} jar. */
+    private static Connection aknigaPost(String bookUrl, String path) {
+        return SiteHttp.connect(Url.SERVER_AKNIGA + path)
+                .method(Connection.Method.POST)
+                .referrer(bookUrl)
+                .header("X-Requested-With", "XMLHttpRequest")
+                .header("Origin", Url.SERVER_AKNIGA)
+                .header("Accept-Language", ACCEPT_LANGUAGE);
+    }
+
+    static String aknigaSecurityKey(Document doc) {
+        for (Element script : doc.select("script")) {
+            Matcher m = AKNIGA_SECURITY_KEY.matcher(script.data());
+            if (m.find()) {
+                return m.group(1);
+            }
+        }
+        return "";
+    }
+
+    /** The current book's id, from its own page or player container (related books carry theirs too). */
+    static String aknigaBid(Document doc) {
+        Element el = doc.selectFirst("article.book--page[data-bid~=^\\d+$], .player--chapters[data-bid~=^\\d+$]");
+        return el == null ? "" : el.attr("data-bid");
+    }
+
+    /**
+     * {@code bookJson} is the {@code /ajax/b/<bid>} answer (null when the page had no key): one HLS
+     * URL shared by all chapters, each clipped by its start/finish time.
+     */
+    static ArrayList<AudioPOJO> parseAkniga(Document doc, String bookJson, String bookUrl) {
+        String bookName = text(doc.selectFirst(".caption__article-main"));
+        Chapters chapters = new Chapters(bookName, bookUrl);
+        if (bookJson != null) {
+            JsonObject book = object(bookJson);
+            JsonElement hres = book.get("hres");
+            String hls = hres == null ? "" : decryptAknigaHres(hres.isJsonPrimitive() ? hres.getAsString() : hres.toString());
+            if (!hls.isEmpty()) {
+                JsonElement items = book.get("items");
+                if (items != null && items.isJsonPrimitive()) {
+                    try {
+                        items = JsonParser.parseString(items.getAsString());
+                    } catch (JsonParseException e) {
+                        items = null;
+                    }
+                }
+                if (items != null && items.isJsonArray()) {
+                    addAknigaClips(chapters, items.getAsJsonArray(), hls);
+                }
+                if (chapters.isEmpty()) {
+                    AudioPOJO whole = chapters.chapter("Аудиокнига (полная)", hls, 0);
+                    if (whole != null) {
+                        whole.setTimeStart(0);
+                    }
+                    chapters.add(whole);
+                }
+            }
+            JsonElement legacy = book.get("aItems");
+            if (chapters.isEmpty() && legacy != null && legacy.isJsonArray()) {
+                int[] accumulated = {0};
+                chapters.each(legacy.getAsJsonArray(), item -> {
+                    JsonObject o = item.getAsJsonObject();
+                    String file = o.has("file") ? string(o, "file") : string(o, "file_url");
+                    AudioPOJO audio = chapters.chapter(string(o, "title"), file, 0);
+                    if (audio != null && o.has("duration")) {
+                        int duration = seconds(o.get("duration"));
+                        audio.setTime(duration);
+                        audio.setTimeStart(accumulated[0]);
+                        accumulated[0] += duration;
+                        audio.setTimeFinish(accumulated[0]);
+                    }
+                    return audio;
+                });
+            }
+        }
+        if (chapters.isEmpty()) {
+            for (Element audio : doc.select("audio[src]")) {
+                if (chapters.add(chapters.chapter(bookName, audio.absUrl("src"), 0))) {
                     break;
                 }
             }
         }
-
-        String id = "";
-        Elements elements = doc.getElementsByTag("article");
-        if (elements != null && elements.size() != 0) {
-            id = elements.first().attr("data-bid");
-        }
-
-        String title = "";
-        elements = doc.getElementsByClass("caption__article-main");
-        if (elements != null && elements.size() != 0) {
-            title = elements.first().text();
-        }
-
-        String autor = "";
-
-        Elements autorElements = doc.getElementsByClass("about-author");
-        if (autorElements != null && autorElements.size() != 0) {
-            Elements aElements = autorElements.first().getElementsByTag("a");
-            if (aElements != null && aElements.size() != 0) {
-                autor = aElements.first().text();
-            }
-        }
-
-        String hash = runScript(mContext, "config", key, "getHash");
-
-        String text = Jsoup.connect(Url.SERVER_AKNIGA + "/ajax/b/" + id)
-                .userAgent(Consts.USER_AGENT)
-                .method(Method.POST)
-                .referrer(url)
-                .header("origin", "https://akniga.org")
-                .sslSocketFactory(Consts.socketFactory())
-                .data("bid", id)
-                .data("hash", hash)
-                .data("hls", "true")
-                .data("security_ls_key", key)
-                .maxBodySize(0)
-                .ignoreContentType(true)
-                .cookies(cookies)
-                .execute()
-                .body();
-        JsonElement json = JsonParser.parseString(text.replaceAll("\\n", ""));
-        if (json.isJsonObject()) {
-            JsonObject jsonObject = json.getAsJsonObject();
-            String srv = jsonObject.get("srv").getAsString();
-            JsonElement keyElement = jsonObject.get("key");
-            String audioUrl;
-            if(keyElement!=null) {
-                String key2 = keyElement.getAsString();
-                String filename = jsonObject.get("slug").getAsString();
-                audioUrl = srv + "b/" + id + "/" + key2 + "/" + filename + ".mp3";
-            }else {
-
-                String hres = jsonObject.get("hres").getAsString();
-                audioUrl = runScript(mContext, "config", hres, "myDecrypt");
-            }
-
-
-            JsonElement jElement = jsonObject.get("items");
-            if (jElement.isJsonPrimitive()) {
-                String array = jElement.getAsString();
-                jElement = JsonParser.parseString(array);
-            }
-            if (jElement.isJsonArray()) {
-                JsonArray jarray = jElement.getAsJsonArray();
-
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-                if (preferences.getBoolean("cutting_file", true)) {
-                    for (int i = 0; i < jarray.size(); i++) {
-                        AudioPOJO audioPOJO = new AudioPOJO();
-                        audioPOJO.setUrl(audioUrl);
-                        audioPOJO.setBookName(jsonObject.get("titleonly").getAsString());
-                        JsonElement jsonElement = jarray.get(i);
-                        if (jsonElement.isJsonObject()) {
-                            String name = jsonElement.getAsJsonObject().get("title").getAsString();
-                            audioPOJO.setName(name);
-                            int duration = jsonElement.getAsJsonObject().get("duration").getAsInt();
-                            int timeStart = jsonElement.getAsJsonObject().get("time_from_start").getAsInt();
-                            int timeFinish = jsonElement.getAsJsonObject().get("time_finish").getAsInt();
-                            audioPOJO.setTime(duration);
-                            audioPOJO.setTimeStart(timeStart);
-                            audioPOJO.setTimeFinish(timeFinish);
-                        }
-                        result.add(audioPOJO);
-                    }
-                }else {
-                    AudioPOJO audioPOJO = new AudioPOJO();
-                    audioPOJO.setUrl(audioUrl);
-                    audioPOJO.setBookName(jsonObject.get("titleonly").getAsString());
-                    audioPOJO.setName(jsonObject.get("titleonly").getAsString());
-                    int duration = 0;
-                    for (int i = 0; i < jarray.size(); i++) {
-                        JsonElement jsonElement = jarray.get(i);
-                        if (jsonElement.isJsonObject()) {
-                            duration += jsonElement.getAsJsonObject().get("duration").getAsInt();
-                        }
-                        audioPOJO.setTime(duration);
-                    }
-                    result.add(audioPOJO);
-                }
-            }
-        }
-        return result;
+        return chapters.done("akniga book");
     }
 
-    private ArrayList<AudioPOJO> getAudioSorceBazaKnig(Document doc, String id, String bookName) {
-        ArrayList<AudioPOJO> result = new ArrayList<>();
-        Elements sriptElements = doc.getElementsByTag("script");
-        for (Element script : sriptElements) {
-            String value = script.toString();
-            if (value.contains(id)) {
-                String key = value.substring(value.indexOf("["), value.indexOf("]")) + "]";
-                if (value.contains("strDecode")) {
-                    throw new EncodingExeption(key);
-                }
-                JsonElement jsonTree = JsonParser.parseString(key);
-                if (jsonTree.isJsonArray()) {
-                    JsonArray jsonArray = jsonTree.getAsJsonArray();
-                    for (JsonElement element : jsonArray) {
-                        if (element.isJsonObject()) {
-                            JsonObject jsonObject = element.getAsJsonObject();
-                            AudioPOJO audioPOJO = new AudioPOJO();
-                            audioPOJO.setName(jsonObject.get("title").getAsString());
-                            audioPOJO.setUrl(jsonObject.get("file").getAsString());
-                            audioPOJO.setBookName(bookName);
-                            result.add(audioPOJO);
-                        }
-                    }
-                }
+    /**
+     * Chapters clipped out of the one shared HLS stream, as complete monotonic intervals: a start
+     * that goes backwards is clamped to the previous end; an item without its own end (no
+     * {@code time_finish}/{@code duration}) ends where the next item explicitly starts, else it is
+     * skipped. Only the last chapter may stay open-ended (plays to the end of the stream).
+     */
+    private static void addAknigaClips(Chapters chapters, JsonArray items, String hls) {
+        List<AudioPOJO> clips = new ArrayList<>();
+        List<JsonObject> times = new ArrayList<>();
+        chapters.each(items, item -> {
+            JsonObject o = item.getAsJsonObject();
+            AudioPOJO audio = chapters.chapter(string(o, "title"), hls, 0);
+            if (audio != null) {
+                clips.add(audio);
+                times.add(o);
             }
-        }
-        return result;
-    }
-
-
-    private ArrayList<AudioPOJO> loadSeriesListBazaKnig(String url) throws IOException {
-
-        int indexSorce = url.indexOf("?sorce");
-        int sorce = 1;
-        if (indexSorce != -1) {
-            String substring = url.substring(indexSorce).replace("?sorce=", "");
-            sorce = Integer.parseInt(substring);
-        }
-
-        ArrayList<AudioPOJO> result = new ArrayList<>();
-
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .ignoreHttpErrors(true);
-
-        if (!Consts.getBazaKnigCookies().isEmpty()) {
-            connection.cookie("PHPSESSID", Consts.getBazaKnigCookies());
-        }
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
-        }
-
-
-        Document doc = connection.get();
-
-        String bookName = "";
-        Elements title = doc.getElementsByTag("h1");
-        if (title != null && title.size() > 0) {
-            String text = title.first().ownText();
-            bookName = text.substring(0, text.indexOf(" - "));
-        }
-
-        Elements sriptElements = doc.getElementsByTag("script");
-        for (Element script : sriptElements) {
-            String value = script.toString();
-            if (value.contains("strDecode(\"")) {
-                value = deleteComnets(value);
-                value = value.substring(value.indexOf("strDecode("));
-                String key = value.substring(value.indexOf("(") + 1, value.indexOf("\");"));
-                String hash = runScript(mContext, "decode", key, "strDecode");
-                System.out.println(hash);
-                JsonElement element = JsonParser.parseString(hash);
-                if (element.isJsonArray()) {
-                    JsonArray array = element.getAsJsonArray();
-                    for (JsonElement item : array) {
-                        if (item.isJsonObject()) {
-                            AudioPOJO audioPOJO = new AudioPOJO();
-                            JsonObject obj = item.getAsJsonObject();
-                            audioPOJO.setName(obj.get("title").getAsString());
-                            audioPOJO.setUrl(obj.get("file").getAsString());
-                            audioPOJO.setBookName(bookName);
-                            result.add(audioPOJO);
-                        }
-                    }
-                }
+            return null;
+        });
+        int end = 0;
+        for (int i = 0; i < clips.size(); i++) {
+            JsonObject o = times.get(i);
+            int start = Math.max(end, seconds(o.get("time_from_start")));
+            int finish = seconds(o.get("time_finish"));
+            if (finish <= start && o.has("duration")) {
+                finish = start + seconds(o.get("duration"));
             }
-        }
-
-        Element div = doc.getElementById("fr");
-        if (div != null) {
-            String data = div.attr("data");
-            if (data != null) {
-                data = data.substring(data.indexOf("src="));
-                data = data.replace("src=\"", "");
-                data = data.substring(0, data.indexOf("\""));
-                Connection conPlaylist = Jsoup.connect(data)
-                        .userAgent(Consts.USER_AGENT)
-                        .referrer("http://www.google.com")
-                        .maxBodySize(0)
-                        .sslSocketFactory(Consts.socketFactory());
-                Document playlist = conPlaylist.get();
-                Elements player = playlist.getElementsByClass("js-play8-playlist");
-                if (player != null && player.size() > 0) {
-                    String value = player.first().attr("value");
-                    JsonElement jsonArray = JsonParser.parseString(value);
-                    if (jsonArray.isJsonArray()) {
-                        for (int i = 0; i < jsonArray.getAsJsonArray().size(); i++) {
-                            JsonElement element = jsonArray.getAsJsonArray().get(i);
-                            if (element.isJsonObject()) {
-                                JsonObject jsonObject = element.getAsJsonObject();
-                                AudioPOJO audioPOJO = new AudioPOJO();
-                                audioPOJO.setName(bookName + "_" + (i + 1));
-                                audioPOJO.setTime((int) jsonObject.get("duration").getAsDouble());
-                                audioPOJO.setBookName(bookName);
-                                JsonArray array = jsonObject.getAsJsonArray("sources");
-                                if (array != null) {
-                                    JsonElement element1 = array.get(0);
-                                    if (element1 != null && element1.isJsonObject()) {
-                                        JsonObject object = element1.getAsJsonObject();
-                                        audioPOJO.setUrl("https://archive.org" + object.get("file").getAsString());
-                                    }
-                                }
-
-                                result.add(audioPOJO);
-                            }
-                        }
-
-                    }
-
-                }
+            if (finish <= start && i + 1 < times.size()) {
+                finish = seconds(times.get(i + 1).get("time_from_start"));
             }
-        } else {
-            if (sorce == 1) {
-                result = getAudioSorceBazaKnig(doc, "id:\"player\"", bookName);
+            AudioPOJO clip = clips.get(i);
+            clip.setTimeStart(start);
+            if (finish > start) {
+                clip.setTime(finish - start);
+                clip.setTimeFinish(finish);
+                end = finish;
+                chapters.add(clip);
+            } else if (i == clips.size() - 1) {
+                chapters.add(clip);
             } else {
-                result = getAudioSorceBazaKnig(doc, "id:\"player" + sorce + "\"", bookName);
+                chapters.skipped++;
             }
         }
-
-        return result;
     }
 
-    private ArrayList<AudioPOJO> loadSeriesListIzibuk(String url) throws IOException {
-        ArrayList<AudioPOJO> result = new ArrayList<>();
-
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .maxBodySize(0)
-                .sslSocketFactory(Consts.socketFactory());
-
-        if(useProxy){
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
-        }
-
-        Document doc = connection.get();
-
-        Elements titleElement = doc.getElementsByAttributeValue("itemprop", "name");
-        String bookName = "";
-        if (titleElement.size() != 0) {
-            bookName = titleElement.first().text().trim();
-        }
-        Elements sriptElements = doc.getElementsByTag("script");
-        for (Element script : sriptElements) {
-            String value = script.toString();
-            if (value.contains("domReady")) {
-                value = deleteComnets(value);
-                value = value.substring(value.indexOf("var player = new XSPlayer("));
-                // value = value.substring(0, value.indexOf("\n"));
-                String json = value.substring(value.indexOf("(") + 1, value.indexOf(");"));
-                JsonElement jsonTree = JsonParser.parseString(json);
-                if (jsonTree.isJsonObject()) {
-                    JsonObject jsonObject = jsonTree.getAsJsonObject();
-                    JsonElement url_pref_element = jsonObject.get("mp3_url_prefix");
-                    if (url_pref_element.isJsonPrimitive()) {
-                        String url_pref = "https://" + url_pref_element.getAsString();
-                        JsonArray array = jsonObject.getAsJsonArray("tracks");
-                        for (int i = 0; i < array.size(); i++) {
-                            AudioPOJO audioPOJO = new AudioPOJO();
-                            JsonArray elements = array.get(i).getAsJsonArray();
-                            audioPOJO.setName(elements.get(1).getAsString());
-                            audioPOJO.setTime(elements.get(2).getAsInt());
-                            audioPOJO.setUrl(url_pref + "/" + elements.get(4).getAsString());
-                            audioPOJO.setBookName(bookName);
-                            result.add(audioPOJO);
-                        }
-                    }
+    /**
+     * Decrypts akniga's {@code hres} (the HLS playlist URL): AES-256-CBC with an EVP_BytesToKey (MD5)
+     * key, as CryptoJS does. Returns "" when it cannot be decrypted.
+     */
+    static String decryptAknigaHres(String hresJson) {
+        try {
+            JsonObject hres = object(hresJson);
+            String ivHex = string(hres, "iv");
+            String saltHex = string(hres, "s");
+            byte[] ct = decodeBase64(string(hres, "ct"), BASE64);
+            byte[] salt = saltHex.isEmpty() ? new byte[8] : hexToBytes(saltHex);
+            byte[] keyIv = evpBytesToKey(AKNIGA_PASSPHRASE.getBytes(StandardCharsets.UTF_8), salt, 48);
+            byte[] iv = ivHex.length() == 32 ? hexToBytes(ivHex) : Arrays.copyOfRange(keyIv, 32, 48);
+            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(javax.crypto.Cipher.DECRYPT_MODE,
+                    new javax.crypto.spec.SecretKeySpec(Arrays.copyOfRange(keyIv, 0, 32), "AES"),
+                    new javax.crypto.spec.IvParameterSpec(iv));
+            String result = new String(cipher.doFinal(ct), StandardCharsets.UTF_8).trim();
+            // a JSON string like "https:\/\/r1.akniga.club\/b\/111286\/pl.m3u8?…", a list of them or {url}
+            try {
+                JsonElement value = JsonParser.parseString(result);
+                if (value.isJsonArray() && value.getAsJsonArray().size() > 0) {
+                    value = value.getAsJsonArray().get(0);
+                } else if (value.isJsonObject()) {
+                    value = value.getAsJsonObject().get("url");
                 }
-
+                result = string(value);
+            } catch (JsonParseException notJson) {
+                result = result.replace("\\/", "/");
             }
+            return resolve(Url.SERVER_AKNIGA + "/", result);
+        } catch (Exception e) {
+            return "";
         }
+    }
 
+    private static byte[] evpBytesToKey(byte[] passphrase, byte[] salt, int needed) throws Exception {
+        byte[] result = new byte[0];
+        byte[] prev = new byte[0];
+        java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+        while (result.length < needed) {
+            md.reset();
+            md.update(prev);
+            md.update(passphrase);
+            md.update(salt);
+            prev = md.digest();
+            byte[] tmp = new byte[result.length + prev.length];
+            System.arraycopy(result, 0, tmp, 0, result.length);
+            System.arraycopy(prev, 0, tmp, result.length, prev.length);
+            result = tmp;
+        }
         return result;
     }
 
-    private ArrayList<AudioPOJO> loadSeriesKnigoblud(String url) throws IOException {
-        ArrayList<AudioPOJO> result = new ArrayList<>();
-
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .maxBodySize(0)
-                .ignoreHttpErrors(true)
-                .sslSocketFactory(Consts.socketFactory());
-
-
-        Document doc = connection.get();
-
-        String bookName = "";
-        Elements titleElement = doc.getElementsByTag("h1");
-        if (titleElement!=null&&titleElement.size() != 0) {
-            String name = titleElement.first().text().trim();
-            bookName = name;
+    /** Hex pairs to bytes; a trailing odd digit is ignored. */
+    static byte[] hexToBytes(String hex) {
+        byte[] data = new byte[hex.length() / 2];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte) ((Character.digit(hex.charAt(2 * i), 16) << 4) + Character.digit(hex.charAt(2 * i + 1), 16));
         }
+        return data;
+    }
 
-        Elements sriptElements = doc.getElementsByTag("script");
-        for (Element script : sriptElements) {
-            String value = script.toString();
-            if (value.contains("KB.playerInit")) {
-                value = deleteComnets(value);
-                value = value.substring(value.indexOf("KB.playerInit("));
-                String json = value.substring(value.indexOf("(") + 1, value.indexOf(");"));
-                JsonElement jsonTree = JsonParser.parseString(json);
-                if (jsonTree.isJsonObject()) {
-                    JsonObject jsonObject = jsonTree.getAsJsonObject();
-                    JsonArray array = jsonObject.getAsJsonArray("playlist");
-                    for (int i = 0; i < array.size(); i++) {
-                        AudioPOJO audioPOJO = new AudioPOJO();
-                        JsonObject object = array.get(i).getAsJsonObject();
-                        if(object!=null){
-                            JsonElement element = object.get("title");
-                            if(element!=null){
-                                audioPOJO.setName(element.getAsString());
-                            }
+    // ---- baza-knig: per-voice strDecode or plain player scripts, else the #fr frame (archive.org) ----
 
-                            element = object.get("duration");
-                            if(element!=null){
-                                audioPOJO.setTime(element.getAsInt());
-                            }
+    private static ArrayList<AudioPOJO> loadBazaKnig(Document doc, String base, String url) throws IOException {
+        Element scope = bazaKnigScope(doc, url);
+        Chapters chapters = bazaKnigScripts(doc, scope, base);
+        if (!chapters.isEmpty()) {
+            return chapters.done("baza-knig player");
+        }
+        Element fr = scope.selectFirst("#fr");
+        if (fr == null && bazaKnigVoice(url) == 1) {
+            fr = doc.getElementById("fr");
+        }
+        String frame = bazaKnigFrameUrl(fr, base);
+        if (frame == null) {
+            return chapters.done("baza-knig player");
+        }
+        String bookName = bazaKnigBookName(doc);
+        if (frame.contains("archive.org")) {
+            String metadata = frame.replace("/embed/", "/metadata/").replaceFirst("[?&#].*$", "");
+            return parseArchiveOrgMetadata(fetchBody(SiteHttp.connect(metadata)), bookName);
+        }
+        return parseBazaKnigPlay8(SiteHttp.get(frame), bookName);
+    }
 
-                            element = object.get("src");
-                            if(element!=null){
-                                audioPOJO.setUrl(element.getAsString());
-                            }
+    /** Chapters of the voice selected by {@code ?sorce=N} from the page's own scripts. */
+    static ArrayList<AudioPOJO> parseBazaKnig(Document doc, String bookUrl) {
+        return bazaKnigScripts(doc, bazaKnigScope(doc, bookUrl), bookUrl).done("baza-knig player");
+    }
 
-                        }
-                        audioPOJO.setBookName(bookName);
-                        result.add(audioPOJO);
-                    }
+    /**
+     * Voice N lives in {@code #content-tabN}; pages without tabs have one voice. A voice requested
+     * by {@code ?sorce=N} whose tab is missing is an error: the whole page would be another voice.
+     */
+    private static Element bazaKnigScope(Document doc, String bookUrl) {
+        String id = "content-tab" + bazaKnigVoice(bookUrl);
+        Element tab = doc.getElementById(id);
+        if (tab == null && BAZA_KNIG_VOICE.matcher(bookUrl).find()) {
+            throw new IllegalStateException("baza-knig voice tab not found: #" + id);
+        }
+        return tab != null ? tab : doc;
+    }
+
+    private static int bazaKnigVoice(String bookUrl) {
+        Matcher m = BAZA_KNIG_VOICE.matcher(bookUrl);
+        return m.find() ? Integer.parseInt(m.group(1)) : 1;
+    }
+
+    private static Chapters bazaKnigScripts(Document doc, Element scope, String bookUrl) {
+        Chapters chapters = new Chapters(bazaKnigBookName(doc), bookUrl);
+        Chapters.ItemParser item = element -> {
+            JsonObject o = element.getAsJsonObject();
+            return chapters.chapter(string(o, "title"), string(o, "file"), 0);
+        };
+        for (Element script : scope.select("script")) {
+            String data = script.data();
+            Matcher m = BAZA_KNIG_STR_DECODE.matcher(data);
+            try {
+                if (m.find()) {
+                    String decoded = decodeBazaKnig(stringLiteral(data, m.start(1)));
+                    chapters.each(array(JsonSlice.from(decoded, 0, '[')), item);
+                } else if (data.contains("id:\"player")) {
+                    chapters.each(array(JsonSlice.from(data, 0, '[')), item);
                 }
+            } catch (IllegalStateException notThisScript) {
+                // keep looking
+            }
+            if (!chapters.isEmpty()) {
+                break;
+            }
+        }
+        return chapters;
+    }
 
+    /** baza-knig's {@code strDecode}: base64 with a shuffled alphabet around UTF-8 JSON. */
+    static String decodeBazaKnig(String key) {
+        return new String(decodeBase64(key, BAZA_KNIG_BASE64), StandardCharsets.UTF_8);
+    }
+
+    static String bazaKnigBookName(Document doc) {
+        Element h1 = doc.selectFirst("h1");
+        String text = h1 == null ? "" : h1.ownText();
+        int dash = text.indexOf(" - ");
+        return (dash > 0 ? text.substring(0, dash) : text).trim();
+    }
+
+    /** The player frame kept as an iframe snippet in the {@code data} attribute of {@code #fr}, or null. */
+    static String bazaKnigFrameUrl(Element fr, String baseUrl) {
+        Element frame = fr == null ? null : Jsoup.parseBodyFragment(fr.attr("data"), baseUrl).selectFirst("[src]");
+        String src = frame == null ? "" : frame.absUrl("src");
+        return src.isEmpty() ? null : src;
+    }
+
+    /**
+     * archive.org {@code /metadata/<id>}: one MP3 per recording, by name — its original MP3, else
+     * one derivative (VBR over fixed bitrate). A file without a name is skipped.
+     */
+    static ArrayList<AudioPOJO> parseArchiveOrgMetadata(String json, String bookName) {
+        JsonObject root = object(json);
+        JsonElement meta = root.get("metadata");
+        String id = meta != null && meta.isJsonObject() ? string(meta.getAsJsonObject(), "identifier") : "";
+        if (id.isEmpty()) {
+            throw new IllegalStateException("archive.org item has no identifier (dark or removed)");
+        }
+        Chapters chapters = new Chapters(bookName, "https://archive.org/");
+        Map<String, JsonObject> recordings = new TreeMap<>();
+        for (JsonElement file : arrayOf(root, "files")) {
+            JsonObject o = file.isJsonObject() ? file.getAsJsonObject() : null;
+            if (o == null || !string(o, "format").contains("MP3")) {
+                continue;
+            }
+            if (string(o, "name").isEmpty()) {
+                chapters.skipped++;
+                continue;
+            }
+            String recording = archiveOrgRecording(o);
+            JsonObject best = recordings.get(recording);
+            if (best == null || archiveOrgRank(o) < archiveOrgRank(best)) {
+                recordings.put(recording, o);
+            }
+        }
+        JsonArray files = new JsonArray();
+        for (JsonObject file : recordings.values()) {
+            files.add(file);
+        }
+        chapters.each(files, item -> {
+            JsonObject o = item.getAsJsonObject();
+            String name = string(o, "name");
+            String title = string(o, "title");
+            try {
+                String url = new URI("https", "archive.org", "/download/" + id + "/" + name, null).toASCIIString();
+                return chapters.chapter(title.isEmpty() ? name : title, url, seconds(o.get("length")));
+            } catch (URISyntaxException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        return chapters.done("archive.org item " + id);
+    }
+
+    /** The recording a file belongs to: a derivative's {@code original}, without extension or bitrate suffix. */
+    private static String archiveOrgRecording(JsonObject file) {
+        String original = string(file, "original");
+        String name = original.isEmpty() || "original".equals(string(file, "source")) ? string(file, "name") : original;
+        return name.replaceFirst("\\.[^./]*$", "").replaceFirst("(?i)_(\\d+kb|vbr)$", "");
+    }
+
+    private static int archiveOrgRank(JsonObject file) {
+        return "original".equals(string(file, "source")) ? 0 : "VBR MP3".equals(string(file, "format")) ? 1 : 2;
+    }
+
+    /** The frame's own playlist; its relative URLs resolve against the frame's (final) URL. */
+    static ArrayList<AudioPOJO> parseBazaKnigPlay8(Document playlist, String bookName) {
+        Element player = playlist.selectFirst(".js-play8-playlist");
+        if (player == null) {
+            throw new IllegalStateException("js-play8 playlist not found");
+        }
+        Chapters chapters = new Chapters(bookName, location(playlist, ""));
+        int[] index = {0};
+        chapters.each(array(player.attr("value")), item -> {
+            index[0]++;
+            JsonArray sources = arrayOf(item.getAsJsonObject(), "sources");
+            String file = sources.size() > 0 && sources.get(0).isJsonObject()
+                    ? string(sources.get(0).getAsJsonObject(), "file") : "";
+            return chapters.chapter(bookName + "_" + index[0], file, seconds(item.getAsJsonObject().get("duration")));
+        });
+        return chapters.done("baza-knig js-play8 playlist");
+    }
+
+    // ---- shared helpers (pure) ----
+
+    /**
+     * Base64 over any 64-letter alphabet. Characters outside it (padding, whitespace, junk) are
+     * skipped and a trailing partial group yields its whole bytes, so no input length throws.
+     */
+    static byte[] decodeBase64(String text, String alphabet) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream(text.length() * 3 / 4 + 1);
+        int buffer = 0;
+        int bits = 0;
+        for (int i = 0; i < text.length(); i++) {
+            int value = alphabet.indexOf(text.charAt(i));
+            if (value < 0) {
+                continue;
+            }
+            buffer = ((buffer << 6) | value) & 0xFFFF;
+            bits += 6;
+            if (bits >= 8) {
+                bits -= 8;
+                out.write((buffer >> bits) & 0xFF);
+            }
+        }
+        return out.toByteArray();
+    }
+
+    private static String base64Text(String text) {
+        return new String(decodeBase64(text, BASE64), StandardCharsets.UTF_8).trim();
+    }
+
+    /** {@code href} resolved against {@code base}; "" when empty or not an http(s) URL. */
+    static String resolve(String base, String href) {
+        if (href == null || href.trim().isEmpty()) {
+            return "";
+        }
+        try {
+            URL url = base == null || base.isEmpty() ? new URL(href.trim()) : new URL(new URL(base), href.trim());
+            String protocol = url.getProtocol();
+            return "https".equals(protocol) || "http".equals(protocol) ? url.toString() : "";
+        } catch (MalformedURLException e) {
+            return "";
+        }
+    }
+
+    /** Content of the JS string literal whose opening quote is at {@code at}, escapes decoded. */
+    static String stringLiteral(String text, int at) {
+        char quote = text.charAt(at);
+        for (int i = at + 1; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '\\') {
+                i++;
+            } else if (c == quote) {
+                return string(json(text.substring(at, i + 1)));
+            }
+        }
+        throw new IllegalStateException("unterminated string literal at index " + at);
+    }
+
+    private static JsonElement json(String text) {
+        try {
+            return JsonParser.parseString(text);
+        } catch (JsonParseException e) {
+            throw new IllegalStateException("malformed player JSON", e);
+        }
+    }
+
+    private static JsonArray array(String text) {
+        JsonElement e = json(text);
+        if (!e.isJsonArray()) {
+            throw new IllegalStateException("player JSON is not a list");
+        }
+        return e.getAsJsonArray();
+    }
+
+    private static JsonObject object(String text) {
+        JsonElement e = json(text);
+        if (!e.isJsonObject()) {
+            throw new IllegalStateException("player JSON is not an object");
+        }
+        return e.getAsJsonObject();
+    }
+
+    private static JsonArray arrayOf(JsonObject o, String key) {
+        JsonElement e = o.get(key);
+        if (e == null || !e.isJsonArray()) {
+            throw new IllegalStateException("player JSON has no '" + key + "' list");
+        }
+        return e.getAsJsonArray();
+    }
+
+    private static String string(JsonObject o, String key) {
+        return string(o.get(key));
+    }
+
+    private static String string(JsonElement e) {
+        return e != null && e.isJsonPrimitive() ? e.getAsString() : "";
+    }
+
+    /** Whole seconds of a number or numeric string ("12.5" → 12); 0 when absent, malformed or negative. */
+    static int seconds(JsonElement e) {
+        if (e == null || !e.isJsonPrimitive()) {
+            return 0;
+        }
+        try {
+            double value = e.getAsDouble();
+            return value > 0 && value < Integer.MAX_VALUE ? (int) value : 0;
+        } catch (NumberFormatException notNumber) {
+            return 0;
+        }
+    }
+
+    private static String text(Element e) {
+        return e == null ? "" : e.text().trim();
+    }
+
+    /** Chapters of one book: an item without a usable URL or with bad fields is skipped and counted. */
+    static final class Chapters {
+
+        interface ItemParser {
+            /** The chapter for {@code item}, or null when it adds nothing itself. */
+            AudioPOJO parse(JsonElement item);
+        }
+
+        private final ArrayList<AudioPOJO> list = new ArrayList<>();
+        private final String bookName;
+        private final String base;
+        int skipped;
+
+        Chapters(String bookName, String base) {
+            this.bookName = bookName;
+            this.base = base;
+        }
+
+        /** A chapter of this book (not yet added), or null — counted as skipped — when {@code href} is unusable. */
+        AudioPOJO chapter(String name, String href, int seconds) {
+            String url = resolve(base, href);
+            if (url.isEmpty()) {
+                skipped++;
+                return null;
+            }
+            AudioPOJO audio = new AudioPOJO();
+            audio.setBookName(bookName);
+            audio.setName(name);
+            audio.setUrl(url);
+            audio.setTime(seconds);
+            return audio;
+        }
+
+        void each(JsonArray items, ItemParser parser) {
+            for (JsonElement item : items) {
+                try {
+                    add(parser.parse(item));
+                } catch (RuntimeException badItem) {
+                    skipped++;
+                }
             }
         }
 
-        return result;
-    }
+        boolean add(AudioPOJO audio) {
+            if (audio != null) {
+                list.add(audio);
+            }
+            return audio != null;
+        }
 
-    static String convertStreamToString(java.io.InputStream is) {
-        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
+        boolean isEmpty() {
+            return list.isEmpty();
+        }
+
+        ArrayList<AudioPOJO> done(String what) {
+            if (list.isEmpty()) {
+                throw new IllegalStateException("no playable chapters in " + what + " (" + skipped + " skipped)");
+            }
+            return list;
+        }
     }
 }

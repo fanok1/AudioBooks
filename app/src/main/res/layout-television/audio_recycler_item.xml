@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -58,6 +59,23 @@
             android:layout_width="12dp"
             android:layout_height="12dp"
             android:layout_marginStart="@dimen/text_margin_book_description" />
+
+        <com.github.lzyzsd.circleprogress.DonutProgress
+            android:id="@+id/download_progress"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="@dimen/text_margin_book_description"
+            android:contentDescription="@string/download_chapter_progress"
+            android:visibility="gone"
+            custom:donut_finished_color="@color/colorAcentPopupWindow"
+            custom:donut_finished_stroke_width="2.5dp"
+            custom:donut_max="100"
+            custom:donut_progress="40"
+            custom:donut_show_text="false"
+            custom:donut_unfinished_color="#40909090"
+            custom:donut_unfinished_stroke_width="2.5dp"
+            tools:visibility="visible" />
 
     </RelativeLayout>
 

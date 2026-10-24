@@ -1,8 +1,5 @@
 package com.fanok.audiobooks.activity;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -15,18 +12,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
-import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import com.alimuzaffar.lib.pin.PinEntryEditText;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
-import com.fanok.audiobooks.LocaleManager;
+import com.fanok.audiobooks.AppThemes;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.adapter.ParentalControlAddapter;
 import com.fanok.audiobooks.databinding.ActivityParentalControlBinding;
 import com.fanok.audiobooks.pojo.ParentControlPOJO;
+import com.fanok.audiobooks.policy.ParentalControl;
 import com.fanok.audiobooks.presenter.ParentalControlPresenter;
 import com.r0adkll.slidr.Slidr;
 import java.util.ArrayList;
@@ -38,10 +36,15 @@ import org.xmlpull.v1.XmlPullParser;
 public class ParentalControlActivity extends MvpAppCompatActivity implements
         com.fanok.audiobooks.interface_pacatge.parental_control.View {
 
-    public static final String PARENTAL_CONTROL_PREFERENCES = "Parental Control";
+    public static final String PARENTAL_CONTROL_PREFERENCES = ParentalControl.PREFERENCES;
 
-    public static final String PARENTAL_CONTROL_ENABLED = "Parental Control Enabled";
+    public static final String PARENTAL_CONTROL_ENABLED = ParentalControl.ENABLED;
 
+    /**
+     * @deprecated the plain-int PIN; kept only for {@code BookActivity}'s old prompt until it calls
+     * {@link ParentalControl#verifyPin(android.content.Context, String)}. Once migrated, this key is gone.
+     */
+    @Deprecated
     public static final String PARENTAL_PASSWORD = "Parental Password";
 
     private static boolean isShowDialog;
@@ -49,7 +52,7 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
     @InjectPresenter
     ParentalControlPresenter mPresenter;
 
-    private SharedPreferences mSettings;
+    private ParentalControl.Store mStore;
 
     private androidx.appcompat.widget.SwitchCompat parentalControl;
 
@@ -59,14 +62,15 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
 
     private ActivityParentalControlBinding binding;
 
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(LocaleManager.onAttach(base));
+    /** Receives the four digits the user confirmed, with the field to clear on a wrong entry. */
+    private interface OnPin {
+        void onPin(@NonNull String pin, @NonNull PinEntryEditText field);
     }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AppThemes.apply(this, R.style.AppTheme_SwipeOnClose, R.style.LightAppTheme_SwipeOnClose,
+                R.style.AppThemeBlack_SwipeOnClose);
         super.onCreate(savedInstanceState);
         binding = ActivityParentalControlBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -82,103 +86,23 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
         Slidr.attach(this);
-        mSettings = getSharedPreferences(PARENTAL_CONTROL_PREFERENCES, MODE_PRIVATE);
+        mStore = ParentalControl.store(this);
 
-        XmlPullParser parser = getResources().getXml(R.xml.pin_entry);
-        try {
-            parser.next();
-            parser.nextTag();
-        } catch (Exception e) {
-            Log.d("Error", Objects.requireNonNull(e.getMessage()));
-        }
-
-        AttributeSet attr = Xml.asAttributeSet(parser);
-
-        PinEntryEditText editText = new PinEntryEditText(this, attr);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.enter_new_password)
-                .setCancelable(true)
-                .setView(editText)
-                .setNeutralButton(R.string.cancel, null)
-                .setPositiveButton(R.string.confirm, null);
-
-        mAlertDialog = builder.create();
-        mAlertDialog.setOnShowListener(dialogInterface -> {
-            Objects.requireNonNull(editText.getText()).clear();
-            editText.requestFocus();
-            Button b = mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            b.setEnabled(false);
-            b.setOnClickListener(
-                    view -> {
-                        SharedPreferences.Editor editor = mSettings.edit();
-                        if (parentalControl != null) {
-                            editor.putInt(PARENTAL_PASSWORD,
-                                    Integer.parseInt(editText.getText().toString()));
-                        }
-                        editor.apply();
-                        parentalControl.setChecked(true);
-                        mAlertDialog.cancel();
-                    });
-        });
-
-        editText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-                int size = Objects.requireNonNull(editText.getText()).toString().length();
-                mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(size == 4);
-
-            }
-        });
-
-        editText.setOnPinEnteredListener(str -> {
-            SharedPreferences.Editor editor = mSettings.edit();
+        mAlertDialog = pinDialog(R.string.enter_new_password, true, (pin, field) -> {
+            ParentalControl.setPin(mStore, pin);
             if (parentalControl != null) {
-                editor.putInt(PARENTAL_PASSWORD,
-                        Integer.parseInt(Objects.requireNonNull(editText.getText()).toString()));
+                parentalControl.setChecked(true);
             }
-            editor.apply();
-            parentalControl.setChecked(true);
             mAlertDialog.cancel();
         });
 
-        if (mSettings.getBoolean(PARENTAL_CONTROL_ENABLED, false) && !isShowDialog) {
-            showDialog(attr);
+        if (ParentalControl.isEnabled(mStore) && !isShowDialog) {
+            showDialog();
         }
 
         binding.parentalControlParent.setLayoutManager(new LinearLayoutManager(this));
-        mAddapter = new ParentalControlAddapter(this);
+        mAddapter = new ParentalControlAddapter(mStore);
         binding.parentalControlParent.setAdapter(mAddapter);
-
-    }
-
-    @Override
-    public Resources.Theme getTheme() {
-        Resources.Theme theme = super.getTheme();
-
-        SharedPreferences pref = PreferenceManager
-                .getDefaultSharedPreferences(this);
-
-        String themeName = pref.getString("pref_theme", getString(R.string.theme_dark_value));
-        if (themeName.equals(getString(R.string.theme_dark_value))) {
-            theme.applyStyle(R.style.AppTheme_SwipeOnClose, true);
-        } else if (themeName.equals(getString(R.string.theme_light_value))) {
-            theme.applyStyle(R.style.LightAppTheme_SwipeOnClose, true);
-        } else if (themeName.equals(getString(R.string.theme_black_value))) {
-            theme.applyStyle(R.style.AppThemeBlack_SwipeOnClose, true);
-        }
-
-        return theme;
     }
 
     @Override
@@ -190,9 +114,7 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
         parentalControl.setOnCheckedChangeListener(
                 (compoundButton, b) -> {
                     mAddapter.setEnabled(b);
-                    SharedPreferences.Editor editor = mSettings.edit();
-                    editor.putBoolean(PARENTAL_CONTROL_ENABLED, b);
-                    editor.apply();
+                    ParentalControl.setEnabled(mStore, b);
                 });
         parentalControl.setOnClickListener(view -> {
             if (parentalControl.isChecked()) {
@@ -200,7 +122,7 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
                 mAlertDialog.show();
             }
         });
-        parentalControl.setChecked(mSettings.getBoolean(PARENTAL_CONTROL_ENABLED, false));
+        parentalControl.setChecked(ParentalControl.isEnabled(mStore));
         if (getIntent().getBooleanExtra("enabled", false) && !parentalControl.isChecked()) {
             mAlertDialog.show();
         }
@@ -224,49 +146,42 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
         }
     }
 
-    void showDialog(AttributeSet attr) {
-
+    /** A dialog with the four-digit PIN field; {@code onPin} runs on the confirm button and on the fourth digit. */
+    private AlertDialog pinDialog(int title, boolean cancelable, OnPin onPin) {
+        XmlPullParser parser = getResources().getXml(R.xml.pin_entry);
+        try {
+            parser.next();
+            parser.nextTag();
+        } catch (Exception e) {
+            Log.d("Error", String.valueOf(e.getMessage()));
+        }
+        AttributeSet attr = Xml.asAttributeSet(parser);
         PinEntryEditText editText = new PinEntryEditText(this, attr);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.enter_password)
-                .setCancelable(false)
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setCancelable(cancelable)
                 .setView(editText)
                 .setNeutralButton(R.string.cancel, null)
-                .setPositiveButton(R.string.confirm, null);
-
-        AlertDialog dialog = builder.create();
+                .setPositiveButton(R.string.confirm, null)
+                .create();
         dialog.setOnShowListener(dialogInterface -> {
             Objects.requireNonNull(editText.getText()).clear();
             editText.requestFocus();
             Button b = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             b.setEnabled(false);
-            b.setOnClickListener(view -> {
-                if (mSettings.getInt(PARENTAL_PASSWORD, 0) == Integer.parseInt(
-                        editText.getText().toString())) {
-                    isShowDialog = true;
-                    dialog.cancel();
-                } else {
-                    Toast.makeText(ParentalControlActivity.this,
-                            getString(R.string.incorect_password),
-                            Toast.LENGTH_SHORT).show();
-                    editText.getText().clear();
-                }
-            });
-
-            Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
-            negativeButton.setOnClickListener(view -> finish());
+            b.setOnClickListener(view -> onPin.onPin(Objects.requireNonNull(editText.getText()).toString(), editText));
+            if (!cancelable) {
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(view -> finish());
+            }
         });
-
         editText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
             }
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
             }
 
             @Override
@@ -275,21 +190,31 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(size == 4);
             }
         });
+        editText.setOnPinEnteredListener(str -> onPin.onPin(str.toString(), editText));
+        return dialog;
+    }
 
-        editText.setOnPinEnteredListener(str -> {
-            if (mSettings.getInt(PARENTAL_PASSWORD, 0) == Integer.parseInt(
-                    Objects.requireNonNull(editText.getText()).toString())) {
+    void showDialog() {
+        final AlertDialog[] holder = new AlertDialog[1];
+        holder[0] = pinDialog(R.string.enter_password, false, (pin, field) -> {
+            ParentalControl.Verdict verdict = ParentalControl.verifyPin(this, pin);
+            if (verdict.result == ParentalControl.Result.OK) {
                 isShowDialog = true;
-                dialog.cancel();
+                holder[0].cancel();
             } else {
-                Toast.makeText(ParentalControlActivity.this,
-                        getString(R.string.incorect_password),
-                        Toast.LENGTH_SHORT).show();
-                editText.getText().clear();
+                showToast(pinMessage(this, verdict));
+                Objects.requireNonNull(field.getText()).clear();
             }
         });
+        holder[0].show();
+    }
 
-        dialog.show();
+    /** The message for a refused PIN: wrong, or locked for the remaining seconds. */
+    public static String pinMessage(@NonNull android.content.Context context, @NonNull ParentalControl.Verdict verdict) {
+        if (verdict.result == ParentalControl.Result.LOCKED) {
+            return context.getString(R.string.pin_locked, (verdict.lockedForMs + 999) / 1000);
+        }
+        return context.getString(R.string.incorect_password);
     }
 
     @Override
@@ -300,5 +225,10 @@ public class ParentalControlActivity extends MvpAppCompatActivity implements
     @Override
     public void showToast(int id) {
         Toast.makeText(this, getString(id), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void showToast(@NonNull String text) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
     }
 }

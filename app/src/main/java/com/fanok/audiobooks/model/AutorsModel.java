@@ -1,367 +1,218 @@
 package com.fanok.audiobooks.model;
 
-import static com.fanok.audiobooks.App.useProxy;
-import static com.fanok.audiobooks.Consts.PROXY_HOST;
-import static com.fanok.audiobooks.Consts.PROXY_PORT;
-
-import com.fanok.audiobooks.App;
-import com.fanok.audiobooks.Consts;
+import com.fanok.audiobooks.AutorsSearchABMP3;
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.net.SiteHttp;
 import com.fanok.audiobooks.pojo.GenrePOJO;
+import com.fanok.audiobooks.search.Provider;
+import com.fanok.audiobooks.search.ProviderPage;
+import com.fanok.audiobooks.search.SearchUrls;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Proxy.Type;
 import java.util.ArrayList;
+import okhttp3.HttpUrl;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+/** Author and performer listings and their search, one page per call; end of list comes from the pager. */
 public class AutorsModel extends GenreModel {
 
-    private boolean end = false;
+    private boolean mPerformerMode = false;
+
+    public void setPerformerMode(boolean mode) {
+        mPerformerMode = mode;
+    }
+
+    /** One page of author/performer search on {@code provider}; EMPTY when the provider has no such search. */
+    public ProviderPage<GenrePOJO> search(Provider provider, SearchUrls.Category category, String query, int page)
+            throws IOException {
+        String url = SearchUrls.url(provider, category, query, page);
+        if (url == null) {
+            return ProviderPage.empty();
+        }
+        switch (provider) {
+            case KNIGAVUHE: return loadBooksList(url, page);
+            case IZIBUK: return loadBooksListIzibuk(url, page);
+            case ABMP3: return new AutorsSearchABMP3().getAutors(url, page);
+            case AKNIGA: return page > 1 ? ProviderPage.<GenrePOJO>empty() : searchAbook(url);
+            default: return ProviderPage.empty();
+        }
+    }
 
     @Override
-    protected ArrayList<GenrePOJO> loadBooksList(String url, int page) throws IOException {
-        ArrayList<GenrePOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
-
-        Elements pagesConteiner = doc.getElementsByClass("pn_page_buttons");
-        if (pagesConteiner.size() != 0) {
-            Elements pagesElements = pagesConteiner.first().children();
-            if (pagesElements.size() != 0) {
-                Element lastPageElement = pagesElements.last();
-                int lastPage = Integer.parseInt(lastPageElement.text());
-                if (lastPage < page) throw new NullPointerException();
-            }
-        } else if (page > 1) throw new NullPointerException();
-
-        Elements items = doc.getElementsByClass("author_item");
-        for (Element item : items) {
+    protected ProviderPage<GenrePOJO> loadBooksList(String url, int page) throws IOException {
+        Document doc = SiteHttp.get(url);
+        boolean hasMore = BooksModel.lastPage(doc.select(".pn_page_buttons a")) > page;
+        return ProviderPage.of(rows(doc.getElementsByClass("author_item"), item -> {
             GenrePOJO genrePOJO = new GenrePOJO();
-            Elements a = item.getElementsByTag("a");
-            if (a.size() != 0) {
-                String src = a.first().attr("href");
-                if (src != null && !src.isEmpty()) genrePOJO.setUrl(Url.SERVER + src);
-                String name = a.first().text();
-                if (name != null && !name.isEmpty()) genrePOJO.setName(name);
+            Element a = item.selectFirst("a");
+            if (a != null) {
+                if (!a.attr("href").isEmpty()) {
+                    genrePOJO.setUrl(Url.SERVER + a.attr("href"));
+                }
+                if (!a.text().isEmpty()) {
+                    genrePOJO.setName(a.text());
+                }
             }
-            Elements booksCount = item.getElementsByClass("author_item_books_count");
-            if (booksCount.size() != 0) {
-                genrePOJO.setDescription(booksCount.first().text());
+            Element booksCount = item.selectFirst(".author_item_books_count");
+            if (booksCount != null) {
+                genrePOJO.setDescription(booksCount.text());
             }
-            if (!genrePOJO.isNull()) result.add(genrePOJO);
-        }
-        return result;
+            return genrePOJO;
+        }), hasMore);
     }
 
     @Override
-    protected ArrayList<GenrePOJO> loadBooksListABMP3(String url, int page) throws IOException {
-        ArrayList<GenrePOJO> result = new ArrayList<>();
-
-
-
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0);
-
-        if(App.useProxy) {
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
+    protected ProviderPage<GenrePOJO> loadBooksListABMP3(String url, int page) throws IOException {
+        Document doc = SiteHttp.get(url);
+        if (doc.selectFirst(".authors_list") == null) {
+            // a paged author listing
+            Element parent = doc.selectFirst(".b-posts");
+            if (parent == null) {
+                return ProviderPage.empty();
+            }
+            boolean hasMore = BooksModel.lastPage(doc.select(".pagination li a")) > page;
+            return ProviderPage.of(authorsRows(parent.children()), hasMore);
         }
+        // the alphabet index: page N is the N-th letter, Russian letters first
+        Element chars = doc.selectFirst(".alphabet");
+        if (chars == null || chars.childrenSize() == 0) {
+            return ProviderPage.empty();
+        }
+        Elements rus = chars.child(chars.childrenSize() - 1).children();
+        Elements eng = chars.child(0).children();
+        int total = rus.size() + eng.size();
+        if (page > total) {
+            return ProviderPage.empty();
+        }
+        Element letter = page <= rus.size() ? rus.get(page - 1) : eng.get(page - rus.size() - 1);
+        Document letterDoc = SiteHttp.get(Url.SERVER_ABMP3 + letter.attr("href"));
+        Element list = letterDoc.selectFirst(".authors_list");
+        ArrayList<GenrePOJO> result = list == null ? new ArrayList<>() : authorsRows(list.children());
+        return ProviderPage.of(result, page < total);
+    }
 
-        Document doc = connection.get();
-
-        Elements autors = doc.getElementsByClass("authors_list");
-        if (autors == null || autors.size() == 0) {
-
-            Elements parent = doc.getElementsByClass("b-posts");
-
-            if (parent != null && parent.size() != 0) {
-
-                Elements pagesConteiner = doc.getElementsByClass("pagination");
-                if (pagesConteiner.size() != 0) {
-                    Elements pagesElements = pagesConteiner.first().children();
-                    if (pagesElements.size() != 0) {
-                        Element lastPageElement = pagesElements.get(pagesElements.size() - 2);
-                        Element aLastPage = lastPageElement.child(0);
-                        if (aLastPage != null) {
-                            int lastPage = Integer.parseInt(aLastPage.text());
-                            if (lastPage < page) {
-                                throw new NullPointerException();
-                            }
-                        } else {
-                            throw new NullPointerException();
-                        }
-                    } else {
-                        throw new NullPointerException();
-                    }
-                } else if (page > 1) {
-                    throw new NullPointerException();
-                }
-
-                Elements list = parent.first().children();
-                if (list != null && list.size() > 0) {
-                    for (Element item : list) {
-                        GenrePOJO genrePOJO = new GenrePOJO();
-                        Elements titles = item.getElementsByClass("title");
-                        if (titles != null && titles.size() != 0) {
-                            Elements aGenre = titles.first().getElementsByTag("a");
-                            if (aGenre != null && aGenre.size() != 0) {
-                                genrePOJO.setUrl(
-                                        Url.SERVER_ABMP3 + aGenre.first().attr("href") + "?page=");
-                                String text = aGenre.first().text();
-                                if (!text.isEmpty()) {
-                                    genrePOJO.setName(text);
-                                }
-                            }
-                        }
-                        Elements ratings = item.getElementsByClass("rating");
-                        if (ratings != null && ratings.size() != 0) {
-                            genrePOJO.setDescription(
-                                    ratings.first().text().trim().replace("кни", " кни"));
-                        }
-
-                        if (!genrePOJO.isNull()) {
-                            result.add(genrePOJO);
-                        }
-                    }
-
+    private static ArrayList<GenrePOJO> authorsRows(Elements list) {
+        return rows(list, item -> {
+            GenrePOJO genrePOJO = new GenrePOJO();
+            Element aGenre = item.selectFirst(".title a");
+            if (aGenre != null) {
+                genrePOJO.setUrl(Url.SERVER_ABMP3 + aGenre.attr("href") + "?page=");
+                if (!aGenre.text().isEmpty()) {
+                    genrePOJO.setName(aGenre.text());
                 }
             }
-        } else {
-            Elements chars = doc.getElementsByClass("alphabet");
-            if (chars != null && chars.size() != 0) {
-                Elements rus = chars.first().child(chars.first().childrenSize() - 1).children();
-                if (rus != null && rus.size() != 0) {
-                    if (rus.size() >= page) {
-                        String text = Url.SERVER_ABMP3 + rus.get(page - 1).attr("href");
-                        result.addAll(getGenre(text));
-                    } else {
-                        int sizeRus = rus.size();
-                        Elements eng = chars.first().child(0).children();
-                        if (eng.size() >= page - sizeRus) {
-                            String text = Url.SERVER_ABMP3 + eng.get(page - sizeRus - 1).attr("href");
-                            result.addAll(getGenre(text));
-                        }
-                    }
-                }
+            Element ratings = item.selectFirst(".rating");
+            if (ratings != null) {
+                genrePOJO.setDescription(ratings.text().trim().replace("кни", " кни"));
             }
-        }
-
-        return result;
+            return genrePOJO;
+        });
     }
 
     @Override
-    protected ArrayList<GenrePOJO> loadBooksListAbook(final String url, final int page) throws IOException {
-        ArrayList<GenrePOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
+    protected ProviderPage<GenrePOJO> loadBooksListAbook(final String url, final int page) throws IOException {
+        Document doc = SiteHttp.get(url);
+        boolean hasMore = !doc.select(".page__nav .page__nav--next").isEmpty();
+        return ProviderPage.of(parseAbookTable(doc), hasMore);
+    }
 
-        Elements bootom = doc.getElementsByClass("page__nav");
-        if (bootom != null && bootom.size() != 0) {
-            Elements nextButton = bootom.get(0).getElementsByClass("page__nav--next");
-            if (!(nextButton != null && nextButton.size() != 0)) {
-                if (end) {
-                    throw new NullPointerException();
-                }
-                end = true;
-            }
-        } else if (page > 1) {
-            throw new NullPointerException();
+    /** akniga's ajax search: a security key and cookies from the listing page, then a POST; one page only (SRCH-07). */
+    private ProviderPage<GenrePOJO> searchAbook(String url) throws IOException {
+        HttpUrl parsed = HttpUrl.parse(url);
+        if (parsed == null) {
+            return ProviderPage.empty();
         }
-
-        Elements items = doc.getElementsByClass("table-authors");
-        if (items != null && items.size() != 0) {
-            Elements tbody = items.first().getElementsByTag("tbody");
-            if (tbody != null && tbody.size() != 0) {
-                Elements list = tbody.first().children();
-                if (list != null && list.size() > 0) {
-                    for (Element item : list) {
-                        GenrePOJO genrePOJO = new GenrePOJO();
-                        Elements titles = item.getElementsByClass("name-obj");
-                        if (titles != null && titles.size() != 0) {
-                            Elements aGenre = titles.first().getElementsByTag("a");
-                            if (aGenre != null && aGenre.size() != 0) {
-                                genrePOJO.setUrl(aGenre.first().attr("href") + "/page<page>/");
-                                genrePOJO.setName(aGenre.first().text());
-                            }
-                        }
-                        Elements description = item.getElementsByClass("description");
-                        if (description != null && description.size() != 0) {
-                            genrePOJO.setDescription(description.first().text().trim());
-                        }
-
-                        Elements reting = item.getElementsByClass("cell-rating");
-                        if (reting != null && reting.size() != 0) {
-                            genrePOJO.setReting(Integer.parseInt(reting.first().text().trim()));
-                        }
-
-                        if (!genrePOJO.isNull()) {
-                            result.add(genrePOJO);
-                        }
-                    }
-                }
+        String query = parsed.queryParameter("q");
+        String endpoint = parsed.newBuilder().query(null).build().toString();
+        Document listing = SiteHttp.get(Url.SERVER_AKNIGA + "/authors/");
+        String key = "";
+        for (Element script : listing.getElementsByTag("script")) {
+            String text = script.data();
+            int at = text.indexOf("LIVESTREET_SECURITY_KEY");
+            if (at >= 0) {
+                text = text.substring(at).replace("LIVESTREET_SECURITY_KEY = '", "");
+                key = text.substring(0, Math.max(0, text.indexOf("'")));
+                break;
             }
         }
-
-        if (result.size() == 0) {
-            throw new NullPointerException();
+        Connection connection = SiteHttp.connect(endpoint)
+                .method(Connection.Method.POST)
+                .referrer(Url.SERVER_AKNIGA + "/authors/")
+                .ignoreContentType(true)
+                .data("security_ls_key", key)
+                .data("sText", query == null ? "" : query);
+        String body = SiteHttp.execute(connection).body();
+        JsonElement json = JsonParser.parseString(body.replaceAll("\\n", ""));
+        if (!json.isJsonObject() || !json.getAsJsonObject().has("html")) {
+            return ProviderPage.empty();
         }
-
-        return result;
+        String html = json.getAsJsonObject().get("html").getAsString();
+        Document doc = Jsoup.parse("<html><head></head><body><table><tbody>" + html + "</tbody></table></body></html>");
+        return ProviderPage.of(parseAbookTable(doc), false);
     }
 
     @Override
-    protected ArrayList<GenrePOJO> loadBooksListIzibuk(String url, int page) throws IOException {
-        ArrayList<GenrePOJO> result = new ArrayList<>();
-        Connection connection = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0);
-
-        if(useProxy){
-            Proxy proxy = new Proxy(Type.SOCKS,
-                    new InetSocketAddress(PROXY_HOST, PROXY_PORT));
-            connection.proxy(proxy);
-        }
-
-        Document doc = connection.get();
-
-        Element bootom = doc.getElementById("authors_list__pn");
-        if (bootom == null) {
-            bootom = doc.getElementById("readers_list__pn");
-        }
-        boolean b = false;
-        if (bootom != null) {
-            Element bootomChild = bootom.child(0);
-            if (bootomChild != null) {
-                Elements list = bootomChild.children();
-                if (list != null && list.size() > 1) {
-                    Element pagesParent = list.last();
-                    Elements pages = pagesParent.children();
-                    if (pages != null && pages.size() > 0) {
-                        Element lastPage = pages.last();
-                        if (lastPage != null) {
-                            String last = lastPage.text();
-                            if (last != null) {
-                                if (page > Integer.parseInt(last)) {
-                                    throw new NullPointerException();
-                                }
-                            } else {
-                                b = true;
-                            }
-                        } else {
-                            b = true;
-                        }
-                    } else {
-                        b = true;
-                    }
-                } else {
-                    b = true;
-                }
-            } else {
-                b = true;
-            }
-        } else {
-            b = true;
-        }
-
-        if (page > 1 && b) {
-            throw new NullPointerException();
-        }
-
+    protected ProviderPage<GenrePOJO> loadBooksListIzibuk(String url, int page) throws IOException {
+        Document doc = SiteHttp.get(url);
+        boolean hasMore = BooksModel.lastPage(doc.select(
+                "#authors_list__pn a[data-page], #readers_list__pn a[data-page]")) > page;
         Element itemParent = doc.getElementById("authors_list");
         if (itemParent == null) {
             itemParent = doc.getElementById("readers_list");
         }
-        if (itemParent != null) {
-            Elements list = itemParent.children();
-            if (list != null) {
-                for (Element item : list) {
-                    GenrePOJO genrePOJO = new GenrePOJO();
-
-                    String src = item.attr("href");
-                    if (src != null) {
-                        genrePOJO.setUrl(Url.SERVER_IZIBUK + src + "?p=");
-                    }
-
-                    Elements children = item.children();
-                    if (children != null && children.size() == 3) {
-                        String name = children.get(1).text();
-                        if (name != null && !name.isEmpty()) {
-                            genrePOJO.setName(name);
-                        }
-
-                        String desc = children.last().text();
-                        if (desc != null) {
-                            genrePOJO.setDescription(desc);
-                        }
-                    }
-
-                    if (!genrePOJO.isNull()) {
-                        result.add(genrePOJO);
-                    }
-                }
-            }
+        if (itemParent == null) {
+            return ProviderPage.empty();
         }
-        return result;
+        return ProviderPage.of(rows(itemParent.children(), item -> {
+            GenrePOJO genrePOJO = new GenrePOJO();
+            genrePOJO.setUrl(Url.SERVER_IZIBUK + item.attr("href") + "?p=");
+            Elements children = item.children();
+            if (children.size() == 3) {
+                genrePOJO.setName(children.get(1).text());
+                genrePOJO.setDescription(children.last().text());
+            }
+            return genrePOJO;
+        }), hasMore);
     }
 
-    private ArrayList<GenrePOJO> getGenre(String url) throws IOException {
+    @Override
+    protected ProviderPage<GenrePOJO> loadBooksListAudioboo(String url, int page) throws IOException {
+        return parseAudiobooPeople(SiteHttp.get(url), mPerformerMode, page);
+    }
+
+    /**
+     * audioboo has no index of authors or readers: those of the listing page's cards, once each, linking to their
+     * book listings. The listing's pages are this list's pages.
+     */
+    static ProviderPage<GenrePOJO> parseAudiobooPeople(Document doc, boolean performers, int page) {
+        String marker = performers ? "Исполнитель:" : "Автор:";
         ArrayList<GenrePOJO> result = new ArrayList<>();
-        Document doc = Jsoup.connect(url)
-                .userAgent(Consts.USER_AGENT)
-                .referrer("http://www.google.com")
-                .sslSocketFactory(Consts.socketFactory())
-                .maxBodySize(0)
-                .get();
-        Elements parent = doc.getElementsByClass("authors_list");
-        if (parent != null && parent.size() != 0) {
-            Elements list = parent.first().children();
-            if (list != null && list.size() > 0) {
-                for (Element item : list) {
-                    GenrePOJO genrePOJO = new GenrePOJO();
-                    Elements titles = item.getElementsByClass("title");
-                    if (titles != null && titles.size() != 0) {
-                        Elements aGenre = titles.first().getElementsByTag("a");
-                        if (aGenre != null && aGenre.size() != 0) {
-                            genrePOJO.setUrl(
-                                    Url.SERVER_ABMP3 + aGenre.first().attr("href") + "?page=");
-                            String text = aGenre.first().text();
-                            if (!text.isEmpty()) {
-                                genrePOJO.setName(text);
-                            }
-                        }
-                    }
-                    Elements ratings = item.getElementsByClass("rating");
-                    if (ratings != null && ratings.size() != 0) {
-                        genrePOJO.setDescription(
-                                ratings.first().text().trim().replace("кни", " кни"));
-                    }
-
-                    if (!genrePOJO.isNull()) {
-                        result.add(genrePOJO);
-                    }
+        ArrayList<String> names = new ArrayList<>();
+        Elements cards = doc.select("article.card");
+        for (Element card : cards) {
+            for (Element li : card.select(".card__list li")) {
+                Element link = li.selectFirst("a[href]");
+                if (link == null || !li.text().contains(marker)) {
+                    continue;
                 }
-
+                String name = link.text().trim();
+                String href = link.absUrl("href");
+                if (name.isEmpty() || !Url.isHost(href, Url.SERVER_AUDIOBOO) || names.contains(name)) {
+                    continue;
+                }
+                GenrePOJO person = new GenrePOJO();
+                person.setUrl(href);
+                person.setName(name);
+                names.add(name);
+                result.add(person);
             }
         }
-        return result;
+        int last = BooksModel.lastPage(doc.select(".navigation a, .pagination a"));
+        return ProviderPage.of(result, last > 0 ? last > page : !cards.isEmpty(), cards.size());
     }
 }

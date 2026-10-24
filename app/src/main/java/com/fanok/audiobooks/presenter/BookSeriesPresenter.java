@@ -9,7 +9,6 @@ import com.fanok.audiobooks.interface_pacatge.book_content.ComentsPresenter;
 import com.fanok.audiobooks.interface_pacatge.book_content.Series;
 import com.fanok.audiobooks.interface_pacatge.book_content.SeriesModel;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
-import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
@@ -22,6 +21,10 @@ public class BookSeriesPresenter extends MvpPresenter<Series> implements
     private static final String TAG = "BookSeriesPresenter";
 
     private boolean isLoading = false;
+
+    private boolean isLoaded = false;
+
+    private Disposable mDisposable;
 
     private final SeriesModel mComentsModel;
 
@@ -41,10 +44,21 @@ public class BookSeriesPresenter extends MvpPresenter<Series> implements
         loadComents();
     }
 
+    @Override
+    public void attachView(Series view) {
+        super.attachView(view);
+        if (!isLoaded && !isLoading) {
+            loadComents(); // a load cancelled by onDestroy (the fragment calls it when its view goes)
+        }
+    }
 
     @Override
     public void onDestroy() {
-
+        if (mDisposable != null) {
+            mDisposable.dispose();
+            mDisposable = null;
+        }
+        isLoading = false;
     }
 
     @Override
@@ -56,35 +70,29 @@ public class BookSeriesPresenter extends MvpPresenter<Series> implements
     private void getData() {
         if (!isLoading) {
             isLoading = true;
-            mComentsModel.getSeries(mUrl)
+            mDisposable = mComentsModel.getSeries(mUrl)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Observer<ArrayList<SeriesPOJO>>() {
-                        @Override
-                        public void onSubscribe(Disposable d) {
-                        }
-
-                        @Override
-                        public void onNext(ArrayList<SeriesPOJO> descriptionPOJO) {
-                            mComentsPOJOS.addAll(descriptionPOJO);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
+                    .subscribe(series -> {
+                        mComentsPOJOS.clear();
+                        mComentsPOJOS.addAll(series);
+                    }, e -> {
+                        Log.w(TAG, "series not loaded", e);
+                        // offline there is nothing to report: the series is online-only content
+                        if (!(e instanceof java.io.IOException
+                                && com.fanok.audiobooks.Consts.isOffline(com.fanok.audiobooks.App.getInstance()))) {
                             getViewState().showToast(R.string.error_load_data);
-                            onComplete();
                         }
-
-                        @Override
-                        public void onComplete() {
-                            Log.d(TAG, "onComplete");
-                            getViewState().showSeries(mComentsPOJOS);
-                            getViewState().showProgress(false);
-                            isLoading = false;
-                        }
-                    });
-
+                        finish();
+                    }, this::finish);
         }
+    }
+
+    private void finish() {
+        getViewState().showSeries(mComentsPOJOS);
+        getViewState().showProgress(false);
+        isLoading = false;
+        isLoaded = true;
     }
 
 }
