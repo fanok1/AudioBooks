@@ -106,7 +106,9 @@
     <string name="sort_title_series">По серии</string>
     <string name="sort_title_saved">По загруженному</string>
     <string name="genre_sort_none">Без сортировки</string>
-    <string name="genre_sort_name">По алфавиту</string>
+    <string name="genre_sort_name">От А до Я</string>
+    <string name="genre_sort_name_desc">От Я до А</string>
+    <string name="people_sort_popular">По популярности</string>
     <string name="genre_sort_count">По количеству книг</string>
     <string name="genre_sort_favorite">Любимые жанры</string>
     <string name="genre_sf_fantasy">Фантастика и фэнтези</string>
@@ -490,7 +492,6 @@
     <string name="playback_stalled">Нет данных от сети. Воспроизведение продолжится само</string>
     <string name="playback_stalled_title">Загрузка… %1$s</string>
     <string name="playback_error_skip">Эту главу не удаётся воспроизвести. Нажмите «Следующий», чтобы пропустить её</string>
-    <string name="playback_rewind_30">Назад на 30 секунд</string>
     <string name="multithreading">Многопоточность</string>
     <string name="search_multithreading">Использовать многопоточность для поиска</string>
     <string name="cutting_file">Разделить файл на разделы</string>
@@ -665,7 +666,7 @@
     <string name="error_report_title">Невозможно воспроизвести книгу</string>
     <string name="reproduction_keep">Не прерывать текущую книгу</string>
     <string name="downloads_manager">Скачанные книги</string>
-    <string name="auto_export">Автоэкспорт в mp3</string>
+    <string name="auto_export">Автоэкспорт в mp3/m4a</string>
     <string name="auto_export_desc">Автоматический экспорт скачанных аудиокниг в стандартные аудиоформаты</string>
     <string name="store_dir">Место хранения кеша загрузок</string>
     <string name="store_dir_summary">%1$s\nсвободно %2$s</string>
@@ -690,4 +691,19 @@
     <string name="hint_switch_book_title">Подсказка</string>
     <string name="hint_switch_book">Сейчас в плеере другая книга.\n\n1. Удержание кнопки воспроизведения дольше 2 секунд запускает эту книгу.\n\n2. При длительном удержании кнопок перемотки перемотка ускоряется.</string>
     <string name="got_it">Понял</string>
+    <!-- seek step of a tap on rewind/forward (player screen, notification, headset, car) -->
+    <string name="seek_step">Шаг перемотки</string>
+    <string name="seek_step_summary">Изменение шага перемотки: %s</string>
+    <string name="seek_back_n">Назад на %d секунд</string>
+    <string name="seek_forward_n">Вперёд на %d секунд</string>
+    <!-- the timer button of the player notification -->
+    <string name="sleep_timer_on_toast">Таймер сна: %d мин</string>
+    <string name="sleep_timer_off_toast">Таймер сна выключен</string>
+    <string name="sleep_timer_turn_off">Выключить таймер сна</string>
+    <!-- chapter selection for download/delete on the book screen -->
+    <string name="selection_count">%1$d из %2$d</string>
+    <string name="selection_select_all">Выбрать все</string>
+    <string name="selection_clear_all">Снять выбор</string>
+    <string name="selection_close">Закрыть выбор</string>
+    <string name="selection_shared_file">Эти главы — один файл: они скачиваются и удаляются вместе</string>
 </resources>

@@ -58,6 +58,7 @@ import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.net.AppProxy;
 import com.fanok.audiobooks.net.ProxyFinder;
 import com.fanok.audiobooks.pojo.BackupPOJO;
+import com.fanok.audiobooks.service.SeekStep;
 import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.FavoritePresenter;
@@ -973,7 +974,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     private void updatePrefSummary(Preference p) {
         if (p instanceof ListPreference) {
             ListPreference listPref = (ListPreference) p;
-            p.setSummary(listPref.getEntry());
+            p.setSummary(SeekStep.PREF.equals(p.getKey())
+                    ? getString(R.string.seek_step_summary, listPref.getEntry()) : listPref.getEntry());
         } else if (p instanceof EditTextPreference) {
             EditTextPreference editTextPref = (EditTextPreference) p;
             if (p.getTitle().toString().toLowerCase().contains("password")) {

@@ -46,6 +46,12 @@ public class GenreSortTest {
     }
 
     @Test
+    public void nameDescSortsFromYaToA() {
+        assertEquals(Arrays.asList("фэнтези", "Ёлки", "Детектив", "Боевик", "аудиоспектакль"),
+                names(GenreSort.NAME_DESC.sorted(site, Collections.emptyMap())));
+    }
+
+    @Test
     public void countPutsMostBooksFirstAndGenresWithoutACountLastInTheSiteOrder() {
         assertEquals(Arrays.asList("Детектив", "Ёлки", "аудиоспектакль", "фэнтези", "Боевик"),
                 names(GenreSort.COUNT.sorted(site, Collections.emptyMap())));
@@ -60,11 +66,21 @@ public class GenreSortTest {
         GenrePOJO text = genre("c", 0);
         text.setDescription("Книги о войне 1812 года и не только");
         GenrePOJO rated = genre("d", 5);
-        rated.setDescription("100 книг");
+        rated.setDescription("[100]");
         assertEquals(4738, GenreSort.count(books));
         assertEquals(953, GenreSort.count(bracketed));
         assertEquals(0, GenreSort.count(text));
         assertEquals(5, GenreSort.count(rated));
+    }
+
+    @Test
+    public void booksNamedInTheDescriptionCountBeforeTheRating() {
+        GenrePOJO author = genre("Кинг Стивен", 1600010); // akniga: the rating column, then "listens • books"
+        author.setDescription("99K • 593 аудиокниги");
+        GenrePOJO few = genre("b", 5);
+        few.setDescription("100 книг");
+        assertEquals(593, GenreSort.count(author));
+        assertEquals(100, GenreSort.count(few));
     }
 
     @Test

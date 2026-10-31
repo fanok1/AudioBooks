@@ -64,6 +64,8 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
      */
     private static final String PREF_DURATION = "listing_duration_filter";
     private static final String PREF_GENRE_SORT = "genre_sort";
+    private static final String PREF_AUTHOR_SORT = "author_sort";
+    private static final String PREF_PERFORMER_SORT = "performer_sort";
 
     private boolean isLoading = false;
     private boolean isRefreshing = false;
@@ -127,6 +129,10 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
                 break;
             case Consts.MODEL_AUTOR:
             case Consts.MODEL_ARTIST:
+                mGenreSort = GenreSort.of(getDefaultSharedPreferences(context).getString(sortPref(), ""));
+                if (mGenreSort == GenreSort.FAVORITE) {
+                    mGenreSort = GenreSort.NONE;
+                }
                 genre = new ArrayList<>();
                 AutorsModel autorsModel = new AutorsModel();
                 if (mModelId == Consts.MODEL_ARTIST) {
@@ -199,10 +205,20 @@ public class BooksPresenter extends MvpPresenter<BooksView> implements
         return mGenreSort;
     }
 
-    /** Re-sorts the loaded genres in place of a reload: the order is local, the pages stay as fetched. */
+    /** The setting that keeps the order of this list: genres, authors and performers each have their own. */
+    @NonNull
+    private String sortPref() {
+        return mModelId == Consts.MODEL_AUTOR ? PREF_AUTHOR_SORT
+                : mModelId == Consts.MODEL_ARTIST ? PREF_PERFORMER_SORT : PREF_GENRE_SORT;
+    }
+
+    /**
+     * Re-sorts the loaded genres, authors or performers in place of a reload: the order is local, the pages stay as
+     * fetched, and each page loaded later takes its place in it.
+     */
     public void onGenreSortSelected(@NonNull GenreSort sort) {
         mGenreSort = sort;
-        getDefaultSharedPreferences(mContext).edit().putString(PREF_GENRE_SORT, sort.name()).apply();
+        getDefaultSharedPreferences(mContext).edit().putString(sortPref(), sort.name()).apply();
         showGenres();
         getViewState().setPosition(0);
     }

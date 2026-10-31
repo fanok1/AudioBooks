@@ -241,6 +241,8 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                 if (modelID == Consts.MODEL_GENRE) {
                     fillGenreSortMenu(menu);
                     setGenreSearch(menu.findItem(R.id.app_bar_search));
+                } else if (modelID == Consts.MODEL_AUTOR || modelID == Consts.MODEL_ARTIST) {
+                    fillGenreSortMenu(menu);
                 } else if (modelID != Consts.MODEL_BOOKS || noSort) {
                     MenuItem orderItem = menu.findItem(R.id.order);
                     if (orderItem != null) orderItem.setVisible(false);
@@ -701,7 +703,10 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
     /** Item ids of the genre list's sort submenu: {@code GENRE_SORT_ITEM_BASE + GenreSort.ordinal()}. */
     private static final int GENRE_SORT_ITEM_BASE = Menu.FIRST + 200;
 
-    /** On a genre list the "order" item sorts the loaded genres locally: its site sorts give way to {@link GenreSort}. */
+    /**
+     * On a genre, author or performer list the "order" item sorts the loaded items locally: its site sorts give way
+     * to {@link GenreSort}. People are listed by the site in order of popularity, and favorite genres are for genres.
+     */
     private void fillGenreSortMenu(@NonNull Menu menu) {
         MenuItem order = menu.findItem(R.id.order);
         SubMenu sub = order == null ? null : order.getSubMenu();
@@ -709,8 +714,13 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
             return;
         }
         sub.clear();
+        boolean people = modelID != Consts.MODEL_GENRE;
         for (GenreSort sort : GenreSort.values()) {
-            sub.add(R.id.genre_sort_group, GENRE_SORT_ITEM_BASE + sort.ordinal(), Menu.NONE, sort.title);
+            if (people && sort == GenreSort.FAVORITE) {
+                continue;
+            }
+            int title = people && sort == GenreSort.NONE ? R.string.people_sort_popular : sort.title;
+            sub.add(R.id.genre_sort_group, GENRE_SORT_ITEM_BASE + sort.ordinal(), Menu.NONE, title);
         }
         sub.setGroupCheckable(R.id.genre_sort_group, true, true);
         order.setVisible(true);

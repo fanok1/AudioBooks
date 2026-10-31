@@ -62,6 +62,17 @@ public class SleepTimerPresenter extends MvpPresenter<SleepTimerView>
         return timerStarted;
     }
 
+    /** The notification's timer button: a countdown of the last duration set here (30 min if none), its options too. */
+    @NonNull
+    public static Intent quickStart(@NonNull SharedPreferences prefs) {
+        int minutes = Math.min(23 * 60 + 59, prefs.getInt(PREF_LAST_MINUTES, 30));
+        if (minutes <= 0) {
+            minutes = 30;
+        }
+        return new Intent(Broadcast_SleepTimer).putExtra("start", true).putExtra("time", minutes * 60_000L)
+                .putExtra("warn", prefs.getBoolean(PREF_WARN, true)).putExtra("shake", prefs.getBoolean(PREF_SHAKE, true));
+    }
+
     /** The player service sets this when it arms the timer and resets it when the timer fires, is cancelled or ends. */
     public static void setTimerStarted(boolean timerStarted) {
         SleepTimerPresenter.timerStarted = timerStarted;

@@ -110,6 +110,15 @@
             android:summary="@string/seek_buttons_desc"
             android:title="@string/seek_buttons" />
 
+        <ListPreference
+            android:defaultValue="30"
+            android:dialogTitle="@string/seek_step"
+            android:entries="@array/seek_step_titles"
+            android:entryValues="@array/seek_step_values"
+            android:icon="@drawable/ic_seek_step_pref"
+            android:key="seek_step"
+            android:title="@string/seek_step" />
+
         <CheckBoxPreference
             android:defaultValue="true"
             android:icon="@drawable/ic_fast_forward_pref"

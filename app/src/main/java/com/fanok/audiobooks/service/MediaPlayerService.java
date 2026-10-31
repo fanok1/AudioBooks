@@ -68,6 +68,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
@@ -161,6 +162,9 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
 
     public static final String ACTION_NEXT = "audioBook.ACTION_NEXT";
 
+    /** The notification's timer button: starts the sleep timer with the last duration set, or cancels it. */
+    public static final String ACTION_TIMER = "audioBook.ACTION_TIMER";
+
     public static final String ACTION_STOP = "audioBook.ACTION_STOP";
 
     /** The notification's close button: stop, as {@link #ACTION_STOP}, and close every screen of the app. */
@@ -179,8 +183,6 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
     private static final String CHANNEL_ID = "124";
     private static final String CHANNEL_NAME = "Player";
     public static final int countAudioWereShowingRatingPopUp = 15;
-    private static final int REWIND = 30000;
-    private static final int FAST_FORWARD = 30000;
     private static final long PROGRESS_INTERVAL_MS = 500;
     private static final long CHECKPOINT_INTERVAL_MS = 10_000;
     /** How long the retry wake lock outlasts the delay of the retry it keeps on time. */
@@ -201,7 +203,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
             | PlaybackStateCompat.ACTION_PAUSE
             | PlaybackStateCompat.ACTION_PLAY_PAUSE
             //no SKIP_TO_NEXT / SKIP_TO_PREVIOUS: Android 13+ would put chapter skips beside play/pause;
-            //the first two custom actions (rewind 30, forward 30) take those slots; the third, exit, follows them
+            //the first two custom actions (rewind, forward by the seek step) take those slots; timer and exit follow
             | PlaybackStateCompat.ACTION_SEEK_TO
             | PlaybackStateCompat.ACTION_REWIND
             | PlaybackStateCompat.ACTION_FAST_FORWARD
@@ -484,6 +486,12 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
     private final Runnable notifyTask = this::postNotification;
 
     private final Runnable focusLossWatchdog = this::onLongFocusLoss;
+    /** A new seek step redraws the notification's and the session's seek buttons (held: prefs keep it weakly). */
+    private final SharedPreferences.OnSharedPreferenceChangeListener seekStepListener = (prefs, key) -> {
+        if (SeekStep.PREF.equals(key)) {
+            publishState();
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -491,6 +499,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
         running = true;
         storage = new StorageUtil(getApplicationContext());
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mPreferences.registerOnSharedPreferenceChangeListener(seekStepListener);
         mAudioDBModel = new AudioDBModel(this);
         createNotificationChannel();
         initMediaSession();
@@ -508,6 +517,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
         checkpointNow(true);
 
         //2. timers, handlers, artwork
+        mPreferences.unregisterOnSharedPreferenceChangeListener(seekStepListener);
         releaseSleepTimer();
         SleepTimerPresenter.setTimerStarted(false);
         unregisterNetworkCallback();
@@ -1666,11 +1676,10 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
     @NonNull
     private PlaybackStateCompat buildPlaybackState() {
         PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder().setActions(SESSION_ACTIONS)
-                .addCustomAction(ACTION_REWIND, getString(R.string.playback_rewind_30),
-                        R.drawable.ic_notification_rewind_30)
-                .addCustomAction(ACTION_FORWARD, getString(R.string.forward_30),
-                        R.drawable.ic_notification_fast_forward_30)
-                //Android 13+ puts a third custom action after forward 30
+                .addCustomAction(ACTION_REWIND, SeekStep.rewindLabel(this), SeekStep.notificationRewindIcon(this))
+                .addCustomAction(ACTION_FORWARD, SeekStep.forwardLabel(this), SeekStep.notificationForwardIcon(this))
+                //Android 13+ shows two more custom actions: the five buttons are timer, rewind, play, forward, exit
+                .addCustomAction(ACTION_TIMER, timerLabel(), timerIcon())
                 .addCustomAction(ACTION_EXIT, getString(R.string.exit), R.drawable.ic_notification_close);
         int state;
         long position = 0;
@@ -1883,23 +1892,23 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
                 .setContentIntent(contentIntent)
                 .setDeleteIntent(PendingIntent.getBroadcast(getApplicationContext(), 0,
                         new Intent(this, OnCancelBroadcastReceiver.class), PendingIntent.FLAG_IMMUTABLE))
-                //three buttons in the compact view, as in the Android 13+ card: rewind 30, play/pause, forward 30, and
-                //exit when expanded; chapters stay on
-                //the headset and car keys. A paused notification is dismissed by swiping (the delete intent).
-                .addAction(R.drawable.ic_notification_rewind_30, getString(R.string.playback_rewind_30),
+                //five buttons, as in the Android 13+ card: timer, rewind, play/pause, forward, exit; the compact view
+                //keeps the middle three. Chapters stay on the headset and car keys. A paused notification is
+                //dismissed by swiping (the delete intent).
+                .addAction(timerIcon(), timerLabel(), playbackAction(ACTION_TIMER, 7))
+                .addAction(SeekStep.notificationRewindIcon(this), SeekStep.rewindLabel(this),
                         playbackAction(ACTION_REWIND, 4))
                 .addAction(showPause ? R.drawable.ic_notification_pause : R.drawable.ic_notification_play,
                         getString(showPause ? R.string.pause : R.string.play),
                         showPause ? playbackAction(ACTION_PAUSE, 1) : playbackAction(ACTION_PLAY, 0))
-                .addAction(R.drawable.ic_notification_fast_forward_30, getString(R.string.forward_30),
+                .addAction(SeekStep.notificationForwardIcon(this), SeekStep.forwardLabel(this),
                         playbackAction(ACTION_FORWARD, 5))
-                //the expanded notification only; the compact one keeps the three above
                 .addAction(R.drawable.ic_notification_close, getString(R.string.exit), exitAction());
         if (book != null && book.getAutor() != null) {
             builder.setSubText(book.getAutor());
         }
         androidx.media.app.NotificationCompat.MediaStyle style =
-                new androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(0, 1, 2);
+                new androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(1, 2, 3);
         if (mediaSession != null) {
             style.setMediaSession(mediaSession.getSessionToken());
         }
@@ -2036,12 +2045,12 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
 
             @Override
             public void onRewind() {
-                seekBy(-REWIND);
+                seekBy(-SeekStep.millis(MediaPlayerService.this));
             }
 
             @Override
             public void onFastForward() {
-                seekBy(FAST_FORWARD);
+                seekBy(SeekStep.millis(MediaPlayerService.this));
             }
 
             /** The playback state's custom actions carry the notification action names. */
@@ -2105,10 +2114,10 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
                 stop();
                 break;
             case KeyEvent.KEYCODE_MEDIA_REWIND:
-                seekBy(-REWIND);
+                seekBy(-SeekStep.millis(MediaPlayerService.this));
                 break;
             case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
-                seekBy(FAST_FORWARD);
+                seekBy(SeekStep.millis(MediaPlayerService.this));
                 break;
             default:
                 toggle();
@@ -2138,11 +2147,14 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
                 stop();
                 App.finishActivities();
                 break;
+            case ACTION_TIMER:
+                toggleSleepTimer();
+                break;
             case ACTION_REWIND:
-                seekBy(-REWIND);
+                seekBy(-SeekStep.millis(MediaPlayerService.this));
                 break;
             case ACTION_FORWARD:
-                seekBy(FAST_FORWARD);
+                seekBy(SeekStep.millis(MediaPlayerService.this));
                 break;
             default:
         }
@@ -2189,12 +2201,12 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
                 break;
             case Broadcast_SEEK_NEXT_30:
                 if (player != null && hasBook()) {
-                    seekFromApp(currentPositionMs() + intent.getLongExtra("ms", FAST_FORWARD));
+                    seekFromApp(currentPositionMs() + intent.getLongExtra("ms", SeekStep.millis(this)));
                 }
                 break;
             case Broadcast_SEEK_PREVIOUS_10:
                 if (player != null && hasBook()) {
-                    seekFromApp(currentPositionMs() - intent.getLongExtra("ms", REWIND));
+                    seekFromApp(currentPositionMs() - intent.getLongExtra("ms", SeekStep.millis(this)));
                 }
                 break;
             case Broadcast_SET_SPEED:
@@ -2308,6 +2320,30 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
         }
     };
 
+    /** The notification's timer button: a running timer is cancelled, else the last one starts (ending a wake window). */
+    private void toggleSleepTimer() {
+        if (!hasBook()) {
+            return;
+        }
+        boolean running = sleepTimer != null;
+        Intent command = running ? new Intent().putExtra("start", false)
+                : SleepTimerPresenter.quickStart(mPreferences);
+        onSleepTimerCommand(command);
+        Toast.makeText(getApplicationContext(), running ? getString(R.string.sleep_timer_off_toast)
+                : getString(R.string.sleep_timer_on_toast, command.getLongExtra("time", 0) / 60_000L),
+                Toast.LENGTH_SHORT).show();
+    }
+
+    @DrawableRes
+    private int timerIcon() {
+        return sleepTimer != null ? R.drawable.ic_notification_timer_on : R.drawable.ic_notification_timer;
+    }
+
+    @NonNull
+    private String timerLabel() {
+        return getString(sleepTimer != null ? R.string.sleep_timer_turn_off : R.string.sleep_timer);
+    }
+
     /**
      * Arms, extends or cancels the sleep timer. An end-of-chapter timer is a boundary on whatever chapter is current
      * when one ENDS (spec §8): a manual next/previous/select or a book replacement re-arms it on the new chapter's
@@ -2322,6 +2358,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
         if (!intent.getBooleanExtra("start", false)) {
             SleepTimerPresenter.setTimerStarted(false);
             sendInternal(new Intent(bradcast_FinishTimer));
+            publishState(); //the notification's timer button shows it is off
             return;
         }
         sleepWarn = intent.getBooleanExtra("warn", false);
@@ -2368,6 +2405,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
             timer.pauseTimer();
         }
         sendSleepTimerState(timer.getTimeRemaining());
+        publishState(); //the notification's timer button shows it runs
     }
 
     /** Playback started or stopped: a countdown counts only while playing; playing on by hand ends a wake window. */
@@ -2444,6 +2482,7 @@ public class MediaPlayerService extends MediaBrowserServiceCompat {
         SleepTimerPresenter.setTimerStarted(false);
         sendInternal(new Intent(bradcast_FinishTimer));
         if (endOfChapter) {
+            publishState();
             return;
         }
         if (sleepShake && wantPlaying && hasAccelerometer()) {

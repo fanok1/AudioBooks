@@ -157,6 +157,9 @@ public class DescriptionBookFragment extends MvpAppCompatFragment implements Des
 
         mAdapterBooksRecomended = new BooksOtherAdapter();
         mRecommendedBooks.setAdapter(mAdapterBooksRecomended);
+        // On a touch screen the list never takes the focus: shown after the description, it was handed the focus and
+        // the page scrolled down to it, the title going under the tabs. RecyclerView sets this in its constructor.
+        mRecommendedBooks.setFocusableInTouchMode(false);
         mRecommendedBooks.setLayoutManager(
                 new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         int margin = (int) requireContext().getResources().getDimension(R.dimen.books_other_margin);

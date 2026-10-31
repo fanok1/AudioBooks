@@ -1,8 +1,10 @@
 package com.fanok.audiobooks;
 
 import android.app.Activity;
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.StyleRes;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -31,6 +33,13 @@ public final class AppThemes {
         boolean night = !theme.equals(context.getString(R.string.theme_light_value));
         AppCompatDelegate.setDefaultNightMode(night ? AppCompatDelegate.MODE_NIGHT_YES
                 : AppCompatDelegate.MODE_NIGHT_NO);
+        // Android 12+ draws the starting window before the app runs: told the app's mode, it takes the matching color
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            UiModeManager uiMode = context.getSystemService(UiModeManager.class);
+            if (uiMode != null) {
+                uiMode.setApplicationNightMode(night ? UiModeManager.MODE_NIGHT_YES : UiModeManager.MODE_NIGHT_NO);
+            }
+        }
     }
 
     /** The one of the three styles that matches the preference. */

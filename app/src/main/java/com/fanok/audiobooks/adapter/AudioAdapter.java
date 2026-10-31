@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.media3.common.util.UnstableApi;
@@ -226,8 +227,60 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         return new HashSet<>(mSelectedItems);
     }
 
+    /** The chosen files: what download and delete act on. */
     public int getSelectedItemsSize() {
         return mSelectedItems.size();
+    }
+
+    /** True while chapters are being chosen for download/delete, even when none is chosen at the moment. */
+    public boolean isSelecting() {
+        return mSelecting;
+    }
+
+    /** The chapters whose file is chosen (several chapters of one file count each). */
+    public int getSelectedChapters() {
+        int count = 0;
+        for (AudioPOJO audio : mData) {
+            if (audio.getUrl() != null && mSelectedItems.contains(audio.getUrl())) count++;
+        }
+        return count;
+    }
+
+    public boolean isAllSelected() {
+        return !mData.isEmpty() && getSelectedChapters() == mData.size();
+    }
+
+    /** Starts choosing with every chapter chosen (the Download/Delete menu); while choosing, chooses them all. */
+    public void startSelection() {
+        mSelecting = true;
+        setAllSelected(true);
+    }
+
+    /** Chooses every chapter, or none; the selection goes on either way. */
+    public void setAllSelected(boolean all) {
+        mSelectedItems.clear();
+        if (all) {
+            for (AudioPOJO audio : mData) {
+                if (audio.getUrl() != null) mSelectedItems.add(audio.getUrl());
+            }
+        }
+        selectionChanged();
+    }
+
+    /** Ends choosing: the check marks go and a tap plays a chapter again. */
+    public void endSelection() {
+        if (!mSelecting) return;
+        mSelecting = false;
+        mSelectedItems.clear();
+        selectionChanged();
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private void selectionChanged() {
+        if (mSelectedListner != null) {
+            mSelectedListner.onItemSelected();
+        }
+        notifyDataSetChanged();
     }
 
     /**
@@ -238,6 +291,13 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
     public void setData(@NonNull ArrayList<AudioPOJO> data, int chaptersTotal) {
         mData = data;
         mChaptersTotal = chaptersTotal;
+        if (mSelecting) {
+            // a reload keeps the choice of the files still listed
+            HashSet<String> listed = new HashSet<>();
+            for (AudioPOJO audio : data) listed.add(audio.getUrl());
+            mSelectedItems.retainAll(listed);
+            if (mSelectedListner != null) mSelectedListner.onItemSelected();
+        }
         notifyDataSetChanged();
         refresh();
     }
@@ -279,16 +339,11 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         void onItemSelected();
     }
 
+    /** The chosen chapters, by URL: a file is downloaded or deleted as a whole, whichever chapters it holds. */
     private final HashSet<String> mSelectedItems;
-
-    @SuppressLint("NotifyDataSetChanged")
-    public void clearSelected() {
-        mSelectedItems.clear();
-        if (mSelectedListner != null) {
-            mSelectedListner.onItemSelected();
-        }
-        notifyDataSetChanged();
-    }
+    private boolean mSelecting;
+    /** The hint that chapters of one file are chosen together, shown once per screen. */
+    private boolean mSharedFileHintShown;
 
 
     @Override
@@ -336,7 +391,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
 
 
         viewHolder.mView.setOnLongClickListener(view -> {
-            selectedItemsAdd(url);
+            longClick(view, i);
             return true;
         });
 
@@ -367,7 +422,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
 
                             if (duration >= LONG_PRESS_DURATION_MS) {
                                 // Если удержание было достаточно долгим, считаем это "долгим кликом"
-                                selectedItemsAdd(url);
+                                longClick(v, i);
                                 return true; // Событие полностью обработано
                             } else {
                                 // Если удержание было коротким, считаем это обычным кликом
@@ -393,15 +448,8 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
                     Consts.getAttributeColor(viewHolder.mView.getContext(), R.attr.backgroundItem));
         }
 
-        if (!mSelectedItems.isEmpty()) {
-            viewHolder.mRadioButton.setVisibility(View.VISIBLE);
-        } else {
-            viewHolder.mRadioButton.setVisibility(View.GONE);
-        }
-
-        viewHolder.mRadioButton.setOnClickListener(view -> selectedItemsAdd(mData.get(i).getUrl()));
-
-        viewHolder.mRadioButton.setChecked(mSelectedItems.contains(mData.get(i).getUrl()));
+        viewHolder.mRadioButton.setVisibility(mSelecting ? View.VISIBLE : View.GONE);
+        viewHolder.mRadioButton.setChecked(url != null && mSelectedItems.contains(url));
     }
 
     @Override
@@ -477,48 +525,51 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         }
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    public void selectedItemsAddAll() {
-
-        if (mSelectedItems.size() == mData.size()) {
-            mSelectedItems.clear();
-        } else {
-            mSelectedItems.clear();
-            for (AudioPOJO audioPOJO : mData) {
-                mSelectedItems.add(audioPOJO.getUrl());
-            }
-        }
-        if (mSelectedListner != null) {
-            mSelectedListner.onItemSelected();
-        }
-
-        notifyDataSetChanged();
-    }
-
+    /** A tap plays the chapter; while choosing it chooses the chapter or takes it back. */
     @SuppressLint("NotifyDataSetChanged")
     private void click(View view, int pos) {
-        if (mSelectedItems.isEmpty()) {
-            indexSelected = pos;
-            if (mListener != null) {
-                mListener.onItemSelected(view, pos);
-            }
-            notifyDataSetChanged();
-        } else {
-            selectedItemsAdd(mData.get(pos).getUrl());
+        if (mSelecting) {
+            toggle(view, pos);
+            return;
         }
-    }
-
-    @SuppressLint("NotifyDataSetChanged")
-    private void selectedItemsAdd(String s) {
-        if (mSelectedItems.contains(s)) {
-            mSelectedItems.remove(s);
-        } else {
-            mSelectedItems.add(s);
-        }
-        if (mSelectedListner != null) {
-            mSelectedListner.onItemSelected();
+        indexSelected = pos;
+        if (mListener != null) {
+            mListener.onItemSelected(view, pos);
         }
         notifyDataSetChanged();
+    }
+
+    /** A long press starts choosing with this chapter alone; while choosing it is a tap. */
+    private void longClick(View view, int pos) {
+        if (!mSelecting) {
+            mSelecting = true;
+            mSelectedItems.clear();
+        }
+        toggle(view, pos);
+    }
+
+    /** Chooses the chapter's file or takes it back: every chapter the file holds goes with it. */
+    private void toggle(View view, int pos) {
+        String url = pos < mData.size() ? mData.get(pos).getUrl() : null;
+        if (url != null) {
+            if (!mSelectedItems.remove(url)) {
+                mSelectedItems.add(url);
+            }
+            if (!mSharedFileHintShown && sharesFile(pos)) {
+                mSharedFileHintShown = true;
+                Toast.makeText(view.getContext(), R.string.selection_shared_file, Toast.LENGTH_LONG).show();
+            }
+        }
+        selectionChanged();
+    }
+
+    /** Whether another chapter is in the same file (clips of one stream, as akniga lists them). */
+    private boolean sharesFile(int pos) {
+        String url = mData.get(pos).getUrl();
+        for (int i = 0; i < mData.size(); i++) {
+            if (i != pos && url.equals(mData.get(i).getUrl())) return true;
+        }
+        return false;
     }
 
     private boolean isStateMatch(int[] states, int dlState) {

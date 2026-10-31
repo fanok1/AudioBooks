@@ -96,4 +96,17 @@
         <item>@string/excellent</item>
     </string-array>
 
+    <string-array name="seek_step_titles">
+        <item>10 сек</item>
+        <item>20 сек</item>
+        <item>30 сек</item>
+        <item>45 сек</item>
+    </string-array>
+    <string-array name="seek_step_values" translatable="false">
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+        <item>45</item>
+    </string-array>
+
 </resources>

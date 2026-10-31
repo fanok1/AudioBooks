@@ -18,17 +18,31 @@
         android:paddingBottom="@dimen/text_margin"
         tools:showIn="@layout/player">
 
-        <RadioButton
+        <!-- the chapter selection: close, all/some/none chosen, the count in name_curent, download, delete -->
+        <ImageButton
+            android:id="@+id/selectionClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="@dimen/text_margin"
+            android:background="@drawable/focusable"
+            android:contentDescription="@string/selection_close"
+            android:focusable="true"
+            android:src="@drawable/ic_close"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/radioAll"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginStart="@dimen/text_margin"
             android:background="@drawable/focusable"
-            android:button="@null"
-            android:drawableStart="@drawable/radio_select"
+            android:drawableStart="@drawable/ic_check_circle_outline"
             android:drawablePadding="@dimen/text_margin_book_description"
             android:focusable="true"
+            android:gravity="center_vertical"
+            android:padding="4dp"
             android:text="@string/all"
             android:textColor="?attr/colorPrimaryText"
             android:visibility="gone" />

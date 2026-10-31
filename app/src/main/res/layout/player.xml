@@ -40,13 +40,29 @@
                 android:src="@drawable/ic_arrow_down_drop_circle_outline" />
 
 
-            <RadioButton
+            <!-- the chapter selection: close, all/some/none chosen, the count in name_curent, download, delete -->
+            <ImageButton
+                android:id="@+id/selectionClose"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginStart="@dimen/text_margin"
+                android:background="?selectableItemBackgroundBorderless"
+                android:contentDescription="@string/selection_close"
+                android:src="@drawable/ic_close"
+                android:visibility="gone" />
+
+            <TextView
                 android:id="@+id/radioAll"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:button="@null"
-                android:drawableStart="@drawable/radio_select"
+                android:layout_gravity="center"
+                android:layout_marginStart="@dimen/text_margin"
+                android:background="?selectableItemBackground"
+                android:drawableStart="@drawable/ic_check_circle_outline"
                 android:drawablePadding="@dimen/text_margin_book_description"
+                android:gravity="center_vertical"
+                android:padding="4dp"
                 android:text="@string/all"
                 android:textColor="?attr/colorPrimaryText"
                 android:visibility="gone" />

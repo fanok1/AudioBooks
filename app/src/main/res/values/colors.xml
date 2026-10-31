@@ -18,6 +18,8 @@
     <color name="primaryLightColorLight">#52c7b8</color>
     <color name="lightColor">#999999</color>
     <color name="colorBackgraundLight">#fafafa</color>
+    <!-- the starting window: dark, the default theme; values-notnight-v31 has the light one (AppThemes.applyNightMode) -->
+    <color name="launchBackground">@color/colorBackgraund</color>
     <color name="BackgroundItemColor">#eff2ed</color>
     <color name="selectableItemBackgroundLight">#efefef</color>
     <color name="colorNavigayionItemLight">#626368</color>

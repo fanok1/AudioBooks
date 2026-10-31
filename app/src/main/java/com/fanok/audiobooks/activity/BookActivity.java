@@ -45,7 +45,6 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -88,6 +87,7 @@ import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.policy.ParentalControl;
 import com.fanok.audiobooks.presenter.BookPresenter;
 import com.fanok.audiobooks.service.MediaPlayerService;
+import com.fanok.audiobooks.service.SeekStep;
 import com.fanok.audiobooks.android_equalizer.DialogEqualizerFragment;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -126,7 +126,10 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
     private ImageButton mButtonCollapse;
     private LinearLayout mTopButtonsControls;
     private LinearLayout mPlayer;
-    private RadioButton mRadioAll;
+    private TextView mRadioAll;
+    private ImageButton mSelectionClose;
+    /** The top row shows how many chapters are chosen, not the playing chapter (bindSelectionBar). */
+    private boolean mShowingCount;
     private ImageButton mDelete;
     private ImageButton mDownland;
 
@@ -441,6 +444,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         mTopButtonsControls = findViewById(R.id.topButtonsControls);
         mPlayer = findViewById(R.id.player);
         mRadioAll = findViewById(R.id.radioAll);
+        mSelectionClose = findViewById(R.id.selectionClose);
         mDelete = findViewById(R.id.delete);
         mDownland = findViewById(R.id.dowland);
         mSpeed = findViewById(R.id.speed);
@@ -566,91 +570,22 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                             }
 
                             if (slideOffset > Consts.COLLAPS_BUTTON_VISIBLE) {
-                                if (mButtonCollapse != null
-                                        && mButtonCollapse.getVisibility() != View.VISIBLE
-                                        && mAudioAdapter.getSelectedItemsSize() == 0) {
-                                    mButtonCollapse.setVisibility(View.VISIBLE);
-                                }
-
-
-                                if (mRadioAll != null && mRadioAll.getVisibility() != View.VISIBLE
-                                        &&
-                                        mAudioAdapter.getSelectedItemsSize() > 0) {
-                                    mRadioAll.setVisibility(View.VISIBLE);
-
-                                    if (mButtonCollapse != null) {
-                                        mButtonCollapse.setVisibility(View.GONE);
-                                    }
-
-                                }
-
-                                if (mDownland != null && mDownland.getVisibility() != View.VISIBLE &&
-                                        mAudioAdapter.getSelectedItemsSize() > 0) {
-                                    mDownland.setVisibility(View.VISIBLE);
-                                    mDelete.setVisibility(View.VISIBLE);
-                                }
+                                bindSelectionBar(true);
                                 if (mButtonCollapse != null) {
                                     mButtonCollapse.setRotation(0);
                                     mButtonCollapse.setContentDescription(getString(R.string.collapse));
                                 }
-
-
-                                double alphaCollapse = (slideOffset - Consts.COLLAPS_BUTTON_VISIBLE)
-                                        / Consts.COLLAPS_BUTTON_VISIBLE_STEP;
-                                if (mButtonCollapse != null) {
-                                    mButtonCollapse.animate().alpha(
-                                            (float) alphaCollapse).setDuration(
-                                            0);
-                                }
-
-                                if (mRadioAll != null) {
-                                    mRadioAll.animate().alpha(
-                                            (float) alphaCollapse).setDuration(
-                                            0);
-                                }
-
-                                if (mDownland != null) {
-                                    mDownland.animate().alpha(
-                                            (float) alphaCollapse).setDuration(
-                                            0);
-                                    mDelete.animate().alpha(
-                                            (float) alphaCollapse).setDuration(
-                                            0);
-                                }
-
-                                if (mAudioAdapter.getSelectedItemsSize() == 0) {
-                                    if (mNameCurent.getText().toString().equals(
-                                            String.valueOf(mAudioAdapter.getSelectedItemsSize()))) {
-                                        Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
-                                        broadcastSend(broadcastIntent);
-                                    }
-                                } else {
-                                    if (!mNameCurent.getText().toString().equals(
-                                            String.valueOf(mAudioAdapter.getSelectedItemsSize()))) {
-                                        mNameCurent.setText(String.valueOf(
-                                                mAudioAdapter.getSelectedItemsSize()));
+                                float alphaCollapse = (float) ((slideOffset - Consts.COLLAPS_BUTTON_VISIBLE)
+                                        / Consts.COLLAPS_BUTTON_VISIBLE_STEP);
+                                for (View view : new View[] {mButtonCollapse, mSelectionClose, mRadioAll, mDownland,
+                                        mDelete, mNameCurent}) {
+                                    if (view != null) {
+                                        view.animate().alpha(alphaCollapse).setDuration(0);
                                     }
                                 }
-
-                                mNameCurent.animate().alpha((float) alphaCollapse).setDuration(0);
                             } else {
                                 showExpandHint(Math.max(0, alpha));
-
-                                if (mRadioAll != null && mRadioAll.getVisibility() != View.GONE) {
-                                    mRadioAll.setVisibility(View.GONE);
-                                }
-
-                                if (mDownland != null && mDownland.getVisibility() != View.GONE) {
-                                    mDownland.setVisibility(View.GONE);
-                                    mDelete.setVisibility(View.GONE);
-                                }
-
-                                if (mNameCurent.getText().toString().equals(
-                                        String.valueOf(mAudioAdapter.getSelectedItemsSize()))) {
-                                    Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
-                                    broadcastSend(broadcastIntent);
-                                }
-
+                                bindSelectionBar(false);
                             }
                         }
                     });
@@ -673,29 +608,25 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         }
 
 
-        mRadioAll.setOnClickListener(view -> {
-            mAudioAdapter.selectedItemsAddAll();
+        // the chapter selection: all <-> none, close, and the actions, which end it
+        mRadioAll.setOnClickListener(view -> mAudioAdapter.setAllSelected(!mAudioAdapter.isAllSelected()));
+        mSelectionClose.setOnClickListener(view -> mAudioAdapter.endSelection());
+        mDownland.setOnClickListener(view -> {
             if (mAudioAdapter.getSelectedItemsSize() > 0) {
-                mRadioAll.setChecked(true);
-            } else {
-                mRadioAll.setChecked(false);
-                mRadioAll.setVisibility(View.GONE);
-                if (mButtonCollapse != null) {
-                    mButtonCollapse.setVisibility(View.VISIBLE);
-                }
+                mPresenter.dowland(mAudioAdapter.getSelectedItems());
+                mAudioAdapter.endSelection();
             }
         });
 
-        mDownland.setOnClickListener(view -> mPresenter.dowland(new java.util.HashSet<>(mAudioAdapter.getSelectedItems())));
-
         mDelete.setOnClickListener(view -> {
             if (mAudioAdapter != null && mAudioAdapter.getSelectedItemsSize() > 0) {
+                final java.util.HashSet<String> chosen = mAudioAdapter.getSelectedItems();
                 new AlertDialog.Builder(this)
                         .setTitle("Удаление загрузок")
-                        .setMessage("Вы уверены, что хотите удалить выбранные файлы (" + mAudioAdapter.getSelectedItemsSize() + ")?")
+                        .setMessage("Вы уверены, что хотите удалить выбранные файлы (" + chosen.size() + ")?")
                         .setPositiveButton("ОК", (dialog, which) -> {
-                            mPresenter.delete(new java.util.HashSet<>(mAudioAdapter.getSelectedItems()));
-                            mAudioAdapter.clearSelected();
+                            mPresenter.delete(chosen);
+                            mAudioAdapter.endSelection();
                         })
                         .setNegativeButton("Отмена", null)
                         .show();
@@ -709,48 +640,8 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         mList.setAdapter(mAudioAdapter);
         mLinearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         mList.setLayoutManager(mLinearLayoutManager);
-        mAudioAdapter.setSelectedListner(() -> {
-            if (mAudioAdapter.getSelectedItemsSize() == 0) {
-                if (mRadioAll != null && mRadioAll.getVisibility() != View.GONE) {
-                    mRadioAll.setVisibility(View.GONE);
-                }
-
-                if (mDownland != null && mDownland.getVisibility() != View.GONE) {
-                    mDownland.setVisibility(View.GONE);
-                    mDelete.setVisibility(View.GONE);
-                }
-                if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.VISIBLE) {
-                    mButtonCollapse.setVisibility(View.VISIBLE);
-                }
-
-                Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
-                broadcastSend(broadcastIntent);
-            } else {
-
-                mNameCurent.setText(String.valueOf(mAudioAdapter.getSelectedItemsSize()));
-
-                if (mRadioAll != null) {
-                    if (mRadioAll.getVisibility() != View.VISIBLE) {
-                        mRadioAll.setVisibility(View.VISIBLE);
-                    }
-                    mRadioAll.setChecked(
-                            mAudioAdapter.getItemCount() == mAudioAdapter.getSelectedItemsSize());
-                    if (mBookPOJO.getUrl().contains(Url.SERVER_AKNIGA)) {
-                        mRadioAll.setVisibility(View.GONE);
-                    }
-                }
-
-                if (mDownland != null) {
-                    if (mDownland.getVisibility() != View.VISIBLE) {
-                        mDownland.setVisibility(View.VISIBLE);
-                        mDelete.setVisibility(View.VISIBLE);
-                    }
-                }
-                if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.GONE) {
-                    mButtonCollapse.setVisibility(View.GONE);
-                }
-            }
-        });
+        mAudioAdapter.setSelectedListner(() -> bindSelectionBar(bottomSheetBehavior == null
+                || bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_COLLAPSED));
 
 
         mSeekBar.setMax(100);
@@ -838,18 +729,13 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (bottomSheetBehavior != null
-                        && bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-                    if (mAudioAdapter.getSelectedItemsSize() > 0) {
-                        mAudioAdapter.clearSelected();
-                    } else {
-                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                    }
+                if (mAudioAdapter.isSelecting()) {
+                    mAudioAdapter.endSelection();
                     return;
                 }
-
-                if (bottomSheetBehavior == null && mAudioAdapter.getSelectedItemsSize() > 0) {
-                    mAudioAdapter.clearSelected();
+                if (bottomSheetBehavior != null
+                        && bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     return;
                 }
 
@@ -885,17 +771,9 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             mButtonCollapse.setVisibility(View.INVISIBLE);
         }
 
-        if (mRadioAll != null && mRadioAll.getVisibility() != View.GONE) {
-            mRadioAll.setVisibility(View.GONE);
-        }
-
-        if (mDownland != null && mDownland.getVisibility() != View.GONE) {
-            mDownland.setVisibility(View.GONE);
-            mDelete.setVisibility(View.GONE);
-        }
-
-        Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
-        broadcastSend(broadcastIntent);
+        mAudioAdapter.endSelection();
+        bindSelectionBar(false);
+        broadcastSend(new Intent(Broadcast_SHOW_TITLE));
     }
 
     @UnstableApi
@@ -913,30 +791,10 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                     View.INVISIBLE);
         }
         if (mButtonCollapse != null && mButtonCollapse.getVisibility() != View.VISIBLE
-                && mAudioAdapter.getSelectedItemsSize() == 0) {
+                && !mAudioAdapter.isSelecting()) {
             mButtonCollapse.setVisibility(View.VISIBLE);
         }
-
-        if (mRadioAll != null && mRadioAll.getVisibility() != View.VISIBLE
-                && mAudioAdapter.getSelectedItemsSize() > 0) {
-            mRadioAll.setVisibility(View.VISIBLE);
-            if (mButtonCollapse != null) {
-                mButtonCollapse.setVisibility(View.GONE);
-            }
-        }
-
-        if (mDownland != null && mDownland.getVisibility() != View.VISIBLE
-                && mAudioAdapter.getSelectedItemsSize() > 0) {
-            mDownland.setVisibility(View.VISIBLE);
-            mDelete.setVisibility(View.VISIBLE);
-        }
-
-        if (mAudioAdapter.getSelectedItemsSize() > 0) {
-            mNameCurent.setText(String.valueOf(mAudioAdapter.getSelectedItemsSize()));
-        } else {
-            Intent broadcastIntent = new Intent(Broadcast_SHOW_TITLE);
-            broadcastSend(broadcastIntent);
-        }
+        bindSelectionBar(true);
 
         int selected = mAudioAdapter.getIndexSelected();
         boolean b = pref.getBoolean("scrollToSelectedPref", false);
@@ -1010,7 +868,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
                     bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             }
-            mAudioAdapter.selectedItemsAddAll();
+            mAudioAdapter.startSelection();
         }
 
         mPresenter.onOptionsMenuItemSelected(menuItem);
@@ -1191,6 +1049,11 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
             mNextTop.setImageResource(mTopSeek ? R.drawable.ic_fast_forward : R.drawable.ic_skip_next);
             mNextTop.setContentDescription(getString(mTopSeek ? R.string.fast_forward : R.string.next));
         }
+        //a tap seeks by the step set in the settings, and the icons show it
+        mRewind.setImageResource(SeekStep.rewindIcon(this));
+        mRewind.setContentDescription(SeekStep.rewindLabel(this));
+        mForward.setImageResource(SeekStep.forwardIcon(this));
+        mForward.setContentDescription(SeekStep.forwardLabel(this));
     }
 
     @Override
@@ -1369,7 +1232,48 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
 
     @Override
     public void showTitle(@NotNull @NonNull String name) {
-        mNameCurent.setText(name);
+        if (!mShowingCount) {
+            mNameCurent.setText(name);
+        }
+    }
+
+    /**
+     * The top row of the chapter list while chapters are chosen for download/delete (the Download/Delete menu or a
+     * long press): close, all/some/none chosen, "N из M" and download and delete stand in place of the collapse
+     * button and the playing chapter. Choosing goes on until it is closed, Back, an action or the sheet collapsing,
+     * however many chapters are chosen. {@code shown}: the list is open, not a sheet at its collapsed height.
+     */
+    private void bindSelectionBar(boolean shown) {
+        boolean selecting = shown && mAudioAdapter != null && mAudioAdapter.isSelecting();
+        int bar = selecting ? View.VISIBLE : View.GONE;
+        for (View view : new View[] {mSelectionClose, mRadioAll, mDownland, mDelete}) {
+            if (view != null && view.getVisibility() != bar) {
+                view.setVisibility(bar);
+            }
+        }
+        if (mButtonCollapse != null && shown && bottomSheetBehavior != null) {
+            mButtonCollapse.setVisibility(selecting ? View.GONE : View.VISIBLE);
+        }
+        if (!selecting) {
+            if (mShowingCount) {
+                mShowingCount = false;
+                broadcastSend(new Intent(Broadcast_SHOW_TITLE));
+            }
+            return;
+        }
+        int chosen = mAudioAdapter.getSelectedChapters();
+        int total = mAudioAdapter.getItemCount();
+        mShowingCount = true;
+        mNameCurent.setText(getString(R.string.selection_count, chosen, total));
+        boolean all = total > 0 && chosen == total;
+        mRadioAll.setCompoundDrawablesRelativeWithIntrinsicBounds(all ? R.drawable.ic_check_circle_outline
+                : chosen == 0 ? R.drawable.ic_checkbox_blank_circle_outline : R.drawable.ic_selection_partial, 0, 0, 0);
+        mRadioAll.setContentDescription(getString(all ? R.string.selection_clear_all : R.string.selection_select_all));
+        boolean any = mAudioAdapter.getSelectedItemsSize() > 0;
+        for (ImageButton action : new ImageButton[] {mDownland, mDelete}) {
+            action.setEnabled(any);
+            action.setImageAlpha(any ? 255 : 97);
+        }
     }
 
     @UnstableApi
@@ -1797,15 +1701,7 @@ public class BookActivity extends MvpAppCompatActivity implements Activity {
         if (bottomSheetBehavior != null) {
             bottomSheetBehavior.setState(mPresenter.getState());
         } else {
-            if (mAudioAdapter.getSelectedItemsSize() > 0) {
-                if (mRadioAll.getVisibility() != View.VISIBLE) {
-                    mRadioAll.setVisibility(View.VISIBLE);
-                }
-            } else {
-                if (mRadioAll.getVisibility() != View.GONE) {
-                    mRadioAll.setVisibility(View.GONE);
-                }
-            }
+            bindSelectionBar(true);
         }
     }
 
