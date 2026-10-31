@@ -64,6 +64,7 @@ import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.FavoritePresenter;
 import com.fanok.audiobooks.search.Provider;
 import com.fanok.audiobooks.search.Sources;
+import com.fanok.audiobooks.update.Updater;
 import com.fanok.audiobooks.util.DownloadStorageHelper;
 
 import com.google.android.material.navigation.NavigationView;
@@ -745,6 +746,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             String key) {
         if (AppProxy.PREF_MODE.equals(key)) {
             updateProxySummary();
+        }
+        if (Updater.PREF.equals(key) && sharedPreferences.getBoolean(key, true) && getContext() != null) {
+            Updater.check(getContext(), null); // switched on: the first check now, not at the next period
         }
         updatePrefSummary(findPreference(key));
     }

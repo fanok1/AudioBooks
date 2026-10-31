@@ -27,6 +27,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- The player retries a chapter at once when the default network comes back. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- update.Updater hands a downloaded update to the system installer (API 26+ asks the user once). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <queries>
         <intent>
@@ -86,6 +88,12 @@
             android:label="@string/download"
             android:exported="false"
             android:theme="@style/AppTheme.SwipeOnClose"/>
+
+        <activity
+            android:name=".activity.ForumLoginActivity"
+            android:configChanges="locale|uiMode"
+            android:exported="false"
+            android:theme="@style/AppTheme.SwipeOnClose" />
 
         <activity
             android:name=".activity.ActivityCookies"
@@ -201,6 +209,15 @@
             </intent-filter>
         </activity>
 
+        <provider
+            android:name=".update.UpdateFileProvider"
+            android:authorities="${applicationId}.update"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_paths" />
+        </provider>
         <provider
             android:name=".MySuggestionProvider"
             android:authorities="${applicationId}.MySuggestionProvider"

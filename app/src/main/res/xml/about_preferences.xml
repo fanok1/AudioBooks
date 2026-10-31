@@ -4,8 +4,7 @@
 
     <Preference
         android:icon="@drawable/ic_version"
-        android:key="version"
-        android:selectable="false" />
+        android:key="version" />
 
     <!--<Preference
         android:icon="@drawable/ic_plus_version"
@@ -147,6 +146,11 @@
         android:icon="@drawable/ic_github"
         android:key="open_github"
         android:title="@string/open_github" />
+
+    <Preference
+        android:icon="@drawable/ic_telegram"
+        android:key="open_telegram"
+        android:title="@string/open_telegram" />
 
 
 </PreferenceScreen>

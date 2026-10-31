@@ -25,6 +25,7 @@ import com.fanok.audiobooks.BuildConfig;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.ActivitySendEmail;
 import com.fanok.audiobooks.activity.MainActivity;
+import com.fanok.audiobooks.update.Updater;
 import com.google.android.material.navigation.NavigationView;
 import java.util.ArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +62,19 @@ public class AboutFragment extends PreferenceFragmentCompat {
                 requireActivity().getApplicationContext(),
                 R.xml.about_preferences,
                 false);
+
+        preferenceClickListner("version", preference -> {
+            Context app = requireContext().getApplicationContext();
+            Toast.makeText(app, R.string.update_checking, Toast.LENGTH_SHORT).show();
+            // a newer version is offered by MainActivity's dialog; here only the other outcomes are told
+            Updater.check(app, result -> {
+                if (result == Updater.Result.LATEST || result == Updater.Result.FAILED) {
+                    Toast.makeText(app, result == Updater.Result.LATEST ? R.string.update_latest
+                            : R.string.update_failed, Toast.LENGTH_LONG).show();
+                }
+            });
+            return true;
+        });
 
         preferenceClickListner("privacy", preference -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(
@@ -140,6 +154,16 @@ public class AboutFragment extends PreferenceFragmentCompat {
             return true;
         });
 
+        preferenceClickListner("open_telegram", preference -> {
+            // the Telegram app when one is installed (tg: is its own scheme), otherwise the group's page in a browser
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("tg://resolve?domain=AudioKnijki")));
+            } catch (ActivityNotFoundException e) {
+                openInBrowser("https://t.me/AudioKnijki");
+            }
+            return true;
+        });
+
         preferenceClickListner("open_rustore", preference -> {
             openInBrowser("https://apps.rustore.ru/app/com.fanok.audiobooks");
             return true;
@@ -166,7 +190,8 @@ public class AboutFragment extends PreferenceFragmentCompat {
         super.onResume();
         Preference version = findPreference("version");
         if (version != null) {
-            version.setSummary(getString(R.string.version) + " " + BuildConfig.VERSION_NAME);
+            version.setSummary(getString(R.string.version) + " " + BuildConfig.VERSION_NAME + "\n"
+                    + getString(R.string.update_check_hint));
             version.setTitle(getString(R.string.app_name));
         }
 

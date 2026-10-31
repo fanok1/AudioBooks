@@ -9,10 +9,12 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
 import android.app.UiModeManager;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
@@ -41,6 +43,7 @@ import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.fanok.audiobooks.AppThemes;
+import com.fanok.audiobooks.BuildConfig;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
@@ -48,6 +51,7 @@ import com.fanok.audiobooks.pojo.BookPOJO;
 import com.fanok.audiobooks.pojo.StorageUtil;
 import com.fanok.audiobooks.presenter.MainPresenter;
 import com.fanok.audiobooks.service.MediaPlayerService;
+import com.fanok.audiobooks.update.Updater;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
@@ -82,6 +86,7 @@ public class MainActivity extends MvpAppCompatActivity
 
     private NavigationView navigationView;
     private final DialogQueue dialogs = new DialogQueue();
+    private boolean updateQueued;
     private Runnable permissionDone;
 
     private SharedPreferences preferences;
@@ -165,6 +170,68 @@ public class MainActivity extends MvpAppCompatActivity
     protected void onResume() {
         super.onResume();
         updateNowPlayingEntry();
+        Updater.setListener(this::offerUpdate);
+        offerUpdate();
+    }
+
+    @Override
+    protected void onPause() {
+        Updater.setListener(null);
+        super.onPause();
+    }
+
+    /** A downloaded update (or one on 4pda that needs a login) is put to the user once, after other dialogs. */
+    private void offerUpdate() {
+        Updater.Offer offer = Updater.pending(this);
+        if (offer == null || updateQueued) {
+            return;
+        }
+        updateQueued = true;
+        dialogs.add(done -> showUpdateDialog(offer, done));
+    }
+
+    private void showUpdateDialog(@NonNull Updater.Offer offer, @NonNull Runnable done) {
+        if (isFinishing() || isDestroyed()) {
+            updateQueued = false;
+            done.run();
+            return;
+        }
+        // any answer puts it off for a day (a check by hand shows it again); a dialog closed by recreation does not
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle(R.string.update_title)
+                .setIcon(R.drawable.ic_update)
+                .setNegativeButton(R.string.update_later, (dialog, which) -> Updater.snooze(this, offer))
+                .setOnCancelListener(dialog -> Updater.snooze(this, offer))
+                .setOnDismissListener(dialog -> {
+                    updateQueued = false;
+                    done.run();
+                });
+        String version = offer.release.version;
+        if (offer.apk != null) {
+            builder.setMessage(getString(R.string.update_ready, version, BuildConfig.VERSION_NAME))
+                    .setPositiveButton(R.string.update_install, (dialog, which) -> {
+                        Updater.snooze(this, offer);
+                        Updater.install(this, offer);
+                    });
+        } else {
+            String page = offer.release.page;
+            builder.setMessage(getString(R.string.update_forum, version, BuildConfig.VERSION_NAME))
+                    .setNeutralButton(R.string.update_in_browser, (dialog, which) -> {
+                        Updater.snooze(this, offer);
+                        try {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(page)));
+                        } catch (ActivityNotFoundException e) {
+                            Toast.makeText(this, R.string.browser_not_found, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+                builder.setPositiveButton(R.string.update_forum_login, (dialog, which) -> {
+                    Updater.snooze(this, offer);
+                    ForumLoginActivity.start(this, page);
+                });
+            }
+        }
+        builder.show();
     }
 
     /** "Now playing" is offered only while the player service holds a book. */
@@ -271,6 +338,7 @@ public class MainActivity extends MvpAppCompatActivity
         Log.d(TAG, "onCreate: called");
 
         setContentView(R.layout.activity_main);
+        Updater.start(this); // once per process: a check in a few seconds, then every 1.5 h
 
         preferences = getSharedPreferences("FIRST", Context.MODE_PRIVATE);
 

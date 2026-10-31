@@ -254,6 +254,8 @@ git push origin v7.4
 
 3. The Release workflow builds and publishes the release with notes generated from the merged pull requests and commits; edit them on GitHub afterwards if needed. A tag containing a hyphen, such as `v7.4-beta1` (with `versionName "7.4-beta1"`), is published as a pre-release.
 
+4. Installed apps find the release themselves ([`update/Updater`](../app/src/main/java/com/fanok/audiobooks/update/Updater.java), "Автообновление"): GitHub first (the tag the latest release redirects to, then its `SHA256SUMS.txt` and `AudioBooks-<versionName>.apk`), so step 3 is enough for them. Where GitHub is blocked they read the mirror: upload the APK to `www.abc-guitars.com/data/audiobook/` and update `update.txt` there (`version=<versionName>`, `file=AudioBooks-<versionName>.apk`, optionally `sha256=<hash from SHA256SUMS.txt>`). The last resort is the 4pda topic: the parser reads the header's list after "Скачать:" (`<strong>Версия: X</strong>` followed by the link to the post) and takes the attachment whose file name ends in `-X.apk`, so keep that form. Every downloaded APK must be signed with the release key and have a higher `versionCode`, or the app rejects it.
+
 If the workflow fails, for example because the tag does not match `versionName`, delete the tag, fix the cause, and tag again:
 
 ```bash

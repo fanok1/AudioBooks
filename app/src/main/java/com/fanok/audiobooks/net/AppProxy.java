@@ -264,6 +264,24 @@ public final class AppProxy {
         return provider != null && isDirect(provider) ? onDeviceRoute(client, system) : client;
     }
 
+    /**
+     * The routes to the app's own servers (its update check), each once, in this order: the mode's route of
+     * {@code client}, the built-in proxy when that is not the mode's, the device's own route when the mode takes a proxy.
+     * A blocked server can then be reached around the block, and a proxy that fails it can be bypassed.
+     */
+    @NonNull
+    public static List<okhttp3.OkHttpClient> updateRoutes(@NonNull okhttp3.OkHttpClient client) {
+        List<okhttp3.OkHttpClient> routes = new java.util.ArrayList<>();
+        routes.add(client);
+        if (configured() && !MODE_BUILTIN.equals(mode)) {
+            routes.add(client.newBuilder().proxy(custom.toProxy()).build());
+        }
+        if (proxyUsable()) {
+            routes.add(onDeviceRoute(client, system));
+        }
+        return routes;
+    }
+
     /** {@code client} with the device's own route ({@code device}, the selector before ours) for every host. */
     @NonNull
     static okhttp3.OkHttpClient onDeviceRoute(@NonNull okhttp3.OkHttpClient client, @Nullable ProxySelector device) {

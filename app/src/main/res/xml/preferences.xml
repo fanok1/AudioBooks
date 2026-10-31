@@ -359,6 +359,14 @@
             android:summary="@string/error_reports_desc"
             android:title="@string/error_reports" />
 
+        <!-- update.Updater: a check at the start and every 1.5 h; "О программе" checks by hand either way -->
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:icon="@drawable/ic_update"
+            android:key="auto_update"
+            android:summary="@string/auto_update_desc"
+            android:title="@string/auto_update" />
+
         <Preference
             android:icon="@drawable/ic_lock"
             android:key="parentalControl"
