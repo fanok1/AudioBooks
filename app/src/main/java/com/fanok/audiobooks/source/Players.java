@@ -68,6 +68,29 @@ public final class Players {
         return null;
     }
 
+    /**
+     * The XSPlayer {@code tracks} list ({@code [id, title, seconds, ?, file]}, the engine of izib.uk and biblus): a
+     * file under {@code mp3_url_prefix} (host and path, no scheme) signed with {@code sign}, or, as the player allows,
+     * an absolute URL played as it is.
+     */
+    public static ArrayList<AudioPOJO> xsTracks(JsonObject player, String bookUrl, String bookName, String what) {
+        String prefix = string(player, "mp3_url_prefix");
+        if (prefix.isEmpty()) {
+            throw new IllegalStateException(what + " has no mp3_url_prefix");
+        }
+        String base = prefix.matches("(?i)^https?://.*") ? prefix : "https://" + prefix.replaceFirst("^/+", "");
+        String sign = string(player, "sign");
+        String query = sign.isEmpty() || sign.startsWith("?") || sign.startsWith("&") ? sign : "?" + sign;
+        Chapters chapters = new Chapters(bookName, bookUrl);
+        chapters.each(arrayOf(player, "tracks"), item -> {
+            JsonArray track = item.getAsJsonArray();
+            String file = string(track.get(4));
+            String url = file.isEmpty() || file.matches("(?i)^https?://.*") ? file : base + "/" + file + query;
+            return chapters.chapter(string(track.get(1)), url, seconds(track.get(2)));
+        });
+        return chapters.done(what);
+    }
+
     /** An XSPlayer-style {@code {playlist: [{title, src, duration}]}}. */
     public static ArrayList<AudioPOJO> xsPlaylist(JsonObject player, String bookUrl, String bookName, String what) {
         Chapters chapters = new Chapters(bookName, bookUrl);

@@ -1,0 +1,123 @@
+{
+ "mp3": "https://r1.akniga.club/s/b/74528/tolkin-dzhon-vlastelin-kolec-bratstvo-kolca.mp3?res=ncYC_WFkTGMbkpEkLo7TjA&expires=2051222400",
+ "version": 1,
+ "items": [
+  {
+   "file": 1,
+   "title": "1. Пролог. О хоббитах.",
+   "time": 1690,
+   "duration": 1690,
+   "durationhms": "28:10",
+   "time_from_start": 0,
+   "time_finish": 1690
+  },
+  {
+   "file": 1,
+   "title": "2. Пролог. О курительном зелье.",
+   "time": 1981,
+   "duration": 291,
+   "durationhms": "04:51",
+   "time_from_start": 1690,
+   "time_finish": 1981
+  },
+  {
+   "file": 1,
+   "title": "3. Пролог. О порядках в Заселье.",
+   "time": 2417,
+   "duration": 436,
+   "durationhms": "07:16",
+   "time_from_start": 1981,
+   "time_finish": 2417
+  },
+  {
+   "file": 1,
+   "title": "4. Пролог. О том, как было найдено Кольцо.",
+   "time": 3302,
+   "duration": 885,
+   "durationhms": "14:45",
+   "time_from_start": 2417,
+   "time_finish": 3302
+  },
+  {
+   "file": 1,
+   "title": "5. Пролог. Заметки о засельских хрониках.",
+   "time": 3763,
+   "duration": 461,
+   "durationhms": "07:41",
+   "time_from_start": 3302,
+   "time_finish": 3763
+  },
+  {
+   "file": 1,
+   "title": "6. Глава 1 _ Званые гости.",
+   "time": 8607,
+   "duration": 4844,
+   "durationhms": "01:20:44",
+   "time_from_start": 3763,
+   "time_finish": 8607
+  },
+  {
+   "file": 1,
+   "title": "7. Глава 2 _ Тень былого",
+   "time": 14310,
+   "duration": 5703,
+   "durationhms": "01:35:03",
+   "time_from_start": 8607,
+   "time_finish": 14310
+  },
+  {
+   "file": 1,
+   "title": "8. Глава 3 _ Трое - компания что надо",
+   "time": 18572,
+   "duration": 4262,
+   "durationhms": "01:11:02",
+   "time_from_start": 14310,
+   "time_finish": 18572
+  },
+  {
+   "file": 1,
+   "title": "9. Глава 4 _ Напрямик по грибы",
+   "time": 21037,
+   "duration": 2465,
+   "durationhms": "41:05",
+   "time_from_start": 18572,
+   "time_finish": 21037
+  },
+  {
+   "file": 1,
+   "title": "10. Глава 5 _ Заговорщики сбрасывают маски",
+   "time": 23312,
+   "duration": 2275,
+   "durationhms": "37:55",
+   "time_from_start": 21037,
+   "time_finish": 23312
+  },
+  {
+   "file": 1,
+   "title": "11. Глава 6 _ Старый Лес",
+   "time": 25862,
+   "duration": 2550,
+   "durationhms": "42:30",
+   "time_from_start": 23312,
+   "time_finish": 25862
+  },
+  {
+   "file": 1,
+   "title": "12. Глава 7 _ В доме Тома Бомбадила",
+   "time": 28509,
+   "duration": 2647,
+   "durationhms": "44:07",
+   "time_from_start": 25862,
+   "time_finish": 28509
+  },
+  {
+   "file": 1,
+   "title": "13. Глава 8 _ Туман над курганами",
+   "time": 31622,
+   "duration": 3113,
+   "durationhms": "51:53",
+   "time_from_start": 28509,
+   "time_finish": 31622
+  }
+ ]
+}

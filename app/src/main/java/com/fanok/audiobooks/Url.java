@@ -113,6 +113,8 @@ public class Url {
         HOST_ALIASES.put("aknig.xyz", "s2.aknig.xyz");
         HOST_ALIASES.put("m.otrub.in", "otrub.in");
         HOST_ALIASES.put("mob.knigoblud.club", "knigoblud.club");
+        HOST_ALIASES.put("m.biblus.org", "biblus.org");
+        HOST_ALIASES.put("sweetbook.net", "golosknig.com");
     }
 
     /** Lower-case host of {@code url} without a leading {@code www.}; empty when unparsable. */

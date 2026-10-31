@@ -41,7 +41,7 @@ public class BookPOJOTest {
     public void emptyPageIsATypedErrorAndUnknownHostIsRejected() {
         for (String[] page : BOOK_PAGES) {
             try {
-                BookPOJO.parseBook(Jsoup.parse("", page[1]), page[1]);
+                BookPOJO.parseBook(BookPageFixtures.empty(page[0], page[1]), page[1]);
                 fail(page[0] + ": empty page parsed");
             } catch (IOException expected) {
                 // typed error

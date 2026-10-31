@@ -5,15 +5,25 @@ import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.source.Abmp3;
 import com.fanok.audiobooks.source.AknigXyz;
 import com.fanok.audiobooks.source.Akniga;
+import com.fanok.audiobooks.source.Aknigi24;
 import com.fanok.audiobooks.source.Audioboo;
-import com.fanok.audiobooks.source.BazaKnig;
 import com.fanok.audiobooks.source.AudioknigaLife;
+import com.fanok.audiobooks.source.AudioknigaOne;
+import com.fanok.audiobooks.source.AudioknigaOnline;
 import com.fanok.audiobooks.source.AudioknigiFun;
+import com.fanok.audiobooks.source.AudioknigiPro;
+import com.fanok.audiobooks.source.BazaKnig;
+import com.fanok.audiobooks.source.Biblus;
+import com.fanok.audiobooks.source.Bookish;
+import com.fanok.audiobooks.source.Golosknig;
+import com.fanok.audiobooks.source.Golosom;
 import com.fanok.audiobooks.source.Izibuk;
 import com.fanok.audiobooks.source.Knigavuhe;
 import com.fanok.audiobooks.source.Knigoblud;
+import com.fanok.audiobooks.source.Lis10book;
 import com.fanok.audiobooks.source.Otrub;
 import com.fanok.audiobooks.source.Poleknig;
+import com.fanok.audiobooks.source.SlushatKnigi;
 import com.fanok.audiobooks.source.SourceParser;
 import com.fanok.audiobooks.source.Uknig;
 
@@ -52,7 +62,30 @@ public enum Provider {
     AKNIG_XYZ(AknigXyz.SERVER, "Aknig.xyz", "aknig_xyz", "search_aknig_xyz", 11, "AknigXyz",
             AknigXyz.INDEX, AknigXyz.GENRES, null, null, new AknigXyz()),
     AUDIOKNIGA_LIFE(AudioknigaLife.SERVER, "Аудиокнига Life", "audiokniga_life", "search_audiokniga_life", 12,
-            "AudioknigaLife", AudioknigaLife.INDEX, AudioknigaLife.GENRES, null, null, new AudioknigaLife());
+            "AudioknigaLife", AudioknigaLife.INDEX, AudioknigaLife.GENRES, null, null, new AudioknigaLife()),
+    AKNIGI24(Aknigi24.SERVER, "Aknigi24", "aknigi24", "search_aknigi24", 13, "Aknigi24",
+            Aknigi24.INDEX, Aknigi24.GENRES, Aknigi24.AUTHORS, Aknigi24.READERS, new Aknigi24()),
+    LIS10BOOK(Lis10book.SERVER, "Lis10book", "lis10book", "search_lis10book", 14, "Lis10book",
+            Lis10book.INDEX, Lis10book.GENRES, Lis10book.AUTHORS, Lis10book.READERS, new Lis10book()),
+    AUDIOKNIGA_ONE(AudioknigaOne.SERVER, "Audiokniga.one", "audiokniga_one", "search_audiokniga_one", 15,
+            "AudioknigaOne", AudioknigaOne.INDEX, AudioknigaOne.GENRES, AudioknigaOne.AUTHORS, AudioknigaOne.READERS,
+            new AudioknigaOne()),
+    BIBLUS(Biblus.SERVER, "Библус", "biblus", "search_biblus", 16, "Biblus",
+            Biblus.INDEX, Biblus.GENRES, null, null, new Biblus()),
+    AUDIOKNIGA_ONLINE(AudioknigaOnline.SERVER, "Audiokniga-online", "audiokniga_online", "search_audiokniga_online",
+            17, "AudioknigaOnline", AudioknigaOnline.INDEX, AudioknigaOnline.GENRES, null, null,
+            new AudioknigaOnline()),
+    SLUSHAT_KNIGI(SlushatKnigi.SERVER, "Slushat-knigi", "slushat_knigi", "search_slushat_knigi", 18, "SlushatKnigi",
+            SlushatKnigi.INDEX, SlushatKnigi.GENRES, null, null, new SlushatKnigi()),
+    AUDIOKNIGI_PRO(AudioknigiPro.SERVER, "Audioknigi.pro", "audioknigi_pro", "search_audioknigi_pro", 19,
+            "AudioknigiPro", AudioknigiPro.INDEX, AudioknigiPro.GENRES, AudioknigiPro.AUTHORS, AudioknigiPro.READERS,
+            new AudioknigiPro()),
+    BOOKISH(Bookish.SERVER, "Bookish", "bookish", "search_bookish", 20, "Bookish",
+            Bookish.INDEX, Bookish.GENRES, null, null, new Bookish()),
+    GOLOSKNIG(Golosknig.SERVER, "Golosknig", "golosknig", "search_golosknig", 21, "Golosknig",
+            Golosknig.INDEX, Golosknig.GENRES, Golosknig.AUTHORS, Golosknig.READERS, new Golosknig()),
+    GOLOSOM(Golosom.SERVER, "Голосом", "golosom", "search_golosom", 22, "Golosom",
+            Golosom.INDEX, Golosom.GENRES, null, null, new Golosom());
 
     /** {@code https://host} without a trailing slash. */
     public final String server;

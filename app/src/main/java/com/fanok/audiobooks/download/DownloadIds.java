@@ -1,6 +1,8 @@
 package com.fanok.audiobooks.download;
 
 import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.search.Provider;
+import com.fanok.audiobooks.source.SourceParser;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -9,13 +11,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Pure identity of downloads. A progressive chapter is one download whose id and custom cache key are
  * {@code v1/<book>/chapter/<ordinal>}; an HLS stream (one URL for many chapters) is one download
  * {@code v1/<book>/stream/<host/path>} without a custom cache key (Media3 rejects one for HLS), shared by its
- * chapters, which keep their own clipping at playback. A stream is named by its own host and path, not by its
- * position, so streams added or dropped around it never renumber it. {@code <book>} is the canonical book URL
+ * chapters, which keep their own clipping at playback; a progressive file is such a stream too where its site
+ * downloads shared files once, with the stream id as its cache key. A stream is named by its own host and path, not
+ * by its position, so streams added or dropped around it never renumber it. {@code <book>} is the canonical book URL
  * without scheme, {@code www.}, trailing slash or fragment, so mirrors of one book and moved hosts give one id.
  * Downloads made before these ids keep the legacy id: the chapter URL without its query ({@link #legacyId}); a row
  * retained only for its exported copy (negative ordinal below -1) is identified by that legacy id alone.
@@ -23,6 +28,8 @@ import java.util.Map;
 public final class DownloadIds {
 
     public static final String VERSION = "v1";
+    /** The version a whole-book file's URL names when the site re-uploaded it ({@code &v=2}). */
+    private static final Pattern FILE_VERSION = Pattern.compile("[?&]v=([^&#]+)");
 
     /** The download that holds one chapter. */
     public static final class Entry {
@@ -92,7 +99,7 @@ public final class DownloadIds {
      * a chapter id always does; a stream id only when the request has the stream's host and path.
      */
     public static boolean holdsCurrent(Entry entry, String url, String requestUrl) {
-        return !entry.hls || streamKey(url).equals(streamKey(requestUrl));
+        return !isStreamId(entry.id) || streamKey(url).equals(streamKey(requestUrl));
     }
 
     /**
@@ -162,12 +169,16 @@ public final class DownloadIds {
     /**
      * Downloads of the chapters of one book, aligned with {@code urls}. {@code ordinals[i]} is the chapter's recorded
      * ordinal, or -1 to use its position {@code i}; below -1 the row was retained for its copy and has its legacy id
-     * only. HLS chapters map to the stream of their URL's host and path.
+     * only. HLS chapters map to the stream of their URL's host and path; so do progressive chapters where the book's
+     * site downloads shared files once ({@link SourceParser#downloadsSharedFiles}), with the stream id as their cache
+     * key.
      */
     public static List<Entry> forBook(String bookUrl, List<String> urls, int[] ordinals) {
         List<Entry> entries = new ArrayList<>(urls.size());
         Map<String, String> legacyOwner = new HashMap<>();
         Map<String, Boolean> legacyShared = new HashMap<>();
+        SourceParser site = Provider.parserOf(bookUrl);
+        boolean filesAreStreams = site != null && site.downloadsSharedFiles();
         for (String url : urls) {
             String legacy = legacyId(url);
             String owner = legacyOwner.get(legacy);
@@ -186,6 +197,12 @@ public final class DownloadIds {
                 entries.add(new Entry(streamId(bookUrl, url), null, true, legacy, shared));
             } else if (recorded < -1) {
                 entries.add(new Entry(legacy, null, false, legacy, shared));
+            } else if (filesAreStreams) {
+                // the file's own id whatever chapters share it, so one row alone, or a book of one chapter, finds it;
+                // a re-uploaded file (its v parameter) is another download
+                Matcher version = FILE_VERSION.matcher(url);
+                String id = streamId(bookUrl, url) + (version.find() ? "?v=" + version.group(1) : "");
+                entries.add(new Entry(id, id, false, legacy, shared));
             } else {
                 String id = chapterId(bookUrl, recorded >= 0 ? recorded : i);
                 entries.add(new Entry(id, id, false, legacy, shared));

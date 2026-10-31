@@ -1,0 +1,891 @@
+
+<!doctype HTML>
+<html lang="ru">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Голосом — бесплатные аудиокниги. Просто бесплатные.</title>
+  <meta name="keywords" content="аудиокниги бесплатно, слушать онлайн, фантастика, фэнтези, детективы, классика, литрпг, попаданцы, S.T.A.L.K.E.R., метро, ужасы, мистика, приключения, исторические романы, любовные романы, женское фэнтези, Достоевский, Толстой, Булгаков, Пелевин, Кинг, Роулинг, Мураками, Звёздная, Каменистый, Лукьяненко, Гарри Поттер, книги на русском, слушать книги бесплатно" />  <meta name="description" content="Тысячи аудиокниг без регистрации, без подписки, без «введите карту, мы не спишем». Достоевский, Кинг, Пелевин, Каменистый, Роулинг — открываешь и слушаешь. Всё." />      <meta property="og:site_name" content="Голосом" />
+    <link rel="canonical" href="https://golosom.org/4454" />
+  <link rel="alternate" hreflang="ru" href="https://golosom.org/4454" />
+  <link rel="alternate" hreflang="en" href="https://golosom.org/en/4454" />
+  <link rel="alternate" hreflang="uk" href="https://golosom.org/uk/4454" />
+  <link rel="alternate" hreflang="x-default" href="https://golosom.org/4454" />
+  <link rel="alternate" type="application/rss+xml" hreflang="ru" title="Голосом" href="https://golosom.org/updates.rss" />
+  <link rel="alternate" type="application/rss+xml" hreflang="en" title="Голосом" href="https://golosom.org/en/updates.rss" />
+  <link rel="alternate" type="application/rss+xml" hreflang="uk" title="Голосом" href="https://golosom.org/uk/updates.rss" />
+
+  <script src="/assets/js/common.js?1"></script>
+
+<script src="/assets/js/app.js?11"></script>
+
+<link rel="stylesheet" type="text/css" href="/assets/css/app.css?13" />
+<script src="https://cdn.adfinity.pro/code/golosom.org/adfinity.js" async></script>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+  <link rel="shortcut icon" href="/favicon.ico?v=2" />
+
+  </head>
+<body>
+
+
+<div class="Header">
+  <div class="HeaderInner">
+    <a href="/" class="HeaderLogo">
+      <svg class="HeaderLogoIcon" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 15v-2a9 9 0 0 1 18 0v2" stroke-linecap="round"/>
+        <rect x="3" y="14" width="4" height="9" rx="1.5"/>
+        <rect x="21" y="14" width="4" height="9" rx="1.5"/>
+      </svg>
+      Голосом
+    </a>
+
+        <div class="HeaderSearch">
+      <form method="get" action="/search">
+        <input type="text" name="q" placeholder="Поиск книг..." autocomplete="off" />
+      </form>
+    </div>
+    
+    <div class="HeaderRight">
+      <nav class="HeaderNav">
+        <a href="/genres">Все жанры</a>
+      </nav>
+
+            <a href="/search" class="HeaderSearchMobile" aria-label="Поиск">
+        <svg viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+        </svg>
+      </a>
+      
+      <button class="HeaderBurger" id="HeaderBurger" type="button" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="HeaderMobileMenu" id="HeaderMobileMenu">
+  <div class="HeaderMobileMenuSearch">
+    <form method="get" action="/search">
+      <input type="text" name="q" placeholder="Поиск книг..." autocomplete="off" />
+    </form>
+  </div>
+  <a href="/genres">Все жанры</a>
+  <a href="/about">О сайте</a>
+  <a href="/contacts">Контакты</a>
+</div>
+
+<div class="SearchOverlay" id="SearchOverlay">
+  <div class="SearchOverlayBox">
+    <div class="SearchOverlayHeader">
+      <div class="SearchOverlayInputWrap">
+        <svg class="SearchOverlayInputIcon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+        </svg>
+        <input type="text" class="SearchOverlayInput" id="SearchOverlayInput" placeholder="Книга, автор или чтец..." autocomplete="off" />
+      </div>
+      <button class="SearchOverlayClose" id="SearchOverlayClose" type="button">
+        <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M5 5l10 10M15 5L5 15"/>
+        </svg>
+      </button>
+    </div>
+    <div class="SearchOverlayResults -empty" id="SearchOverlayResults"></div>
+  </div>
+</div>
+
+
+<div class="pageContent">
+<div class="SectionHeader">Новые книги</div>
+
+<span id="BL__PageNavAnchor"></span>
+
+<div id="BLWrap">
+  <div class="BookList" id="BL">
+    
+    
+  <div class="bookListItem js-fadein" id="book8"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/zapiski-kavalerista-izbrannaya-lirika">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/e3a4a97141b1a391/pic/b1920f64f3c48d5a.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">«Записки кавалериста» Избранная лирика</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/zapiski-kavalerista-izbrannaya-lirika">«Записки кавалериста» Избранная лирика</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/nikolaj-gumilev">Николай Гумилев</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/fyodor-stepanov">Фёдор Степанов</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/biografii-memuary-zhzl">Биографии, мемуары, ЖЗЛ</a>
+                          <span class="Tag">3 ч. 19 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+    
+  <div class="bookListItem js-fadein" id="book14"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/teni-ischezayut-v-polden">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/c54afe039d64530b/pic/7ba4c621e22e1944.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Тени исчезают в полдень</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/teni-ischezayut-v-polden">Тени исчезают в полдень</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/anatolij-ivanov">Анатолий Иванов</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/svetlana-raskatova">Светлана Раскатова</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/roman-proza">Роман, проза</a>
+                          <span class="Tag">33 ч. 25 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+          
+  <div class="bookListItem js-fadein" id="book4"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/sunduk-so-skazkami-vladimir-odoevskij">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/47564b3e0bee942c/pic/9af3cc84700b3f6e.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Сундук со сказками. Владимир Одоевский</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/sunduk-so-skazkami-vladimir-odoevskij">Сундук со сказками. Владимир Одоевский</a>
+      </div>
+
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/aleksandr-bordukov">Александр Бордуков</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/dlya-detej-audioskazki-stishki">Для детей, аудиосказки, стишки</a>
+                  <a class="Tag" href="/series/sunduk-so-skazkami">Сундук со сказками</a>
+                          <span class="Tag">47 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+          
+  <div class="bookListItem js-fadein" id="book1"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/stranstviya-drakona">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/6d054b2b2f401fc5/pic/c4a3d0f0a0bd2c04.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Странствия дракона</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/stranstviya-drakona">Странствия дракона</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/enn-makkefri">Энн Маккефри</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/rajna">Rajna</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/fantastika-fentezi">Фантастика, фэнтези</a>
+                  <a class="Tag" href="/series/vsadniki-perna">Всадники Перна</a>
+                          <span class="Tag">14 ч. 27 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+    
+  <div class="bookListItem js-fadein" id="book3"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/staraya-angliya-skazaniya-i-legendy">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/e48e21a7b5e0d72e/pic/721cdd32267a8d81.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Старая Англия. Сказания и легенды</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/staraya-angliya-skazaniya-i-legendy">Старая Англия. Сказания и легенды</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/kipling-redyard">Киплинг Редьярд</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/vyacheslav-gerasimov">Вячеслав Герасимов</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/fantastika-fentezi">Фантастика, фэнтези</a>
+                          <span class="Tag">6 ч. 49 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+    
+  <div class="bookListItem js-fadein" id="book12"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/razvedka-i-kreml">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/e556b57239a86782/pic/7165fc426cd169ac.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Разведка и Кремль</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/razvedka-i-kreml">Разведка и Кремль</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/pavel-sudoplatov">Павел Судоплатов</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/oborotov-yurij">Оборотов Юрий</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/istoriya-kulturologiya">История, культурология</a>
+                          <span class="Tag">20 ч. 14 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+    
+  <div class="bookListItem js-fadein" id="book13"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/priklyucheniya-doistoricheskogo-malchika">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/aeb8973b6c9e07bf/pic/e0db5938b550cdbb.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Приключения доисторического мальчика</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/priklyucheniya-doistoricheskogo-malchika">Приключения доисторического мальчика</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/ernest-dervili">Эрнест Д&#039;Эрвильи</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/tatyana-gorchakova">Татьяна Горчакова</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/dlya-detej-audioskazki-stishki">Для детей, аудиосказки, стишки</a>
+                          <span class="Tag">3 ч. 3 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+          
+  <div class="bookListItem js-fadein" id="book6"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/prigovorennyj-k-prizme">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/a18d49b4f847e03d/pic/551ee058ebab962b.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Приговоренный к призме</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/prigovorennyj-k-prizme">Приговоренный к призме</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/alan-din-foster">Алан Дин Фостер</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/lorna-dn">lorna-dn</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/fantastika-fentezi">Фантастика, фэнтези</a>
+                  <a class="Tag" href="/series/chelanksijskaya-federatsiya">Челанксийская федерация</a>
+                          <span class="Tag">9 ч. 30 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+    
+  <div class="bookListItem js-fadein" id="book15"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/pravilnoe-otnoshenie-k-dozhdyu">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/16c2b6c170ca4480/pic/964358758e6ae37a.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Правильное отношение к дождю</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/pravilnoe-otnoshenie-k-dozhdyu">Правильное отношение к дождю</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/aleksandr-makkoll-smit">Александр Макколл-Смит</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/irina-vorobyova">Ирина Воробьёва</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/detektivy-trillery-boeviki">Детективы, триллеры, боевики</a>
+                          <span class="Tag">8 ч. 24 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+    
+  <div class="bookListItem js-fadein" id="book18"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/poka-vash-podrostok-ne-svel-vas-s-uma">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/45bf0ce1420b453b/pic/493692ca226dd38b.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Пока ваш подросток не свел вас с ума</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/poka-vash-podrostok-ne-svel-vas-s-uma">Пока ваш подросток не свел вас с ума</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/najdzhel-latta">Найджел Латта</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/mariya-abalkina">Мария Абалкина</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/psihologiya-filosofiya">Психология, философия</a>
+                          <span class="Tag">8 ч. 45 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+          
+  <div class="bookListItem js-fadein" id="book11"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/osobyj-pochtovyj">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/314d64b37eb96ceb/pic/0399b814c2bd608a.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Особый почтовый</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/osobyj-pochtovyj">Особый почтовый</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/aleksej-pehov">Алексей Пехов</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/mihail-murzakov">Михаил Мурзаков</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/fantastika-fentezi">Фантастика, фэнтези</a>
+                  <a class="Tag" href="/series/mir-na-granitse-iznanki">Мир на границе Изнанки</a>
+                          <span class="Tag">2 ч. 29 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+    
+  <div class="bookListItem js-fadein" id="book2"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/nekrasivaya">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/fbcf8f2c42eab2bc/pic/490919b9da66c97c.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Некрасивая</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/nekrasivaya">Некрасивая</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/lidiya-charskaya">Лидия Чарская</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/marina-pavlovski">Марина Павловски</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/dlya-detej-audioskazki-stishki">Для детей, аудиосказки, стишки</a>
+                          <span class="Tag">4 ч. 28 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+          
+  <div class="bookListItem js-fadein" id="book10"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/my-s-toboj-odnoj-krovi">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/709f45f58c4093b2/pic/deed4b8cd93525bc.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Мы с тобой одной крови</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/my-s-toboj-odnoj-krovi">Мы с тобой одной крови</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/nikolaj-leonov">Николай Леонов</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/igor-murashko">Игорь Мурашко</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/detektivy-trillery-boeviki">Детективы, триллеры, боевики</a>
+                  <a class="Tag" href="/series/lev-gurov">Лев Гуров</a>
+                          <span class="Tag">10 ч. 3 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+          
+  <div class="bookListItem js-fadein" id="book17"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/ya-operupolnomochennyj">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/3830a93470af861e/pic/1af946d22441d374.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Я, Оперуполномоченный</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/ya-operupolnomochennyj">Я, Оперуполномоченный</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Авторы:</span>
+                            <span class="-allPeople">
+            <a href="/author/andrej-veter">Андрей Ветер</a>,           </span>
+                            <span class="-allPeople">
+            <a href="/author/valerij-streletskij">Валерий Стрелецкий</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/sergej-kirsanov">Сергей Кирсанов</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/detektivy-trillery-boeviki">Детективы, триллеры, боевики</a>
+                  <a class="Tag" href="/series/moskovskij-sled">Московский след</a>
+                          <span class="Tag">15 ч. 15 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+          
+  <div class="bookListItem js-fadein" id="book16"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/gusi-gusi-ga-ga-ga">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/d609069ecb69b194/pic/20290db770af76a8.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Гуси-гуси, га-га-га...</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/gusi-gusi-ga-ga-ga">Гуси-гуси, га-га-га...</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/vladislav-krapivin">Владислав Крапивин</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/igor-knyazev">Игорь Князев</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/dlya-detej-audioskazki-stishki">Для детей, аудиосказки, стишки</a>
+                  <a class="Tag" href="/series/v-glubine-velikogo-kristalla">В глубине Великого Кристалла</a>
+                          <span class="Tag">8 ч. 4 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+          
+  <div class="bookListItem js-fadein" id="book7"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/dom-odinokih-serdets">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/266f168f3a32b937/pic/2dfe1cdd40d4e460.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Дом одиноких сердец</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/dom-odinokih-serdets">Дом одиноких сердец</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/chingiz-abdullaev">Чингиз Абдуллаев</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/nikolaj-savitskij">Николай Савицкий</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/detektivy-trillery-boeviki">Детективы, триллеры, боевики</a>
+                  <a class="Tag" href="/series/drongo">Дронго</a>
+                          <span class="Tag">8 ч. 24 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+
+    
+  <div class="bookListItem js-fadein" id="book5"><div class="bookListItemInner"><div class="bookListItemInner2">
+    
+      <a class="bookListItemCover" href="/book/boltik">
+          <div class="bookListItemCoverImg js-parallax" data-img="https://r7.audioknigi.xyz/62c5f51c3de6ea12/pic/a86a855a1f327022.jpg"></div>
+          <div class="bookListItemCoverName">
+              <div class="bookListItemCoverNameText">Болтик</div>
+          </div>
+      </a>
+
+    <div class="bookListItemRight">
+      <div class="bookListItemName">
+        <a href="/book/boltik">Болтик</a>
+      </div>
+
+                  <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Автор:</span>
+                            <span class="-allPeople">
+            <a href="/author/vladislav-krapivin">Владислав Крапивин</a>          </span>
+                      </div>
+                        <div class="bookListItemMetaBlock">
+        <span class="MetaLabel">Чтец:</span>
+                            <span class="-allPeople">
+            <a href="/performer/andrej-pankrashkin">Андрей Панкрашкин</a>          </span>
+                      </div>
+      
+      <div class="bookListItemMetaBlock">
+        <a class="Tag" href="/genre/dlya-detej-audioskazki-stishki">Для детей, аудиосказки, стишки</a>
+                          <span class="Tag">4 ч. 29 мин.</span>
+                      </div>
+    </div>
+  </div></div></div>
+
+  
+
+  </div>
+
+  <div class="PageNav" id="BL__PageNav">
+    
+    <div class="PageNavLine1 clearfix">
+        <div class="PageNavPageButtons"><a class="PageNavButton __NoSelect __noDrag _page" href="/1" data-page="1">1</a><div class="PageNavButtonSep __NoSelect __noDrag">...</div><a class="PageNavButton __NoSelect __noDrag _page" href="/4450" data-page="4450">4450</a><a class="PageNavButton __NoSelect __noDrag _page" href="/4451" data-page="4451">4451</a><a class="PageNavButton __NoSelect __noDrag _page" href="/4452" data-page="4452">4452</a><a class="PageNavButton __NoSelect __noDrag _page" href="/4453" data-page="4453">4453</a><a class="PageNavButton __NoSelect __noDrag _page _pageCur" href="/4454" data-page="4454">4454</a></div>
+    </div>
+</div>
+</div>
+
+
+<div class="IndexText">
+  <h2>Слушать аудиокниги бесплатно — на «Голосом» это не просьба, это приглашение</h2>
+<p>Знаешь, в чём проблема хорошей книги? Она требует, чтобы ты сел. Остановился. Открыл страницу. А жизнь — она не про «сесть и остановиться». Жизнь — это пробки, беговые дорожки, очереди в налоговой и два часа в электричке, где единственное развлечение — чей-то локоть в твоём ребре. Именно для этой жизни существует «Голосом» — сайт, где можно <b>слушать аудиокниги онлайн бесплатно</b> и без регистрации, пока мир вокруг занимается своими делами.</p>
+<p>Мы не библиотека в классическом смысле. Мы — голос в твоих наушниках, который расскажет историю так, что ты проедешь свою остановку и не пожалеешь. <b>Бесплатные аудиокниги</b> — фантастика, детективы, классика, современная проза — всё здесь, всё озвучено, всё ждёт момента, когда ты нажмёшь «play».</p>
+<h3>Почему «Голосом» — а не тишина?</h3>
+<p>Потому что тишина переоценена. Тишина — это когда ты мог бы слушать Булгакова, но вместо этого слушаешь, как сосед ругается с женой через стену. <b>Аудиокниги слушать онлайн</b> — это выбор в пользу себя. Это когда утренняя пробежка превращается в путешествие по Средиземью, а мытьё посуды — в расследование убийства в закрытой комнате.</p>
+<p>На «Голосом» собрана <b>большая библиотека аудиокниг</b> на русском языке. Без подвоха. Без скрытых подписок. Без «первые три минуты бесплатно, а дальше — продай почку». Заходишь, выбираешь, слушаешь. Всё.</p>
+<h3>Что у нас есть — и чего нет</h3>
+<p>У нас есть <b>аудиокниги фантастика</b> — от Азимова и Лема до современных авторов, которые штампуют новые вселенные быстрее, чем ты успеваешь запомнить имена персонажей. Есть <b>детективы</b> — закрученные, нервные, такие, где ты подозреваешь всех, включая рассказчика, и особенно рассказчика. Есть <b>русская классика в аудиоформате</b> — Достоевский, Толстой, Чехов — те самые книги, которые ты пятнадцать лет обещаешь себе прочитать, и вот наконец можно просто послушать, без чувства вины и без толстого тома на тумбочке. Есть <b>современная проза</b> — книги, о которых говорят прямо сейчас, ради которых люди толкаются на ярмарках, а тут никакой толкучки. И есть <b>аудиокниги для саморазвития</b> — психология, бизнес, продуктивность — всё, чтобы на следующем созвоне звучать так, будто ты реально знаешь, о чём говоришь. Чего у нас нет — так это рекламы, которая вламывается посреди кульминации. Ну, почти. Мы работаем над этим.</p>
+<h3>Как это работает</h3>
+<p>Никакой магии. Заходишь на <b>golosom</b> — видишь каталог. Выбираешь жанр, автора или просто тыкаешь в то, что зацепило обложкой. Нажимаешь «play». <b>Слушать аудиокниги без регистрации</b> — не маркетинговый трюк, а то, как оно устроено. Между тобой и хорошей историей не стоит окно с просьбой придумать пароль из восьми символов, заглавной буквы и знака зодиака.</p>
+<p>Работает на телефоне. Работает на компьютере. Работает на планшете, который ты купил два года назад и с тех пор используешь как подставку под кружку. Дай ему шанс, он заслужил.</p>
+<h3>Для тех, кто ищет конкретику</h3>
+<p>Если ты дочитал до сюда — респект, серьёзно. Вот что ещё стоит знать.</p>
+<p><b>Новые аудиокниги</b> появляются регулярно — мир не стоит на месте, и лучшие книги года заслуживают голоса. <b>Аудиокниги 2026</b> уже в каталоге. <b>Лучшие аудиокниги</b> по версии наших слушателей вынесены в отдельную подборку — для тех, у кого нет настроения выбирать.</p>
+<p>Ищешь что-то конкретное? Поиск работает так, как должен — быстро и без лишних вопросов. <b>Аудиокниги Стивен Кинг</b>, <b>аудиокниги Пелевин</b>, <b>аудиокниги Ремарк</b> — набираешь имя, получаешь результат.</p>
+<h3>Последнее слово</h3>
+<p>«Голосом» — это <b>бесплатная онлайн-библиотека аудиокниг</b>, которая работает по простому принципу: хорошие истории не должны прятаться за стеной из подписок и паролей. Они должны быть там, где ты — в наушниках, в дороге, в три часа ночи, когда не спится. Надевай наушники, выбирай книгу, нажимай «play». Остальное — наша работа.</p>
+</div>
+
+</div>
+
+<div class="Footer">
+  <div class="FooterBlock">
+    <strong>Голосом</strong> — слушай аудиокниги онлайн бесплатно
+  </div>
+  <div class="FooterLinks">
+    <a href="/about">О сайте</a>
+    <a href="/contacts">Контакты</a>
+    <a href="/privacy">Конфиденциальность</a>
+
+        <div class="LangSwitcher" id="LangSwitcher">
+      <a class="LangSwitcherBtn" id="LangSwitcherBtn" href="javascript:void(0)">
+        🇷🇺 Русский                        <svg class="LangSwitcherArrow" viewBox="0 0 10 6" width="10" height="6" fill="currentColor"><path d="M5 0L10 6H0z"/></svg>
+      </a>
+      <div class="LangSwitcherMenu" id="LangSwitcherMenu">
+                <a href="/en/4454" class="LangSwitcherItem">🇬🇧 English</a>        <a href="/uk/4454" class="LangSwitcherItem">🇺🇦 Українська</a>      </div>
+    </div>
+      </div>
+</div>
+
+<script>
+App.mergeConfig({"mobile":true,"urlPrefix":""});
+App.engineReady();
+App.mergeStrings({"error":"Ошибка","loading":"Загрузка","show_all":"Показать все","hide":"Скрыть","search_results_count":["Найдено <b>%s аудиокнига<\/b>","Найдено <b>%s аудиокниги<\/b>","Найдено <b>%s аудиокниг<\/b>","Искать аудиокниги"],"search_not_found":"🤷 По запросу <b>%s<\/b> ничего не нашлось. Попробуйте другие слова!","search_audiobooks":"Искать аудиокниги","search_audiobooks_dynamic":"Искать <b>«%s»<\/b>","search_loading":"Загрузка результатов...","search_overlay_not_found":"Ничего не нашлось. Попробуйте другие слова!","search_overlay_all_results":"Все результаты →","spoiler_show":"Показать","spoiler_hide":"Скрыть"});
+
+try {
+  
+App.PageNav.Initialize({"page":4454,"pages":4454,"infinity":false,"linkTemplate":"\/{page}","contentNodeId":"BL"});
+
+} catch (e) {
+  console.error('script(1) failed:', e)
+}
+
+  (function() {
+    try {
+      (function () {
+  var TARGET_SELECTOR = '.adfinity-overlay-close-side-btn';
+  var SECONDARY_ID = 'krestik_banner_mobvpaut';
+  var LISTENER_FLAG = '__adfinityCloseHandlerAttached';
+
+  function attachHandler(el) {
+    if (!el || el[LISTENER_FLAG]) {
+      return;
+    }
+    el[LISTENER_FLAG] = true;
+    el.addEventListener('click', function () {
+      var secondary = document.getElementById(SECONDARY_ID);
+      if (secondary) {
+        secondary.click();
+      }
+    });
+  }
+
+  function scanExisting(root) {
+    var nodes = (root || document).querySelectorAll(TARGET_SELECTOR);
+    for (var i = 0; i < nodes.length; i++) {
+      attachHandler(nodes[i]);
+    }
+  }
+
+  scanExisting(document);
+
+  var observer = new MutationObserver(function (mutations) {
+    for (var i = 0; i < mutations.length; i++) {
+      var added = mutations[i].addedNodes;
+      for (var j = 0; j < added.length; j++) {
+        var node = added[j];
+        if (node.nodeType !== 1) continue;
+        if (node.matches && node.matches(TARGET_SELECTOR)) {
+          attachHandler(node);
+        }
+        if (node.querySelectorAll) {
+          scanExisting(node);
+        }
+      }
+    }
+  });
+
+  observer.observe(document.documentElement || document.body, {
+    childList: true,
+    subtree: true
+  });
+})();
+
+  App.listBooks.init();
+    App.PageNav.addPageAppendCallback(function(node) {
+    App.listBooks.init(node);
+    App.fadeIn.init(node);
+});
+App.PageNav.addPageReplaceCallback(function(node) {
+    App.listBooks.reset(node);
+    App.listBooks.init(node);
+    App.fadeIn.init(node);
+});
+    } catch (e) {
+      console.error('script(2) failed:', e)
+    }
+  })();
+
+</script>
+
+  <!--LiveInternet counter--><a href="https://www.liveinternet.ru/click"
+target="_blank"><img id="licnt0B95" width="88" height="15" style="border:0;opacity:0.01;height:1px;width:1px;position:absolute;" 
+title="LiveInternet: number of visitors for today is shown"
+src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAEALAAAAAABAAEAAAIBTAA7"
+alt=""/></a><script>(function(d,s){d.getElementById("licnt0B95").src=
+"https://counter.yadro.ru/hit?t26.6;r"+escape(d.referrer)+
+((typeof(s)=="undefined")?"":";s"+s.width+"*"+s.height+"*"+
+(s.colorDepth?s.colorDepth:s.pixelDepth))+";u"+escape(d.URL)+
+";h"+escape(d.title.substring(0,150))+";"+Math.random()})
+(document,screen)</script><!--/LiveInternet-->
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=108208169', 'ym');
+
+    ym(108208169, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/108208169" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XBMKX3Z0H0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-XBMKX3Z0H0');
+</script>
+
+
+
+</body>
+</html>

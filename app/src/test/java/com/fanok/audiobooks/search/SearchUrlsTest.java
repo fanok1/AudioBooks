@@ -39,12 +39,28 @@ public class SearchUrlsTest {
         PAGE_FORMAT.put(Provider.AUDIOKNIGA_LIFE, "/page/%d/");
         PAGE_FORMAT.put(Provider.AUDIOKNIGI_FUN, "search_start=%d&");
         PAGE_FORMAT.put(Provider.AKNIG_XYZ, "&search_start=%d&");
+        PAGE_FORMAT.put(Provider.AKNIGI24, "&page=%d");
+        PAGE_FORMAT.put(Provider.LIS10BOOK, "&page=%d");
+        PAGE_FORMAT.put(Provider.BIBLUS, "&p=%d");
+        PAGE_FORMAT.put(Provider.AUDIOKNIGA_ONLINE, "search_start=%d&");
+        PAGE_FORMAT.put(Provider.SLUSHAT_KNIGI, "&search_start=%d");
+        PAGE_FORMAT.put(Provider.AUDIOKNIGI_PRO, "search_start=%d&");
+        PAGE_FORMAT.put(Provider.BOOKISH, "search_start=%d&");
+        PAGE_FORMAT.put(Provider.GOLOSKNIG, "/page%d/");
+        PAGE_FORMAT.put(Provider.GOLOSOM, "&page=%d");
     }
 
     private static String pageToken(Provider provider, Category category, int page) {
         // akniga's ajax author/performer search is a query-string endpoint, its book search is a path
         String format = provider == Provider.AKNIGA && category != Category.BOOKS
                 ? "&page=%d" : PAGE_FORMAT.get(provider);
+        if (provider == Provider.AUDIOKNIGA_ONE) {
+            // offsets: 16 books, 30 people a page
+            return category == Category.BOOKS ? "&search_start=" + (page - 1) * 16 + "&" : "&off=" + (page - 1) * 30;
+        }
+        if (provider == Provider.GOLOSKNIG && page == 1) {
+            return "/books/?"; // page 1 is the bare search path
+        }
         return String.format(format, page);
     }
 
@@ -150,8 +166,9 @@ public class SearchUrlsTest {
                         int from = path.indexOf("p.title=") + "p.title=".length();
                         decoded = path.substring(from, path.indexOf("/v.litres_buy", from));
                     } else {
-                        String name = provider == Provider.ABMP3 ? "text" : provider == Provider.AUDIOBOO
-                                || provider == Provider.AUDIOKNIGI_FUN || provider == Provider.AKNIG_XYZ ? "story" : "q";
+                        String name = provider == Provider.ABMP3 ? "text"
+                                : provider == Provider.AKNIGI24 && category != Category.BOOKS ? "search"
+                                : HttpUrl.parse(url).queryParameter("story") != null ? "story" : "q";
                         decoded = HttpUrl.parse(url).queryParameter(name);
                     }
                     assertEquals(provider + "/" + category + " -> " + url, query, decoded);

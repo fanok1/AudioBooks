@@ -66,7 +66,8 @@ A site is one row in `search/Provider.java` and one adapter, `source/<Site>.java
 else — catalog and search screens, the Order and filter menus, the multi-site search, "on other sites", the book page,
 player, downloads, parental control, Referer and proxy routing — works through that interface and never branches on a
 site. `source/Uknig.java` (plain HTML, Playerjs by URL) and `source/AknigXyz.java` (DataLife Engine, POSTed sorts)
-were written on this contract and are the examples to start from.
+were written on this contract and are the examples to start from; `source/Lis10book.java` is a JSON-API site and
+`source/Golosknig.java` an encrypted XHR playlist of one whole-book MP3.
 
 **First release of a site:** catalog with real paging, book search, the genre list, the book page (description and
 chapters) and the sorts the server really offers. People indexes and search, series, comments, recommendations, other
@@ -116,6 +117,7 @@ differs writes its own lines or overrides the default, never a branch in the sha
 | Ranking periods, a duration bound | `periods`, `periodOf`, `withPeriod`, `periodsAreDates`; `withDuration`; `listsDuration` false when cards carry no time |
 | Referer, own CDN or API hosts, a slow server | `referer()`, `hosts()`, `timeoutMs()`; `mediaHeaders(bookUrl)` for audio requests. `timeoutMs()` also lengthens the site's limit in the multi-site search and "on other sites" (`Provider.requestSeconds`); raise it when `LiveDumpTest`'s `search-times.txt` marks the site SLOW (a two-word search above half its limit). A site set to go direct fetches its audio direct on every host, a CDN it shares with other sites included (`AppProxy.mediaClient`) |
 | A card that is a list of books (a collection) | `opensAsListing(url)`: the catalog opens it as a listing, never as a book page |
+| Chapters that are time ranges of one file (a whole-book MP3) | `AudioPOJO` `timeStart`/`timeFinish`, and `downloadsSharedFiles()` so the file downloads once (`DownloadIds`), not once per chapter |
 | A session cookie, a wall that lets only POST pass | `cookies()` (sent to the site's own host only; `mediaCookies(bookUrl)` for audio), `postsPages()` |
 | Lists read from other pages or built in | override `loadListing`, `loadGenres`, `loadPeople`, `loadSeries` (the defaults fetch the URL and parse it) |
 | Optional sections | `people`, `searchPeople`, `series`, `comments`, `recommendations`, `otherReaders`, `otherSource*` ("on other sites") |

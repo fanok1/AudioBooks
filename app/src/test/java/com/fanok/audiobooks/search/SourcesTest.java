@@ -37,7 +37,7 @@ public class SourcesTest {
         Sources.State state = Sources.parse(Sources.format(order, 3));
         assertEquals(order, state.order);
         assertEquals(3, state.active);
-        assertEquals("every source active", order.size(),
+        assertEquals("as many active as allowed", Math.min(Sources.MAX_ACTIVE, order.size()),
                 Sources.parse(Sources.format(order, order.size())).active);
     }
 
