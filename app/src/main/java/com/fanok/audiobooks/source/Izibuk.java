@@ -6,10 +6,7 @@ import static com.fanok.audiobooks.source.Html.each;
 import static com.fanok.audiobooks.source.Html.lastPage;
 import static com.fanok.audiobooks.source.Html.rows;
 import static com.fanok.audiobooks.source.Html.text;
-import static com.fanok.audiobooks.source.Json.arrayOf;
 import static com.fanok.audiobooks.source.Json.object;
-import static com.fanok.audiobooks.source.Json.seconds;
-import static com.fanok.audiobooks.source.Json.string;
 import static com.fanok.audiobooks.source.Players.playerScript;
 
 import com.fanok.audiobooks.Url;
@@ -23,9 +20,6 @@ import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 import com.fanok.audiobooks.search.ProviderPage;
 import com.fanok.audiobooks.search.SearchUrls;
-import com.fanok.audiobooks.source.Players.Chapters;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -555,22 +549,8 @@ public final class Izibuk implements SourceParser {
 
     /** The {@code new XSPlayer({...})} playlist: files under {@code mp3_url_prefix}, signed with {@code sign}. */
     public static ArrayList<AudioPOJO> parseTracks(Document doc, String bookUrl) {
-        Chapters chapters = new Chapters(text(doc.selectFirst("[itemprop=name]")), bookUrl);
-        JsonObject player = object(playerScript(doc, "new XSPlayer(", '{'));
-        String prefix = string(player, "mp3_url_prefix");
-        if (prefix.isEmpty()) {
-            throw new IllegalStateException("izibuk player has no mp3_url_prefix");
-        }
-        String base = prefix.matches("(?i)^https?://.*") ? prefix : "https://" + prefix.replaceFirst("^/+", "");
-        String sign = string(player, "sign");
-        String query = sign.isEmpty() || sign.startsWith("?") || sign.startsWith("&") ? sign : "?" + sign;
-        chapters.each(arrayOf(player, "tracks"), item -> {
-            JsonArray track = item.getAsJsonArray(); // [id, title, seconds, ?, file]
-            String file = string(track.get(4));
-            return chapters.chapter(string(track.get(1)), file.isEmpty() ? "" : base + "/" + file + query,
-                    seconds(track.get(2)));
-        });
-        return chapters.done("izibuk player");
+        return Players.xsTracks(object(playerScript(doc, "new XSPlayer(", '{')), bookUrl,
+                text(doc.selectFirst("[itemprop=name]")), "izibuk player");
     }
 
     /** The series block of the book page, the open book included (without a link). */

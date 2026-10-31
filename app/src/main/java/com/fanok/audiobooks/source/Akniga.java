@@ -9,8 +9,6 @@ import static com.fanok.audiobooks.source.Html.rows;
 import static com.fanok.audiobooks.source.Json.object;
 import static com.fanok.audiobooks.source.Json.seconds;
 import static com.fanok.audiobooks.source.Json.string;
-import static com.fanok.audiobooks.source.Players.BASE64;
-import static com.fanok.audiobooks.source.Players.decodeBase64;
 import static com.fanok.audiobooks.source.Players.resolve;
 
 import android.util.Log;
@@ -50,7 +48,6 @@ import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -954,9 +951,10 @@ public final class Akniga implements SourceParser {
      * Chapters clipped out of the one shared HLS stream, as complete monotonic intervals: a start
      * that goes backwards is clamped to the previous end; an item without its own end (no
      * {@code time_finish}/{@code duration}) ends where the next item explicitly starts, else it is
-     * skipped. Only the last chapter may stay open-ended (plays to the end of the stream).
+     * skipped. Only the last chapter may stay open-ended (plays to the end of the stream). Golosknig's whole-book MP3
+     * comes with the same items.
      */
-    private static void addClips(Chapters chapters, JsonArray items, String hls) {
+    static void addClips(Chapters chapters, JsonArray items, String hls) {
         List<AudioPOJO> clips = new ArrayList<>();
         List<JsonObject> times = new ArrayList<>();
         chapters.each(items, item -> {
@@ -995,23 +993,12 @@ public final class Akniga implements SourceParser {
     }
 
     /**
-     * Decrypts akniga's {@code hres} (the HLS playlist URL): AES-256-CBC with an EVP_BytesToKey (MD5)
-     * key, as CryptoJS does. Returns "" when it cannot be decrypted.
+     * Decrypts akniga's {@code hres} (the HLS playlist URL), a {@link CryptoJs} JSON. Returns "" when it cannot be
+     * decrypted.
      */
     public static String decryptHres(String hresJson) {
         try {
-            JsonObject hres = object(hresJson);
-            String ivHex = string(hres, "iv");
-            String saltHex = string(hres, "s");
-            byte[] ct = decodeBase64(string(hres, "ct"), BASE64);
-            byte[] salt = saltHex.isEmpty() ? new byte[8] : hexToBytes(saltHex);
-            byte[] keyIv = evpBytesToKey(PASSPHRASE.getBytes(StandardCharsets.UTF_8), salt, 48);
-            byte[] iv = ivHex.length() == 32 ? hexToBytes(ivHex) : Arrays.copyOfRange(keyIv, 32, 48);
-            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(javax.crypto.Cipher.DECRYPT_MODE,
-                    new javax.crypto.spec.SecretKeySpec(Arrays.copyOfRange(keyIv, 0, 32), "AES"),
-                    new javax.crypto.spec.IvParameterSpec(iv));
-            String result = new String(cipher.doFinal(ct), StandardCharsets.UTF_8).trim();
+            String result = CryptoJs.decrypt(hresJson, PASSPHRASE).trim();
             // a JSON string like "https:\/\/r1.akniga.club\/b\/111286\/pl.m3u8?…", a list of them or {url}
             try {
                 JsonElement value = JsonParser.parseString(result);
@@ -1028,33 +1015,6 @@ public final class Akniga implements SourceParser {
         } catch (Exception e) {
             return "";
         }
-    }
-
-    private static byte[] evpBytesToKey(byte[] passphrase, byte[] salt, int needed) throws Exception {
-        byte[] result = new byte[0];
-        byte[] prev = new byte[0];
-        java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
-        while (result.length < needed) {
-            md.reset();
-            md.update(prev);
-            md.update(passphrase);
-            md.update(salt);
-            prev = md.digest();
-            byte[] tmp = new byte[result.length + prev.length];
-            System.arraycopy(result, 0, tmp, 0, result.length);
-            System.arraycopy(prev, 0, tmp, result.length, prev.length);
-            result = tmp;
-        }
-        return result;
-    }
-
-    /** Hex pairs to bytes; a trailing odd digit is ignored. */
-    static byte[] hexToBytes(String hex) {
-        byte[] data = new byte[hex.length() / 2];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) ((Character.digit(hex.charAt(2 * i), 16) << 4) + Character.digit(hex.charAt(2 * i + 1), 16));
-        }
-        return data;
     }
 
     // ---------------------------------------------------------------- series

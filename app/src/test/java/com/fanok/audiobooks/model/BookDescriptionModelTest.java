@@ -99,7 +99,7 @@ public class BookDescriptionModelTest {
                 .assertNoValues().assertError(e -> e instanceof IOException && e.getMessage().contains("no book"));
         for (String[] page : BOOK_PAGES) {
             try {
-                BookDescriptionModel.parseDescription(Jsoup.parse("", page[1]), page[1]);
+                BookDescriptionModel.parseDescription(BookPageFixtures.empty(page[0], page[1]), page[1]);
                 fail(page[0] + ": empty page parsed");
             } catch (IOException expected) {
                 // typed error

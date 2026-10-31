@@ -279,6 +279,15 @@ public interface SourceParser {
         return Collections.emptyMap();
     }
 
+    /**
+     * True when the site's chapters are parts of shared progressive files (a whole-book MP3 cut by time bounds): each
+     * file downloads once, as a stream of the book ({@link com.fanok.audiobooks.download.DownloadIds}), not once per
+     * chapter. False by default: the downloads of the other sites keep their per-chapter ids.
+     */
+    default boolean downloadsSharedFiles() {
+        return false;
+    }
+
     /** The series the book belongs to, as listed on or linked from its page. */
     default ArrayList<SeriesPOJO> series(Document page, String bookUrl) throws IOException {
         return new ArrayList<>();

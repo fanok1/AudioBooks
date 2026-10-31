@@ -30,6 +30,32 @@ public class DownloadIdsTest {
         assertTrue(e.get(0).legacyShared);
     }
 
+    /** golosknig plays one MP3 of the whole book cut by time bounds: the file downloads once, whatever its query. */
+    @Test
+    public void chaptersOfOneFileShareItsDownloadWhereTheSiteSaysSo() {
+        String book = "https://golosknig.com/yacheyka-21-hellstrem-roslund";
+        String mp3 = "https://r1.akniga.club/s/b/92055/yacheyka-21.mp3?res=a&expires=2051222400";
+        List<DownloadIds.Entry> e = DownloadIds.forBook(book,
+                Arrays.asList(mp3, mp3, mp3.replace("res=a", "res=b")), new int[]{0, 1, 2});
+
+        String id = "v1/golosknig.com/yacheyka-21-hellstrem-roslund/stream/r1.akniga.club/s/b/92055/yacheyka-21.mp3";
+        for (DownloadIds.Entry entry : e) {
+            assertEquals(id, entry.id);
+            assertEquals("progressive: its own cache key", id, entry.cacheKey);
+            assertFalse(entry.hls);
+        }
+        assertTrue(DownloadIds.holdsCurrent(e.get(0), mp3, mp3.replace("res=a", "res=c")));
+        assertFalse(DownloadIds.holdsCurrent(e.get(0), mp3, "https://r1.akniga.club/s/b/1/other.mp3"));
+        // one row alone, or a book of one chapter, names the same download
+        assertEquals(id, DownloadIds.forBook(book, Collections.singletonList(mp3), new int[]{5}).get(0).id);
+        // a re-uploaded file is another download
+        assertEquals(id + "?v=2", DownloadIds.forBook(book, Collections.singletonList(mp3 + "&v=2"), null).get(0).id);
+        // any other site keeps a download per chapter
+        String akniga = "https://akniga.org/bulgakov-master";
+        assertEquals("v1/akniga.org/bulgakov-master/chapter/1",
+                DownloadIds.forBook(akniga, Arrays.asList(mp3, mp3), null).get(1).id);
+    }
+
     @Test
     public void schemeTrailingSlashAndWwwVariantsOfABookGiveOneId() {
         String id = DownloadIds.chapterId(BOOK, 0);

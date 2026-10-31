@@ -51,7 +51,7 @@ public enum Genre {
             + "audiodrama dramatic+reading"),
     RANOBE(R.string.genre_ranobe, "ранобэ манга манхва аниме light+novel ranobe manga anime"),
     HISTORY(R.string.genre_history, "истор культуролог античн средневек histor antiqu"),
-    WAR(R.string.genre_war, "воен войн war military"),
+    WAR(R.string.genre_war, "воен войн вов war military"),
     BIOGRAPHY(R.string.genre_biography, "биограф мемуар жзл воспоминан biograph memoir"),
     SCIENCE(R.string.genre_science, "наук научн научпоп познават документальн публицист технолог science nature "
             + "nonfiction non+fiction documentar"),

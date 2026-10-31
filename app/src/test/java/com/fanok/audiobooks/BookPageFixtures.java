@@ -31,18 +31,41 @@ public final class BookPageFixtures {
             {"audiokniga-life/book.html", "https://audiokniga.life/fantastika/6508-noldsapfir-2-s-t-i-k-s.html"},
             {"audioknigi-fun/book.html", "https://audioknigi.fun/81692-na-vyruchku-yunomu-gassi.html"},
             {"aknig-xyz/book.html", "https://s2.aknig.xyz/14731-chetvertoe-krylo.html"},
+            {"aknigi24/book.html",
+                    "https://aknigi24.com/book/garri-potter-i-metody-racionalnogo-mysleniia-iudkovski-eliezer-ali-wodan"},
+            {"lis10book/book.json", "https://lis10book.com/audio/zheleznoe-plamya/"},
+            {"audiokniga-one/book.html", "https://audiokniga.one/16149-idealnyj-mir-dlja-sociopata-1-13.html"},
+            {"biblus/book.html", "https://biblus.org/konec-vechnosti.html"},
+            {"audiokniga-online/book.html", "https://audiokniga-online.ru/klasika/247-vojna-i-mir.html"},
+            {"slushat-knigi/book.html",
+                    "https://slushat-knigi.com/34123-audiokniga-master-i-margarita-mihail-bulgakov.html"},
+            {"audioknigi-pro/book.html",
+                    "https://audioknigi.pro/audioknigi/22614-koleso-vremeni-11-nogh-snovideniy-robert-dghordan.html"},
+            {"bookish/book-series.html",
+                    "https://bookish.site/145424-revizor-vozvrashchenie-v-sssr-65-vinterkei-serzh-shumilin-artem.html"},
+            {"golosknig/book.html", "https://golosknig.com/yacheyka-21-hellstrem-roslund"},
+            {"golosom/book.html", "https://golosom.org/book/master-i-margarita"},
     };
 
     private BookPageFixtures() {
     }
 
+    /** The page as its site's {@code fetch} returns it: a {@code .json} fixture is a JSON site's {@link JsonPage}. */
     public static Document load(String path, String baseUrl) throws IOException {
+        if (path.endsWith(".json")) {
+            return json(path, baseUrl);
+        }
         try (InputStream in = BookPageFixtures.class.getResourceAsStream("/fixtures/" + path)) {
             if (in == null) {
                 throw new IOException("missing fixture " + path);
             }
             return Jsoup.parse(in, null, baseUrl);
         }
+    }
+
+    /** An empty page of the kind {@code path} is: an empty HTML page, or an empty JSON object for a JSON site. */
+    public static Document empty(String path, String baseUrl) {
+        return path.endsWith(".json") ? JsonPage.parse(baseUrl, "{}") : Jsoup.parse("", baseUrl);
     }
 
     /** A JSON fixture as the page {@code SiteHttp.getJson(location)} returns, for a JSON site's parse methods. */

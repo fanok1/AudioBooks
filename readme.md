@@ -42,7 +42,7 @@ The idea is simple: bring book discovery, a personal library, and comfortable li
 
 ### Book sources
 
-Choose from **Akniga, Книга в ухе, ИзиБук, AudioBook-mp3, База Книг, Книгоблуд, Audioboo, Отрубин, Полекниг, уКниг, Аудиокниги.fun, Aknig.xyz, and Аудиокнига Life**. Select the browsing source in **Settings → Source** (`Настройки → Источник`) and choose which catalogs to search under **Search sources** (`Источники поиска`).
+Choose from **Akniga, Книга в ухе, ИзиБук, AudioBook-mp3, База Книг, Книгоблуд, Audioboo, Отрубин, Полекниг, уКниг, Аудиокниги.fun, Aknig.xyz, Аудиокнига Life, Aknigi24, Lis10book, Audiokniga.one, Библус, Audiokniga-online, Slushat-knigi, Audioknigi.pro, Bookish, Golosknig, and Голосом** (up to 13 of them active at a time). Select the browsing source in **Settings → Source** (`Настройки → Источник`) and choose which catalogs to search under **Search sources** (`Источники поиска`).
 
 Books and catalog details come from the selected websites. Availability, recommendations, and other features can vary by source and network access.
 

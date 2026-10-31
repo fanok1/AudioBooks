@@ -230,7 +230,9 @@ public class BooksFragment extends MvpAppCompatFragment implements BooksView {
                 fillSourceMenu(menu);
 
                 if (modelID != Consts.MODEL_BOOKS || mUrl.contains("reader") || mUrl.contains("author")
-                        || mUrl.contains("genre") || mUrl.contains("serie") || mUrl.contains("performer")) {
+                        || mUrl.contains("genre") || mUrl.contains("serie") || mUrl.contains("performer")
+                        || mUrl.contains("narrator") || mUrl.contains("xfsearch") || mUrl.contains("/tags/")
+                        || mUrl.contains("zhanr")) {
                     MenuItem sourceItem = menu.findItem(R.id.source);
                     if (sourceItem != null) sourceItem.setVisible(false);
                 } else {

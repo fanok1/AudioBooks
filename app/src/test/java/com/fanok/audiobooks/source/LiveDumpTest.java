@@ -2,6 +2,7 @@ package com.fanok.audiobooks.source;
 
 import static org.junit.Assume.assumeTrue;
 
+import com.fanok.audiobooks.net.JsonPage;
 import com.fanok.audiobooks.search.ListingFilters;
 import com.fanok.audiobooks.search.Provider;
 import com.fanok.audiobooks.search.ProviderPage;
@@ -281,7 +282,8 @@ public class LiveDumpTest {
 
     /** The page at {@code url} as the site fetches it, parsed from its saved copy (saved on the first run). */
     private Document page(SourceParser site, String url) throws IOException {
-        File file = new File(pages, sha1(url) + ".html");
+        File json = new File(pages, sha1(url) + ".json");
+        File file = json.exists() ? json : new File(pages, sha1(url) + ".html");
         Document live = null;
         if (fetched.add(url) || !file.exists()) {
             try {
@@ -293,12 +295,16 @@ public class LiveDumpTest {
             }
         }
         if (!file.exists()) {
-            String text = live.location() + "\n" + live.outerHtml();
+            // a JSON site's page is saved as its JSON, and read back as the JsonPage its parse methods take
+            boolean isJson = live instanceof JsonPage;
+            file = isJson ? json : file;
+            String text = live.location() + "\n" + (isJson ? JsonPage.of(live).toString() : live.outerHtml());
             Files.write(file.toPath(), text.getBytes(StandardCharsets.UTF_8));
         }
         String text = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
         int eol = text.indexOf('\n');
-        return Jsoup.parse(text.substring(eol + 1), text.substring(0, eol));
+        return file == json ? JsonPage.parse(text.substring(0, eol), text.substring(eol + 1))
+                : Jsoup.parse(text.substring(eol + 1), text.substring(0, eol));
     }
 
     private interface Call<T> {

@@ -206,6 +206,25 @@
                 <data android:host="audioknigi.fun" />
                 <data android:host="s2.aknig.xyz" />
                 <data android:host="aknig.xyz" />
+                <data android:host="aknigi24.com" />
+                <data android:host="www.aknigi24.com" />
+                <data android:host="lis10book.com" />
+                <data android:host="www.lis10book.com" />
+                <data android:host="audiokniga.one" />
+                <data android:host="biblus.org" />
+                <data android:host="m.biblus.org" />
+                <data android:host="audiokniga-online.ru" />
+                <data android:host="www.audiokniga-online.ru" />
+                <data android:host="slushat-knigi.com" />
+                <data android:host="www.slushat-knigi.com" />
+                <data android:host="audioknigi.pro" />
+                <data android:host="www.audioknigi.pro" />
+                <data android:host="bookish.site" />
+                <data android:host="golosknig.com" />
+                <data android:host="www.golosknig.com" />
+                <data android:host="sweetbook.net" />
+                <data android:host="golosom.org" />
+                <data android:host="www.golosom.org" />
             </intent-filter>
         </activity>
 
