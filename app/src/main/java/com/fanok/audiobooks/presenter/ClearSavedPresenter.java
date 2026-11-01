@@ -1,15 +1,11 @@
 package com.fanok.audiobooks.presenter;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
-import androidx.media3.common.C;
+import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.media3.common.util.UnstableApi;
-import androidx.media3.exoplayer.offline.Download;
-import androidx.media3.exoplayer.offline.DownloadCursor;
-import androidx.media3.exoplayer.offline.DownloadIndex;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
@@ -18,39 +14,41 @@ import com.fanok.audiobooks.broadcasts.DownloadActionReceiver;
 import com.fanok.audiobooks.interface_pacatge.clearSeved.ClearSavedView;
 import com.fanok.audiobooks.model.ClearSavedModel;
 import com.fanok.audiobooks.pojo.DownloadItem;
-import com.fanok.audiobooks.util.DownloadUtil;
+import com.fanok.audiobooks.util.DownloadStorageHelper;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import io.reactivex.Observable;
-import io.reactivex.Observer;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 
+/**
+ * The Downloads screen. Every refresh builds a new immutable snapshot off the main thread and replaces the previous
+ * one on main; refreshes asked for while one runs are coalesced into one more, so snapshots never interleave.
+ */
 @InjectViewState
 public class ClearSavedPresenter extends MvpPresenter<ClearSavedView> {
 
-    private ArrayList<DownloadItem> downloads;
+    /** Current snapshot; read and replaced on the main thread only. */
+    private List<DownloadItem> downloads = Collections.emptyList();
     private boolean isLoading = false;
+    private boolean reloadRequested = false;
     private ClearSavedModel mModel;
     private Context mContext;
 
-    private CompositeDisposable compositeDisposable;
-
+    private final CompositeDisposable compositeDisposable;
 
 
     public ClearSavedPresenter(Context c){
-        downloads = new ArrayList<>();
         mModel = new ClearSavedModel(c);
         mContext = c;
         compositeDisposable = new CompositeDisposable();
-        //updateDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -59,61 +57,93 @@ public class ClearSavedPresenter extends MvpPresenter<ClearSavedView> {
         load();
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
     public void load(){
-        if(!isLoading){
-            getViewState().showProgress(true);
-            mModel.getAllSaved()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Observer<ArrayList<DownloadItem>>() {
-                        @Override
-                        public void onSubscribe(Disposable d) {
-                            compositeDisposable.add(d);
-                        }
-
-                        @Override
-                        public void onNext(ArrayList<DownloadItem> downloadItems) {
-                            downloads = downloadItems;
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            getViewState().showToast(R.string.error_load_data);
-                            onComplete();
-                        }
-
-                        @Override
-                        public void onComplete() {
-                            getViewState().showProgress(false);
-                            getViewState().showData(downloads);
-                            isLoading = false;
-                        }
-                    });
-        }
-
+        refresh(true);
     }
 
-    public void remove(int position){
-        String id = downloads.get(position).getFileName();
-        Intent intent = new Intent(mContext, DownloadActionReceiver.class);
-        intent.setAction("CANCEL");
-        intent.putExtra("id", id);
-        mContext.sendBroadcast(intent);
-        downloads.remove(position);
-        getViewState().showData(downloads);
+    public void updateData() {
+        refresh(false);
     }
 
-    public void remove(ArrayList<DownloadItem> arrayList){
-        for (DownloadItem downloadItem : arrayList) {
-            String id = downloadItem.getFileName();
-            Intent intent = new Intent(mContext, DownloadActionReceiver.class);
-            intent.setAction("CANCEL");
-            intent.putExtra("id", id);
-            mContext.sendBroadcast(intent);
-            downloads.remove(downloadItem);
+    @OptIn(markerClass = UnstableApi.class)
+    private void refresh(boolean showProgress) {
+        if (mModel == null) return;
+        if (isLoading) {
+            reloadRequested = true;
+            return;
         }
+        isLoading = true;
+        if (showProgress) getViewState().showProgress(true);
+        final ClearSavedModel model = mModel;
+        compositeDisposable.add(Single.fromCallable(model::loadSnapshot)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(snapshot -> {
+                    downloads = snapshot;
+                    getViewState().showData(snapshot);
+                    finishRefresh(showProgress);
+                }, e -> {
+                    android.util.Log.e("ClearSavedPresenter", "Downloads not loaded", e);
+                    getViewState().showToast(R.string.error_load_data);
+                    finishRefresh(showProgress);
+                }));
+    }
+
+    private void finishRefresh(boolean showProgress) {
+        isLoading = false;
+        if (showProgress) getViewState().showProgress(false);
+        if (reloadRequested) {
+            reloadRequested = false;
+            refresh(false);
+        }
+    }
+
+    /** Removes the given books (resolved by id when the user chose them) from the library and the screen. */
+    public void remove(@NonNull List<DownloadItem> items) {
+        if (items.isEmpty()) return;
+        Set<String> ids = new HashSet<>();
+        List<String> bookUrls = new ArrayList<>();
+        for (DownloadItem item : items) {
+            ids.add(item.getId());
+            bookUrls.add(item.getBookUrl());
+        }
+        List<DownloadItem> kept = new ArrayList<>();
+        for (DownloadItem item : downloads) {
+            if (!ids.contains(item.getId())) kept.add(item);
+        }
+        downloads = Collections.unmodifiableList(kept);
         getViewState().showData(downloads);
+
+        if (mContext != null) {
+            DownloadStorageHelper.removeBooks(mContext, bookUrls, (removed, total, failed) -> {
+                if (failed > 0 && mContext != null) {
+                    android.widget.Toast.makeText(mContext, mContext.getString(R.string.remove_partial, removed, total, failed),
+                            android.widget.Toast.LENGTH_LONG).show();
+                    refresh(false);
+                }
+            });
+        }
+    }
+
+    /** Writes the completed chapters of the given books without a copy to the download folder. */
+    @OptIn(markerClass = UnstableApi.class)
+    public void export(@NonNull List<DownloadItem> items) {
+        if (mContext == null || items.isEmpty()) return;
+        List<String> bookUrls = new ArrayList<>();
+        for (DownloadItem item : items) bookUrls.add(item.getBookUrl());
+        getViewState().showMessage(mContext.getString(R.string.export_started));
+        DownloadStorageHelper.exportBooks(mContext, bookUrls, (exported, failed, error) -> {
+            if (mContext == null) return;
+            String message;
+            if (failed > 0) {
+                message = mContext.getString(R.string.export_failed, exported, failed, error != null ? error : "");
+            } else if (exported > 0) {
+                message = mContext.getString(R.string.export_done, exported);
+            } else {
+                message = mContext.getString(R.string.export_nothing);
+            }
+            getViewState().showMessage(message);
+        });
     }
 
     public void onDestroy(){
@@ -125,118 +155,24 @@ public class ClearSavedPresenter extends MvpPresenter<ClearSavedView> {
         mContext = null;
     }
 
-    public void restart (String id){
+    public void restart(@NonNull DownloadItem item) {
+        sendAction("RESTART", item);
+    }
+
+    public void resume(@NonNull DownloadItem item) {
+        sendAction("RESUME", item);
+    }
+
+    public void pause(@NonNull DownloadItem item) {
+        sendAction("PAUSE", item);
+    }
+
+    private void sendAction(@NonNull String action, @NonNull DownloadItem item) {
+        if (mContext == null || item.getDownloadIds().isEmpty()) return;
         Intent intent = new Intent(mContext, DownloadActionReceiver.class);
-        intent.setAction("RESTART");
-        intent.putExtra("id", id);
+        intent.setAction(action);
+        intent.setPackage(mContext.getPackageName());
+        intent.putExtra(DownloadActionReceiver.EXTRA_IDS, item.getDownloadIds().toArray(new String[0]));
         mContext.sendBroadcast(intent);
-    }
-
-    public void resume (String id){
-        Intent intent = new Intent(mContext, DownloadActionReceiver.class);
-        intent.setAction("RESUME");
-        intent.putExtra("id", id);
-        mContext.sendBroadcast(intent);
-    }
-
-    public void pause (String id) {
-        Intent intent = new Intent(mContext, DownloadActionReceiver.class);
-        intent.setAction("PAUSE");
-        intent.putExtra("id", id);
-        mContext.sendBroadcast(intent);
-
-    }
-
-    @UnstableApi
-    public void updateData() {
-        if (isLoading || mModel == null) {
-            return;
-        }
-        getActualDownloadsObservable()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Boolean>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        compositeDisposable.add(d);
-                    }
-
-                    @Override
-                    public void onNext(Boolean dataChanged) {
-                        if (dataChanged) {
-                            getViewState().showData(downloads);
-                        }
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        if (e instanceof IOException) {
-                            getViewState().showToast(R.string.error_load_data);
-                        }
-                    }
-
-                    @Override
-                    public void onComplete() {
-                    }
-                });
-    }
-
-
-    @UnstableApi
-    private Observable<Boolean> getActualDownloadsObservable() {
-        return Observable.fromCallable(() -> {
-            DownloadIndex downloadIndex = DownloadUtil.getDownloadManager().getDownloadIndex();
-            HashMap<String, Download> actualDownloadsMap = new HashMap<>();
-            try (DownloadCursor cursor = downloadIndex.getDownloads()) {
-                while (cursor.moveToNext()) {
-                    Download download = cursor.getDownload();
-                    actualDownloadsMap.put(download.request.id, download);
-                }
-            }
-
-            boolean dataChanged = false;
-            ArrayList<DownloadItem> itemsToRemove = new ArrayList<>();
-
-            for (DownloadItem currentItem : downloads) {
-                Download actualDownload = actualDownloadsMap.get(currentItem.getFileName());
-
-                if (actualDownload != null) {
-                    int oldStatus = currentItem.getStatus();
-                    float oldProgress = currentItem.getProgress();
-                    currentItem.setStatus(actualDownload.state);
-                    int progress = 0;
-                    if (actualDownload.getPercentDownloaded() != C.PERCENTAGE_UNSET) {
-                        progress = Math.max(0, Math.min(100, Math.round(actualDownload.getPercentDownloaded())));
-                    } else if (actualDownload.contentLength > 0) {
-                        progress = (int) Math.round(100.0 * actualDownload.getBytesDownloaded() / (double) actualDownload.contentLength);
-                        progress = Math.max(0, Math.min(100, progress));
-                    }
-                    currentItem.setProgress(progress);
-                    if (oldStatus != currentItem.getStatus() || oldProgress != currentItem.getProgress()) {
-                        dataChanged = true;
-                    }
-                    actualDownloadsMap.remove(currentItem.getFileName());
-                } else {
-                    itemsToRemove.add(currentItem);
-                    dataChanged = true;
-                }
-            }
-
-            if (!itemsToRemove.isEmpty()) {
-                downloads.removeAll(itemsToRemove);
-            }
-
-            if (!actualDownloadsMap.isEmpty()) {
-                for (Download newDownload : actualDownloadsMap.values()) {
-                    DownloadItem newItem = mModel.buildDownloadItem(newDownload);
-                    if (newItem != null) {
-                        downloads.add(newItem);
-                    }
-                }
-                dataChanged = true;
-            }
-
-            return dataChanged;
-        });
     }
 }

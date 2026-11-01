@@ -36,10 +36,39 @@
                 custom:donut_finished_color="@color/colorAcentPopupWindow"
                 custom:donut_max="100"
                 custom:donut_progress="14"
-                custom:donut_show_text="true"
-                custom:donut_text="85%"
-                custom:donut_text_color="@color/colorAcentPopupWindow"
-                custom:donut_unfinished_color="@android:color/transparent" />
+                custom:donut_finished_stroke_width="4dp"
+                custom:donut_show_text="false"
+                custom:donut_unfinished_color="@android:color/transparent"
+                custom:donut_unfinished_stroke_width="4dp" />
+
+            <!-- the percent and its label, one block centred in the ring's hole; shown with the ring -->
+            <LinearLayout
+                android:id="@+id/listened"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/listenedPercent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/colorAcentPopupWindow"
+                    android:textSize="16sp"
+                    tools:text="85%" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:text="@string/listened_label"
+                    android:textColor="@color/colorAcentPopupWindow"
+                    android:textSize="9sp" />
+            </LinearLayout>
         </RelativeLayout>
 
         <LinearLayout
@@ -54,43 +83,48 @@
                 android:orientation="vertical"
                 tools:ignore="UselessParent">
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_marginEnd="@dimen/recycler_item_textmargin"
-                    android:orientation="horizontal"
-                    tools:ignore="UseCompoundDrawables">
-
-                    <TextView
-                        android:id="@+id/source"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="?attr/subTextColor"
-                        android:textSize="@dimen/subTextSize"
-                        tools:text="Книга в ухе" />
-
-                    <ImageView
-                        android:id="@+id/is_download"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center_vertical"
-                        android:layout_marginStart="@dimen/text_margin_book_description"
-                        android:scaleType="centerInside"
-                        tools:ignore="ContentDescription" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/title"
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/recycler_item_textmargin"
-                    android:ellipsize="end"
-                    android:maxLines="2"
-                    android:textColor="?attr/colorPrimaryText"
-                    android:textSize="@dimen/books_recyle_item_title_size"
-                    tools:context=".activity.MainActivity"
-                    tools:text="Зеланд Вадим - Жрица Итфат" />
+                    android:layout_marginEnd="@dimen/recycler_item_textmargin">
+
+                    <TextView
+                        android:id="@+id/title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_toStartOf="@+id/top_right_icons"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:textColor="?attr/colorPrimaryText"
+                        android:textSize="@dimen/books_recyle_item_title_size"
+                        tools:text="Зеланд Вадим - Жрица Итфат" />
+
+                    <LinearLayout
+                        android:id="@+id/top_right_icons"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:orientation="horizontal"
+                        tools:ignore="UseCompoundDrawables">
+
+                        <TextView
+                            android:id="@+id/source"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="?attr/subTextColor"
+                            android:textSize="@dimen/subTextSize"
+                            tools:text="Книга в ухе" />
+
+                        <ImageView
+                            android:id="@+id/is_download"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="@dimen/text_margin_book_description"
+                            android:scaleType="centerInside"
+                            android:contentDescription="@string/download_state_full" />
+                    </LinearLayout>
+                </RelativeLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -116,7 +150,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/recycler_item_textmargin"
-                        android:drawableStart="@drawable/ic_rating_2"
+
                         android:gravity="center_vertical"
                         android:maxLines="1"
                         android:singleLine="true"
@@ -149,30 +183,37 @@
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/series"
+                            android:id="@+id/time"
+                            android:layout_gravity="bottom"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:drawableStart="@drawable/ic_book"
-                            android:gravity="center_vertical"
-                            android:maxLines="1"
-                            android:singleLine="true"
-                            android:textColor="?attr/hrefColor"
-                            android:textSize="@dimen/subTextSize"
-                            tools:text="Темная башня" />
-
-                        <TextView
-                            android:id="@+id/time"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="@dimen/recycler_item_textmargin"
                             android:drawableStart="@drawable/ic_clock"
-                            android:gravity="center_vertical|end"
+                            android:gravity="center_vertical"
                             android:maxLines="1"
                             android:singleLine="true"
                             android:textColor="?attr/subTextColor"
                             android:textSize="@dimen/subTextSize"
                             tools:text="13 часов 15 минут" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="end">
+
+                            <TextView
+                                android:id="@+id/series"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="@dimen/recycler_item_textmargin"
+                                
+                                android:gravity="center_vertical|end"
+                                android:maxLines="2"
+                                android:textColor="?attr/hrefColor"
+                                android:textSize="@dimen/subTextSize"
+                                tools:text="Темная башня" />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <LinearLayout
@@ -183,7 +224,7 @@
 
                         <TextView
                             android:id="@+id/artist"
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:drawableStart="@drawable/ic_artist"
@@ -196,11 +237,9 @@
 
                         <TextView
                             android:id="@+id/autor"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/recycler_item_textmargin"
                             android:layout_marginEnd="@dimen/recycler_item_textmargin"
-                            android:layout_weight="1"
                             android:drawableStart="@drawable/ic_autor"
                             android:gravity="center_vertical"
                             android:maxLines="1"

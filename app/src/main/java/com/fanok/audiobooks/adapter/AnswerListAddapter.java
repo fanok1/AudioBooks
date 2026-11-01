@@ -207,7 +207,7 @@ public class AnswerListAddapter extends RecyclerView.Adapter<AnswerListAddapter.
 
     @SuppressLint("NotifyDataSetChanged")
     public void setItem(ArrayList<SubComentsPOJO> model) {
-        mModel = model;
+        mModel = model == null ? new ArrayList<>() : new ArrayList<>(model);
         notifyDataSetChanged();
 
     }

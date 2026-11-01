@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The always-visible scrollbar thumb of the sources list: 7 dp, rounded, in the list's end padding. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetLeft="1.5dp"
+    android:insetTop="2dp"
+    android:insetRight="1.5dp"
+    android:insetBottom="2dp">
+    <shape android:shape="rectangle">
+        <corners android:radius="3.5dp" />
+        <solid android:color="?android:attr/textColorSecondary" />
+    </shape>
+</inset>

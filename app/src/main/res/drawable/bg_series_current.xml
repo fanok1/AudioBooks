@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The open book in a series list: a light tint of the link color and a bar of it at the start edge. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/series_current_fill" />
+        </shape>
+    </item>
+    <item
+        android:width="4dp"
+        android:gravity="start|fill_vertical">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/hrefColor" />
+        </shape>
+    </item>
+</layer-list>

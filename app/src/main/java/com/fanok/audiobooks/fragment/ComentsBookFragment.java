@@ -60,21 +60,20 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
 
         binding = FragmentBookComentsBinding.inflate(inflater, container, false);
 
+        // the replies panel stays hidden until a comment with replies opens it: collapsed, it would peek over
+        // the list's end by the gesture inset the sheet adds to its peek height
         BottomSheetBehavior<LinearLayout> bottomSheetBehavior = BottomSheetBehavior.from(binding.answer.getRoot());
-        binding.answer.close.setOnClickListener(view1 -> {
-            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            }
-        });
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        binding.answer.close.setOnClickListener(view1 -> bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN));
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         binding.list.setLayoutManager(linearLayoutManager);
-        if (!url.contains(Url.SERVER_BAZA_KNIG)) {
+        if (!Url.isHost(Url.canonical(url), Url.SERVER_BAZA_KNIG)) {
             mComentsListAddapter = new ComentsListAddapter(getContext());
             mAnswerListAddapter = new AnswerListAddapter(getContext());
             mComentsListAddapter.setListener((view12, position) -> {
                 ComentsPOJO comentsPOJO = mComentsListAddapter.getItem(position);
-                if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+                if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                     ArrayList<SubComentsPOJO> subComentsPOJOArrayList = new ArrayList<>(comentsPOJO.getChildComents());
                     SubComentsPOJO subComentsPOJO = new SubComentsPOJO();
@@ -114,7 +113,6 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
         mComentsListAddapter = null;
         mAnswerListAddapter = null;
         mComentsListBazaKnigAddapter = null;
-        mPresenter.onDestroy();
         super.onDestroyView();
         binding = null;
     }
@@ -136,7 +134,7 @@ public class ComentsBookFragment extends MvpAppCompatFragment implements Coments
         } else {
             binding.placeholder.setVisibility(View.GONE);
         }
-        if (!url.contains(Url.SERVER_BAZA_KNIG)) {
+        if (!Url.isHost(Url.canonical(url), Url.SERVER_BAZA_KNIG)) {
             mComentsListAddapter.setItem(data);
         } else {
             mComentsListBazaKnigAddapter.setItem(data);

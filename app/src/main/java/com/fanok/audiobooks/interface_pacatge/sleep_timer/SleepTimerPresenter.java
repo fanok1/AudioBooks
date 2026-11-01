@@ -1,19 +1,29 @@
 package com.fanok.audiobooks.interface_pacatge.sleep_timer;
 
 
-import android.view.View;
-
 public interface SleepTimerPresenter {
 
-    void numberClick(View view);
+    void setMode(int mode);
 
-    void endChapterClick(View view);
+    void setCountdown(int hours, int minutes);
 
-    void setEndCapterTime(long time);
+    void setClock(int hour, int minute);
 
-    void clear(View view);
+    void setWarn(boolean warn);
+
+    void setShake(boolean shake);
 
     void start();
 
+    void endOfChapter();
+
+    void extend();
+
+    void cancel();
+
+    /** The service's state reply ({@code SleepTimerActivity.bradcast_UpdateTimer}). */
+    void onTimerUpdate(long remainingMs, long endAt, boolean paused, int mode);
+
+    /** The service's {@code SleepTimerActivity.bradcast_FinishTimer}: fired or cancelled. */
     void finish();
 }

@@ -64,7 +64,7 @@ public class OtherSourceFragment extends Fragment {
         });
 
         if (bookPOJO.isEmpty()) {
-            binding.placeholder.setText(R.string.error_load_data);
+            binding.placeholder.setText(R.string.no_other_sources);
             binding.placeholder.setVisibility(View.VISIBLE);
         } else {
             binding.placeholder.setVisibility(View.GONE);

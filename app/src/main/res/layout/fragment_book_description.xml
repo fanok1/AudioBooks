@@ -135,7 +135,7 @@
                         android:singleLine="true"
                         android:textColor="?attr/subTextColor"
                         android:textSize="@dimen/textSizeBookDescription"
-                        app:drawableStartCompat="@drawable/ic_rating_2"
+
                         tools:text="+4972" />
 
                 </LinearLayout>
@@ -246,16 +246,35 @@
                 android:textSize="@dimen/textSizeBookDescription"
                 tools:text="Гарри Поттер с нетерпением ждет окончания каникул и начала пятого учебного года в Хогвартсе. Юный волшебник как никогда страдает от одиночества, а насмешки и придирки Дурслей стали совсем невыносимы. К тому же он уверен, что Волан-де-Морт возродился и скоро начнет действовать. Вас снова ждут опасные и захватывающие приключения, жестокая борьба, верные друзья и волшебный мир Гарри Поттера." />
 
-            <TextView
-                android:id="@+id/showMore"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:text="@string/show_more"
-                android:textAlignment="center"
-                android:textColor="?attr/subTextColor"
-                android:textSize="@dimen/textSizeBookDescription" />
+                android:orientation="horizontal">
+
+                <!-- beside "show less" only: copies the description -->
+                <TextView
+                    android:id="@+id/copyDesc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:text="@string/copy"
+                    android:textColor="?attr/hrefColor"
+                    android:textSize="@dimen/textSizeBookDescription"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/showMore"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:text="@string/show_more"
+                    android:textAlignment="center"
+                    android:textColor="?attr/hrefColor"
+                    android:textSize="@dimen/textSizeBookDescription" />
+            </LinearLayout>
 
             <View
                 android:id="@+id/otherBookLine"

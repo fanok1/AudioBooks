@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The link color at a quarter: the open book's row in a series list, readable under the text in every theme. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:alpha="0.25" android:color="?attr/hrefColor" />
+</selector>

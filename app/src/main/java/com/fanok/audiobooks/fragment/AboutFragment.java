@@ -4,6 +4,7 @@ import static android.content.Context.CLIPBOARD_SERVICE;
 import static android.content.Context.UI_MODE_SERVICE;
 
 import android.app.UiModeManager;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -24,6 +25,7 @@ import com.fanok.audiobooks.BuildConfig;
 import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.activity.ActivitySendEmail;
 import com.fanok.audiobooks.activity.MainActivity;
+import com.fanok.audiobooks.update.Updater;
 import com.google.android.material.navigation.NavigationView;
 import java.util.ArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +63,19 @@ public class AboutFragment extends PreferenceFragmentCompat {
                 R.xml.about_preferences,
                 false);
 
+        preferenceClickListner("version", preference -> {
+            Context app = requireContext().getApplicationContext();
+            Toast.makeText(app, R.string.update_checking, Toast.LENGTH_SHORT).show();
+            // a newer version is offered by MainActivity's dialog; here only the other outcomes are told
+            Updater.check(app, result -> {
+                if (result == Updater.Result.LATEST || result == Updater.Result.FAILED) {
+                    Toast.makeText(app, result == Updater.Result.LATEST ? R.string.update_latest
+                            : R.string.update_failed, Toast.LENGTH_LONG).show();
+                }
+            });
+            return true;
+        });
+
         preferenceClickListner("privacy", preference -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(
                     requireContext());
@@ -76,16 +91,12 @@ public class AboutFragment extends PreferenceFragmentCompat {
         });
 
         preferenceClickListner("yandexForm", preference -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("http://mdpu.mcdir.ru/yd.html"));
-            startActivity(browserIntent);
+            openInBrowser("http://mdpu.mcdir.ru/yd.html");
             return true;
         });
 
         preferenceClickListner("qiwi", preference -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("http://qiwi.com/n/ONAMA629"));
-            startActivity(browserIntent);
+            openInBrowser("http://qiwi.com/n/ONAMA629");
             return true;
         });
 
@@ -99,8 +110,7 @@ public class AboutFragment extends PreferenceFragmentCompat {
                 enabled = false;
 
             } else if (pm != null) {
-                enabled = !pm.isIgnoringBatteryOptimizations(
-                        "com.fanok.audiobooks");
+                enabled = !pm.isIgnoringBatteryOptimizations(requireContext().getPackageName());
             } else {
                 enabled = false;
             }
@@ -135,16 +145,27 @@ public class AboutFragment extends PreferenceFragmentCompat {
         });
 
         preferenceClickListner("open_4pda", preference -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://4pda.to/forum/index.php?showtopic=978445"));
-            startActivity(browserIntent);
+            openInBrowser("https://4pda.to/forum/index.php?showtopic=1128418");
+            return true;
+        });
+
+        preferenceClickListner("open_github", preference -> {
+            openInBrowser("https://github.com/korvin2000/AudioBooks");
+            return true;
+        });
+
+        preferenceClickListner("open_telegram", preference -> {
+            // the Telegram app when one is installed (tg: is its own scheme), otherwise the group's page in a browser
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("tg://resolve?domain=AudioKnijki")));
+            } catch (ActivityNotFoundException e) {
+                openInBrowser("https://t.me/AudioKnijki");
+            }
             return true;
         });
 
         preferenceClickListner("open_rustore", preference -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://apps.rustore.ru/app/com.fanok.audiobooks"));
-            startActivity(browserIntent);
+            openInBrowser("https://apps.rustore.ru/app/com.fanok.audiobooks");
             return true;
         });
 
@@ -169,7 +190,8 @@ public class AboutFragment extends PreferenceFragmentCompat {
         super.onResume();
         Preference version = findPreference("version");
         if (version != null) {
-            version.setSummary(getString(R.string.version) + " " + BuildConfig.VERSION_NAME);
+            version.setSummary(getString(R.string.version) + " " + BuildConfig.VERSION_NAME + "\n"
+                    + getString(R.string.update_check_hint));
             version.setTitle(getString(R.string.app_name));
         }
 
@@ -185,6 +207,15 @@ public class AboutFragment extends PreferenceFragmentCompat {
             } else if (mTextViewArrayList != null && mTextViewArrayList.size() > 9) {
                 mTextViewArrayList.get(9).setBackgroundResource(SelectedValue.resourceId);
             }
+        }
+    }
+
+    /** Opens {@code url} in a browser; devices without one get a message instead of a crash. */
+    private void openInBrowser(@NotNull String url) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(getContext(), R.string.browser_not_found, Toast.LENGTH_SHORT).show();
         }
     }
 

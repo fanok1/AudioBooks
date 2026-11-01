@@ -13,7 +13,6 @@ import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
-import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.fragment.AboutFragment;
 import com.fanok.audiobooks.fragment.BooksFragment;
 import com.fanok.audiobooks.fragment.FavoriteFragment;
@@ -21,7 +20,8 @@ import com.fanok.audiobooks.fragment.SettingsFragment;
 import com.fanok.audiobooks.interface_pacatge.main.MainView;
 import com.fanok.audiobooks.model.BooksDBModel;
 import com.fanok.audiobooks.pojo.BookPOJO;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.fanok.audiobooks.search.Provider;
+import com.fanok.audiobooks.service.MediaPlayerService;
 
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> implements
@@ -35,113 +35,33 @@ public class MainPresenter extends MvpPresenter<MainView> implements
         mContext = context;
     }
 
+    /** Opens a drawer section of the selected source at {@code url}; a source without the section says so. */
+    private void openSection(String url, int title, int modelId, String tag) {
+        if (url == null) {
+            getViewState().showToast(R.string.section_not_available);
+            return;
+        }
+        getViewState().showFragment(BooksFragment.newInstance(url, title, modelId), tag);
+    }
+
+    private void openAudiobooks(Provider source) {
+        openSection(source.index, R.string.menu_audiobooks, Consts.MODEL_BOOKS, "audioBook");
+    }
+
     @Override
     public void onItemSelected(int id) {
-
+        Provider source = Provider.current();
+        if (source == null) {
+            return;
+        }
         if (id == R.id.nav_audiobooks || id == R.id.layout_nav_audiobooks) {
-            Fragment fragment = null;
-            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
-                fragment = BooksFragment.newInstance(Url.INDEX,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
-                fragment = BooksFragment.newInstance(Url.INDEX_IZIBUK,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_AUDIO_BOOK_MP3) {
-                fragment = BooksFragment.newInstance(Url.INDEX_ABMP3,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_ABOOK) {
-                fragment = BooksFragment.newInstance(Url.INDEX_AKNIGA,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG) {
-                fragment = BooksFragment.newInstance(Url.INDEX_BAZA_KNIG,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
-                fragment = BooksFragment.newInstance(Url.INDEX_KNIGOBLUD,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            }else if (Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
-                fragment = BooksFragment.newInstance(Url.INDEX_BOOKOOF,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            }
-            if (fragment != null) {
-                getViewState().showFragment(fragment, "audioBook");
-            }
+            openAudiobooks(source);
         } else if (id == R.id.nav_genre || id == R.id.layout_nav_genre) {
-            Fragment fragment = null;
-            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS_IZIBUK,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_AUDIO_BOOK_MP3) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS_ABMP3,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_ABOOK) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS_AKNIGA,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS_BAZA_KNIG,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS_KNIGOBLUD,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            }else if (Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
-                fragment = BooksFragment.newInstance(Url.INDEX_BOOKOOF,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            }
-            if (fragment != null) {
-                getViewState().showFragment(fragment, "genre");
-            }
-
+            openSection(source.sections, R.string.menu_genre, Consts.MODEL_GENRE, "genre");
         } else if (id == R.id.nav_autor || id == R.id.layout_nav_autor) {
-
-            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG || Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD
-                    || Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
-                getViewState().showToast(R.string.section_not_available);
-            } else {
-                Fragment fragment = null;
-                if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
-                    fragment = BooksFragment.newInstance(Url.AUTHORS,
-                            R.string.menu_autor, Consts.MODEL_AUTOR);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
-                    fragment = BooksFragment.newInstance(Url.AUTHORS_IZIBUK,
-                            R.string.menu_autor, Consts.MODEL_AUTOR);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_AUDIO_BOOK_MP3) {
-                    fragment = BooksFragment.newInstance(Url.AUTHORS_ABMP3,
-                            R.string.menu_autor, Consts.MODEL_AUTOR);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_ABOOK) {
-                    fragment = BooksFragment.newInstance(Url.AUTHORS_AKNIGA,
-                            R.string.menu_autor, Consts.MODEL_AUTOR);
-                }
-                if (fragment != null) {
-                    getViewState().showFragment(fragment, "autor");
-                }
-            }
-
+            openSection(source.authors, R.string.menu_autor, Consts.MODEL_AUTOR, "autor");
         } else if (id == R.id.nav_artist || id == R.id.layout_nav_artist) {
-
-            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG||Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD
-                    ||Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
-                getViewState().showToast(R.string.section_not_available);
-            } else {
-                Fragment fragment = null;
-                if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
-                    fragment = BooksFragment.newInstance(
-                            Url.PERFORMERS, R.string.menu_artist, Consts.MODEL_ARTIST);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
-                    fragment = BooksFragment.newInstance(
-                            Url.PERFORMERS_IZIBUK, R.string.menu_artist, Consts.MODEL_ARTIST);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_AUDIO_BOOK_MP3) {
-                    fragment = BooksFragment.newInstance(
-                            Url.PERFORMERS_ABMP3, R.string.menu_artist, Consts.MODEL_ARTIST);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_ABOOK) {
-                    fragment = BooksFragment.newInstance(
-                            Url.PERFORMERS_AKNIGA, R.string.menu_artist, Consts.MODEL_ARTIST);
-                }
-                if (fragment != null) {
-                    getViewState().showFragment(fragment, "artist");
-                }
-            }
+            openSection(source.performers, R.string.menu_artist, Consts.MODEL_ARTIST, "artist");
         } else if (id == R.id.nav_favorite || id == R.id.layout_nav_favorite) {
             Fragment fragment = FavoriteFragment.newInstance(R.string.menu_favorite,
                     Consts.TABLE_FAVORITE);
@@ -162,6 +82,12 @@ public class MainPresenter extends MvpPresenter<MainView> implements
             Fragment fragment = FavoriteFragment.newInstance(R.string.menu_saved,
                     Consts.TABLE_SAVED);
             getViewState().showFragment(fragment, "saved");
+        } else if (id == R.id.nav_now_playing || id == R.id.layout_nav_now_playing) {
+            // the activity opens it, so parental control can ask for the PIN on screen
+            BookPOJO book = MediaPlayerService.currentBook();
+            if (book != null) {
+                getViewState().showBooksActivity(book);
+            }
         }
     }
 
@@ -172,8 +98,6 @@ public class MainPresenter extends MvpPresenter<MainView> implements
 
     @Override
     public void startFragment(int fragmentID, String url) {
-        FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
-        crashlytics.setCustomKey("url", url);
 
         if (url.isEmpty()) {
             startFragment(fragmentID, false);
@@ -215,108 +139,23 @@ public class MainPresenter extends MvpPresenter<MainView> implements
     @Override
     public void startFragment(int fragmentID, boolean b) {
         System.out.println(getViewState());
-        Fragment fragment = null;
+        Provider source = Provider.current();
+        Fragment fragment;
         if (fragmentID == Consts.FRAGMENT_AUDIOBOOK) {
-            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
-                fragment = BooksFragment.newInstance(Url.INDEX,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
-                fragment = BooksFragment.newInstance(Url.INDEX_IZIBUK,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_AUDIO_BOOK_MP3) {
-                fragment = BooksFragment.newInstance(Url.INDEX_ABMP3,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_ABOOK) {
-                fragment = BooksFragment.newInstance(Url.INDEX_AKNIGA,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG) {
-                fragment = BooksFragment.newInstance(Url.INDEX_BAZA_KNIG,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
-                fragment = BooksFragment.newInstance(Url.INDEX_KNIGOBLUD,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            }else if (Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
-                fragment = BooksFragment.newInstance(Url.INDEX_BOOKOOF,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            }
-
-            if (fragment != null) {
-                getViewState().showFragment(fragment, "audioBook");
+            if (source != null) {
+                openAudiobooks(source);
             }
         } else if (fragmentID == Consts.FRAGMENT_GENRE) {
-            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS_IZIBUK,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_AUDIO_BOOK_MP3) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS_ABMP3,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_ABOOK) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS_AKNIGA,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS_BAZA_KNIG,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
-                fragment = BooksFragment.newInstance(Url.SECTIONS_KNIGOBLUD,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
-            }else if (Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
-                fragment = BooksFragment.newInstance(Url.INDEX_BOOKOOF,
-                        R.string.menu_genre, Consts.MODEL_GENRE);
+            if (source != null) {
+                openSection(source.sections, R.string.menu_genre, Consts.MODEL_GENRE, "genre");
             }
-
-            if (fragment != null) {
-                getViewState().showFragment(fragment, "genre");
-            }
-
-
         } else if (fragmentID == Consts.FRAGMENT_AUTOR) {
-
-            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG||Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD
-                    ||Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
-                getViewState().showToast(R.string.section_not_available);
-            } else {
-                if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
-                    fragment = BooksFragment.newInstance(Url.AUTHORS,
-                            R.string.menu_autor, Consts.MODEL_AUTOR);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
-                    fragment = BooksFragment.newInstance(Url.AUTHORS_IZIBUK,
-                            R.string.menu_autor, Consts.MODEL_AUTOR);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_AUDIO_BOOK_MP3) {
-                    fragment = BooksFragment.newInstance(Url.AUTHORS_ABMP3,
-                            R.string.menu_autor, Consts.MODEL_AUTOR);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_ABOOK) {
-                    fragment = BooksFragment.newInstance(Url.AUTHORS_AKNIGA,
-                            R.string.menu_autor, Consts.MODEL_AUTOR);
-                }
-                if (fragment != null) {
-                    getViewState().showFragment(fragment, "autor");
-                }
+            if (source != null) {
+                openSection(source.authors, R.string.menu_autor, Consts.MODEL_AUTOR, "autor");
             }
         } else if (fragmentID == Consts.FRAGMENT_ARTIST) {
-
-            if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG||Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD
-                    ||Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
-                getViewState().showToast(R.string.section_not_available);
-            } else {
-                if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
-                    fragment = BooksFragment.newInstance(
-                            Url.PERFORMERS, R.string.menu_artist, Consts.MODEL_ARTIST);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
-                    fragment = BooksFragment.newInstance(
-                            Url.PERFORMERS_IZIBUK, R.string.menu_artist, Consts.MODEL_ARTIST);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_AUDIO_BOOK_MP3) {
-                    fragment = BooksFragment.newInstance(
-                            Url.PERFORMERS_ABMP3, R.string.menu_artist, Consts.MODEL_ARTIST);
-                } else if (Consts.getSOURCE() == Consts.SOURCE_ABOOK) {
-                    fragment = BooksFragment.newInstance(
-                            Url.PERFORMERS_AKNIGA, R.string.menu_artist, Consts.MODEL_ARTIST);
-                }
-                if (fragment != null) {
-                    getViewState().showFragment(fragment, "artist");
-                }
+            if (source != null) {
+                openSection(source.performers, R.string.menu_artist, Consts.MODEL_ARTIST, "artist");
             }
         } else if (fragmentID == Consts.FRAGMENT_FAVORITE) {
             fragment = FavoriteFragment.newInstance(R.string.menu_favorite,
@@ -332,30 +171,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements
                     Consts.TABLE_SAVED);
             getViewState().showFragment(fragment, "saved");
         } else if (fragmentID == Consts.LAST_BOOK) {
-            if (Consts.getSOURCE() == Consts.SOURCE_KNIGA_V_UHE) {
-                fragment = BooksFragment.newInstance(Url.INDEX,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_IZI_BUK) {
-                fragment = BooksFragment.newInstance(Url.INDEX_IZIBUK,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_AUDIO_BOOK_MP3) {
-                fragment = BooksFragment.newInstance(Url.INDEX_ABMP3,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_ABOOK) {
-                fragment = BooksFragment.newInstance(Url.INDEX_AKNIGA,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_KNIGOBLUD) {
-                fragment = BooksFragment.newInstance(Url.INDEX_KNIGOBLUD,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_BAZA_KNIG) {
-                fragment = BooksFragment.newInstance(Url.INDEX_BAZA_KNIG,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            } else if (Consts.getSOURCE() == Consts.SOURCE_BOOKOOF) {
-                fragment = BooksFragment.newInstance(Url.INDEX_BOOKOOF,
-                        R.string.menu_audiobooks, Consts.MODEL_BOOKS);
-            }
-            if (fragment != null) {
-                getViewState().showFragment(fragment, "audioBook");
+            if (source != null) {
+                openAudiobooks(source);
             }
             if (!b) {
                 BooksDBModel booksDBModel = new BooksDBModel(mContext);

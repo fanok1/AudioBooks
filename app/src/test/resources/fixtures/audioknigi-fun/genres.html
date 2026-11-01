@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8">
+<title>Все жанры аудиокниг</title>
+<meta name="description" content="На странице представлены популярные и не очень жанры аудиокниг. Легкий поиск жанра по первой букве">
+
+<meta name="generator" content="DataLife Engine (http://dle-news.ru)">
+<link rel="search" type="application/opensearchdescription+xml" href="https://audioknigi.fun/index.php?do=opensearch" title="Аудиокниги слушать онлайн бесплатно и без регистрации">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="theme-color" content="#111">
+	<link rel="preload" href="/templates/audiobooks/webfonts/manrope-400.woff2" as="font" type="font/woff2" crossorigin>
+	<link rel="preload" href="/templates/audiobooks/webfonts/manrope-600.woff2" as="font" type="font/woff2" crossorigin>
+	<link rel="preload" href="/templates/audiobooks/webfonts/manrope-700.woff2" as="font" type="font/woff2" crossorigin>
+	<link rel="preload" href="/templates/audiobooks/webfonts/fredoka-one-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/templates/audiobooks/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+	<link rel="shortcut icon" href="/templates/audiobooks/images/logo.svg" />
+	<link href="/templates/audiobooks/css/common.css" type="text/css" rel="stylesheet" />
+	<link href="/templates/audiobooks/css/styles.css?v=20261004-cwv1" type="text/css" rel="stylesheet" />
+	<link href="/templates/audiobooks/css/engine.css?v=20260825-search2" type="text/css" rel="stylesheet" /> 
+	<link href="/templates/audiobooks/css/fontawesome.css" type="text/css" rel="stylesheet" />
+	<link href="/templates/audiobooks/css/external_audio.css?v=20260825" type="text/css" rel="stylesheet" />
+    <link rel="shortcut icon" href="/templates/audiobooks/images/favicon.svg">
+    <!-- Yandex.RTB -->
+	<script>window.yaContextCb=window.yaContextCb||[]</script>
+    <script src="https://yandex.ru/ads/system/context.js" async></script>
+    <script src="https://cdn.adfinity.pro/code/audioknigi.fun/adfinity.js" async></script>
+    <!--<script async src="https://statika.mpsuadv.ru/scripts/7126.js"></script>-->
+    <script src="/templates/audiobooks/js/decoder.js?v=20260420" defer></script>
+    <!--<link href="/snowFlakes/snow.min.css" rel="stylesheet">-->
+    <link rel="stylesheet" href="/templates/audiobooks/css/audioplayer.css?v=20260420">
+</head>
+
+<body>
+     
+    	<div class="overlay"></div><div class="mobile-menu" id="mobile-menu"></div><div class="mobile-menu-close"><span class="fas fa-times"></span></div><div id="scrolltop"><span class="fas fa-long-arrow-up"></span></div>
+     
+         
+
+	<div class="wrapper">
+		<div class="wrapper-container wrapper-main">
+		<header class="header d-flex ai-center vw100">
+				<a href="/" class="logo header__logo">
+					<div class="logo__title">Audioknigi.FUN</div>
+					<p class="logo__caption">Слушать аудиокниги онлайн</p>
+				</a>
+				<div class="header__login flex-grow-1"><script>
+	function switchLight() {
+		if (localStorage.getItem('theme') === 'light') {
+			document.querySelector('body').classList.add('lt-is-active');
+		} else {
+			document.querySelector('body').classList.remove('lt-is-active');
+		};
+	};
+	switchLight();
+</script>	
+
+
+<div class="login login--not-logged d-none">
+	<div class="login__header d-flex jc-space-between ai-center">
+		<div class="login__title stretch-free-width ws-nowrap">Войти <a href="/?do=register">Регистрация</a></div>
+		<div class="login__close"><span class="fas fa-times"></span></div>
+	</div>
+	<form method="post">
+	<div class="login__content">
+		<div class="login__row">
+			<div class="login__caption">Логин:</div>
+			<div class="login__input"><input type="text" name="login_name" id="login_name" placeholder="Ваш логин"/></div>
+			<span class="fas fa-user"></span>
+		</div>
+		<div class="login__row">
+			<div class="login__caption">Пароль: <a href="https://audioknigi.fun/index.php?do=lostpassword">Забыли пароль?</a></div>
+			<div class="login__input"><input type="password" name="login_password" id="login_password" placeholder="Ваш пароль" /></div>
+			<span class="fas fa-lock"></span>
+		</div>
+		<label class="login__row checkbox" for="login_not_save">
+			<input type="checkbox" name="login_not_save" id="login_not_save" value="1"/>
+			<span>Не запоминать меня</span>
+		</label>
+		<div class="login__row">
+			<button onclick="submit();" type="submit" title="Вход">Войти на сайт</button>
+			<input name="login" type="hidden" id="login" value="submit" />
+		</div>
+	</div>
+	<div class="login__social">
+		<div class="login__social-caption">Или войти через</div>
+		<div class="login__social-btns">
+			
+			
+			
+			
+			
+			
+		</div>
+	</div>
+	</form>
+</div>
+
+</div>
+				<div class="header__search">
+					<form id="quicksearch" method="post">
+						<input type="hidden" name="do" value="search">
+						<input type="hidden" name="subaction" value="search">
+						<div class="header__search-box">
+							<input id="story" name="story" placeholder="Поиск по библиотеке аудиокниг..." type="text" autocomplete="off">
+							<button type="submit" class="search-btn"><span class="fas fa-search"></span></button>
+						</div>
+					</form>
+				</div>
+				<ul class="theme-toggle" title="Переключение на светлую/тёмную тему">
+					<li><span class="fas fa-sun"></span></li>
+					<li><span class="fas fa-moon"></span></li>
+				</ul>
+				
+				<a href="/?do=register" rel="nofollow" class="header__link">Регистрация</a>
+				<button class="header__btn js-show-login">Войти</button>
+				
+				
+				<button class="header__btn-menu d-none js-show-mobile-menu"><span class="fas fa-bars"></span></button>
+			</header>
+
+			<!-- END HEADER -->
+
+			<ul class="carou__menu d-flex jc-flex-end">
+					<li><a href="/lastnews/">Новинки</a></li>
+				<li><a href="/podborki/">Подборки</a></li>
+				<li><a href="/c/zhanr.html">Жанры</a></li>
+				<li><a href="/c/avtor.html">Авторы</a></li>
+				<li><a href="/c/chtec.html">Чтецы</a></li>
+				<li><a href="/c/cikl.html">Циклы</a></li>
+                <li><a href="/c/god.html">Года</a></li>
+				<li><a href="/top-100.html">Топ 100</a></li>
+			</ul>
+			
+
+			<div class="content cols d-flex">
+
+				<aside class="col-side">
+
+                    <div class="side-block js-this-in-mobile-menu">
+                        <a href="https://t.me/audioknigi_fun" target="_blank" class="tg_button -no_hover clearfix">
+                            <div class="tg_button_icon"></div>
+                            <span class="tg_button_text">Мы в Telegram</span>
+                        </a>
+
+                        <div class="side-block__content d-flex jc-space-between">
+                            <div class="nav-col">
+                                <div class="nav-title">Жанры</div>
+                                <ul class="nav-menu nav-menu--short">
+                                    <li><a href="/zhanr/fantastika/">Фантастика</a></li>
+                                    <li><a href="/zhanr/fjentezi/">Фэнтези</a></li>
+                                    <li><a href="/zhanr/popadancy/">Попаданцы</a></li>
+                                    <li><a href="/zhanr/detektivy/">Детективы</a></li>
+                                    <li><a href="/zhanr/trillery/">Триллеры</a></li>
+                                    <li><a href="/zhanr/uzhasy/">Ужасы</a></li>
+                                    <li><a href="/zhanr/mistika/">Мистика</a></li>
+                                    <li><a href="/zhanr/litrpg/">ЛитРПГ</a></li>
+                                    <li><a href="/zhanr/boevik/">Боевики</a></li>
+                                </ul>
+                                <a class="nav-more-link" href="/c/zhanr.html">Все жанры</a>
+                            </div>
+
+                            <div class="nav-col">
+                                <div class="nav-title">Подборки</div>
+                                <ul class="nav-menu nav-menu--short">
+                                    <li><a href="/podborki/audioknigi-pro-popadancev-v-vov/">Попаданцы в ВОВ</a></li>
+                                    <li><a href="/podborki/audioknigi-pro-zombi/">Про зомби</a></li>
+                                    <li><a href="/podborki/audioknigi-pro-kosmos/">Про космос</a></li>
+                                    <li><a href="/podborki/audioknigi-pro-magiju/">Про магию</a></li>
+                                    <li><a href="/podborki/audioknigi-pro-vampirov/">Про вампиров</a></li>
+                                    <li><a href="/podborki/ljubovnoe-fjentezi-pro-popadanok/">Фэнтези о попаданках</a></li>
+                                    <li><a href="/podborki/strashnye-istorii-na-noch/">Страшное на ночь</a></li>
+                                    <li><a href="/podborki/russkie-detektivy/">Русские детективы</a></li>
+                                    <li><a href="/podborki/pro-magicheskie-akademii/">Магические академии</a></li>
+                                </ul>
+                                <a class="nav-more-link" href="/podborki/">Все подборки</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Yandex.RTB R-A-3636729-1 -->
+                    <div id="yandex_rtb_R-A-3636729-1"></div>
+                    <script>
+                    window.yaContextCb.push(()=>{
+                        Ya.Context.AdvManager.render({
+                            "blockId": "R-A-3636729-1",
+                            "renderTo": "yandex_rtb_R-A-3636729-1"
+                        })
+                    })
+                    </script>
+					
+					<div class="side-block">
+						<div class="side-block__title">Популярные за месяц</div>
+						<div class="side-block__content upd-box">
+								<a href="https://audioknigi.fun/69189-bez-chesti-ivan-schukin.html" class="updli fx-row fx-middle">
+    <div class="updli-1 img-fit-cover"><img data-src="/uploads/mini/poster-upd-left/3f/f4f8dd73d2637d96e55c8b628ae26c.webp" loading="lazy" src="/uploads/posts/2025-10/36639_1739904246.webp" alt="обложка аудиокниги Без чести"></div>
+    <div class="updli-2 fx-1"><div class="line-clamp">Без чести - Иван Щукин</div> </div>
+</a><a href="https://audioknigi.fun/53351-2012-tochka-perehoda.html" class="updli fx-row fx-middle">
+    <div class="updli-1 img-fit-cover"><img data-src="/uploads/mini/poster-upd-left/43/e3da435ebe329db42b77d1408e5ea7.webp" loading="lazy" src="/uploads/posts/2026-08/134193b5_6003604045.webp" alt="обложка аудиокниги 2012. Точка перехода"></div>
+    <div class="updli-2 fx-1"><div class="line-clamp">2012. Точка перехода - Роман Злотников</div> </div>
+</a><a href="https://audioknigi.fun/68805-ratnik-2-evgeniy-shalashov_-oleg-kovalychuk.html" class="updli fx-row fx-middle">
+    <div class="updli-1 img-fit-cover"><img data-src="/uploads/mini/poster-upd-left/40/f5904139cab11be75c0e6edcd47713.webp" loading="lazy" src="/uploads/posts/2025-10/29071_1739904052.webp" alt="обложка аудиокниги Ратник 2"></div>
+    <div class="updli-2 fx-1"><div class="line-clamp">Ратник 2 - Евгений Шалашов, Олег Ковальчук</div> </div>
+</a><a href="https://audioknigi.fun/63978-otmorozki-drugim-putem-andrey-zemlyanoy.html" class="updli fx-row fx-middle">
+    <div class="updli-1 img-fit-cover"><img data-src="/uploads/mini/poster-upd-left/ca/6d07eec8a727ee097498c29f2bd41b.webp" loading="lazy" src="/uploads/posts/2025-10/29269_1737808832.jpg" alt="обложка аудиокниги Отморозки: Другим путем"></div>
+    <div class="updli-2 fx-1"><div class="line-clamp">Отморозки: Другим путем - Андрей Земляной</div> </div>
+</a><a href="https://audioknigi.fun/70559-pervoklassnyy-advokat.html" class="updli fx-row fx-middle">
+    <div class="updli-1 img-fit-cover"><img data-src="/uploads/mini/poster-upd-left/d4/3a1902d904c0db5f75cfd40fdbfeb3.webp" loading="lazy" src="/uploads/posts/2025-11/68f78b550734b.jpg" alt="обложка аудиокниги Первоклассный адвокат"></div>
+    <div class="updli-2 fx-1"><div class="line-clamp">Первоклассный адвокат - Mu Su Li</div> </div>
+</a><a href="https://audioknigi.fun/67966-soedinennye-shtaty-rossii-kniga-2-polina-rom_-dmitriy-lim.html" class="updli fx-row fx-middle">
+    <div class="updli-1 img-fit-cover"><img data-src="/uploads/mini/poster-upd-left/d8/e3ffe8f196a645600de4d73eb32097.webp" loading="lazy" src="/uploads/posts/2025-10/25763_1739903581.webp" alt="обложка аудиокниги Соединённые Штаты России. Книга 2"></div>
+    <div class="updli-2 fx-1"><div class="line-clamp">Соединённые Штаты России. Книга 2 - Полина Ром, Дмитрий Лим</div> </div>
+</a><a href="https://audioknigi.fun/69064-moy-88-oy-nazad-v…-dmitriy-manasypov.html" class="updli fx-row fx-middle">
+    <div class="updli-1 img-fit-cover"><img data-src="/uploads/mini/poster-upd-left/56/c0c7346897c6e9306fdc06781b44c9.webp" loading="lazy" src="/uploads/posts/2025-10/30079_1739904182.jpg" alt="обложка аудиокниги Мой 88-ой: назад в…"></div>
+    <div class="updli-2 fx-1"><div class="line-clamp">Мой 88-ой: назад в… - Дмитрий Манасыпов</div> </div>
+</a><a href="https://audioknigi.fun/44977-serdce-drakona-4-kirill-klevanskiy.html" class="updli fx-row fx-middle">
+    <div class="updli-1 img-fit-cover"><img data-src="/uploads/mini/poster-upd-left/7f/6e4793b0c90a73d1c067add96c0b2b.webp" loading="lazy" src="/uploads/posts/2025-04/11526_1737807669.jpg" alt="обложка аудиокниги Сердце Дракона 4"></div>
+    <div class="updli-2 fx-1"><div class="line-clamp">Сердце Дракона 4 - Кирилл Клеванский</div> </div>
+</a><a href="https://audioknigi.fun/81200-nehoroshiy-geroy.html" class="updli fx-row fx-middle">
+    <div class="updli-1 img-fit-cover"><img data-src="/uploads/mini/poster-upd-left/f2/a4920357b4812063dba142ebe13191.webp" loading="lazy" src="/uploads/posts/2026-09/711ee776_3c8fbe4ff55c464691989eb3b01d91d8.webp" alt="обложка аудиокниги Нехороший герой"></div>
+    <div class="updli-2 fx-1"><div class="line-clamp">Нехороший герой - Александр Яков</div> </div>
+</a><a href="https://audioknigi.fun/64479-sapiens-kratkaya-istoriya-chelovechestva-yuvaly-noy-harari.html" class="updli fx-row fx-middle">
+    <div class="updli-1 img-fit-cover"><img data-src="/uploads/mini/poster-upd-left/27/8cad3e0e01deed8890660a3d571473.webp" loading="lazy" src="/uploads/posts/2025-10/32598_1737809085.jpg" alt="обложка аудиокниги Sapiens: краткая история человечества"></div>
+    <div class="updli-2 fx-1"><div class="line-clamp">Sapiens: краткая история человечества - Юваль Харари</div> </div>
+</a>
+						</div>
+					</div>
+
+					<div class="side-block">
+						<div class="side-block__title">Последние комментарии</div>
+						<div class="side-block__content">
+							<div class="lcomm js-comm">
+	<div class="lcomm__meta d-flex ai-center">
+		<div class="lcomm__av img-fit-cover js-comm-avatar"><img src="/templates/audiobooks/dleimages/noavatar.png" loading="lazy" alt="Аноним"></div>
+		<div class="lcomm__author flex-grow-1 ws-nowrap js-comm-author">Аноним</div>
+		<div class="lcomm__date">24.10.26</div>
+	</div>
+	<div class="lcomm__text">Очень понравилась</div>
+	<a class="lcomm__link ws-nowrap icon-at-left" href="https://audioknigi.fun/65733-maghor-po-sosedstvu-serdce-na-kuski-mila-lyubimaya_-dasha-koen.html#comment"><span class="fas fa-arrow-circle-right"></span>Мажор по соседству. Сердце на куски - Мила Любимая, Даша Коэн</a>
+</div><div class="lcomm js-comm">
+	<div class="lcomm__meta d-flex ai-center">
+		<div class="lcomm__av img-fit-cover js-comm-avatar"><img src="/templates/audiobooks/dleimages/noavatar.png" loading="lazy" alt="Анонимный слушатель"></div>
+		<div class="lcomm__author flex-grow-1 ws-nowrap js-comm-author">Анонимный слушатель</div>
+		<div class="lcomm__date">19.10.26</div>
+	</div>
+	<div class="lcomm__text">Не смогла послушать полностью На  восьмой главе всё начало слетать на шестую,</div>
+	<a class="lcomm__link ws-nowrap icon-at-left" href="https://audioknigi.fun/66401-kak-mikroby-upravlyayut-nami-taynye-vlastiteli-ghizni-na-zemle-yong-ed.html#comment"><span class="fas fa-arrow-circle-right"></span>Как микробы управляют нами. Тайные властители жизни на Земле - Йонг Эд</a>
+</div><div class="lcomm js-comm">
+	<div class="lcomm__meta d-flex ai-center">
+		<div class="lcomm__av img-fit-cover js-comm-avatar"><img src="/templates/audiobooks/dleimages/noavatar.png" loading="lazy" alt="Инкогнито"></div>
+		<div class="lcomm__author flex-grow-1 ws-nowrap js-comm-author">Инкогнито</div>
+		<div class="lcomm__date">14.10.26</div>
+	</div>
+	<div class="lcomm__text">Очень понравилась</div>
+	<a class="lcomm__link ws-nowrap icon-at-left" href="https://audioknigi.fun/77824-krestyyanin-i-tineydgher.html#comment"><span class="fas fa-arrow-circle-right"></span>Крестьянин и тинейджер</a>
+</div><div class="lcomm js-comm">
+	<div class="lcomm__meta d-flex ai-center">
+		<div class="lcomm__av img-fit-cover js-comm-avatar"><img src="/templates/audiobooks/dleimages/noavatar.png" loading="lazy" alt="Аудиочитатель"></div>
+		<div class="lcomm__author flex-grow-1 ws-nowrap js-comm-author">Аудиочитатель</div>
+		<div class="lcomm__date">14.10.26</div>
+	</div>
+	<div class="lcomm__text">Псевдоисторическя каша и враньё. </div>
+	<a class="lcomm__link ws-nowrap icon-at-left" href="https://audioknigi.fun/25838-pokolenie-pobediteley.html#comment"><span class="fas fa-arrow-circle-right"></span>Поколение победителей</a>
+</div><div class="lcomm js-comm">
+	<div class="lcomm__meta d-flex ai-center">
+		<div class="lcomm__av img-fit-cover js-comm-avatar"><img src="/templates/audiobooks/dleimages/noavatar.png" loading="lazy" alt="Аудиочитатель"></div>
+		<div class="lcomm__author flex-grow-1 ws-nowrap js-comm-author">Аудиочитатель</div>
+		<div class="lcomm__date">10.10.26</div>
+	</div>
+	<div class="lcomm__text">И автор, выше всяких похвал! Но сайт покину - невозможно слушать аудиокнигу -</div>
+	<a class="lcomm__link ws-nowrap icon-at-left" href="https://audioknigi.fun/46280-vedymak-klim-vse-serii-yuliya-skorkina.html#comment"><span class="fas fa-arrow-circle-right"></span>Ведьмак Клим (Все серии) - Юлия Скоркина</a>
+</div><div class="lcomm js-comm">
+	<div class="lcomm__meta d-flex ai-center">
+		<div class="lcomm__av img-fit-cover js-comm-avatar"><img src="/templates/audiobooks/dleimages/noavatar.png" loading="lazy" alt="Инкогнито"></div>
+		<div class="lcomm__author flex-grow-1 ws-nowrap js-comm-author">Инкогнито</div>
+		<div class="lcomm__date">10.10.26</div>
+	</div>
+	<div class="lcomm__text">Слушал с удовольствием</div>
+	<a class="lcomm__link ws-nowrap icon-at-left" href="https://audioknigi.fun/67076-shkola-plastunov-erofey-trofimov.html#comment"><span class="fas fa-arrow-circle-right"></span>Школа пластунов - Ерофей Трофимов</a>
+</div>
+						</div>
+					</div>
+
+				</aside>
+
+				<!-- END COL SIDE -->
+
+				<main class="col-main flex-grow-1 d-flex fd-column">
+					
+					<div class="speedbar ws-nowrap">
+	<span itemscope itemtype="https://schema.org/BreadcrumbList"><span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><meta itemprop="position" content="1"><a href="https://audioknigi.fun/" itemprop="item"><span itemprop="name">Главная</span></a></span> » Жанры</span>
+</div>
+					
+					
+                  
+                     
+					<h1>Жанры аудиокниг</h1>
+<input type="text" placeholder="Поиск по списку" class="xf-search">
+
+<!--<div><ul class="alphabet-ru"><li><a href="а">а</a></li><li><a href="б">б</a></li><li><a href="в">в</a></li><li><a href="г">г</a></li><li><a href="д">д</a></li><li><a href="е">е</a></li><li><a href="ж">ж</a></li><li><a href="з">з</a></li><li><a href="и">и</a></li><li><a href="к">к</a></li><li><a href="л">л</a></li><li><a href="м">м</a></li><li><a href="н">н</a></li><li><a href="о">о</a></li><li><a href="п">п</a></li><li><a href="р">р</a></li><li><a href="с">с</a></li><li><a href="т">т</a></li><li><a href="у">у</a></li><li><a href="ф">ф</a></li><li><a href="х">х</a></li></ul></div>
+<div><ul class="alphabet-en"></ul></div>-->
+
+
+<div><style>
+.fc-sort-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;margin-top:12px;flex-wrap:wrap}
+.fc-sort-label{font-size:.85em;color:#888}
+.fc-sort-btn{padding:4px 14px;border:1px solid #ccc;border-radius:20px;background:#f5f5f5;color:#333;cursor:pointer;font-size:.85em;transition:background .2s,color .2s}
+.fc-sort-btn:hover{background:#e0e0e0;color:#2b2b2b;}
+.fc-sort-btn.active{background:#4a90d9;border-color:#4a90d9;color:#fff}
+</style>
+<div class="fc-sort-bar">
+<span class="fc-sort-label">Сортировка:</span>
+<button class="fc-sort-btn active" data-sort="count">По количеству</button>
+<button class="fc-sort-btn" data-sort="alpha">По алфавиту</button>
+</div><ul id="fields-list" class="fields-list"><li data-field="ф" data-count="16880"><a href="/zhanr/fantastika/">Фантастика</a> <span class="field_counter">16880 книг</span></li><li data-field="ф" data-count="15394"><a href="/zhanr/fjentezi/">Фэнтези</a> <span class="field_counter">15394 книг</span></li><li data-field="р" data-count="9641"><a href="/zhanr/roman/">Роман</a> <span class="field_counter">9641 книг</span></li><li data-field="п" data-count="9414"><a href="/zhanr/proza/">Проза</a> <span class="field_counter">9414 книг</span></li><li data-field="д" data-count="7644"><a href="/zhanr/detektivy/">Детективы</a> <span class="field_counter">7644 книг</span></li><li data-field="у" data-count="7217"><a href="/zhanr/uzhasy/">Ужасы</a> <span class="field_counter">7217 книг</span></li><li data-field="м" data-count="7151"><a href="/zhanr/mistika/">Мистика</a> <span class="field_counter">7151 книг</span></li><li data-field="т" data-count="7050"><a href="/zhanr/trillery/">Триллеры</a> <span class="field_counter">7050 книг</span></li><li data-field="д" data-count="3228"><a href="/zhanr/dlja-detej/">Для детей</a> <span class="field_counter">3228 книг</span></li><li data-field="п" data-count="2863"><a href="/zhanr/popadancy/">Попаданцы</a> <span class="field_counter">2863 книг</span></li><li data-field="а" data-count="2752"><a href="/zhanr/audioskazki/">Аудиосказки</a> <span class="field_counter">2752 книг</span></li><li data-field="л" data-count="2301"><a href="/zhanr/ljubovnoe-fjentezi/">Любовное фэнтези</a> <span class="field_counter">2301 книг</span></li><li data-field="п" data-count="2258"><a href="/zhanr/prikljuchenija/">Приключения</a> <span class="field_counter">2258 книг</span></li><li data-field="к" data-count="2223"><a href="/zhanr/klassika/">Классика</a> <span class="field_counter">2223 книг</span></li><li data-field="р" data-count="1898"><a href="/zhanr/ranobje/">Ранобэ</a> <span class="field_counter">1898 книг</span></li><li style="display:none;" data-field="з" data-count="1785"><a href="/zhanr/zarubezhnaja-literatura/">Зарубежная литература</a> <span class="field_counter">1785 книг</span></li><li style="display:none;" data-field="с" data-count="1647"><a href="/zhanr/satira/">Сатира</a> <span class="field_counter">1647 книг</span></li><li style="display:none;" data-field="ю" data-count="1647"><a href="/zhanr/jumor/">Юмор</a> <span class="field_counter">1647 книг</span></li><li style="display:none;" data-field="р" data-count="1580"><a href="/zhanr/rasskazy/">Рассказы</a> <span class="field_counter">1580 книг</span></li><li style="display:none;" data-field="а" data-count="1559"><a href="/zhanr/audiospektakli/">Аудиоспектакли</a> <span class="field_counter">1559 книг</span></li><li style="display:none;" data-field="б" data-count="1522"><a href="/zhanr/biografii/">Биографии</a> <span class="field_counter">1522 книг</span></li><li style="display:none;" data-field="н" data-count="1418"><a href="/zhanr/novelly/">Новеллы</a> <span class="field_counter">1418 книг</span></li><li style="display:none;" data-field="и" data-count="1305"><a href="/zhanr/istorija/">История</a> <span class="field_counter">1305 книг</span></li><li style="display:none;" data-field="м" data-count="1304"><a href="/zhanr/memuary/">Мемуары</a> <span class="field_counter">1304 книг</span></li><li style="display:none;" data-field="п" data-count="1278"><a href="/zhanr/psihologija/">Психология</a> <span class="field_counter">1278 книг</span></li><li style="display:none;" data-field="ф" data-count="1258"><a href="/zhanr/filosofija/">Философия</a> <span class="field_counter">1258 книг</span></li><li style="display:none;" data-field="б" data-count="1170"><a href="/zhanr/boevik/">Боевик</a> <span class="field_counter">1170 книг</span></li><li style="display:none;" data-field="р" data-count="930"><a href="/zhanr/raznoe/">Разное</a> <span class="field_counter">930 книг</span></li><li style="display:none;" data-field="л" data-count="870"><a href="/zhanr/litrpg/">ЛитРПГ</a> <span class="field_counter">870 книг</span></li><li style="display:none;" data-field="э" data-count="809"><a href="/zhanr/jezoterika/">Эзотерика</a> <span class="field_counter">809 книг</span></li><li style="display:none;" data-field="п" data-count="702"><a href="/zhanr/poznavatelnaja-literatura/">Познавательная литература</a> <span class="field_counter">702 книг</span></li><li style="display:none;" data-field="р" data-count="647"><a href="/zhanr/religija/">Религия</a> <span class="field_counter">647 книг</span></li><li style="display:none;" data-field="а" data-count="618"><a href="/zhanr/alternativnaja-istorija/">Альтернативная история</a> <span class="field_counter">618 книг</span></li><li style="display:none;" data-field="н" data-count="571"><a href="/zhanr/nauchno-populjarnoe/">Научно-популярное</a> <span class="field_counter">571 книг</span></li><li style="display:none;" data-field="п" data-count="560"><a href="/zhanr/postapokalipsis/">Постапокалипсис</a> <span class="field_counter">560 книг</span></li><li style="display:none;" data-field="л" data-count="558"><a href="/zhanr/ljubovnyj-roman/">Любовный Роман</a> <span class="field_counter">558 книг</span></li><li style="display:none;" data-field="п" data-count="473"><a href="/zhanr/pojezija/">Поэзия</a> <span class="field_counter">473 книг</span></li><li style="display:none;" data-field="р" data-count="393"><a href="/zhanr/russkaja-literatura/">Русская литература</a> <span class="field_counter">393 книг</span></li><li style="display:none;" data-field="б" data-count="380"><a href="/zhanr/biznes/">Бизнес</a> <span class="field_counter">380 книг</span></li><li style="display:none;" data-field="s" data-count="291"><a href="/zhanr/stalker/">Stalker</a> <span class="field_counter">291 книг</span></li><li style="display:none;" data-field="д" data-count="217"><a href="/zhanr/dlja-vzroslyh/">Для взрослых</a> <span class="field_counter">217 книг</span></li><li style="display:none;" data-field="з" data-count="209"><a href="/zhanr/zdorove/">Здоровье</a> <span class="field_counter">209 книг</span></li><li style="display:none;" data-field="м" data-count="209"><a href="/zhanr/medicina/">Медицина</a> <span class="field_counter">209 книг</span></li><li style="display:none;" data-field="с" data-count="204"><a href="/zhanr/sovremennaja-proza/">Современная проза</a> <span class="field_counter">204 книг</span></li><li style="display:none;" data-field="к" data-count="176"><a href="/zhanr/kriminal/">Криминал</a> <span class="field_counter">176 книг</span></li><li style="display:none;" data-field="w" data-count="137"><a href="/zhanr/warhammer-40000/">Warhammer 40000</a> <span class="field_counter">137 книг</span></li><li style="display:none;" data-field="о" data-count="135"><a href="/zhanr/obuchenie/">Обучение</a> <span class="field_counter">135 книг</span></li><li style="display:none;" data-field="в" data-count="128"><a href="/zhanr/voennyj/">Военный</a> <span class="field_counter">128 книг</span></li><li style="display:none;" data-field="s" data-count="119"><a href="/zhanr/s-t-i-k-s/">S-T-I-K-S</a> <span class="field_counter">119 книг</span></li><li style="display:none;" data-field="с" data-count="93"><a href="/zhanr/samorazvitie/">Саморазвитие</a> <span class="field_counter">93 книг</span></li><li style="display:none;" data-field="н" data-count="91"><a href="/zhanr/na-inostrannyh-jazykah/">На иностранных языках</a> <span class="field_counter">91 книг</span></li><li style="display:none;" data-field="к" data-count="79"><a href="/zhanr/kiberpank/">Киберпанк</a> <span class="field_counter">79 книг</span></li><li style="display:none;" data-field="т" data-count="72"><a href="/zhanr/tru-krajm/">Тру-крайм</a> <span class="field_counter">72 книг</span></li><li style="display:none;" data-field="м" data-count="60"><a href="/zhanr/metro-2033/">Метро 2033</a> <span class="field_counter">60 книг</span></li><li style="display:none;" data-field="б" data-count="32"><a href="/zhanr/bojar-anime/">Бояръ-Аниме</a> <span class="field_counter">32 книг</span></li><li style="display:none;" data-field="e" data-count="29"><a href="/zhanr/eve-online/">Eve Online</a> <span class="field_counter">29 книг</span></li><li style="display:none;" data-field="э" data-count="21"><a href="/zhanr/jetnogenez/">Этногенез</a> <span class="field_counter">21 книг</span></li></ul><div class="pages" id="pages">
+    <div class="pages-load" id="show-more"><a href="#" onclick="return false;">Загрузить ещё</a></div>
+</div>
+<script>
+(function(){
+    var PER_PAGE = 15;
+    var listEl   = document.getElementById('fields-list');
+    var btn      = document.getElementById('show-more');
+    var sortBtns = document.querySelectorAll('.fc-sort-btn');
+    if (!listEl) return;
+    var allItems = Array.prototype.slice.call(listEl.querySelectorAll('li'));
+    var cur = PER_PAGE;
+
+    function renderList() {
+        var frag = document.createDocumentFragment();
+        for (var i = 0; i < allItems.length; i++) {
+            allItems[i].style.display = (i < cur) ? '' : 'none';
+            frag.appendChild(allItems[i]);
+        }
+        listEl.appendChild(frag);
+        if (btn) btn.parentNode.style.display = (cur >= allItems.length) ? 'none' : '';
+    }
+
+    if (btn) btn.addEventListener('click', function() { cur += PER_PAGE; renderList(); });
+
+    sortBtns.forEach(function(b) {
+        b.addEventListener('click', function() {
+            sortBtns.forEach(function(x){ x.classList.remove('active'); });
+            b.classList.add('active');
+            var mode = b.getAttribute('data-sort');
+            allItems.sort(function(a, z) {
+                if (mode === 'alpha') {
+                    return a.querySelector('a').textContent.trim().localeCompare(z.querySelector('a').textContent.trim(), 'ru');
+                }
+                var ca = parseInt(a.getAttribute('data-count'),10)||0;
+                var cz = parseInt(z.getAttribute('data-count'),10)||0;
+                if (ca !== cz) return cz - ca;
+                return a.querySelector('a').textContent.trim().localeCompare(z.querySelector('a').textContent.trim(), 'ru');
+            });
+            cur = PER_PAGE;
+            renderList();
+        });
+    });
+
+    renderList();
+})();
+</script></div>
+
+<style>
+.alphabet-ru li, .alphabet-en li {display: none;}
+</style>
+                        
+                        
+                        
+                        
+                    	
+                        <div class="related-links"></div>
+                    
+					
+				</main>
+				
+				<!-- END COL MAIN -->
+
+			</div>
+
+			<!-- END CONTENT -->
+
+			
+            
+
+			<footer class="footer d-flex ai-center">
+				<a href="/copyright.html" rel="nofollow" class="btn">Правообладателям</a>
+                <a href="/sitemap.html" rel="nofollow">Карта сайта</a>
+                <div class="partner"><div class="partner-capt"><a href="mailto:dmca@audioknigi.fun">dmca@audioknigi.fun</a></div> <div class="partner-logo"><img src="/templates/audiobooks/images/litres-footer.svg" alt="Мы партнёр Литрес" title="Мы партнёр Литрес"></div></div>
+				<div class="footer__text flex-grow-1">
+                    <span>18+</span>© 2022-2026 Audioknigi.fun.
+				</div>
+			</footer>
+
+			<!-- END FOOTER -->
+
+		</div>
+
+		<!-- END WRAPPER-MAIN -->
+
+	</div>
+
+	<!-- END WRAPPER -->
+
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript" >
+       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+       m[i].l=1*new Date();
+       for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+       k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+       ym(91045703, "init", {
+            clickmap:true,
+            trackLinks:true,
+            accurateTrackBounce:true
+       });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/91045703" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+    
+	
+<script src="/engine/classes/min/index.php?g=general3&amp;v=8a1b1"></script>
+<script src="/engine/classes/min/index.php?f=engine/classes/js/jqueryui3.js,engine/classes/js/dle_js.js,engine/classes/js/lazyload.js&amp;v=8a1b1" defer></script>
+	<script src="/templates/audiobooks/js/libs.js?v=20260811-comments-fast"></script>
+	<script>
+<!--
+var dle_root       = '/';
+var dle_admin      = '';
+var dle_login_hash = 'ae3c3afbe00e57435f65326c16ccdadbfe8e7f9b';
+var dle_group      = 5;
+var dle_skin       = 'audiobooks';
+var dle_wysiwyg    = '2';
+var quick_wysiwyg  = '2';
+var dle_min_search = '4';
+var dle_act_lang   = ["Да", "Нет", "Ввод", "Отмена", "Сохранить", "Удалить", "Загрузка. Пожалуйста, подождите..."];
+var menu_short     = 'Быстрое редактирование';
+var menu_full      = 'Полное редактирование';
+var menu_profile   = 'Просмотр профиля';
+var menu_send      = 'Отправить сообщение';
+var menu_uedit     = 'Админцентр';
+var dle_info       = 'Информация';
+var dle_confirm    = 'Подтверждение';
+var dle_prompt     = 'Ввод информации';
+var dle_req_field  = ["Заполните поле с именем", "Заполните поле с сообщением", "Заполните поле с темой сообщения"];
+var dle_del_agree  = 'Вы действительно хотите удалить? Данное действие невозможно будет отменить';
+var dle_spam_agree = 'Вы действительно хотите отметить пользователя как спамера? Это приведёт к удалению всех его комментариев';
+var dle_c_title    = 'Отправка жалобы';
+var dle_complaint  = 'Укажите текст Вашей жалобы для администрации:';
+var dle_mail       = 'Ваш e-mail:';
+var dle_big_text   = 'Выделен слишком большой участок текста.';
+var dle_orfo_title = 'Укажите комментарий для администрации к найденной ошибке на странице:';
+var dle_p_send     = 'Отправить';
+var dle_p_send_ok  = 'Уведомление успешно отправлено';
+var dle_save_ok    = 'Изменения успешно сохранены. Обновить страницу?';
+var dle_reply_title= 'Ответ на комментарий';
+var dle_tree_comm  = '0';
+var dle_del_news   = 'Удалить статью';
+var dle_sub_agree  = 'Вы действительно хотите подписаться на комментарии к данной публикации?';
+var dle_captcha_type  = '0';
+var dle_share_interesting  = ["Поделиться ссылкой на выделенный текст", "Twitter", "Facebook", "Вконтакте", "Прямая ссылка:", "Нажмите правой клавишей мыши и выберите «Копировать ссылку»"];
+var DLEPlayerLang     = {prev: 'Предыдущий',next: 'Следующий',play: 'Воспроизвести',pause: 'Пауза',mute: 'Выключить звук', unmute: 'Включить звук', settings: 'Настройки', enterFullscreen: 'На полный экран', exitFullscreen: 'Выключить полноэкранный режим', speed: 'Скорость', normal: 'Обычная', quality: 'Качество', pip: 'Режим PiP'};
+var allow_dle_delete_news   = false;
+var dle_search_delay   = false;
+var dle_search_value   = '';
+jQuery(function($){
+FastSearch();
+});
+//-->
+</script>
+	<script>
+	(function ($) {
+		if (!$ || !document.getElementById('story')) return;
+		var akSearchTimer = null;
+
+		function searchPosition($box) {
+			$box.css({position: 'absolute', top: 0, left: 0});
+			if ($.fn.position) {
+				$box.position({my: 'left top', at: 'left bottom', of: '#story', collision: 'fit flip'});
+			}
+		}
+
+		function externalLink(query) {
+			return '<a class="ak-external-search-link" href="/external-audio/?q=' + encodeURIComponent(query) + '"><b>Продолжить поиск в доп. каталоге</b><small>Проверим ещё несколько библиотек</small></a>';
+		}
+
+		function showSearchBox(html) {
+			var $box = $('#searchsuggestions');
+			if (!$box.length) {
+				$('body').append("<div id='searchsuggestions' style='display:none'></div>");
+				$box = $('#searchsuggestions');
+			}
+			$box.html(html).stop(true, true).fadeIn(120);
+			searchPosition($box);
+			return $box;
+		}
+
+		function showSearchLoading(query) {
+			showSearchBox('<div class="ak-search-loading"><i></i><span>Ищем в библиотеке…</span></div>' + externalLink(query));
+		}
+
+		window.dle_do_search = function (query) {
+			clearInterval(window.dle_search_delay);
+			showSearchLoading(query);
+			$.post(dle_root + 'engine/ajax/controller.php?mod=search', {
+				query: '' + query,
+				user_hash: dle_login_hash
+			}).done(function (response) {
+				showSearchBox(response + externalLink(query));
+			}).fail(function () {
+				showSearchBox('<span class="notfound">Основной поиск временно не ответил.</span>' + externalLink(query));
+			});
+			window.dle_search_value = query;
+		};
+
+		$('#story').on('input.akExternalSearch', function () {
+			var query = $.trim(this.value || '');
+			var minimum = Number(window.dle_min_search || 2);
+			clearTimeout(akSearchTimer);
+			if (query.length >= minimum) {
+				showSearchLoading(query);
+				window.dle_search_value = query;
+				akSearchTimer = setTimeout(function () { window.dle_do_search(query); }, 350);
+			} else {
+				$('#searchsuggestions').stop(true, true).fadeOut(100);
+			}
+		});
+
+		$('#quicksearch').on('submit.akExternalSearch', function () {
+			var query = $.trim($('#story').val() || '');
+			if (query) showSearchLoading(query);
+		});
+
+		if (window.MutationObserver) {
+			var observedSearchBox = null;
+			var searchBoxObserver = new MutationObserver(ensureExternalLink);
+			function ensureExternalLink() {
+				var box = document.getElementById('searchsuggestions');
+				var query = $.trim($('#story').val() || '');
+				if (box !== observedSearchBox) {
+					searchBoxObserver.disconnect();
+					observedSearchBox = box;
+					if (box) searchBoxObserver.observe(box, {childList: true, subtree: true});
+				}
+				if (box && query && !box.querySelector('.ak-external-search-link')) {
+					box.insertAdjacentHTML('beforeend', externalLink(query));
+				}
+			}
+			new MutationObserver(ensureExternalLink).observe(document.body, {childList: true});
+			ensureExternalLink();
+		}
+	})(window.jQuery);
+	</script>
+
+<!--<div id="movie_video"></div><script type="text/javascript" src="https://vak345.com/s.js?v=cd18e2780f446cc51bf8916755ce2599" async></script>-->
+
+    <!--<script src="/snowFlakes/Snow.js"></script>
+    <script>
+        new Snow ();
+    </script>-->
+     
+<script>
+window.AKPlayerConfig = {
+    isLogged: false,
+    listenHistoryEndpoint: "/engine/ajax/controller.php?mod=listen_history",
+    audioPreroll: {
+        enabled: true,
+        campaign: "club-20260911-v2",
+        src: "/uploads/audio/audio.mp3",
+        repeatHours: 24
+    }
+};
+</script>
+<script src="/templates/audiobooks/js/audioplayer.js?v=20260923-traffic-fix"></script>
+    
+   
+    
+</body>
+</html>

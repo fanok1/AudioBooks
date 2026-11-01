@@ -9,11 +9,19 @@ import java.util.List;
 
 @Dao
 public interface AudioDao {
+    /** Listening progress is kept while its book is in history, favorites or saved books. */
+    String UNREFERENCED = "url_book NOT IN (SELECT url_book FROM history)"
+            + " AND url_book NOT IN (SELECT url_book FROM favorite)"
+            + " AND url_book NOT IN (SELECT url_book FROM saved)";
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(AudioEntity entity);
 
-    @Query("DELETE FROM audio WHERE url_book = :urlBook")
-    void deleteByUrl(String urlBook);
+    @Query("DELETE FROM audio WHERE url_book = :urlBook AND " + UNREFERENCED)
+    void deleteByUrlIfUnreferenced(String urlBook);
+
+    @Query("DELETE FROM audio WHERE " + UNREFERENCED)
+    void deleteUnreferenced();
 
     @Query("DELETE FROM audio")
     void deleteAll();

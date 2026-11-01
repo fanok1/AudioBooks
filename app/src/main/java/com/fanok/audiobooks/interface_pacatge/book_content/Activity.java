@@ -2,15 +2,16 @@ package com.fanok.audiobooks.interface_pacatge.book_content;
 
 
 import android.content.Intent;
-import android.content.ServiceConnection;
 import androidx.annotation.NonNull;
 import com.arellomobile.mvp.MvpView;
 import com.arellomobile.mvp.viewstate.strategy.AddToEndSingleStrategy;
+import com.arellomobile.mvp.viewstate.strategy.OneExecutionStateStrategy;
 import com.arellomobile.mvp.viewstate.strategy.SingleStateStrategy;
 import com.arellomobile.mvp.viewstate.strategy.SkipStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.fanok.audiobooks.pojo.AudioPOJO;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.pojo.OtherArtistPOJO;
 import java.util.ArrayList;
 
 public interface Activity extends MvpView {
@@ -29,16 +30,18 @@ public interface Activity extends MvpView {
 
     void showProgres(boolean b);
 
+    /** {@code chaptersTotal}: chapters the book has, more than {@code data} when only downloaded ones are listed. */
     @StateStrategyType(AddToEndSingleStrategy.class)
-    void showData(ArrayList<AudioPOJO> data, String url);
+    void showData(ArrayList<AudioPOJO> data, String url, int chaptersTotal);
 
     void showTitle(@NonNull String name);
 
-    @StateStrategyType(SkipStrategy.class)
-    void decode(@NonNull String key);
-
     @StateStrategyType(AddToEndSingleStrategy.class)
     void updateTime(int timeCurent, int timeEnd, int buffered);
+
+    /** Another book keeps playing while this one opens: the hint on holding play and the seek buttons, once ever. */
+    @StateStrategyType(OneExecutionStateStrategy.class)
+    void showSwitchBookHint();
 
     @StateStrategyType(AddToEndSingleStrategy.class)
     void setTimeEnd(int timeEnd);
@@ -55,9 +58,6 @@ public interface Activity extends MvpView {
     @StateStrategyType(SkipStrategy.class)
     void activityStart(@NonNull Intent intent);
 
-    @StateStrategyType(SkipStrategy.class)
-    void myUnbindService(@NonNull ServiceConnection serviceConnection);
-
     @StateStrategyType(AddToEndSingleStrategy.class)
     void stateCollapsed();
 
@@ -66,6 +66,10 @@ public interface Activity extends MvpView {
 
     @StateStrategyType(AddToEndSingleStrategy.class)
     void showOtherSource();
+
+    /** Shows the other-narrators tab with {@code artists}, never empty. */
+    @StateStrategyType(AddToEndSingleStrategy.class)
+    void showOtherArtist(@NonNull ArrayList<OtherArtistPOJO> artists);
 
     @StateStrategyType(AddToEndSingleStrategy.class)
     void stateElse();
@@ -82,6 +86,17 @@ public interface Activity extends MvpView {
 
     @StateStrategyType(SkipStrategy.class)
     void showToast(String s);
+
+    /**
+     * The chapters could not be loaded: {@code message} and the full {@code report} (the exception with its stack trace)
+     * in a dialog that can copy it, or {@code message} alone when the user turned the reports off.
+     */
+    @StateStrategyType(OneExecutionStateStrategy.class)
+    void showLoadError(String message, String report);
+
+    /** A notice that must be read: shown long, and on the next attach when the screen was stopped. */
+    @StateStrategyType(OneExecutionStateStrategy.class)
+    void showLongToast(int id);
 
     @StateStrategyType(SkipStrategy.class)
     void updateAdapter();

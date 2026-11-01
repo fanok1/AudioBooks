@@ -1,6 +1,7 @@
 package com.fanok.audiobooks.model;
 
 import android.content.Context;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import com.fanok.audiobooks.interface_pacatge.books.AudioDBHelperInterfase;
 import com.fanok.audiobooks.interface_pacatge.books.BooksDBAbstract;
@@ -12,6 +13,8 @@ import java.util.List;
 
 public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterfase {
     private static final String TAG = "AudioDBModel";
+
+    private int mSkippedRows;
 
 
     public AudioDBModel(Context context) {
@@ -41,14 +44,16 @@ public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterf
         getDatabase().audioDao().insert(entity);
     }
 
+    /** Drops the progress of {@code urlBook} unless the book is still in history, favorites or saved books. */
     @Override
     public void remove(@NonNull String urlBook) {
-        getDatabase().audioDao().deleteByUrl(urlBook);
+        getDatabase().audioDao().deleteByUrlIfUnreferenced(urlBook);
     }
 
+    /** Drops the progress of every book that is no longer in history, favorites or saved books. */
     @Override
     public void clearAll() {
-        getDatabase().audioDao().deleteAll();
+        getDatabase().audioDao().deleteUnreferenced();
     }
 
     @Override
@@ -74,12 +79,23 @@ public class AudioDBModel extends BooksDBAbstract implements AudioDBHelperInterf
         ArrayList<TimeStartPOJO> list = new ArrayList<>();
         for (AudioEntity entity : entities) {
             TimeStartPOJO audio = new TimeStartPOJO();
-            audio.setUrl(entity.urlBook);
-            audio.setName(entity.name);
-            audio.setTime(entity.time);
+            try {
+                audio.setUrl(entity.urlBook);
+                audio.setName(entity.name);
+                audio.setTime(entity.time);
+            } catch (RuntimeException e) {
+                mSkippedRows++;
+                Log.w(TAG, "Skipping unreadable progress row " + entity.urlBook, e);
+                continue;
+            }
             list.add(audio);
         }
         Collections.reverse(list);
         return list;
+    }
+
+    /** Rows {@link #getAll()} could not convert and left out since this model was created. */
+    public int getSkippedRows() {
+        return mSkippedRows;
     }
 }

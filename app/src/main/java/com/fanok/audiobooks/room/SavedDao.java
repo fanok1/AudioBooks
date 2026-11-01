@@ -21,7 +21,7 @@ public interface SavedDao {
     @Query("DELETE FROM saved")
     void deleteAll();
 
-    @Query("SELECT * FROM saved")
+    @Query("SELECT * FROM saved ORDER BY id")
     List<SavedEntity> getAll();
 
     @Query("SELECT * FROM saved ORDER BY id DESC LIMIT 1")

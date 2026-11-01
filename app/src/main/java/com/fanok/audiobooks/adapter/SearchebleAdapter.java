@@ -25,7 +25,7 @@ public class SearchebleAdapter extends RecyclerView.Adapter<SearchebleAdapter.My
 
     @SuppressLint("NotifyDataSetChanged")
     public void setItem(ArrayList<SearchebleArrayPOJO> newModel) {
-        mModel = newModel;
+        mModel = newModel == null ? new ArrayList<>() : new ArrayList<>(newModel);
         notifyDataSetChanged();
     }
 

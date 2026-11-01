@@ -23,6 +23,10 @@ public interface ActivityPresenter {
 
     void buttomPlayClick(View view);
 
+    boolean canSwitchToThisBook();
+
+    void switchToThisBook();
+
     void buttomPreviousClick(View view);
 
     void buttomNextClick(View view);
@@ -52,8 +56,6 @@ public interface ActivityPresenter {
     void dowland(HashSet<String> data);
 
     void delete(HashSet<String> data);
-
-    void addDecodeData(String string);
 
     void onCreate(Context context);
 

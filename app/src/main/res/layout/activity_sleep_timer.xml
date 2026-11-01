@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- One layout for phones, tablets and TV: it scrolls, and the controls follow D-pad order top to bottom. Compact
+     enough that the setup fits a phone screen without scrolling. -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -22,322 +24,337 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="bottom"
-        android:orientation="vertical"
+        android:fillViewport="true"
+        android:theme="@style/ThemeOverlay.App.SleepTimer"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="2">
-
-            <LinearLayout
-                android:id="@+id/timer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:orientation="horizontal"
-                android:padding="@dimen/text_margin"
-                tools:ignore="UselessParent">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center">
-
-                    <TextView
-                        android:id="@+id/hours"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:text="@string/zero_time"
-                        android:textColor="?attr/hrefColor"
-                        android:textSize="@dimen/number_text_size"
-                        android:textStyle="bold"
-                        tools:textColor="@color/hrefColor" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="bottom"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/hours"
-                        android:textColor="?attr/hrefColor"
-                        android:textSize="@dimen/titleSize"
-                        tools:textColor="@color/hrefColor" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center">
-
-                    <TextView
-                        android:id="@+id/minutes"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:text="@string/zero_time"
-                        android:textColor="?attr/hrefColor"
-                        android:textSize="@dimen/number_text_size"
-                        android:textStyle="bold"
-                        tools:textColor="@color/hrefColor" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="bottom"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/minutes"
-                        android:textColor="?attr/hrefColor"
-                        android:textSize="@dimen/titleSize"
-                        tools:textColor="@color/hrefColor" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center">
-
-                    <TextView
-                        android:id="@+id/seconds"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:text="@string/zero_time"
-                        android:textColor="?attr/hrefColor"
-                        android:textSize="@dimen/number_text_size"
-                        android:textStyle="bold"
-                        tools:textColor="@color/hrefColor" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="bottom"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/seconds"
-                        android:textColor="?attr/hrefColor"
-                        android:textSize="@dimen/titleSize"
-                        tools:textColor="@color/hrefColor" />
-
-                </LinearLayout>
-
-                <ImageButton
-                    android:id="@+id/clear"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/clear"
-                    android:padding="@dimen/text_margin"
-                    android:src="@drawable/ic_backspace_outline" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_alignBottom="@id/timer"
-                android:layout_marginStart="@dimen/text_margin"
-                android:layout_marginEnd="@dimen/text_margin"
-                android:alpha="0.1"
-                android:background="?attr/colorPrimaryText" />
-
-        </RelativeLayout>
-
-
-        <LinearLayout
-            android:id="@+id/numbers"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="3"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                tools:ignore="NestedWeights">
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/numb_1"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size" />
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/numb_2"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size" />
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/numb_3"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/numb_4"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size" />
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/numb_5"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size" />
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/numb_6"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/numb_7"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size" />
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/numb_8"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size" />
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/numb_9"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size"
-                    android:visibility="invisible" />
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/numb_0"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/number_buttons_text_size" />
-
-                <Button
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/number_buttons_size"
-                    android:layout_weight="1"
-                    android:background="?selectableItemBackgroundBorderless"
-                    android:text="@string/end_chapter"
-                    android:textColor="?attr/prefIconColor"
-                    android:textSize="@dimen/titleSizeParentControl" />
-            </LinearLayout>
-
-
-        </LinearLayout>
-
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:orientation="horizontal"
             android:padding="@dimen/text_margin">
 
-            <ImageButton
-                android:id="@+id/start"
-                android:layout_width="wrap_content"
+            <!-- Setup: the timer is not running -->
+            <LinearLayout
+                android:id="@+id/setup"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:background="@drawable/shape_drawable"
-                android:contentDescription="@string/play"
-                android:src="@drawable/ic_play" />
-        </LinearLayout>
+                android:orientation="vertical">
 
-    </LinearLayout>
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/mode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/modeCountdown"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/sleep_timer_mode_countdown" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/modeClock"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/sleep_timer_mode_clock" />
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                <LinearLayout
+                    android:id="@+id/countdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_horizontal"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+
+                            <!-- Up/Down change the value: Left leads back to the mode, Right to the minutes -->
+                            <NumberPicker
+                                android:id="@+id/hours"
+                                android:focusable="true"
+                                android:background="@drawable/focusable"
+                                android:layout_width="96dp"
+                                android:layout_height="@dimen/sleep_timer_picker_height"
+                                android:contentDescription="@string/sleep_timer_hours_label"
+                                android:descendantFocusability="blocksDescendants"
+                                android:nextFocusLeft="@id/modeCountdown"
+                                android:nextFocusRight="@+id/minutes" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/sleep_timer_hours_label"
+                                android:textColor="?attr/subTextColor"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical">
+
+                            <NumberPicker
+                                android:id="@+id/minutes"
+                                android:focusable="true"
+                                android:background="@drawable/focusable"
+                                android:layout_width="96dp"
+                                android:layout_height="@dimen/sleep_timer_picker_height"
+                                android:contentDescription="@string/sleep_timer_minutes_label"
+                                android:descendantFocusability="blocksDescendants"
+                                android:nextFocusLeft="@id/hours"
+                                android:nextFocusRight="@+id/preset15" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/sleep_timer_minutes_label"
+                                android:textColor="?attr/subTextColor"
+                                android:textSize="16sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/presets"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="4dp"
+                        app:chipSpacingHorizontal="4dp"
+                        app:selectionRequired="false"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@id/preset15"
+                            style="@style/Widget.App.SleepTimer.Preset"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:tag="15"
+                            android:text="@string/sleep_timer_preset_15" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/preset30"
+                            style="@style/Widget.App.SleepTimer.Preset"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:tag="30"
+                            android:text="@string/sleep_timer_preset_30" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/preset45"
+                            style="@style/Widget.App.SleepTimer.Preset"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:tag="45"
+                            android:text="@string/sleep_timer_preset_45" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/preset60"
+                            style="@style/Widget.App.SleepTimer.Preset"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:tag="60"
+                            android:text="@string/sleep_timer_preset_60" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/preset90"
+                            style="@style/Widget.App.SleepTimer.Preset"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:tag="90"
+                            android:text="@string/sleep_timer_preset_90" />
+
+                    </com.google.android.material.chip.ChipGroup>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/clock"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/clockTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:minHeight="48dp"
+                        android:paddingStart="24dp"
+                        android:paddingEnd="24dp"
+                        android:textColor="?attr/hrefColor"
+                        android:textSize="48sp"
+                        android:textStyle="bold"
+                        android:tooltipText="@string/sleep_timer_clock_pick"
+                        tools:targetApi="o"
+                        tools:text="23:30" />
+
+                    <TextView
+                        android:id="@+id/clockCaption"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center"
+                        android:textColor="?attr/subTextColor"
+                        android:textSize="16sp"
+                        tools:text="Сработает через 1 ч 20 мин" />
+
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/endOfChapter"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/sleep_timer_end_of_chapter" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/warn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:minHeight="48dp"
+                    android:text="@string/sleep_timer_warn_title"
+                    android:textColor="?attr/colorPrimaryText"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sleep_timer_warn_summary"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:id="@+id/shakeRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/shake"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:minHeight="48dp"
+                        android:text="@string/sleep_timer_shake_title"
+                        android:textColor="?attr/colorPrimaryText"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/sleep_timer_shake_summary"
+                        android:textColor="?attr/subTextColor"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/start"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:minHeight="56dp"
+                    android:text="@string/sleep_timer_start"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
+            <!-- Running -->
+            <LinearLayout
+                android:id="@+id/running"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingTop="32dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/remaining"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/hrefColor"
+                    android:textSize="56sp"
+                    android:textStyle="bold"
+                    tools:text="00:29:41" />
+
+                <TextView
+                    android:id="@+id/endCaption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="18sp"
+                    tools:text="Остановится в 23:41" />
+
+                <TextView
+                    android:id="@+id/pausedCaption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="@string/sleep_timer_paused"
+                    android:textColor="?attr/subTextColor"
+                    android:textSize="16sp"
+                    android:visibility="gone" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/extend"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:minWidth="120dp"
+                    android:text="@string/sleep_timer_extend"
+                    android:textSize="16sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/cancel"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:minHeight="56dp"
+                    android:text="@string/sleep_timer_cancel"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

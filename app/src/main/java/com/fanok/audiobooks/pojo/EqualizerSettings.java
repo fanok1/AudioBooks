@@ -6,4 +6,6 @@ public class EqualizerSettings {
     public short reverbPreset;
     public short bassStrength;
     public boolean equalizerEnabled;
+    /** Absent in settings saved before it existed: 0, the centre. */
+    public int balance;
 }

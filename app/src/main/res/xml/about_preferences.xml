@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <Preference
         android:icon="@drawable/ic_version"
-        android:key="version"
-        android:selectable="false" />
+        android:key="version" />
 
     <!--<Preference
         android:icon="@drawable/ic_plus_version"
@@ -17,11 +17,13 @@
         android:key="privacy"
         android:title="@string/privacy" />
 
+    <!-- hidden for now (temporary): the screen and its items stay as they are -->
     <PreferenceScreen
         android:icon="@drawable/ic_donate"
         android:key="donate"
         android:summary="@string/donate_summary"
-        android:title="@string/donate">
+        android:title="@string/donate"
+        app:isPreferenceVisible="false">
 
         <Preference
             android:icon="@drawable/ic_mir"
@@ -128,14 +130,27 @@
         android:summary="@string/battary_optimize_desc"
         android:title="@string/battary_optimize" />
 
+    <!-- hidden for now (temporary): the item and its link stay as they are -->
     <Preference
         android:icon="@drawable/ic_rustore"
         android:key="open_rustore"
-        android:title="@string/open_rustore" />
+        android:title="@string/open_rustore"
+        app:isPreferenceVisible="false" />
 
     <Preference
+        android:icon="@drawable/ic_web"
         android:key="open_4pda"
         android:title="@string/open_4pda" />
+
+    <Preference
+        android:icon="@drawable/ic_github"
+        android:key="open_github"
+        android:title="@string/open_github" />
+
+    <Preference
+        android:icon="@drawable/ic_telegram"
+        android:key="open_telegram"
+        android:title="@string/open_telegram" />
 
 
 </PreferenceScreen>

@@ -11,21 +11,27 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
@@ -49,8 +55,14 @@ import com.fanok.audiobooks.adapter.BooksListAddapter;
 import com.fanok.audiobooks.databinding.FragmentFavoriteBinding;
 import com.fanok.audiobooks.interface_pacatge.favorite.FavoriteView;
 import com.fanok.audiobooks.pojo.BookPOJO;
+import com.fanok.audiobooks.policy.DefaultCover;
+import com.fanok.audiobooks.policy.ParentalControl;
 import com.fanok.audiobooks.presenter.FavoritePresenter;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.BaseTransientBottomBar;
+import com.google.android.material.snackbar.Snackbar;
+import com.squareup.picasso.Picasso;
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -60,11 +72,15 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     private static final String TAG = "FavoriteFragment";
     private static final String ARG_TITLE = "title";
     private static final String ARG_TABLE = "table";
+    /** Seconds before "Yes" of the clear-all question can be pressed. */
+    private static final int CLEAR_CONFIRM_DELAY_S = 3;
 
     @InjectPresenter
     FavoritePresenter mPresenter;
 
     private BooksListAddapter mAddapterBooks;
+    /** The parental-control version the visible covers were bound with. */
+    private long mParentalVersion;
 
     private int titleId;
 
@@ -73,6 +89,8 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     private SearchView searchView;
 
     private FragmentFavoriteBinding binding;
+
+    private BottomSheetDialog bookMenu;
 
     public static FavoriteFragment newInstance(int title, int table) {
         FavoriteFragment fragment = new FavoriteFragment();
@@ -175,12 +193,21 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
                 }
 
                 setColorPrimeriTextInIconItemMenu(menu.findItem(R.id.app_bar_search), requireContext());
+
+                if (table == TABLE_FAVORITE || table == TABLE_HISTORY) {
+                    MenuItem clear = menu.findItem(R.id.clear_list);
+                    clear.setVisible(true);
+                    setColorPrimeriTextInIconItemMenu(clear, requireContext());
+                }
             }
 
-            @SuppressLint("UnsafeOptInUsageError")
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem item) {
-                mPresenter.onOptionsItemSelected(binding.view, item.getItemId());
+                if (item.getItemId() == R.id.clear_list) {
+                    confirmClear();
+                    return true;
+                }
+                mPresenter.onOptionsItemSelected(item.getItemId());
                 item.setChecked(true);
                 return true;
             }
@@ -189,17 +216,26 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         if (titleId != 0) {
             requireActivity().setTitle(titleId);
         }
+        setSubTitle(""); // the previous screen's subtitle; an active filter sets its own on view-state replay
 
         SharedPreferences pref = PreferenceManager
                 .getDefaultSharedPreferences(requireContext());
 
         mAddapterBooks = new BooksListAddapter(pref.getBoolean("history_procent", true));
         binding.list.setAdapter(mAddapterBooks);
-        mAddapterBooks.setListener(this::onItemSelected);
+        mAddapterBooks.setListener((view, position) -> {
+            if (position != RecyclerView.NO_POSITION) {
+                mPresenter.onBookItemClick(position);
+            }
+        });
 
-        mAddapterBooks.setLongListener(
-                (view13, position) -> mPresenter.onBookItemLongClick(view13, position,
-                        getLayoutInflater()));
+        mAddapterBooks.setLongListener((view, position) -> {
+            if (position != RecyclerView.NO_POSITION) {
+                mPresenter.onBookItemLongClick(position);
+            }
+        });
+
+        binding.placeholder.placeholderRetry.setOnClickListener(v -> mPresenter.loadBooks());
 
         ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(
                 0, ItemTouchHelper.LEFT) {
@@ -214,8 +250,9 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int position = viewHolder.getBindingAdapterPosition();
-                mPresenter.onRemove(position);
-                Toast.makeText(getContext(), R.string.delete_complite, Toast.LENGTH_SHORT).show();
+                if (position != RecyclerView.NO_POSITION) {
+                    mPresenter.onRemove(position);
+                }
             }
 
             @Override
@@ -261,11 +298,15 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
 
     @Override
     public void onDestroyView() {
-        getPresenter().onDestroy();
+        if (bookMenu != null) {
+            bookMenu.dismiss();
+            bookMenu = null;
+        }
         if (mAddapterBooks != null) {
             mAddapterBooks.close();
         }
         mAddapterBooks = null;
+        searchView = null;
         super.onDestroyView();
         binding = null;
     }
@@ -286,6 +327,32 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
     public void showData(@NonNull ArrayList<BookPOJO> bookPOJOS) {
         if (mAddapterBooks != null) {
             mAddapterBooks.setItem(bookPOJOS);
+        }
+        if (binding != null) {
+            showPlaceholder(bookPOJOS.isEmpty() ? R.string.list_empty : 0, false);
+        }
+    }
+
+    /** The centred message instead of the list; {@code 0} hides it. */
+    private void showPlaceholder(int message, boolean retry) {
+        if (message == 0) {
+            binding.placeholder.getRoot().setVisibility(View.GONE);
+            return;
+        }
+        binding.placeholder.placeholderText.setText(message);
+        binding.placeholder.placeholderRetry.setVisibility(retry ? View.VISIBLE : View.GONE);
+        binding.placeholder.getRoot().setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void showError(boolean b) {
+        if (binding == null) {
+            return;
+        }
+        if (b) {
+            showPlaceholder(R.string.error_load_data, true);
+        } else if (binding.placeholder.placeholderRetry.getVisibility() == View.VISIBLE) {
+            showPlaceholder(0, false);
         }
     }
 
@@ -339,14 +406,180 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         }
     }
 
+    /**
+     * Asks before emptying the list; "Yes" counts down {@link #CLEAR_CONFIRM_DELAY_S} seconds before it can be
+     * pressed, so a stray tap on the toolbar icon clears nothing.
+     */
+    private void confirmClear() {
+        final String yes = getString(R.string.yes);
+        final AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle(titleId != 0 ? titleId : R.string.app_name)
+                .setMessage(table == TABLE_HISTORY ? R.string.confirm_clear_history : R.string.confirm_clear_favorite)
+                .setPositiveButton(yes, (d, which) -> mPresenter.clearAll())
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+        final Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        button.setEnabled(false);
+        button.post(new Runnable() {
+            private int left = CLEAR_CONFIRM_DELAY_S;
+
+            @Override
+            public void run() {
+                if (!dialog.isShowing()) {
+                    return;
+                }
+                if (left > 0) {
+                    // the dialog's context: the fragment may have left the screen while the dialog stays
+                    button.setText(dialog.getContext().getString(R.string.yes_countdown, yes, left--));
+                    button.postDelayed(this, 1000);
+                } else {
+                    button.setText(yes);
+                    button.setEnabled(true);
+                }
+            }
+        });
+    }
+
+    /** The swiped book is gone from the list; it is deleted unless "undo" is tapped before the bar leaves (UI-10). */
+    @Override
+    public void showUndoRemove(@NonNull BookPOJO book) {
+        if (binding == null) {
+            mPresenter.commitRemove();
+            return;
+        }
+        Snackbar.make(binding.getRoot(), R.string.book_removed, Snackbar.LENGTH_LONG)
+                .setAction(R.string.undo, v -> mPresenter.undoRemove())
+                .addCallback(new BaseTransientBottomBar.BaseCallback<Snackbar>() {
+                    @Override
+                    public void onDismissed(Snackbar transientBottomBar, int event) {
+                        if (event != DISMISS_EVENT_ACTION) {
+                            mPresenter.commitRemove();
+                        }
+                    }
+                })
+                .show();
+    }
+
+    @Override
+    public void showFilterValues(int filterId, @NonNull ArrayList<String> values) {
+        if (binding == null) {
+            return;
+        }
+        PopupMenu popupMenu = new PopupMenu(requireContext(), binding.view, Gravity.END);
+        popupMenu.getMenu().add(1, 0, 0, R.string.all);
+        for (int i = 0; i < values.size(); i++) {
+            popupMenu.getMenu().add(1, i + 1, 0, values.get(i));
+        }
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int index = item.getItemId();
+            mPresenter.onFilterSelected(filterId, index == 0 ? null : values.get(index - 1));
+            return true;
+        });
+        popupMenu.show();
+    }
+
+    @SuppressLint("InflateParams")
+    @Override
+    public void showBookMenu(@NonNull BookPOJO book) {
+        if (bookMenu != null) {
+            bookMenu.dismiss();
+        }
+        View layout = getLayoutInflater().inflate(R.layout.bootom_sheet_books_menu, null);
+        final BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
+        dialog.setContentView(layout);
+        bookMenu = dialog;
+        dialog.setOnDismissListener(d -> {
+            if (bookMenu == dialog) {
+                bookMenu = null;
+            }
+        });
+
+        TextView open = layout.findViewById(R.id.open);
+        TextView add = layout.findViewById(R.id.addFavorite);
+        TextView remove = layout.findViewById(R.id.removeFavorite);
+        TextView genre = layout.findViewById(R.id.genre);
+        TextView author = layout.findViewById(R.id.author);
+        TextView artist = layout.findViewById(R.id.artist);
+        TextView series = layout.findViewById(R.id.series);
+
+        ImageView imageView = layout.findViewById(R.id.imageView);
+        Drawable mask = ParentalControl.coverMask(imageView.getContext(), book);
+        if (mask != null) {
+            imageView.setImageDrawable(mask);
+        } else if (DefaultCover.replaces(book.getPhoto())) {
+            imageView.setImageDrawable(DefaultCover.drawable(imageView.getContext(), book.getUrl()));
+        } else {
+            Picasso.get()
+                    .load(book.getPhoto())
+                    .error(android.R.drawable.ic_menu_gallery)
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .into(imageView);
+        }
+
+        TextView title = layout.findViewById(R.id.title);
+        title.setText(book.getName());
+
+        TextView authorName = layout.findViewById(R.id.authorName);
+        if (book.getAutor() != null) {
+            authorName.setText(book.getAutor());
+            authorName.setVisibility(View.VISIBLE);
+        } else {
+            authorName.setVisibility(View.GONE);
+        }
+
+        add.setVisibility(View.GONE);
+        remove.setVisibility(View.VISIBLE);
+        remove.setText(R.string.remove);
+        remove.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_minus_circle, 0, 0, 0);
+
+        open.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            showBooksActivity(book);
+        });
+
+        remove.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            mPresenter.onRemove(book);
+        });
+
+        genre.setVisibility(book.getUrlGenre() != null ? View.VISIBLE : View.GONE);
+        genre.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            mPresenter.onMenuGenre(book.getUrlGenre(), book.getGenre());
+        });
+
+        author.setVisibility(book.getUrlAutor() != null ? View.VISIBLE : View.GONE);
+        author.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            mPresenter.onMenuAutor(book.getUrlAutor(), book.getAutor());
+        });
+
+        artist.setVisibility(book.getUrlArtist() != null ? View.VISIBLE : View.GONE);
+        artist.setOnClickListener(view1 -> {
+            dialog.dismiss();
+            mPresenter.onMenuArtist(book.getUrlArtist(), book.getArtist());
+        });
+
+        series.setVisibility(book.getSeries() != null && book.getUrlSeries() != null ? View.VISIBLE : View.GONE);
+        series.setOnClickListener(view12 -> {
+            dialog.dismiss();
+            mPresenter.onMenuSeries(book.getUrlSeries(), book.getSeries());
+        });
+        dialog.show();
+    }
+
     protected FavoritePresenter getPresenter() {
         return mPresenter;
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
     @Override
     public void onResume() {
         super.onResume();
+        long parentalVersion = ParentalControl.version(requireContext());
+        if (parentalVersion != mParentalVersion && mAddapterBooks != null) {
+            mAddapterBooks.refreshItem();
+        }
+        mParentalVersion = parentalVersion;
         MainActivity activity = (MainActivity) getActivity();
         if (activity != null) {
             NavigationView navigationView = activity.getNavigationView();
@@ -406,10 +639,5 @@ public class FavoriteFragment extends MvpAppCompatFragment implements FavoriteVi
         Intent intent = new Intent(getContext(), SearchableActivity.class);
         intent.putExtra(Consts.ARG_MODEL, modelId);
         searchActivityLauncher.launch(intent);
-    }
-
-
-    private void onItemSelected(View view12, int position) {
-        mPresenter.onBookItemClick(view12, position);
     }
 }

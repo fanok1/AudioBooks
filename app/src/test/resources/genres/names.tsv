@@ -1,0 +1,437 @@
+# Genre names of the 13 sources (genres-info.md) and of the candidate sites (docs/new-audiobook-sources.ru.md, collected 2026-10-30), with the app's genres they map to: name<TAB>Genre.of<TAB>Genre.allOf; - for none. A change here changes what parental control blocks: review it.
+# 13 sources
+EVE online	SF_FANTASY	SF_FANTASY
+Eve Online	SF_FANTASY	SF_FANTASY
+LitRPG	LITRPG	LITRPG
+S-T-I-K-S	POSTAPOCALYPSE	POSTAPOCALYPSE
+S.T.A.L.K.E.R.	POSTAPOCALYPSE	POSTAPOCALYPSE
+Stalker	POSTAPOCALYPSE	POSTAPOCALYPSE
+Warhammer 40000	SF_FANTASY	SF_FANTASY
+Young adult	TEENS	TEENS
+Альтернативная история	ALT_HISTORY	ALT_HISTORY
+Античность	HISTORY	HISTORY
+Аудиосказки	KIDS	KIDS
+Аудиосказки и рассказы для детей	KIDS	KIDS
+Аудиоспектакли	PERFORMANCE	PERFORMANCE
+Аудиоспектакли, радиопостановки и литературные чтения	PERFORMANCE	PERFORMANCE
+Аудиоспектакль	PERFORMANCE	PERFORMANCE
+Бизнес	BUSINESS	BUSINESS
+Бизнес, личностный рост	BUSINESS	PSYCHOLOGY,BUSINESS
+Биографии	BIOGRAPHY	BIOGRAPHY
+Биографии и мемуары	BIOGRAPHY	BIOGRAPHY
+Биографии, мемуары	BIOGRAPHY	BIOGRAPHY
+Биографии, мемуары, ЖЗЛ	BIOGRAPHY	BIOGRAPHY
+Биография	BIOGRAPHY	BIOGRAPHY
+Боевая фантастика	SF_FANTASY	SF_FANTASY
+Боевик	ACTION	ACTION
+Боевики	ACTION	ACTION
+Боевое фэнтези	SF_FANTASY	SF_FANTASY
+Бояръ-Аниме	SF_FANTASY	SF_FANTASY
+Бояръ-аниме	SF_FANTASY	SF_FANTASY
+Бытовое фэнтези	SF_FANTASY	SF_FANTASY
+Военный	WAR	WAR
+Война	WAR	WAR
+Воспитание детей	PSYCHOLOGY	PSYCHOLOGY
+Вселенная метро 2033	POSTAPOCALYPSE	POSTAPOCALYPSE
+Высокие технологии	SCIENCE	SCIENCE
+Героическое фэнтези	SF_FANTASY	SF_FANTASY
+Городское фэнтези	SF_FANTASY	SF_FANTASY
+Детектив	DETECTIVE	DETECTIVE
+Детективное фэнтези	SF_FANTASY	SF_FANTASY
+Детективы	DETECTIVE	DETECTIVE
+Детективы и триллеры	DETECTIVE	DETECTIVE
+Детективы, триллеры	DETECTIVE	DETECTIVE
+Детективы, триллеры, боевики	DETECTIVE	DETECTIVE,ACTION
+Детская литература	KIDS	KIDS
+Детская психология	PSYCHOLOGY	PSYCHOLOGY
+Для взрослых	EROTICA	EROTICA
+Для детей	KIDS	KIDS
+Для детей и Аудиосказки	KIDS	KIDS
+Для детей, Аудиосказки	KIDS	KIDS
+Для детей, аудиосказки, стишки	KIDS	KIDS
+Дозоры	SF_FANTASY	SF_FANTASY
+Документальная литература	SCIENCE	SCIENCE
+Драма	PROSE	PROSE
+Зарубежная классика	CLASSIC	CLASSIC
+Зарубежная литература	PROSE	PROSE
+Зарубежная фантастика	SF_FANTASY	SF_FANTASY
+Зарубежное фэнтези	SF_FANTASY	SF_FANTASY
+Зарубежный детектив	DETECTIVE	DETECTIVE
+Зарубежный любовный роман	ROMANCE	ROMANCE
+Здоровье	HEALTH	HEALTH
+Здоровье детей	HEALTH	HEALTH
+Интервью	PODCASTS	PODCASTS
+Иронический детектив	DETECTIVE	DETECTIVE
+Историческая проза	HISTORY	HISTORY
+Историческая фантастика	SF_FANTASY	SF_FANTASY
+Исторический детектив	DETECTIVE	DETECTIVE
+Исторический любовный роман	ROMANCE	ROMANCE
+Исторический роман	HISTORY	HISTORY
+Историческое фэнтези	SF_FANTASY	SF_FANTASY
+История	HISTORY	HISTORY
+История, культурология	HISTORY	HISTORY
+Киберпанк	SF_FANTASY	SF_FANTASY
+Классика	CLASSIC	CLASSIC
+Классика фантастики	SF_FANTASY	SF_FANTASY
+Классический детектив	DETECTIVE	DETECTIVE
+Короткий любовный роман	ROMANCE	ROMANCE
+Космическая фантастика	SF_FANTASY	SF_FANTASY
+Криминал	DETECTIVE	DETECTIVE
+ЛФФР	ROMANTIC_FANTASY	ROMANTIC_FANTASY
+Лекция	EDUCATION	EDUCATION
+ЛитРПГ	LITRPG	LITRPG
+Личные финансы	BUSINESS	BUSINESS
+Любовно-фантастический роман	ROMANTIC_FANTASY	ROMANTIC_FANTASY
+Любовное Фэнтези	ROMANTIC_FANTASY	ROMANTIC_FANTASY
+Любовное фэнтези	ROMANTIC_FANTASY	ROMANTIC_FANTASY
+Любовный Роман	ROMANCE	ROMANCE
+Любовный роман	ROMANCE	ROMANCE
+Магический реализм	SF_FANTASY	SF_FANTASY
+Медицина	HEALTH	HEALTH
+Медицина и здоровье	HEALTH	HEALTH
+Медицина, здоровье	HEALTH	HEALTH
+Мемуары	BIOGRAPHY	BIOGRAPHY
+Метро 2033	POSTAPOCALYPSE	POSTAPOCALYPSE
+Мистика	HORROR	HORROR
+На иностранных языках	FOREIGN	FOREIGN
+Научная фантастика	SF_FANTASY	SF_FANTASY
+Научно-популярное	SCIENCE	SCIENCE
+Новелла	PROSE	PROSE
+Новеллы	PROSE	PROSE
+Обучение	EDUCATION	EDUCATION
+Ораторское искусство, риторика	EDUCATION	EDUCATION
+Остросюжетный любовный роман	ROMANCE	ROMANCE
+Повести	PROSE	PROSE
+Повести и рассказы	PROSE	PROSE
+Повесть	PROSE	PROSE
+Подкасты	PODCASTS	PODCASTS
+Познавательная литература	SCIENCE	SCIENCE
+Попаданцы	POPADANCY	POPADANCY
+Постапокалипсис	POSTAPOCALYPSE	POSTAPOCALYPSE
+Постмодернизм	PROSE	PROSE
+Поэзия	POETRY	POETRY
+Приключение	ADVENTURE	ADVENTURE
+Приключения	ADVENTURE	ADVENTURE
+Приключения и вестерн	ADVENTURE	ADVENTURE
+Приключения, вестерны и боевики	ADVENTURE	ACTION,ADVENTURE
+Приключения, военные приключения	ADVENTURE	ADVENTURE
+Приключенческая фантастика	SF_FANTASY	SF_FANTASY
+Приключенческое фэнтези	SF_FANTASY	SF_FANTASY
+Притча	RELIGION	RELIGION
+Про зомби	HORROR	HORROR
+Проза	PROSE	PROSE
+Психоделика	PROSE	PROSE
+Психология	PSYCHOLOGY	PSYCHOLOGY
+Психология и философия	PSYCHOLOGY	PSYCHOLOGY
+Психология, философия	PSYCHOLOGY	PSYCHOLOGY
+Публицистика	SCIENCE	SCIENCE
+Путешествия	ADVENTURE	ADVENTURE
+Радиоспектакли	PERFORMANCE	PERFORMANCE
+Разное	OTHER	OTHER
+Ранобэ	RANOBE	RANOBE
+Ранобэ и новеллы	RANOBE	PROSE,RANOBE
+Ранобэ, новеллы	RANOBE	PROSE,RANOBE
+Рассказы	PROSE	PROSE
+РеалРПГ	LITRPG	LITRPG
+Реализм	PROSE	PROSE
+Религия	RELIGION	RELIGION
+Роман	PROSE	PROSE
+Роман и проза	PROSE	PROSE
+Роман, проза	PROSE	PROSE
+Романтическое фэнтези	ROMANTIC_FANTASY	ROMANTIC_FANTASY
+Романы	PROSE	PROSE
+Русская литература	PROSE	PROSE
+Русские детективы	DETECTIVE	DETECTIVE
+Русское фэнтези	SF_FANTASY	SF_FANTASY
+Саморазвитие	PSYCHOLOGY	PSYCHOLOGY
+Сатира	HUMOR	HUMOR
+Семейная психология	PSYCHOLOGY	PSYCHOLOGY
+Сентиментальный роман	ROMANCE	ROMANCE
+Сказка	KIDS	KIDS
+Сказки	KIDS	KIDS
+Советская классика	CLASSIC	CLASSIC
+Современная зарубежная литература	PROSE	PROSE
+Современная проза	PROSE	PROSE
+Современная русская литература	PROSE	PROSE
+Современный детектив	DETECTIVE	DETECTIVE
+Современный любовный роман	ROMANCE	ROMANCE
+Социальная психология	PSYCHOLOGY	PSYCHOLOGY
+Социальная фантастика	SF_FANTASY	SF_FANTASY
+Стихи	POETRY	POETRY
+Сюрреализм	PROSE	PROSE
+Технотьма	POSTAPOCALYPSE	POSTAPOCALYPSE
+Триллер	DETECTIVE	DETECTIVE
+Триллеры	DETECTIVE	DETECTIVE
+Тру-крайм	TRUE_CRIME	TRUE_CRIME
+Трєш	HORROR	HORROR
+Ужасы	HORROR	HORROR
+Ужасы и мистика	HORROR	HORROR
+Ужасы, мистика	HORROR	HORROR
+Ужасы, мистика, хоррор	HORROR	HORROR
+Учебник	EDUCATION	EDUCATION
+Фантастика	SF_FANTASY	SF_FANTASY
+Фантастика и фэнтези	SF_FANTASY	SF_FANTASY
+Фантастика, фэнтези	SF_FANTASY	SF_FANTASY
+Филгуд	PROSE	PROSE
+Философия	PSYCHOLOGY	PSYCHOLOGY
+Фэнтези	SF_FANTASY	SF_FANTASY
+Хоррор	HORROR	HORROR
+Хоррор/Ужасы	HORROR	HORROR
+Христианский любовный роман	ROMANCE	ROMANCE
+Эзотерика	ESOTERIC	ESOTERIC
+Эзотерика, Нетрадиционные религиозно-философские учения	ESOTERIC	RELIGION,ESOTERIC
+Экономика	BUSINESS	BUSINESS
+Эротика	EROTICA	EROTICA
+Эротическая литература	EROTICA	EROTICA
+Эротический роман	EROTICA	EROTICA
+Эротическое фэнтези	EROTICA	SF_FANTASY,EROTICA
+Этногенез	SF_FANTASY	SF_FANTASY
+Юмор	HUMOR	HUMOR
+Юмор и сатира	HUMOR	HUMOR
+Юмор, сатира	HUMOR	HUMOR
+Юмористическая проза	HUMOR	HUMOR
+Юмористическая фантастика	SF_FANTASY	SF_FANTASY
+Юмористическое фэнтези	SF_FANTASY	SF_FANTASY
+# candidate sites
+*Non-fiction	SCIENCE	SCIENCE
+*Non-fiction > Animals	SCIENCE	SCIENCE
+*Non-fiction > Art, Design & Architecture	SCIENCE	SCIENCE
+*Non-fiction > Bibles	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Bibles > American Standard Version	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Bibles > Douay-Rheims Version	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Bibles > King James Version	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Bibles > Weymouth New Testament	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Bibles > World English Bible	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Bibles > Young's Literal Translation	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Biography & Autobiography	SCIENCE	BIOGRAPHY,SCIENCE
+*Non-fiction > Biography & Autobiography > Memoirs	SCIENCE	BIOGRAPHY,SCIENCE
+*Non-fiction > Business & Economics	SCIENCE	SCIENCE,BUSINESS
+*Non-fiction > Crafts & Hobbies	SCIENCE	SCIENCE
+*Non-fiction > Education	SCIENCE	SCIENCE,EDUCATION
+*Non-fiction > Education > Language learning	SCIENCE	SCIENCE,EDUCATION
+*Non-fiction > Essays & Short Works	SCIENCE	SCIENCE
+*Non-fiction > Family & Relationships	SCIENCE	SCIENCE,PSYCHOLOGY
+*Non-fiction > Health & Fitness	SCIENCE	SCIENCE,HEALTH
+*Non-fiction > History	SCIENCE	HISTORY,SCIENCE
+*Non-fiction > History > Antiquity	SCIENCE	HISTORY,SCIENCE
+*Non-fiction > History > Early Modern	SCIENCE	HISTORY,SCIENCE
+*Non-fiction > History > Middle Ages/Middle History	SCIENCE	HISTORY,SCIENCE
+*Non-fiction > History > Modern (19th C)	SCIENCE	HISTORY,SCIENCE
+*Non-fiction > History > Modern (20th C)	SCIENCE	HISTORY,SCIENCE
+*Non-fiction > House & Home	SCIENCE	SCIENCE
+*Non-fiction > House & Home > Cooking	SCIENCE	SCIENCE
+*Non-fiction > House & Home > Gardening	SCIENCE	SCIENCE
+*Non-fiction > Humor	SCIENCE	HUMOR,SCIENCE
+*Non-fiction > Law	SCIENCE	SCIENCE
+*Non-fiction > Literary Collections	SCIENCE	PROSE,SCIENCE
+*Non-fiction > Literary Collections > Essays	SCIENCE	PROSE,SCIENCE
+*Non-fiction > Literary Collections > Letters	SCIENCE	PROSE,SCIENCE
+*Non-fiction > Literary Collections > Short non-fiction	SCIENCE	PROSE,SCIENCE
+*Non-fiction > Literary Criticism	SCIENCE	PROSE,SCIENCE
+*Non-fiction > Mathematics	SCIENCE	SCIENCE
+*Non-fiction > Medical	SCIENCE	SCIENCE,HEALTH
+*Non-fiction > Music	SCIENCE	SCIENCE
+*Non-fiction > Nature	SCIENCE	SCIENCE
+*Non-fiction > Performing Arts	SCIENCE	SCIENCE
+*Non-fiction > Philosophy	SCIENCE	SCIENCE,PSYCHOLOGY
+*Non-fiction > Philosophy > Ancient	SCIENCE	SCIENCE,PSYCHOLOGY
+*Non-fiction > Philosophy > Atheism & Agnosticism	SCIENCE	SCIENCE,PSYCHOLOGY
+*Non-fiction > Philosophy > Contemporary	SCIENCE	SCIENCE,PSYCHOLOGY
+*Non-fiction > Philosophy > Early Modern	SCIENCE	SCIENCE,PSYCHOLOGY
+*Non-fiction > Philosophy > Medieval	SCIENCE	SCIENCE,PSYCHOLOGY
+*Non-fiction > Philosophy > Modern	SCIENCE	SCIENCE,PSYCHOLOGY
+*Non-fiction > Political Science	SCIENCE	SCIENCE
+*Non-fiction > Psychology	SCIENCE	SCIENCE,PSYCHOLOGY
+*Non-fiction > Reference	SCIENCE	SCIENCE
+*Non-fiction > Religion	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Religion > Christianity - Biographies	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Religion > Christianity - Commentary	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Religion > Christianity - Other	SCIENCE	SCIENCE,RELIGION
+*Non-fiction > Religion > Other religions	SCIENCE	SCIENCE,RELIGION,OTHER
+*Non-fiction > Science	SCIENCE	SCIENCE
+*Non-fiction > Science > Astronomy, Physics & Mechanics	SCIENCE	SCIENCE
+*Non-fiction > Science > Chemistry	SCIENCE	SCIENCE
+*Non-fiction > Science > Earth Sciences	SCIENCE	SCIENCE
+*Non-fiction > Science > Life Sciences	SCIENCE	SCIENCE
+*Non-fiction > Self-Help	SCIENCE	SCIENCE,PSYCHOLOGY
+*Non-fiction > Social Science (Culture & Anthropology)	SCIENCE	SCIENCE
+*Non-fiction > Sports & Recreation	SCIENCE	SCIENCE
+*Non-fiction > Sports & Recreation > Games	SCIENCE	SCIENCE
+*Non-fiction > Technology & Engineering	SCIENCE	SCIENCE
+*Non-fiction > Technology & Engineering > Transportation	SCIENCE	SCIENCE
+*Non-fiction > Travel & Geography	SCIENCE	ADVENTURE,SCIENCE
+*Non-fiction > Travel & Geography > Exploration	SCIENCE	ADVENTURE,SCIENCE
+*Non-fiction > True Crime	SCIENCE	TRUE_CRIME,SCIENCE
+*Non-fiction > War & Military	SCIENCE	WAR,SCIENCE
+*Non-fiction > Writing & Linguistics	SCIENCE	SCIENCE
+18+	EROTICA	EROTICA
+Action & Adventure Fiction	ACTION	ACTION,ADVENTURE
+Asian Antiquity	HISTORY	HISTORY
+Children's Fiction	KIDS	KIDS
+Children's Fiction > Action & Adventure	KIDS	ACTION,ADVENTURE,KIDS
+Children's Fiction > Animals & Nature	KIDS	KIDS,SCIENCE
+Children's Fiction > Family	KIDS	KIDS,PSYCHOLOGY
+Children's Fiction > General	KIDS	KIDS
+Children's Fiction > Historical	KIDS	KIDS,HISTORY
+Children's Fiction > Myths, Legends & Fairy Tales	KIDS	SF_FANTASY,KIDS
+Children's Fiction > Poetry	KIDS	KIDS,POETRY
+Children's Fiction > Religion	KIDS	KIDS,RELIGION
+Children's Fiction > School	KIDS	KIDS
+Children's Fiction > Short works	KIDS	KIDS
+Children's Non-fiction	KIDS	KIDS
+Children's Non-fiction > Arts	KIDS	KIDS
+Children's Non-fiction > Biography	KIDS	KIDS,BIOGRAPHY
+Children's Non-fiction > General	KIDS	KIDS
+Children's Non-fiction > History	KIDS	KIDS,HISTORY
+Children's Non-fiction > Reference	KIDS	KIDS
+Children's Non-fiction > Religion	KIDS	KIDS,RELIGION
+Children's Non-fiction > Science	KIDS	KIDS,SCIENCE
+Classics (Greek & Latin Antiquity)	CLASSIC	CLASSIC,HISTORY
+Crime & Mystery Fiction	DETECTIVE	DETECTIVE
+Crime & Mystery Fiction > Detective Fiction	DETECTIVE	DETECTIVE
+Culture & Heritage Fiction	PROSE	PROSE
+Dark Fantasy	SF_FANTASY	SF_FANTASY
+Dramatic Readings	PERFORMANCE	PERFORMANCE
+Epistolary Fiction	PROSE	PROSE
+Erotica	EROTICA	EROTICA
+Family Life	PSYCHOLOGY	PSYCHOLOGY
+Fantastic Fiction	SF_FANTASY	SF_FANTASY
+Fantastic Fiction > Fantasy Fiction	SF_FANTASY	SF_FANTASY
+Fantastic Fiction > Gothic Fiction	SF_FANTASY	SF_FANTASY,HORROR
+Fantastic Fiction > Horror & Supernatural Fiction	SF_FANTASY	SF_FANTASY,HORROR
+Fantastic Fiction > Myths, Legends & Fairy Tales	SF_FANTASY	SF_FANTASY,KIDS
+Fantastic Fiction > Science Fiction	SF_FANTASY	SF_FANTASY
+Fictional Biographies & Memoirs	BIOGRAPHY	BIOGRAPHY
+General Fiction	PROSE	PROSE
+General Fiction > Published 1800 -1900	PROSE	PROSE
+General Fiction > Published 1900 onward	PROSE	PROSE
+General Fiction > Published before 1800	PROSE	PROSE
+Historical Fiction	HISTORY	HISTORY
+Humorous Fiction	HUMOR	HUMOR
+Literary Fiction	PROSE	PROSE
+Nature & Animal Fiction	SCIENCE	PROSE,SCIENCE
+Nautical & Marine Fiction	ADVENTURE	ADVENTURE,PROSE
+Periodicals & Magazines	-	-
+Plays	PERFORMANCE	PERFORMANCE
+Plays > Comedy	PERFORMANCE	HUMOR,PERFORMANCE
+Plays > Comedy > Satire	PERFORMANCE	HUMOR,PERFORMANCE
+Plays > Drama	PERFORMANCE	PROSE,PERFORMANCE
+Plays > Drama > Tragedy	PERFORMANCE	PROSE,PERFORMANCE
+Plays > Romance	PERFORMANCE	ROMANCE,PERFORMANCE
+Poetry	POETRY	POETRY
+Poetry > Anthologies	POETRY	POETRY
+Poetry > Ballads	POETRY	POETRY
+Poetry > Elegies & Odes	POETRY	POETRY
+Poetry > Epics	POETRY	POETRY
+Poetry > Free Verse	POETRY	POETRY
+Poetry > Lyric	POETRY	POETRY
+Poetry > Multi-version (Weekly and Fortnightly poetry)	POETRY	POETRY
+Poetry > Narratives	POETRY	POETRY
+Poetry > Single author	POETRY	POETRY
+Poetry > Sonnets	POETRY	POETRY
+Religious Fiction	RELIGION	RELIGION
+Religious Fiction > Christian Fiction	RELIGION	RELIGION
+Romance	ROMANCE	ROMANCE
+STALKER	POSTAPOCALYPSE	POSTAPOCALYPSE
+STIKS	POSTAPOCALYPSE	POSTAPOCALYPSE
+Sagas	PROSE	PROSE
+Satire	HUMOR	HUMOR
+Science Fantasy	SF_FANTASY	SF_FANTASY
+Short Stories	PROSE	PROSE
+Short Stories > Anthologies	PROSE	PROSE
+Short Stories > Single Author Collections	PROSE	PROSE
+Sports Fiction	PROSE	PROSE
+Suspense, Espionage, Political & Thrillers	DETECTIVE	DETECTIVE
+Travel Fiction	ADVENTURE	ADVENTURE
+War & Military Fiction	WAR	WAR
+Westerns	ADVENTURE	ADVENTURE
+«Дотолкиновское» фэнтези	SF_FANTASY	SF_FANTASY
+«Классическое» фэнтези	SF_FANTASY	SF_FANTASY
+«Твёрдая» НФ	SF_FANTASY	SF_FANTASY
+Альтернативные миры	SF_FANTASY	SF_FANTASY
+Анималистическое	-	-
+Аниме	RANOBE	RANOBE
+Антиутопия	SF_FANTASY	SF_FANTASY
+Артуриана	SF_FANTASY	SF_FANTASY
+Вестерны и боевики	ADVENTURE	ACTION,ADVENTURE
+Военные	WAR	WAR
+Героическая фантастика	SF_FANTASY	SF_FANTASY
+Готика	HORROR	HORROR
+Гуманитарная («мягкая») НФ	SF_FANTASY	SF_FANTASY
+Детектив и триллер	DETECTIVE	DETECTIVE
+Детективная фантастика	SF_FANTASY	SF_FANTASY
+Детективы, боевики, триллеры	DETECTIVE	DETECTIVE,ACTION
+Детективы-триллеры	DETECTIVE	DETECTIVE
+Детская фантастика	SF_FANTASY	SF_FANTASY
+Дизельпанк	SF_FANTASY	SF_FANTASY
+Драмы	PROSE	PROSE
+Зомби-хоррор	HORROR	HORROR
+Иронические детективы	DETECTIVE	DETECTIVE
+Искусственный голос	-	-
+Истории на ночь	PROSE	PROSE
+Истории о привидениях	HORROR	HORROR
+Историческая литература	HISTORY	HISTORY
+Классическая	CLASSIC	CLASSIC
+Классические детективы	DETECTIVE	DETECTIVE
+Классический латино-американский	CLASSIC	CLASSIC
+Классический мистический хоррор	HORROR	HORROR
+Клокпанк	SF_FANTASY	SF_FANTASY
+Короткие рассказы	PROSE	PROSE
+Космоопера	SF_FANTASY	SF_FANTASY
+Лавкрафтианский хоррор	HORROR	HORROR
+Легкая проза	PROSE	PROSE
+Любовно-фантастические романы	ROMANTIC_FANTASY	ROMANTIC_FANTASY
+Любовные романы	ROMANCE	ROMANCE
+МЕТРО 2033	POSTAPOCALYPSE	POSTAPOCALYPSE
+Мистика, ужасы	HORROR	HORROR
+Мифологическое	SF_FANTASY	SF_FANTASY
+Научпоп	SCIENCE	SCIENCE
+Нуар	DETECTIVE	DETECTIVE
+Ораторское искусство	EDUCATION	EDUCATION
+Планетарная фантастика	SF_FANTASY	SF_FANTASY
+Полицейские детективы	DETECTIVE	DETECTIVE
+Полицейский детектив	DETECTIVE	DETECTIVE
+Попаданцы в ВОВ	POPADANCY	POPADANCY
+Постапокалиптика	POSTAPOCALYPSE	POSTAPOCALYPSE
+Про деревню	PROSE	PROSE
+Риторика	EDUCATION	EDUCATION
+Роман-катастрофа	PROSE	PROSE
+Русская классика	CLASSIC	CLASSIC
+Сандалпанк	SF_FANTASY	SF_FANTASY
+Сказка/Притча	KIDS	KIDS,RELIGION
+Современная литература	PROSE	PROSE
+Современная стилизация	-	-
+Современные детективы	DETECTIVE	DETECTIVE
+Современный	-	-
+Современный психологический хоррор	HORROR	HORROR
+Сплаттерпанк	HORROR	HORROR
+Сталкер	POSTAPOCALYPSE	POSTAPOCALYPSE
+Сталкер (STALKER)	POSTAPOCALYPSE	POSTAPOCALYPSE
+Стикс	POSTAPOCALYPSE	POSTAPOCALYPSE
+Стимпанк	SF_FANTASY	SF_FANTASY
+Стимпанк/паропанк	SF_FANTASY	SF_FANTASY
+Стоунпанк	SF_FANTASY	SF_FANTASY
+Таймпанк	SF_FANTASY	SF_FANTASY
+Технофэнтези	SF_FANTASY	SF_FANTASY
+Утопия	SF_FANTASY	SF_FANTASY
+Хроноопера	SF_FANTASY	SF_FANTASY
+Что читают известные люди	-	-
+Эпическое фэнтези	SF_FANTASY	SF_FANTASY
+военные приключения	ADVENTURE	ADVENTURE
+здоровье	HEALTH	HEALTH
+мемуары	BIOGRAPHY	BIOGRAPHY
+новеллы	PROSE	PROSE
+триллеры	DETECTIVE	DETECTIVE
+# new sources (2026-10-31)
+На инстранном языке	FOREIGN	FOREIGN
+боевики	ACTION	ACTION
+фэнтези	SF_FANTASY	SF_FANTASY
+проза	PROSE	PROSE
+Ужасы и Мистика	HORROR	HORROR
+Аудиосказки для детей	KIDS	KIDS
+Истории про деревню	PROSE	PROSE
+Подборки	-	-
+Лицензионные аудиокниги	-	-
+ВОВ	WAR	WAR
+Бояръ-аниме	SF_FANTASY	SF_FANTASY
+русские рассказы	PROSE	PROSE

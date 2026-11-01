@@ -43,7 +43,7 @@
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="4dp"
+        android:elevation="16dp"
         android:fitsSystemWindows="false">
 
         <include

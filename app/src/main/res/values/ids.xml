@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- the filter item's submenu on a book listing, filled in BooksFragment -->
+    <item name="filter_duration" type="id" />
+    <item name="filter_period_group" type="id" />
+    <item name="source_group" type="id" />
+    <!-- the order item's submenu on a genre list, filled in BooksFragment -->
+    <item name="genre_sort_group" type="id" />
+    <!-- knigoblud's rankings in its order submenu (Sort.TODAY, TRENDING, FINISHED), filled in BooksFragment -->
+    <item name="knigoblud_today" type="id" />
+    <item name="knigoblud_trending" type="id" />
+    <item name="knigoblud_finished" type="id" />
+    <!-- audiobook-mp3's rankings in its order submenu (Sort.TOP_100, RANDOM), filled in BooksFragment -->
+    <item name="abmp3_top100" type="id" />
+    <item name="abmp3_random" type="id" />
+    <!-- the sorts the deleted books_options_menu defined (Sort.NEW, POPULAR_*, RATING, RATING_*), filled in BooksFragment -->
+    <item name="new_data" type="id" />
+    <item name="popular_all_time" type="id" />
+    <item name="popular_month" type="id" />
+    <item name="popular_week" type="id" />
+    <item name="popular_day" type="id" />
+    <item name="reting" type="id" />
+    <item name="reting_all_time" type="id" />
+    <item name="reting_month" type="id" />
+    <item name="reting_week" type="id" />
+    <item name="reting_day" type="id" />
+    <!-- the sorts the deleted books_audioboo_options_menu defined (Sort.TITLE, DURATION), filled in BooksFragment -->
+    <item name="sort_title" type="id" />
+    <item name="sort_duration" type="id" />
+    <!-- the sorts the deleted books_baza_knig_options_menu defined (Sort.POPULAR, YEARS), filled in BooksFragment -->
+    <item name="popular" type="id" />
+    <item name="years" type="id" />
+    <!-- the sorts the deleted books_akniga_options_menu defined (Sort.POPULAR_YEAR, RATING_YEAR, COLLECTIONS_*), filled in BooksFragment -->
+    <item name="popular_year" type="id" />
+    <item name="reting_year" type="id" />
+    <item name="collections_new" type="id" />
+    <item name="collections_top" type="id" />
+    <item name="collections_discussed" type="id" />
+</resources>

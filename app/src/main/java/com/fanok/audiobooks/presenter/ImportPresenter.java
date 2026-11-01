@@ -9,7 +9,6 @@ import com.fanok.audiobooks.R;
 import com.fanok.audiobooks.interface_pacatge.import_favorite.ActivityImportInterface;
 import com.fanok.audiobooks.interface_pacatge.import_favorite.ImportPresenterInterface;
 import com.fanok.audiobooks.model.ImportModel;
-import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
@@ -22,6 +21,8 @@ public class ImportPresenter extends MvpPresenter<ActivityImportInterface> imple
     private final ImportModel mImportModel;
 
     private boolean loading = false;
+
+    private Disposable mDisposable;
 
     public ImportPresenter(@NotNull Context context, int src) {
         mImportModel = new ImportModel(context, src);
@@ -40,32 +41,24 @@ public class ImportPresenter extends MvpPresenter<ActivityImportInterface> imple
             if (!loading) {
                 loading = true;
                 getViewState().showProgress(true);
-                mImportModel.importBooks(username, password)
+                mDisposable = mImportModel.importBooks(username, password)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Observer<Integer>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                            }
-
-                            @Override
-                            public void onNext(Integer id) {
-                                getViewState().showToast(id);
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                getViewState().showToast(R.string.error_import);
-                            }
-
-                            @Override
-                            public void onComplete() {
-                                getViewState().showProgress(false);
-                                loading = false;
-                            }
-                        });
-
+                        .doFinally(() -> {
+                            loading = false;
+                            getViewState().showProgress(false);
+                        })
+                        .subscribe(id -> getViewState().showToast(id),
+                                e -> getViewState().showToast(R.string.error_import));
             }
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mDisposable != null) {
+            mDisposable.dispose();
         }
     }
 }

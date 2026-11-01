@@ -21,7 +21,7 @@ public interface HistoryDao {
     @Query("DELETE FROM history")
     void deleteAll();
 
-    @Query("SELECT * FROM history")
+    @Query("SELECT * FROM history ORDER BY id")
     List<HistoryEntity> getAll();
 
     @Query("SELECT * FROM history ORDER BY id DESC LIMIT 1")

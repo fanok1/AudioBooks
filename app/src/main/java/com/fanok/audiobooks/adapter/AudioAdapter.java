@@ -18,27 +18,32 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.offline.Download;
-import androidx.media3.exoplayer.offline.DownloadCursor;
 import androidx.media3.exoplayer.offline.DownloadIndex;
 import androidx.recyclerview.widget.RecyclerView;
+import com.fanok.audiobooks.App;
 import com.fanok.audiobooks.Consts;
 import com.fanok.audiobooks.R;
-import com.fanok.audiobooks.Url;
+import com.fanok.audiobooks.download.DownloadMonitor;
+import com.fanok.audiobooks.download.DownloadStatus;
 import com.fanok.audiobooks.pojo.AudioPOJO;
+import com.fanok.audiobooks.util.DeletionPlanner;
 import com.fanok.audiobooks.util.DownloadUtil;
+import com.github.lzyzsd.circleprogress.DonutProgress;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 /** @noinspection ClassEscapesDefinedScope*/
-@UnstableApi
+@OptIn(markerClass = UnstableApi.class)
 public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> {
 
     private static final String TAG = "AudioAdapter";
@@ -46,19 +51,34 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
     private int indexSelected = -1;
 
     private ArrayList<AudioPOJO> mData;
+    private int mChaptersTotal;
+    /** Positions of the chapters held as exported copies in the download folder (their download may be gone). */
+    private final java.util.Set<Integer> exported = new HashSet<>();
 
     private AudioAdapter.OnListItemSelectedInterface mListener;
 
     private AudioAdapter.OnSelectedListner mSelectedListner;
+    /** Chapter URL → the download holding it (by its DownloadIds entry, else its legacy id). */
     private final Map<String, Download> allDownloads;
+    private String bookUrl;
 
-    private final  int[] states = new int[] {
+    /** Change payload: only the chapter's download state is redrawn. */
+    private static final Object LIVE = new Object();
+
+    public interface OnStatusListener {
+        /** The book's download status, after every index read and every monitor tick. */
+        void onDownloadStatus(@NonNull DownloadStatus status);
+    }
+
+    private OnStatusListener mStatusListener;
+    private final DownloadMonitor.Listener mLive = this::onTick;
+
+    private final int[] states = new int[] {
             Download.STATE_COMPLETED,
             Download.STATE_DOWNLOADING,
             Download.STATE_QUEUED,
             Download.STATE_FAILED,
             Download.STATE_STOPPED,
-            Download.STATE_REMOVING,
             Download.STATE_RESTARTING
     };
 
@@ -70,6 +90,8 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         private final ImageView mImageView;
 
         private final ProgressBar mProgressBar;
+
+        private final DonutProgress mDonut;
 
         private final RadioButton mRadioButton;
 
@@ -87,6 +109,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
             mRadioButton = itemView.findViewById(R.id.radio);
             mImageView = itemView.findViewById(R.id.is_download);
             mProgressBar = itemView.findViewById(R.id.progressBar);
+            mDonut = itemView.findViewById(R.id.download_progress);
         }
     }
 
@@ -106,36 +129,177 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         mSelectedListner = selectedListner;
     }
 
+    public void setStatusListener(OnStatusListener listener) {
+        mStatusListener = listener;
+    }
+
+    /**
+     * Live chapter rings and status while the screen is visible (its onStart/onStop): the process-wide monitor must
+     * not keep a stopped screen. The screen's onResume {@link #refresh}es what changed meanwhile.
+     */
+    public void startLive() {
+        DownloadMonitor.get().addListener(mLive);
+    }
+
+    public void stopLive() {
+        DownloadMonitor.get().removeListener(mLive);
+    }
+
+    /** A monitor tick: redraws the chapters in flight with the manager's live state and republishes the status. */
+    private void onTick() {
+        for (int i = 0; i < mData.size(); i++) {
+            String url = mData.get(i).getUrl();
+            Download d = url != null ? allDownloads.get(url) : null;
+            if (d != null && d.state != Download.STATE_COMPLETED) notifyItemChanged(i, LIVE);
+        }
+        publishStatus();
+    }
+
+    /**
+     * The book's status from the chapter list: held chapters (completed download or local file), chosen ones (any
+     * download or local file) and the transfers, one per download id, refreshed by the monitor.
+     */
+    private void publishStatus() {
+        if (mStatusListener == null) return;
+        Map<String, DownloadStatus.Part> parts = new HashMap<>();
+        int done = 0;
+        int selected = 0;
+        for (int i = 0; i < mData.size(); i++) {
+            String url = mData.get(i).getUrl();
+            if (url == null) continue;
+            if (!DeletionPlanner.isRemote(url) || exported.contains(i)) {
+                done++;
+                selected++;
+                continue;
+            }
+            Download d = allDownloads.get(url);
+            if (d == null) continue;
+            selected++;
+            if (d.state == Download.STATE_COMPLETED) done++;
+            if (!parts.containsKey(d.request.id)) parts.put(d.request.id, DownloadMonitor.partOf(d));
+        }
+        mStatusListener.onDownloadStatus(DownloadMonitor.get().statusOf(new ArrayList<>(parts.values()), done,
+                selected, Math.max(mChaptersTotal, mData.size())));
+    }
+
+    /** The book whose chapters are listed: their downloads are looked up by their ids within it. */
+    public void setBookUrl(String bookUrl) {
+        this.bookUrl = bookUrl;
+        refresh();
+    }
+
     @SuppressLint("NotifyDataSetChanged")
     public void refresh() {
-        allDownloads.clear();
-        try {
-            DownloadIndex index = DownloadUtil.getDownloadManager().getDownloadIndex();
-            try (DownloadCursor cursor = index.getDownloads(states)) {
-                while (cursor.moveToNext()) {
-                    Download d = cursor.getDownload();
-                    allDownloads.put(d.request.id, d);
+        final String book = bookUrl;
+        final List<String> urls = new ArrayList<>();
+        for (AudioPOJO audio : mData) urls.add(audio.getUrl());
+        DownloadUtil.runInBackground(() -> {
+            final HashMap<String, Download> byUrl = new HashMap<>();
+            try {
+                DownloadIndex index = DownloadUtil.getDownloadManager().getDownloadIndex();
+                for (Map.Entry<String, Download> e : DownloadUtil.downloadsByChapterUrl(
+                        App.getInstance(), index, book, urls).entrySet()) {
+                    if (isStateMatch(states, e.getValue().state)) byUrl.put(e.getKey(), e.getValue());
                 }
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to query downloads", e);
             }
-
-        } catch (IOException e) {
-            Log.w(TAG, "Failed to query downloads", e);
-        }
-        notifyDataSetChanged();
+            java.util.Set<Integer> copies = new HashSet<>();
+            try {
+                copies = DownloadUtil.exportedChapters(App.getInstance(), book, urls);
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to read exported chapters", e);
+            }
+            final java.util.Set<Integer> exportedNow = copies;
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                exported.clear();
+                exported.addAll(exportedNow);
+                allDownloads.clear();
+                allDownloads.putAll(byUrl);
+                notifyDataSetChanged();
+                publishStatus();
+            });
+        });
     }
 
+    /** A copy of the chosen chapter URLs, so clearing the selection never changes what was handed over. */
     public HashSet<String> getSelectedItems() {
-        return mSelectedItems;
+        return new HashSet<>(mSelectedItems);
     }
 
+    /** The chosen files: what download and delete act on. */
     public int getSelectedItemsSize() {
         return mSelectedItems.size();
     }
 
+    /** True while chapters are being chosen for download/delete, even when none is chosen at the moment. */
+    public boolean isSelecting() {
+        return mSelecting;
+    }
+
+    /** The chapters whose file is chosen (several chapters of one file count each). */
+    public int getSelectedChapters() {
+        int count = 0;
+        for (AudioPOJO audio : mData) {
+            if (audio.getUrl() != null && mSelectedItems.contains(audio.getUrl())) count++;
+        }
+        return count;
+    }
+
+    public boolean isAllSelected() {
+        return !mData.isEmpty() && getSelectedChapters() == mData.size();
+    }
+
+    /** Starts choosing with every chapter chosen (the Download/Delete menu); while choosing, chooses them all. */
+    public void startSelection() {
+        mSelecting = true;
+        setAllSelected(true);
+    }
+
+    /** Chooses every chapter, or none; the selection goes on either way. */
+    public void setAllSelected(boolean all) {
+        mSelectedItems.clear();
+        if (all) {
+            for (AudioPOJO audio : mData) {
+                if (audio.getUrl() != null) mSelectedItems.add(audio.getUrl());
+            }
+        }
+        selectionChanged();
+    }
+
+    /** Ends choosing: the check marks go and a tap plays a chapter again. */
+    public void endSelection() {
+        if (!mSelecting) return;
+        mSelecting = false;
+        mSelectedItems.clear();
+        selectionChanged();
+    }
+
     @SuppressLint("NotifyDataSetChanged")
-    public void setData(@NonNull ArrayList<AudioPOJO> data) {
-        mData = data;
+    private void selectionChanged() {
+        if (mSelectedListner != null) {
+            mSelectedListner.onItemSelected();
+        }
         notifyDataSetChanged();
+    }
+
+    /**
+     * The chapters to list, of {@code chaptersTotal} the book has: more than listed when only the downloaded ones are
+     * (offline), so a partly downloaded book never reads as complete.
+     */
+    @SuppressLint("NotifyDataSetChanged")
+    public void setData(@NonNull ArrayList<AudioPOJO> data, int chaptersTotal) {
+        mData = data;
+        mChaptersTotal = chaptersTotal;
+        if (mSelecting) {
+            // a reload keeps the choice of the files still listed
+            HashSet<String> listed = new HashSet<>();
+            for (AudioPOJO audio : data) listed.add(audio.getUrl());
+            mSelectedItems.retainAll(listed);
+            if (mSelectedListner != null) mSelectedListner.onItemSelected();
+        }
+        notifyDataSetChanged();
+        refresh();
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -175,16 +339,11 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
         void onItemSelected();
     }
 
+    /** The chosen chapters, by URL: a file is downloaded or deleted as a whole, whichever chapters it holds. */
     private final HashSet<String> mSelectedItems;
-
-    @SuppressLint("NotifyDataSetChanged")
-    public void clearSelected() {
-        mSelectedItems.clear();
-        if (mSelectedListner != null) {
-            mSelectedListner.onItemSelected();
-        }
-        notifyDataSetChanged();
-    }
+    private boolean mSelecting;
+    /** The hint that chapters of one file are chosen together, shown once per screen. */
+    private boolean mSharedFileHintShown;
 
 
     @Override
@@ -228,36 +387,15 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
 
 
         String url = mData.get(i).getUrl();
-        Download download = allDownloads.get(mData.get(i).getCleanUrl());
-        if (download != null && java.util.stream.IntStream.of(states).anyMatch(v -> v == download.state)){
-            if (download.state == Download.STATE_COMPLETED) {
-                viewHolder.mImageView.setVisibility(View.VISIBLE);
-                viewHolder.mImageView.setImageResource(R.drawable.ic_is_check);
-                viewHolder.mProgressBar.setVisibility(View.GONE);
-            } else if (download.state == Download.STATE_DOWNLOADING || download.state == Download.STATE_QUEUED){
-                viewHolder.mImageView.setVisibility(View.INVISIBLE);
-                viewHolder.mProgressBar.setVisibility(View.VISIBLE);
-            }else if (download.state == Download.STATE_FAILED){
-                viewHolder.mProgressBar.setVisibility(View.GONE);
-                viewHolder.mImageView.setImageResource(R.drawable.ic_error);
-                viewHolder.mImageView.setVisibility(View.VISIBLE);
-            }else if (download.state == Download.STATE_STOPPED){
-                viewHolder.mProgressBar.setVisibility(View.GONE);
-                viewHolder.mImageView.setImageResource(R.drawable.ic_pause_circle_outline);
-                viewHolder.mImageView.setVisibility(View.VISIBLE);
-            }
-        } else {
-            viewHolder.mImageView.setVisibility(View.INVISIBLE);
-            viewHolder.mProgressBar.setVisibility(View.GONE);
-        }
+        bindDownloadState(viewHolder, i);
 
 
         viewHolder.mView.setOnLongClickListener(view -> {
-            selectedItemsAdd(url);
+            longClick(view, i);
             return true;
         });
 
-        UiModeManager uiModeManager = (UiModeManager) viewHolder.mView.getContext().getSystemService(UI_MODE_SERVICE);
+        UiModeManager uiModeManager = (UiModeManager) viewHolder.mView.getContext().getApplicationContext().getSystemService(UI_MODE_SERVICE);
         if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
             // --- Логика для ТВ ---
             // Устанавливаем OnKeyListener для эмуляции долгого нажатия
@@ -284,7 +422,7 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
 
                             if (duration >= LONG_PRESS_DURATION_MS) {
                                 // Если удержание было достаточно долгим, считаем это "долгим кликом"
-                                selectedItemsAdd(url);
+                                longClick(v, i);
                                 return true; // Событие полностью обработано
                             } else {
                                 // Если удержание было коротким, считаем это обычным кликом
@@ -310,58 +448,135 @@ public class AudioAdapter extends RecyclerView.Adapter<AudioAdapter.ViewHolder> 
                     Consts.getAttributeColor(viewHolder.mView.getContext(), R.attr.backgroundItem));
         }
 
-        if (!mSelectedItems.isEmpty()) {
-            viewHolder.mRadioButton.setVisibility(View.VISIBLE);
-        } else {
-            viewHolder.mRadioButton.setVisibility(View.GONE);
-        }
-
-        viewHolder.mRadioButton.setOnClickListener(view -> selectedItemsAdd(mData.get(i).getUrl()));
-
-        viewHolder.mRadioButton.setChecked(mSelectedItems.contains(mData.get(i).getUrl()));
+        viewHolder.mRadioButton.setVisibility(mSelecting ? View.VISIBLE : View.GONE);
+        viewHolder.mRadioButton.setChecked(url != null && mSelectedItems.contains(url));
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    public void selectedItemsAddAll() {
-
-        if (mSelectedItems.size() == mData.size()) {
-            mSelectedItems.clear();
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i, @NonNull List<Object> payloads) {
+        if (payloads.contains(LIVE)) {
+            bindDownloadState(viewHolder, i);
         } else {
-            mSelectedItems.clear();
-            for (AudioPOJO audioPOJO : mData) {
-                mSelectedItems.add(audioPOJO.getUrl());
-            }
+            super.onBindViewHolder(viewHolder, i, payloads);
         }
-        if (mSelectedListner != null) {
-            mSelectedListner.onItemSelected();
-        }
-
-        notifyDataSetChanged();
     }
 
+    /**
+     * The chapter's download as an icon: held, a ring of how much is here (the manager's live bytes), queued, failed
+     * or paused. The spinner stays only while the download does not know its size yet.
+     */
+    private void bindDownloadState(@NonNull ViewHolder viewHolder, int position) {
+        String url = mData.get(position).getUrl();
+        Download download = url != null ? allDownloads.get(url) : null;
+        if (download != null) download = DownloadMonitor.get().refresh(download);
+        viewHolder.mImageView.setVisibility(View.INVISIBLE);
+        viewHolder.mProgressBar.setVisibility(View.GONE);
+        if (viewHolder.mDonut != null) viewHolder.mDonut.setVisibility(View.GONE);
+        if (exported.contains(position)) {
+            viewHolder.mImageView.setImageResource(R.drawable.ic_is_check);
+            viewHolder.mImageView.setContentDescription(null);
+            viewHolder.mImageView.setVisibility(View.VISIBLE);
+            return;
+        }
+        if (download == null || !isStateMatch(states, download.state)) return;
+        switch (download.state) {
+            case Download.STATE_COMPLETED:
+                boolean isActuallyPresent = true;
+                if (url.startsWith("file://") || url.startsWith("/")) {
+                    String p = url.replace("file://", "");
+                    if (!new java.io.File(p).exists()) isActuallyPresent = false;
+                }
+                if (isActuallyPresent) {
+                    viewHolder.mImageView.setImageResource(R.drawable.ic_is_check);
+                    viewHolder.mImageView.setContentDescription(null);
+                    viewHolder.mImageView.setVisibility(View.VISIBLE);
+                }
+                break;
+            case Download.STATE_DOWNLOADING:
+            case Download.STATE_RESTARTING:
+                int percent = DownloadMonitor.percentOf(download);
+                if (percent < 0 || viewHolder.mDonut == null) {
+                    viewHolder.mProgressBar.setVisibility(View.VISIBLE);
+                } else {
+                    viewHolder.mDonut.setProgress(percent);
+                    viewHolder.mDonut.setVisibility(View.VISIBLE);
+                }
+                break;
+            case Download.STATE_QUEUED:
+                viewHolder.mImageView.setImageResource(R.drawable.ic_progress_download);
+                viewHolder.mImageView.setContentDescription(
+                        viewHolder.mView.getContext().getString(R.string.download_chapter_queued));
+                viewHolder.mImageView.setVisibility(View.VISIBLE);
+                break;
+            case Download.STATE_FAILED:
+                viewHolder.mImageView.setImageResource(R.drawable.ic_error);
+                viewHolder.mImageView.setContentDescription(
+                        viewHolder.mView.getContext().getString(R.string.download_status_failed));
+                viewHolder.mImageView.setVisibility(View.VISIBLE);
+                break;
+            case Download.STATE_STOPPED:
+                viewHolder.mImageView.setImageResource(R.drawable.ic_pause_circle_outline);
+                viewHolder.mImageView.setContentDescription(
+                        viewHolder.mView.getContext().getString(R.string.download_status_paused));
+                viewHolder.mImageView.setVisibility(View.VISIBLE);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /** A tap plays the chapter; while choosing it chooses the chapter or takes it back. */
     @SuppressLint("NotifyDataSetChanged")
     private void click(View view, int pos) {
-        if (mSelectedItems.isEmpty()) {
-            indexSelected = pos;
-            if (mListener != null) {
-                mListener.onItemSelected(view, pos);
-            }
-            notifyDataSetChanged();
-        } else {
-            selectedItemsAdd(mData.get(pos).getUrl());
+        if (mSelecting) {
+            toggle(view, pos);
+            return;
         }
-    }
-
-    @SuppressLint("NotifyDataSetChanged")
-    private void selectedItemsAdd(String s) {
-        if (mSelectedItems.contains(s)) {
-            mSelectedItems.remove(s);
-        } else {
-            mSelectedItems.add(s);
-        }
-        if (mSelectedListner != null) {
-            mSelectedListner.onItemSelected();
+        indexSelected = pos;
+        if (mListener != null) {
+            mListener.onItemSelected(view, pos);
         }
         notifyDataSetChanged();
+    }
+
+    /** A long press starts choosing with this chapter alone; while choosing it is a tap. */
+    private void longClick(View view, int pos) {
+        if (!mSelecting) {
+            mSelecting = true;
+            mSelectedItems.clear();
+        }
+        toggle(view, pos);
+    }
+
+    /** Chooses the chapter's file or takes it back: every chapter the file holds goes with it. */
+    private void toggle(View view, int pos) {
+        String url = pos < mData.size() ? mData.get(pos).getUrl() : null;
+        if (url != null) {
+            if (!mSelectedItems.remove(url)) {
+                mSelectedItems.add(url);
+            }
+            if (!mSharedFileHintShown && sharesFile(pos)) {
+                mSharedFileHintShown = true;
+                Toast.makeText(view.getContext(), R.string.selection_shared_file, Toast.LENGTH_LONG).show();
+            }
+        }
+        selectionChanged();
+    }
+
+    /** Whether another chapter is in the same file (clips of one stream, as akniga lists them). */
+    private boolean sharesFile(int pos) {
+        String url = mData.get(pos).getUrl();
+        for (int i = 0; i < mData.size(); i++) {
+            if (i != pos && url.equals(mData.get(i).getUrl())) return true;
+        }
+        return false;
+    }
+
+    private boolean isStateMatch(int[] states, int dlState) {
+        if (states == null) return false;
+        for (int s : states) {
+            if (s == dlState) return true;
+        }
+        return false;
     }
 }

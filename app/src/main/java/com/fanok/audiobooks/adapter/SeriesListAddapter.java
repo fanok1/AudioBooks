@@ -1,15 +1,25 @@
 package com.fanok.audiobooks.adapter;
 
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
+import android.graphics.Typeface;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
-import com.fanok.audiobooks.Consts;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.fanok.audiobooks.R;
+import com.fanok.audiobooks.Url;
 import com.fanok.audiobooks.pojo.SeriesPOJO;
 import java.util.ArrayList;
 
@@ -21,35 +31,108 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
 
 
         private final TextView mLine;
+        private final ImageView mImage;
 
         private final LinearLayout mLinearLayout;
 
         private final TextView mText;
+
+        /** The row's own background (the theme's touch feedback), restored when a recycled row is not the book. */
+        private final int mDefaultBackground;
 
 
         MyHolder(@NonNull final View itemView) {
             super(itemView);
 
             mLine = itemView.findViewById(R.id.line);
+            mImage = itemView.findViewById(R.id.image);
             mText = itemView.findViewById(R.id.text);
             mLinearLayout = itemView.findViewById(R.id.item);
+            TypedValue value = new TypedValue();
+            itemView.getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, value, true);
+            mDefaultBackground = value.resourceId;
 
             itemView.setOnClickListener(view -> {
-                if (mListener != null) mListener.onItemSelected(view, getBindingAdapterPosition());
+                int position = getBindingAdapterPosition();
+                if (mListener != null && position != RecyclerView.NO_POSITION) {
+                    mListener.onItemSelected(view, position);
+                }
             });
 
 
         }
 
-        void bind(SeriesPOJO book) {
-            if (book.getUrl().equals(carentUrl)) {
-                mLinearLayout.setBackgroundColor(
-                        Consts.getAttributeColor(mLinearLayout.getContext(),
-                                R.attr.mySelectableItemBackground));
+        private boolean isPureWhite(Bitmap bitmap) {
+            if (bitmap == null) return true;
+            int width = bitmap.getWidth();
+            int height = bitmap.getHeight();
+            if (width <= 0 || height <= 0) return true;
+
+            int sampled = 0;
+            int nonWhite = 0;
+            int stepX = Math.max(1, width / 6);
+            int stepY = Math.max(1, height / 6);
+
+            for (int x = 0; x < width; x += stepX) {
+                for (int y = 0; y < height; y += stepY) {
+                    sampled++;
+                    int pixel = bitmap.getPixel(x, y);
+                    int r = (pixel >> 16) & 0xFF;
+                    int g = (pixel >> 8) & 0xFF;
+                    int b = pixel & 0xFF;
+                    if (r < 248 || g < 248 || b < 248) {
+                        nonWhite++;
+                    }
+                }
             }
+            return nonWhite == 0;
+        }
+
+        void bind(SeriesPOJO book) {
+            boolean current = isCurrent(book.getUrl(), carentUrl);
+            mLinearLayout.setBackgroundResource(current ? R.drawable.bg_series_current : mDefaultBackground);
+            mLine.setTypeface(null, current ? Typeface.BOLD : Typeface.NORMAL);
+            mText.setTypeface(null, current ? Typeface.BOLD : Typeface.NORMAL);
+            itemView.setSelected(current);
             mLine.setText(book.getNumber());
             mText.setText(book.getName());
+            if (mImage != null) {
+                if (book.getPhoto() != null && !book.getPhoto().isEmpty()) {
+                    Glide.with(itemView.getContext())
+                            .asBitmap()
+                            .load(com.fanok.audiobooks.net.Covers.glide(book.getPhoto()))
+                            .listener(new RequestListener<Bitmap>() {
+                                @Override
+                                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
+                                    mImage.setVisibility(View.GONE);
+                                    return false;
+                                }
+
+                                @Override
+                                public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
+                                    if (resource != null && isPureWhite(resource)) {
+                                        mImage.setVisibility(View.GONE);
+                                        return true;
+                                    } else {
+                                        mImage.setVisibility(View.VISIBLE);
+                                        return false;
+                                    }
+                                }
+                            })
+                            .into(mImage);
+                } else {
+                    mImage.setVisibility(View.GONE);
+                }
+            }
         }
+    }
+
+    /**
+     * Whether a series entry is the book on screen: its link opens the same page, or it has no link at all (the
+     * sites that list the open book without one: knigavuhe, izibuk, knigoblud).
+     */
+    static boolean isCurrent(@NonNull String entryUrl, @NonNull String bookUrl) {
+        return entryUrl.isEmpty() || Url.samePage(entryUrl, bookUrl);
     }
 
     public interface OnListItemSelectedInterface {
@@ -104,7 +187,7 @@ public class SeriesListAddapter extends RecyclerView.Adapter<SeriesListAddapter.
 
     @SuppressLint("NotifyDataSetChanged")
     public void setItem(ArrayList<SeriesPOJO> newModel) {
-        mModel = newModel;
+        mModel = newModel == null ? new ArrayList<>() : new ArrayList<>(newModel);
         notifyDataSetChanged();
     }
 

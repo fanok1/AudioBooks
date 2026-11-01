@@ -1,0 +1,10 @@
+<!-- drawable/rewind_45.xml: Material Design Icons style, digits as in rewind-30 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/black"
+        android:pathData="M12.5,3C17.15,3 21.08,6.03 22.47,10.22L20.1,11C19.05,7.81 16.04,5.5 12.5,5.5C10.54,5.5 8.77,6.22 7.38,7.38L10,10H3V3L5.6,5.6C7.45,4 9.85,3 12.5,3ZM5,12H7V16H9V12H11V22H9V18H5V12ZM13,12H19V14H15V16H17A2,2 0 0,1 19,18V20A2,2 0 0,1 17,22H13V20H17V18H13V12Z" />
+</vector>

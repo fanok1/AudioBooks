@@ -133,6 +133,22 @@
                 app:drawableStartCompat="@drawable/ic_menu_saved"
                 tools:textColor="" />
 
+            <TextView
+                android:id="@+id/layout_nav_now_playing"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="?android:selectableItemBackground"
+                android:drawablePadding="20dp"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/menu_now_playing"
+                android:textColor="?attr/prefIconColor"
+                android:visibility="gone"
+                app:drawableStartCompat="@drawable/ic_auto_play"
+                tools:textColor="" />
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1px"
@@ -167,6 +183,21 @@
                 android:text="@string/menu_about"
                 android:textColor="?attr/prefIconColor"
                 app:drawableStartCompat="@drawable/ic_menu_about"
+                tools:textColor="" />
+
+            <TextView
+                android:id="@+id/layout_nav_exit"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="?android:selectableItemBackground"
+                android:drawablePadding="20dp"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/exit"
+                android:textColor="?attr/prefIconColor"
+                app:drawableStartCompat="@drawable/ic_exit"
                 tools:textColor="" />
 
         </LinearLayout>

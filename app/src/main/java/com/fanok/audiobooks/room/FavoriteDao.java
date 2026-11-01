@@ -21,7 +21,7 @@ public interface FavoriteDao {
     @Query("DELETE FROM favorite")
     void deleteAll();
 
-    @Query("SELECT * FROM favorite")
+    @Query("SELECT * FROM favorite ORDER BY id")
     List<FavoriteEntity> getAll();
 
     @Query("SELECT * FROM favorite ORDER BY id DESC LIMIT 1")

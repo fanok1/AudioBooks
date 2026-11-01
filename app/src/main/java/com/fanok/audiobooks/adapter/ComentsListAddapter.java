@@ -1,7 +1,5 @@
 package com.fanok.audiobooks.adapter;
 
-import static java.lang.Integer.MAX_VALUE;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -15,6 +13,8 @@ import com.fanok.audiobooks.pojo.ComentsPOJO;
 import com.squareup.picasso.Picasso;
 import de.hdodenhof.circleimageview.CircleImageView;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /** @noinspection ClassEscapesDefinedScope*/
 public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapter.MyHolder> {
@@ -22,6 +22,8 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
     private static final int MAX_LINES = 5;
     private ArrayList<ComentsPOJO> mModel;
     private OnListItemSelectedInterface mListener;
+    /** Positions whose text is expanded; cleared with the data (UI-09). */
+    private final Set<Integer> expanded = new HashSet<>();
 
     class MyHolder extends RecyclerView.ViewHolder {
 
@@ -41,8 +43,6 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
 
         private final TextView mTime;
 
-        private boolean showMore;
-
         MyHolder(@NonNull final View itemView) {
             super(itemView);
 
@@ -55,20 +55,33 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
             mComents = itemView.findViewById(R.id.coments);
             mShowAnswer = itemView.findViewById(R.id.showAnswer);
 
-            mShowAnswer.setOnClickListener(view -> {
-                if (mListener != null) mListener.onItemSelected(view, getBindingAdapterPosition());
+            mShowAnswer.setOnClickListener(this::select);
+            mComents.setOnClickListener(this::select);
+            mReadMore.setOnClickListener(view -> {
+                int position = getBindingAdapterPosition();
+                if (position == RecyclerView.NO_POSITION) {
+                    return;
+                }
+                if (!expanded.remove(position)) {
+                    expanded.add(position);
+                }
+                notifyItemChanged(position);
             });
-
-            mComents.setOnClickListener(view -> {
-                if (mListener != null) mListener.onItemSelected(view, getBindingAdapterPosition());
-            });
-
-
         }
 
-        void bind(ComentsPOJO comentsPOJO) {
+        private void select(View view) {
+            int position = getBindingAdapterPosition();
+            if (mListener != null && position != RecyclerView.NO_POSITION) {
+                mListener.onItemSelected(view, position);
+            }
+        }
+
+        void bind(ComentsPOJO comentsPOJO, boolean isExpanded) {
+            Picasso.get().cancelRequest(mImageView);
             if (!comentsPOJO.getImage().isEmpty()) {
                 Picasso.get().load(comentsPOJO.getImage()).into(mImageView);
+            } else {
+                mImageView.setImageDrawable(null);
             }
             mName.setText(comentsPOJO.getName());
             mTime.setText(comentsPOJO.getDate());
@@ -88,26 +101,7 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
                 mComents.setText(String.valueOf(childCount));
             }
 
-            mText.setMaxLines(MAX_VALUE);
-            mText.setText(comentsPOJO.getText());
-            if (mText.getLineCount() <= MAX_LINES) {
-                mReadMore.setVisibility(View.GONE);
-            } else {
-                mReadMore.setVisibility(View.VISIBLE);
-            }
-            mText.setMaxLines(MAX_LINES);
-            showMore = false;
-
-            mReadMore.setOnClickListener(view -> {
-                if (!showMore) {
-                    mText.setMaxLines(MAX_VALUE);
-                    mReadMore.setText(R.string.show_less);
-                } else {
-                    mText.setMaxLines(MAX_LINES);
-                    mReadMore.setText(R.string.show_more);
-                }
-                showMore = !showMore;
-            });
+            ExpandableText.bind(mText, mReadMore, comentsPOJO.getText(), MAX_LINES, isExpanded);
         }
     }
 
@@ -125,6 +119,7 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
 
     public void clearItem() {
         int oldSize = mModel.size();
+        expanded.clear();
         if (oldSize > 0) {
             mModel.clear();
             notifyItemRangeRemoved(0, oldSize);
@@ -142,7 +137,7 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
 
     @Override
     public void onBindViewHolder(@NonNull MyHolder myHolder, int i) {
-        myHolder.bind(mModel.get(i));
+        myHolder.bind(mModel.get(i), expanded.contains(i));
     }
 
     @NonNull
@@ -155,7 +150,8 @@ public class ComentsListAddapter extends RecyclerView.Adapter<ComentsListAddapte
 
     @SuppressLint("NotifyDataSetChanged")
     public void setItem(ArrayList<ComentsPOJO> newModel) {
-        mModel = newModel;
+        mModel = newModel == null ? new ArrayList<>() : new ArrayList<>(newModel);
+        expanded.clear();
         notifyDataSetChanged();
     }
 

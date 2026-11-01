@@ -14,7 +14,6 @@
     <dimen name="recycler_item_margin">5dp</dimen>
     <dimen name="subTextSize">12sp</dimen>
     <dimen name="titleSize">16sp</dimen>
-    <dimen name="titleSizeParentControl">20sp</dimen>
     <dimen name="recycler_item_textmargin">6dp</dimen>
     <dimen name="scale_drawable">18dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
@@ -37,4 +36,8 @@
     <integer name="isTablet">0</integer>
 
     <dimen name="margin_small">8dp</dimen>
+    <!-- the book screen's toolbar without title and author: its 24dp icons and a little room -->
+    <dimen name="book_toolbar_compact">40dp</dimen>
+    <!-- the sleep timer's hour and minute wheels: three rows of 48dp, as the selection lines are apart -->
+    <dimen name="sleep_timer_picker_height">144dp</dimen>
 </resources>

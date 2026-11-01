@@ -24,7 +24,7 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
 
     @SuppressLint("NotifyDataSetChanged")
     public void setItem(ArrayList<GenrePOJO> newModel) {
-        mModel = newModel;
+        mModel = newModel == null ? new ArrayList<>() : new ArrayList<>(newModel);
         notifyDataSetChanged();
     }
 
@@ -82,8 +82,9 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
             mReting = itemView.findViewById(R.id.reting);
             mDescription = itemView.findViewById(R.id.desc);
             itemView.setOnClickListener(view -> {
-                if (listner != null) {
-                    listner.onClickItem(itemView, getBindingAdapterPosition());
+                int position = getBindingAdapterPosition();
+                if (listner != null && position != RecyclerView.NO_POSITION) {
+                    listner.onClickItem(itemView, position);
                 }
             });
         }
@@ -93,13 +94,16 @@ public class GenreListAddapter extends RecyclerView.Adapter<GenreListAddapter.My
                 throw new NullPointerException();
             }
             mName.setText(book.getName());
-            if (book.getReting() != 0) {
+            // a count the description already says is not repeated beside it
+            String description = book.getDescription();
+            if (book.getReting() != 0 && (description == null
+                    || !description.replaceAll("\\D", "").equals(String.valueOf(book.getReting())))) {
                 mReting.setText(String.valueOf(book.getReting()));
                 mReting.setVisibility(View.VISIBLE);
             } else {
                 mReting.setVisibility(View.GONE);
             }
-            mDescription.setText(book.getDescription());
+            mDescription.setText(description);
 
         }
     }

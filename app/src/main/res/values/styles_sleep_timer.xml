@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The sleep timer's controls in the link accent of all three themes: colorPrimary is the toolbar color,
+         which is near the background on the black theme. Dark text on the light-blue filled button. -->
+    <style name="ThemeOverlay.App.SleepTimer" parent="">
+        <item name="colorPrimary">?attr/hrefColor</item>
+        <item name="colorSecondary">?attr/hrefColor</item>
+        <item name="colorOnPrimary">@android:color/black</item>
+        <item name="colorOnSecondary">@android:color/black</item>
+        <item name="colorControlActivated">?attr/hrefColor</item>
+    </style>
+
+    <style name="ThemeOverlay.App.SleepTimer.TimePicker" parent="ThemeOverlay.MaterialComponents.TimePicker">
+        <item name="colorPrimary">?attr/hrefColor</item>
+    </style>
+
+    <!-- The presets in one row on a phone: less padding around the text than a choice chip has -->
+    <style name="Widget.App.SleepTimer.Preset" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="chipStartPadding">4dp</item>
+        <item name="chipEndPadding">4dp</item>
+        <item name="textStartPadding">4dp</item>
+        <item name="textEndPadding">4dp</item>
+    </style>
+</resources>

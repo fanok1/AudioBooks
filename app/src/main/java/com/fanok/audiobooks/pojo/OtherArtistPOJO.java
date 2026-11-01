@@ -13,7 +13,7 @@ public class OtherArtistPOJO {
     }
 
     public void setName(@NonNull String name) {
-        this.name = name.substring(0, 1).toUpperCase() + name.substring(1);
+        this.name = name.isEmpty() ? name : name.substring(0, 1).toUpperCase() + name.substring(1);
     }
 
     public String getUrl() {

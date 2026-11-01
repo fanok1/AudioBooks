@@ -2,7 +2,7 @@ package com.fanok.audiobooks.pojo;
 
 import android.net.Uri;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.fanok.audiobooks.Consts;
 
 public class AudioPOJO {
@@ -28,8 +28,9 @@ public class AudioPOJO {
         return name;
     }
 
-    public void setName(@NonNull String name) {
-        this.name = name;
+    /** Null is stored as "" so a nameless chapter is kept instead of failing the whole list. */
+    public void setName(@Nullable String name) {
+        this.name = name == null ? "" : name;
     }
 
     public String getUrl() {
@@ -37,21 +38,24 @@ public class AudioPOJO {
     }
 
     public String getCleanUrl() {
-        Uri uri = Uri.parse(url);
-        return new Uri.Builder()
-                .scheme(uri.getScheme())
-                .authority(uri.getAuthority())
-                .path(uri.getPath())
-                .build()
-                .toString();
+        if (url == null || url.isEmpty()) return "";
+        try {
+            Uri uri = Uri.parse(url);
+            if (uri.getScheme() == null) return url;
+            return new Uri.Builder()
+                    .scheme(uri.getScheme())
+                    .authority(uri.getAuthority())
+                    .path(uri.getPath())
+                    .build()
+                    .toString();
+        } catch (Exception e) {
+            return url;
+        }
     }
 
-    public void setUrl(@NonNull String url) {
-        if (!Consts.REGEXP_URL.matcher(url).matches()) {
-            throw new IllegalArgumentException(
-                    "Value must be url");
-        }
-        this.url = url;
+    /** Null or blank is stored as ""; callers drop chapters without a URL. */
+    public void setUrl(@Nullable String url) {
+        this.url = url == null || url.trim().isEmpty() ? "" : url;
     }
 
     public int getTime() {

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The "Прокси" setting: its dialog (ProxyDialogFragment) and its summary in the settings. -->
+<resources>
+    <string name="proxy_mode_off">Выключен</string>
+    <string name="proxy_mode_off_caption">Используются настройки сети устройства</string>
+    <string name="proxy_mode_builtin">Встроенный прокси</string>
+    <string name="proxy_mode_builtin_caption">Ваш прокси из пункта «Свой прокси»</string>
+    <string name="proxy_mode_auto">Автоматический подбор</string>
+    <string name="proxy_mode_auto_caption">Приложение само найдёт рабочий публичный прокси и сменит его при сбое</string>
+
+    <string name="proxy_status_lists">Поиск прокси… загрузка списков</string>
+    <string name="proxy_status_scanning">Поиск прокси… проверено %1$d из %2$d, найдено %3$d</string>
+    <string name="proxy_status_working">Работает: %1$s · %2$d мс</string>
+    <string name="proxy_status_working_spares">Работает: %1$s · %2$d мс · запасных: %3$d</string>
+    <string name="proxy_status_not_found">Рабочий прокси не найден — попробуйте позже</string>
+    <string name="proxy_status_no_network">Нет сети</string>
+    <string name="proxy_rescan">Найти заново</string>
+    <string name="proxy_note">Публичные прокси бывают медленными и нестабильными; при сбое приложение подберёт другой.</string>
+    <string name="proxy_close">Закрыть</string>
+
+    <string name="proxy_summary_off">Выключен · настройки устройства</string>
+    <string name="proxy_summary_builtin">Встроенный прокси · %1$s</string>
+    <string name="proxy_summary_auto">Автоматический</string>
+    <string name="proxy_summary_auto_working">Автоматический · работает %1$s, %2$d мс</string>
+    <string name="proxy_summary_auto_scanning">Автоматический · поиск…</string>
+    <string name="proxy_summary_auto_not_found">Автоматический · рабочий прокси не найден</string>
+    <string name="proxy_summary_auto_no_network">Автоматический · нет сети</string>
+
+    <!-- "Свой прокси" (CustomProxyDialogFragment): the server of the built-in mode -->
+    <string name="proxy_custom_title">Свой прокси</string>
+    <string name="proxy_custom_summary">Настройка своего встроенного прокси</string>
+    <string name="proxy_custom_type">Тип прокси</string>
+    <string name="proxy_custom_socks">SOCKS5</string>
+    <string name="proxy_custom_http">HTTP</string>
+    <string name="proxy_custom_type_caption">HTTP-прокси открывает и https-сайты. Прокси с шифрованием до самого сервера (HTTPS-прокси) не поддерживаются.</string>
+    <string name="proxy_custom_host">Адрес (хост или IP)</string>
+    <string name="proxy_custom_port">Порт</string>
+    <string name="proxy_custom_user">Логин (необязательно)</string>
+    <string name="proxy_custom_password">Пароль (необязательно)</string>
+    <string name="proxy_custom_use">Использовать этот прокси</string>
+    <string name="proxy_custom_use_caption">Режим «Встроенный прокси» в пункте «Прокси»</string>
+    <string name="proxy_custom_check">Проверить</string>
+    <string name="proxy_custom_checking">Проверка через прокси…</string>
+    <string name="proxy_custom_ok">Работает: %1$s ответил за %2$.1f с</string>
+    <string name="proxy_custom_ok_code">Работает: %1$s ответил за %2$.1f с (код %3$d)</string>
+    <string name="proxy_custom_login_refused">Прокси не принял логин или пароль</string>
+    <string name="proxy_custom_no_answer">Нет ответа от прокси или сайта</string>
+    <string name="proxy_custom_unknown_host">Адрес прокси не найден</string>
+    <string name="proxy_custom_refused">Прокси не принимает соединения</string>
+    <string name="proxy_custom_silent">Прокси не отвечает: соединение не установлено</string>
+    <string name="proxy_custom_failed">Не работает: %1$s</string>
+    <string name="proxy_custom_save">Сохранить</string>
+    <string name="proxy_custom_cancel">Отмена</string>
+    <string name="proxy_custom_reset">По умолчанию</string>
+    <string name="proxy_custom_error_host">Только хост или IP: без порта, «/» и пробелов</string>
+    <string name="proxy_custom_error_port">Порт: число от 1 до 65535</string>
+    <string name="proxy_custom_error_user">Укажите логин к паролю</string>
+</resources>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sleep_timer_mode_countdown">Через время</string>
+    <string name="sleep_timer_mode_clock">По часам</string>
+    <string name="sleep_timer_hours_label">ч</string>
+    <string name="sleep_timer_minutes_label">мин</string>
+    <string name="sleep_timer_preset_15">15 мин</string>
+    <string name="sleep_timer_preset_30">30 мин</string>
+    <string name="sleep_timer_preset_45">45 мин</string>
+    <string name="sleep_timer_preset_60">1 ч</string>
+    <string name="sleep_timer_preset_90">1,5 ч</string>
+    <string name="sleep_timer_clock_pick">Выбрать время</string>
+    <string name="sleep_timer_fires_in">Сработает через %s</string>
+    <string name="sleep_timer_duration_hm">%1$d ч %2$d мин</string>
+    <string name="sleep_timer_duration_h">%d ч</string>
+    <string name="sleep_timer_duration_m">%d мин</string>
+    <string name="sleep_timer_end_of_chapter">Остановить в конце главы</string>
+    <string name="sleep_timer_warn_title">Предупреждать за 30 секунд</string>
+    <string name="sleep_timer_warn_summary">Громкие сигналы за 30, 20 и 10 секунд до остановки, книга плавно затихает</string>
+    <string name="sleep_timer_shake_title">Встряхнуть, чтобы продолжить</string>
+    <string name="sleep_timer_shake_summary">Встряхните телефон во время сигнала или в течение минуты после остановки — таймер запустится заново</string>
+    <string name="sleep_timer_start">Запустить</string>
+    <string name="sleep_timer_stops_at">Остановится в %s</string>
+    <string name="sleep_timer_chapter_left">В конце главы · осталось %s</string>
+    <string name="sleep_timer_paused">На паузе — отсчёт продолжится, когда книга заиграет</string>
+    <string name="sleep_timer_extend">+10 мин</string>
+    <string name="sleep_timer_cancel">Отменить таймер</string>
+    <string name="sleep_timer_started_clock">Таймер сработает в %s, даже если книга на паузе</string>
+</resources>

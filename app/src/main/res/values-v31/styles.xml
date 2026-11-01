@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ always shows a splash on a cold start: here it is only the theme's background, without an icon -->
+    <style name="AppTheme.Launcher">
+        <item name="android:windowBackground">@color/launchBackground</item>
+        <item name="android:windowSplashScreenBackground">@color/launchBackground</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+    </style>
+
+    <!-- values/styles.xml's, plus the same plain splash for a cold start from a link (LoadBook) -->
+    <style name="AppTheme.NoAnimTheme" parent="AppTheme.NoActionBar">
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowSplashScreenBackground">@color/launchBackground</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+    </style>
+</resources>

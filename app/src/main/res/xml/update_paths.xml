@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the downloaded update only (Updater), for the system installer -->
+<paths>
+    <cache-path
+        name="update"
+        path="update/" />
+</paths>

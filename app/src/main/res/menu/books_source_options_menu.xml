@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the book listings of a site with a SourceParser: the Order submenu is filled from SourceParser.sorts, the source
+     submenu from Provider (BooksFragment) -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/app_bar_search"
+        android:icon="@drawable/ic_search_black_24dp"
+        android:title="@string/search"
+        app:showAsAction="always" />
+    <!-- duration range and ranking period; its submenu is filled and shown by BooksFragment -->
+    <item
+        android:id="@+id/filter"
+        android:icon="@drawable/ic_filter"
+        android:title="@string/filter"
+        android:visible="false"
+        app:showAsAction="always">
+        <menu />
+    </item>
+    <item
+        android:id="@+id/order"
+        android:icon="@drawable/ic_sort"
+        android:title="@string/order"
+        app:showAsAction="always">
+        <menu />
+    </item>
+    <item
+        android:id="@+id/source"
+        android:icon="@drawable/ic_web"
+        android:title="@string/source"
+        app:showAsAction="always">
+        <menu />
+    </item>
+</menu>

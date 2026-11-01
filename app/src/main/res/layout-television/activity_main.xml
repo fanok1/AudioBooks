@@ -135,6 +135,23 @@
                 android:textColor="?attr/prefIconColor"
                 tools:textColor="" />
 
+            <TextView
+                android:id="@+id/layout_nav_now_playing"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/focusable"
+                android:drawableStart="@drawable/ic_auto_play"
+                android:drawablePadding="20dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/menu_now_playing"
+                android:textColor="?attr/prefIconColor"
+                android:visibility="gone"
+                tools:textColor="" />
+
 
             <View
                 android:layout_width="match_parent"
@@ -171,6 +188,22 @@
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:text="@string/menu_about"
+                android:textColor="?attr/prefIconColor"
+                tools:textColor="" />
+
+            <TextView
+                android:id="@+id/layout_nav_exit"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/focusable"
+                android:drawableStart="@drawable/ic_exit"
+                android:drawablePadding="20dp"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="@string/exit"
                 android:textColor="?attr/prefIconColor"
                 tools:textColor="" />
 

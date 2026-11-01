@@ -8,13 +8,6 @@
     tools:background="@color/colorBackgraund"
     tools:viewBindingIgnore="true">
 
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="@dimen/text_margin_book_description"
-        android:textSize="@dimen/titleSizeParentControl" />
-
     <CheckedTextView
         android:id="@+id/checkedTextView"
         android:layout_width="match_parent"

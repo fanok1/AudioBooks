@@ -1,0 +1,27 @@
+<!-- synthetic: audioboo.org answers every GET with a Cloudflare challenge (see challenge.html), so this
+     page is built from the selectors AudioModel.parseAudioboo uses: h1 and a Playerjs script with an inline file list. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Синтетическая книга слушать онлайн</title>
+</head>
+<body>
+<h1>Синтетическая книга</h1>
+<script>window.PlayerjsLoader = function () { return "Playerjs"; };</script>
+<script>
+    var player = new Playerjs({id: "player", title: "Синтетическая книга [1]",
+        file: [
+            {"title": "Глава 1", "file": "/uploads/audio/01.mp3"},
+            {"title": "Глава 2", "file": "//_//aHR0cHM6Ly9jZG4uYXVkaW9ib28ub3JnLzAyLm1wMw"},
+            {"title": "Часть 2", "folder": [
+                {"title": "Глава 3 [бонус]", "file": "https://audioboo.org/engine/go.php?url=aHR0cHM6Ly9jZG4uYXVkaW9ib28ub3JnLzMubXAz"},
+                {"title": "", "file": "https://cdn.audioboo.org/04.mp3"}
+            ]},
+            {"title": "Без файла", "file": ""}
+        ]
+    });
+    var related = [{"id": 1}];
+</script>
+</body>
+</html>

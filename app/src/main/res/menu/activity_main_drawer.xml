@@ -39,6 +39,13 @@
             android:id="@+id/nav_saved"
             android:icon="@drawable/ic_menu_saved"
             android:title="@string/menu_saved" />
+        <!-- opens the book screen; never left checked, shown only while the player holds a book -->
+        <item
+            android:id="@+id/nav_now_playing"
+            android:checkable="false"
+            android:icon="@drawable/ic_auto_play"
+            android:title="@string/menu_now_playing"
+            android:visible="false" />
     </group>
 
     <group
@@ -52,6 +59,12 @@
             android:id="@+id/nav_about"
             android:icon="@drawable/ic_menu_about"
             android:title="@string/menu_about" />
+        <!-- ends playback and closes the app (MediaPlayerService.exitApp); never left checked -->
+        <item
+            android:id="@+id/nav_exit"
+            android:checkable="false"
+            android:icon="@drawable/ic_exit"
+            android:title="@string/exit" />
     </group>
 
 </menu>

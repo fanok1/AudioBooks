@@ -253,7 +253,7 @@
                     android:singleLine="true"
                     android:text="@string/show_more"
                     android:textAlignment="center"
-                    android:textColor="?attr/subTextColor"
+                    android:textColor="?attr/hrefColor"
                     android:textSize="@dimen/textSizeBookDescription" />
 
                 <View

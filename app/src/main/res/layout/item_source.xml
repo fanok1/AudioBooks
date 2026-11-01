@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One source in the sources dialog: the status stripe, the drag handle, the title, the last result and the route
+     button. The row is the focusable, clickable unit (its menu is the D-pad and TalkBack path); the status colors and
+     the fading background are set in code, the ripple is the foreground so the two do not fight. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="36dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <View
+        android:id="@+id/sourceStripe"
+        android:layout_width="4dp"
+        android:layout_height="match_parent" />
+
+    <ImageView
+        android:id="@+id/sourceHandle"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="6dp"
+        android:contentDescription="@string/sources_drag"
+        android:focusable="false"
+        android:padding="6dp"
+        app:srcCompat="@drawable/ic_drag_handle"
+        app:tint="?android:attr/textColorSecondary" />
+
+    <TextView
+        android:id="@+id/sourceTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="15sp"
+        tools:text="Книга в ухе" />
+
+    <!-- The result, or a spinner in its place while the site is being checked. -->
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:minWidth="56dp">
+
+        <TextView
+            android:id="@+id/sourceStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:fontFeatureSettings="tnum"
+            android:gravity="end"
+            android:minWidth="56dp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="13sp"
+            tools:text="1,2 с" />
+
+        <ProgressBar
+            android:id="@+id/sourceProgress"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="end|center_vertical"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <ImageButton
+        android:id="@+id/sourceMode"
+        android:layout_width="40dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="2dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:scaleType="centerInside"
+        tools:ignore="ContentDescription"
+        tools:src="@drawable/ic_arrow_right" />
+</LinearLayout>
